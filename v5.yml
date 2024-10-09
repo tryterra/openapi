@@ -2279,19 +2279,6 @@ paths:
   /integrations:
     get:
       operationId: GetIntegrations
-      parameters:
-      - name: dev-id
-        in: header
-        description: your developer ID
-        required: true
-        schema:
-          type: string
-      - name: x-api-key
-        in: header
-        description: your API key
-        required: true
-        schema:
-          type: string
       responses:
         '200':
           description: Returns list of all available integrations on the API
