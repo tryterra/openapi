@@ -263,7 +263,14 @@ paths:
       parameters:
       - name: dev-id
         in: header
-        description: Your Terra Developer ID
+        description: your developer ID
+        required: true
+        schema:
+          type: string
+      - name: x-api-key
+        in: header
+        description: your API key
+        required: true
         schema:
           type: string
       responses:
