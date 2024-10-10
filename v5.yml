@@ -1,3 +1,4 @@
+openapi: 3.1.0
 info:
   description: The Terra API
   title: TerraAPI
@@ -254,7 +255,65 @@ paths:
                     type: string
                     enum: [success, error]
                     description: indicates that an error happened (value is error)
-  
+  /auth/generateAuthToken:
+    post:
+      summary: SDK - Generate Authentication Token
+      description: Endpoint to generate an authentication token to be used in the
+        SDK's
+      operationId: generate-authentication-token
+      parameters:
+      - name: dev-id
+        in: header
+        description: Your Terra Developer ID
+        schema:
+          type: string
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              examples:
+                Result:
+                  value: |-
+                    {
+                        "status": "success",
+                        "token": "250c68b9c21b78e40e7a3285a2d538d3bc24aabd3b4c76a782fb0a571ca4501d",
+                        "expires_in": 180
+                    }
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  token:
+                    type: string
+                    example: 250c68b9c21b78e40e7a3285a2d538d3bc24aabd3b4c76a782fb0a571ca4501d
+                  expires_in:
+                    type: integer
+                    example: 180
+                    default: 0
+        '404':
+          description: '404'
+          content:
+            application/json:
+              examples:
+                Result:
+                  value: |-
+                    {
+                        "status": "error",
+                        "message": "Invalid dev-id was provided"
+                    }
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Invalid dev-id was provided
+      deprecated: false
   /activity:
     get:
       operationId: GetActivity
