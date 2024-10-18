@@ -1,0 +1,2148 @@
+openapi: 3.1.0
+info:
+  title: Terra API Team-Based API
+  description: API to manage and retrieve data from team-based fitness tracking devices used in sports training and monitoring.
+  version: 1.0.0
+security:
+  - apiKeyAuth: []
+    devIdAuth: []
+servers:
+  - url: 'https://api.tryterra.co/v2/teams'
+    description: Main teams API base URL
+paths:
+  /integrations/detailed:
+    get:
+      summary: Get detailed information about available integrations
+      description: Returns detailed information about available providers, including required login fields and logos.
+      security: []
+      responses:
+        '200':
+          description: Integrations retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationsResponse'
+      tags:
+        - Integrations
+  /coaches:
+    get:
+      summary: List all coaches
+      responses:
+        '200':
+          description: "A list of coaches"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Coach'
+      tags:
+        - Coaches
+    post:
+      summary: Create a new coach
+      description: Registers a new coach with credentials and integration specifics.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Coach'
+      responses:
+        '201':
+          description: Coach created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Coach'
+        '400':
+          description: Invalid input, object invalid
+        '409':
+          description: The coach already exists for your dev-id
+      tags:
+        - Coaches
+  /coaches/{coachId}:
+    delete:
+      summary: Delete a coach
+      description: Deletes a coach and all associated athletes, activities, and tests.
+      parameters:
+        - name: coachId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the coach to be deleted.
+      responses:
+        '204':
+          description: Coach deleted successfully.
+        '404':
+          description: Coach not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Coaches
+  /coaches/{coachId}/athletes:
+    get:
+      summary: Retrieve all athletes under a specific coach
+      parameters:
+        - name: coachId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "An array of athletes coached by the specified coach"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Athlete'
+      tags:
+          - Coaches
+  /coaches/{coachId}/activities:
+    get:
+      summary: Retrieve all activities recorded by athletes under a specific coach
+      parameters:
+        - name: coachId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start_time
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: "List of activities within the specified time range for all athletes under the coach"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoachDataReturned'
+      tags:
+        - Coaches
+  /coaches/{coachId}/activities/metrics/schema:
+    get:
+      summary: Retrieve activity metrics schema for a coach
+      description: Returns the schema of activity metrics available for the specified coach.
+      parameters:
+        - name: coachId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the coach.
+      responses:
+        '200':
+          description: Schema retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoachDataReturned'
+        '404':
+          description: Coach not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Coaches
+  /coaches/{coachId}/tests:
+    get:
+      summary: Retrieve all tests conducted by athletes under a specific coach
+      parameters:
+        - name: coachId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: start_time
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: "List of tests within the specified time range for all athletes under the coach"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Test'
+      tags:
+        - Coaches
+  /athletes:
+    get:
+      summary: List all athletes
+      responses:
+        '200':
+          description: An array of athletes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Athlete'
+      tags:
+        - Athletes
+  /athletes/{athleteId}:
+    get:
+      summary: Retrieve a specific athlete by their ID
+      parameters:
+        - name: athleteId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: "Detailed information about the athlete"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Athlete'
+      tags:
+        - Athletes
+    patch:
+      summary: Update an athlete's information
+      parameters:
+        - name: athleteId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Athlete'
+      responses:
+        '200':
+          description: Athlete updated
+      tags:
+        - Athletes
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+    devIdAuth:
+      type: apiKey
+      in: header
+      name: dev-id
+  schemas:
+    Coach:
+      type: object
+      properties:
+        coach_id:
+          type: string
+          description: "Unique identifier for the coach, generated by the server."
+          readOnly: true
+        external_coach_id:
+          type: string
+          description: "Identifier of the coach on the provider's systems"
+          readOnly: true
+        reference_id:     
+          type: string
+          description: "ID of the coach on your system"
+        region:
+          type: string
+          description: "Region in which the coach operates."
+        provider:
+          type: string
+          description: "Integration provider associated with the coach (e.g., VALD, Catapult)."
+        created_at:
+          type: string
+          format: date-time
+          description: "The date and time when the coach was registered."
+        client_id:
+          type: string
+          description: "Public identifier for the coach."
+          writeOnly: true
+        client_secret:
+          type: string
+          description: "Secret key or token for authentication."
+          writeOnly: true
+        token:
+          type: string
+          description: "API key or token for the coach object"
+          writeOnly: true
+    Athlete:
+      type: object
+      properties:
+        coach_id:
+          type: string
+          description: "The ID of the coach to which the athlete belongs"
+          readOnly: true
+        athlete_id:
+          type: string
+          description: "Unique identifier for the athlete, generated by the server."
+          readOnly: true
+        external_athlete_id:
+          type: string
+          description: "Unique identifier for the athlete on the provider's system, generated by the provider (e.g. VALD, Catapult)"
+          readOnly: true
+        reference_id:
+          type: string
+          description: "A string to reference the Athlete. This can be a UUID, email, or other, and can be used to reconcile the Athlete with your internal systems."
+        provider:
+          type: string
+          description: "Integration provider associated with the Athlete (e.g., VALD, Catapult)."
+          readOnly: true
+        first_name:
+          type: string
+          description: "Athlete's first name."
+        last_name:
+          type: string
+          description: "Athlete's last name"
+        email:
+          type: string
+          description: "Athlete's email"
+        created_at:
+          type: string
+          format: date-time
+          description: "The date and time when the athlete was registered."
+          readOnly: true
+        date_of_birth:
+          type: string
+          format: date
+          description: "The date of birth of the athlete"
+        last_updated_at:
+          type: string
+          format: date-time
+          description: "The date and time when the athlete was last updated (e.g. updated their first and last name)."
+          readOnly: true
+        active:
+          type: boolean
+          description: "Determines whether or not Terra will send webhooks for the given athlete"
+    Metric:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          description: "Name of the metric"
+        value:
+          oneOf:
+            - type: number
+            - type: string
+          nullable: true
+          description: "Value of the metric"
+        unit:
+          type: string
+          nullable: true
+          description: "Unit of the metric"
+    AthleteMetrics:
+      type: object
+      properties:
+        athlete_id:
+          type: string
+          nullable: true
+          description: "ID of the athlete"
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Metric'
+          nullable: true
+          description: "List of metrics associated with the athlete"
+    DetailedParticipationStatus:
+      type: object
+      properties:
+        athlete_id:
+          type: string
+          nullable: true
+          description: "ID of the athlete"
+        external_athlete_id:
+          type: string
+          nullable: true
+          description: "External ID of the athlete"
+        is_home_team:
+          $ref: '#/components/schemas/IsHomeFlag'
+          description: "Indicates if the athlete is from the home team"
+        participation:
+          $ref: '#/components/schemas/ParticipationType'
+          nullable: true
+          description: "Type of participation in an activity"
+        function:
+          type: string
+          nullable: true
+          description: "Function of the athlete in the activity"
+    ParticipationStatus:
+      type: object
+      properties:
+        full:
+          type: array
+          items:
+            type: string
+          description: "List of athletes with full participation"
+          default: []
+        partial:
+          type: array
+          items:
+            type: string
+          description: "List of athletes with partial participation"
+          default: []
+        unknown:
+          type: array
+          items:
+            type: string
+          description: "List of athletes with unknown participation"
+          default: []
+    Period:
+      type: object
+      properties:
+        period_id:
+          type: string
+          nullable: true
+          description: "ID of the period"
+        name:
+          type: string
+          nullable: true
+          description: "Name of the period"
+        athlete_participation:
+          $ref: '#/components/schemas/ParticipationStatus'
+          nullable: true
+          description: "Participation status of athletes in the period"
+        detailed_athlete_participation:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetailedParticipationStatus'
+          description: "Detailed participation status of athletes"
+          default: []
+        start_timestamp_us:
+          type: integer
+          nullable: true
+          description: "Start timestamp of the period in microseconds"
+        end_timestamp_us:
+          type: integer
+          nullable: true
+          description: "End timestamp of the period in microseconds"
+    TeamInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          description: "Name of the team"
+        is_home:
+          $ref: '#/components/schemas/IsHomeFlag'
+          description: "Indicates if the team is the home team"
+
+    TeamActivity:
+      type: object
+      properties:
+        activity_id:
+          type: string
+          nullable: true
+          description: "Unique identifier for the activity"
+        start_timestamp_us:
+          type: integer
+          nullable: true
+          description: "Start timestamp of the activity in microseconds"
+        end_timestamp_us:
+          type: integer
+          nullable: true
+          description: "End timestamp of the activity in microseconds"
+        description:
+          type: string
+          nullable: true
+          description: "Description of the activity"
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamInfo'
+          nullable: true
+          description: "List of teams involved in the activity"
+        athlete_participation:
+          $ref: '#/components/schemas/ParticipationStatus'
+          nullable: true
+          description: "Overall participation status of athletes"
+        tz_offset_seconds:
+          type: integer
+          nullable: true
+          description: "Timezone offset in seconds"
+          default: 0
+        periods:
+          type: array
+          items:
+            $ref: '#/components/schemas/Period'
+          nullable: true
+          description: "List of periods in the activity"
+          default: []
+        activity_metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Metric'
+          nullable: true
+          description: "List of metrics associated with the activity"
+          default: []
+        athlete_metrics:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/Metric'
+          nullable: true
+          description: "Dictionary mapping athlete IDs to their metrics"
+          default: {}
+        events:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "List of events related to the activity"
+
+    components:
+    MetricStats:
+      type: object
+      properties:
+        min:
+          type: number
+          nullable: true
+          description: "Minimum value of the metric"
+        max:
+          type: number
+          nullable: true
+          description: "Maximum value of the metric"
+        avg:
+          type: number
+          nullable: true
+          description: "Average value of the metric"
+        value:
+          type: number
+          nullable: true
+          description: "Specific value of the metric"
+    TestResultMetric:
+      type: object
+      properties:
+        side:
+          $ref: '#/components/schemas/Side'
+          description: "Side indicator"
+        aspect:
+          $ref: '#/components/schemas/Aspect'
+          description: "Aspect indicator"
+        statistic_type:
+          $ref: '#/components/schemas/StatisticType'
+          description: "Type of statistic"
+        metric_type:
+          $ref: '#/components/schemas/MetricType'
+        contraction_type:
+          $ref: '#/components/schemas/ContractionType'
+          description: "Type of muscle contraction"
+        value:
+          type: number
+          nullable: true
+          description: "Value of the metric"
+    Rep:
+      type: object
+      properties:
+        offset_us:
+          type: integer
+          description: "Offset from start of test in microseconds"
+        duration_us:
+          type: number
+          description: "Duration of the rep in microseconds"
+        metrics:
+          type: array
+          description: "List of metrics for the rep"
+          items:
+            $ref: '#/components/schemas/TestResultMetric'
+    Set:
+      type: object
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestResultMetric'
+        timestamp_us:
+          type: integer
+          nullable: true
+          description: "Timestamp of the set in microseconds"
+        duration_us:
+          type: integer
+          nullable: true
+          description: "Duration of the set in microseconds"
+        side:
+          $ref: '#/components/schemas/Side'
+          default: 0
+        aspect:
+          $ref: '#/components/schemas/Aspect'
+          default: -1
+        reps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Rep'
+        weight:
+          type: number
+          nullable: true
+          description: "Weight used for the exercise"
+        exercise_name:
+          type: string
+          nullable: true
+          description: "Name of the exercise"
+        variations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variation'
+        movement:
+          $ref: '#/components/schemas/Movement'
+          default: -1
+  
+    Test:
+      type: object
+      properties:
+        test_id:
+          type: string
+          nullable: true
+          description: "Unique identifier for the test"
+        timestamp_us:
+          type: integer
+          nullable: true
+          description: "Timestamp of the test in microseconds"
+        athlete_weight:
+          type: number
+          nullable: true
+          description: "Weight of the athlete during the test"
+        movement:
+          $ref: '#/components/schemas/Movement'
+          nullable: true
+        tz_offset_seconds:
+          type: integer
+          nullable: true
+          description: "Timezone offset in seconds"
+          default: 0
+        category:
+          $ref: '#/components/schemas/TestCategory'
+          nullable: true
+        duration_us:
+          type: number
+          nullable: true
+          description: "Duration of the test in microseconds"
+        body_region:
+          $ref: '#/components/schemas/BodyRegion'
+          nullable: true
+        position:
+          $ref: '#/components/schemas/Position'
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+          description: "Any notes related to the test"
+        device:
+          type: string
+          nullable: true
+          description: "The device used for the test"
+        test_result_metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestResultMetric'
+        sets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Set'
+
+    TestsPayload:
+      type: object
+      properties:
+        tests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Test'
+        athlete:
+          type: object
+          description: "Athlete details"
+          $ref: '#/components/schemas/Athlete'
+    CoachRegistered:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Coach'
+        message:
+          type: string
+          default: "Coach has successfully registered"
+        type:
+          type: string
+          default: "coach.registered"
+    AthletesRegistered:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Athlete'
+        message:
+          type: string
+          default: "One or more Athletes have been successfully registered"
+        type:
+          type: string
+          default: "athlete.registered"
+    ErrorResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+          examples: 
+            - "https://api.tryterra.co/probs/not-found"
+        title:
+          type: string
+          examples: 
+            - "Resource Not Found"
+        status:
+          type: integer
+          format: int32
+          examples: 
+            - 404
+        detail:
+          type: string
+          examples: 
+            - "The coach with the provided ID does not exist."
+        instance:
+          type: string
+          format: uri
+          nullable: true
+      required:
+        - type
+        - title
+        - status
+        - detail
+    examples:
+      ErrorCoachNotFound:
+        summary: Resource Not Found
+        value:
+          type: "https://api.tryterra.co/probs/not-found"
+          title: "Resource Not Found"
+          status: 404
+          detail: "The coach with the provided ID does not exist."
+      ErrorInvalidRequest:
+        summary: Invalid Request
+        value:
+          type: "https://api.tryterra.co/probs/invalid-request"
+          title: "Invalid Request"
+          status: 400
+          detail: "Missing required query parameter: start_date."
+      ErrorUnauthorized:
+        summary: Unauthorized
+        value:
+          type: "https://api.tryterra.co/probs/unauthorized"
+          title: "Unauthorized"
+          status: 401
+          detail: "Authentication credentials are missing or invalid."
+      ErrorForbidden:
+        summary: Forbidden
+        value:
+          type: "https://api.tryterra.co/probs/forbidden"
+          title: "Forbidden"
+          status: 403
+          detail: "You do not have permission to access this resource."
+    CoachDataReturned:
+      type: object
+      properties:
+        coach:
+          $ref: '#/components/schemas/Coach'
+        data:
+          type: array
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/MetricSchema'
+            - $ref: '#/components/schemas/Test'
+            - $ref: '#/components/schemas/TeamActivity'
+    MetricSchema:
+      type: object
+      properties:
+        key:
+          type: string
+          description: "Unique key for the metric."
+        display_name:
+          type: string
+          nullable: true
+          description: "Human-readable name of the metric."
+        unit:
+          type: string
+          nullable: true
+          description: "Unit of measurement for the metric."
+        type:
+          type: string
+          nullable: true
+          description: "Data type of the metric (e.g., integer, float)."
+        sport:
+          $ref: '#/components/schemas/Sport'
+          nullable: true
+          description: "Sport associated with the metric."
+    IntegrationsResponse:
+      type: object
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderDetails'
+    ProviderDetails:
+      type: object
+      properties:
+        provider:
+          type: string
+          description: "Provider identifier (e.g., 'VALD', 'CATAPULT')."
+        name:
+          type: string
+          description: "Display name of the provider."
+        icon:
+          type: string
+          description: "URL to the provider's logo or icon."
+        types:
+          type: object
+          properties:
+            tests:
+              type: boolean
+              description: "Indicates if the provider supports test data."
+            activities:
+              type: boolean
+              description: "Indicates if the provider supports activity data."
+        login_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoginField'
+    LoginField:
+      type: object
+      properties:
+        field:
+          type: string
+          description: "Field name used in authentication."
+        name:
+          type: string
+          description: "Human-readable name of the field."
+        type:
+          type: string
+          description: "Input type (e.g., 'text', 'password')."
+        required:
+          type: boolean
+          description: "Indicates if the field is required."
+        options:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "Options for select-type fields."
+    IsHomeFlag:
+      type: integer
+      description: "Indicates if the team is home or away"
+      oneOf:
+        - title: "UNKNOWN"
+          const: -1
+          description: "Unknown or not specified"
+        - title: "AWAY"
+          const: 0
+          description: "Away team"
+        - title: "HOME"
+          const: 1
+          description: "Home team"
+    ParticipationType:
+      type: integer
+      description: "Type of participation in an activity"
+      oneOf:
+        - title: "UNKNOWN"
+          const: 0
+          description: "Unknown participation type"
+        - title: "FULL"
+          const: 1
+          description: "Full participation"
+        - title: "PARTIAL"
+          const: 2
+          description: "Partial participation"
+    Sport:
+      type: integer
+      description: "Type of sport"
+      oneOf:
+        - title: "UNKNOWN"
+          const: -1
+          description: "Unknown sport"
+        - title: "GENERIC"
+          const: 0
+          description: "Generic sport"
+        - title: "AMERICAN_FOOTBALL"
+          const: 10
+          description: "American Football"
+        - title: "BASEBALL"
+          const: 11
+          description: "Baseball"
+        - title: "BASKETBALL"
+          const: 12
+          description: "Basketball"
+        - title: "CRICKET"
+          const: 13
+          description: "Cricket"
+        - title: "FOOTBALL"
+          const: 14
+          description: "Football (Soccer)"
+        - title: "ICE_HOCKEY"
+          const: 15
+          description: "Ice Hockey"
+        - title: "RUGBY"
+          const: 16
+          description: "Rugby"
+        - title: "TENNIS"
+          const: 17
+          description: "Tennis"
+
+    Side:
+      type: integer
+      description: "Side indicator"
+      oneOf:
+        - title: "NA"
+          const: 0
+          description: "Not applicable"
+        - title: "LEFT"
+          const: 1
+          description: "Left side"
+        - title: "RIGHT"
+          const: 2
+          description: "Right side"
+        - title: "LEFT_THEN_RIGHT"
+          const: 3
+          description: "Left side followed by right side"
+        - title: "RIGHT_THEN_LEFT"
+          const: 4
+          description: "Right side followed by left side"
+        - title: "BOTH"
+          const: 5
+          description: "Both sides simultaneously"
+        - title: "ASYMMETRY_PERCENTAGE"
+          const: 6
+          description: "Asymmetry percentage between sides"
+
+    Aspect:
+      type: integer
+      description: "Aspect indicator"
+      oneOf:
+        - title: "NA"
+          const: -1
+          description: "Not applicable"
+        - title: "INNER"
+          const: 10
+          description: "Inner aspect"
+        - title: "OUTER"
+          const: 20
+          description: "Outer aspect"
+        - title: "VERTICAL"
+          const: 30
+          description: "Vertical aspect"
+        - title: "HORIZONTAL"
+          const: 40
+          description: "Horizontal aspect"
+        - title: "MEDIAL"
+          const: 50
+          description: "Medial aspect"
+        - title: "LATERAL"
+          const: 60
+          description: "Lateral aspect"
+        - title: "ANTERIOR"
+          const: 70
+          description: "Anterior aspect"
+        - title: "POSTERIOR"
+          const: 80
+          description: "Posterior aspect"
+        - title: "TAKEOFF"
+          const: 90
+          description: "Takeoff phase"
+        - title: "LANDING"
+          const: 100
+          description: "Landing phase"
+
+    Position:
+      type: integer
+      description: "Position indicator"
+      oneOf:
+        - title: "UNKNOWN"
+          const: 0
+          description: "Unknown position"
+        - title: "NEUTRAL"
+          const: 10
+          description: "Neutral position"
+        - title: "CUSTOM"
+          const: 20
+          description: "Custom position"
+        - title: "P30_DEGREES_ABDUCTION"
+          const: 100
+          description: "30 degrees abduction"
+        - title: "P45_DEGREES_ABDUCTION"
+          const: 110
+          description: "45 degrees abduction"
+        - title: "P90_DEGREES_ABDUCTION"
+          const: 120
+          description: "90 degrees abduction"
+        - title: "STANDING_30_DEGREES_ABDUCTION"
+          const: 130
+          description: "Standing with 30 degrees abduction"
+        - title: "P90_DEGREES_SHOULDER_ABDUCTION"
+          const: 140
+          description: "90 degrees shoulder abduction"
+        - title: "SUPINE_90_DEGREES_SHOULDER_ABDUCTION"
+          const: 150
+          description: "Supine position with 90 degrees shoulder abduction"
+        - title: "SEATED_90_DEGREES_SHOULDER_ABDUCTION_LONG_LEVER"
+          const: 160
+          description: "Seated with 90 degrees shoulder abduction, long lever"
+        - title: "SEATED_90_DEGREES_SHOULDER_ABDUCTION_SHORT_LEVER"
+          const: 170
+          description: "Seated with 90 degrees shoulder abduction, short lever"
+        - title: "P90_DEGREES_FLEXION"
+          const: 200
+          description: "90 degrees flexion"
+        - title: "HORIZONTAL_FLEXION"
+          const: 210
+          description: "Horizontal flexion"
+        - title: "P90_DEGREES_ELBOW_FLEXION"
+          const: 220
+          description: "90 degrees elbow flexion"
+        - title: "P90_DEGREES_SHOULDER_FLEXION"
+          const: 230
+          description: "90 degrees shoulder flexion"
+        - title: "SEATED_90_DEGREE_SHOULDER_FLEXION"
+          const: 240
+          description: "Seated with 90 degrees shoulder flexion"
+        - title: "STANDING_90_DEGREE_SHOULDER_FLEXION"
+          const: 250
+          description: "Standing with 90 degrees shoulder flexion"
+        - title: "SEATED"
+          const: 300
+          description: "Seated position"
+        - title: "SEATED_ELBOW_90_DEGREES"
+          const: 310
+          description: "Seated with elbow at 90 degrees"
+        - title: "SEATED_ELBOW_90_DEGREES_90_DEGREE_SHOULDER_ABDUCTION"
+          const: 320
+          description: "Seated with elbow and shoulder at 90 degrees abduction"
+        - title: "SEATED_SHORT_LEVER"
+          const: 330
+          description: "Seated with short lever"
+        - title: "SEATED_LONG_LEVER"
+          const: 340
+          description: "Seated with long lever"
+        - title: "SEATED_45_DEGREES"
+          const: 350
+          description: "Seated at 45 degrees"
+        - title: "SEATED_90_DEGREES"
+          const: 360
+          description: "Seated at 90 degrees"
+        - title: "SEATED_10_DEGREES"
+          const: 370
+          description: "Seated at 10 degrees"
+        - title: "STANDING"
+          const: 400
+          description: "Standing position"
+        - title: "STANDING_ELBOW_90_DEGREES"
+          const: 410
+          description: "Standing with elbow at 90 degrees"
+        - title: "STANDING_ELBOW_90_DEGREES_90_DEGREE_SHOULDER_ABDUCTION"
+          const: 420
+          description: "Standing with elbow and shoulder at 90 degrees abduction"
+        - title: "STANDING_LONG_LEVER"
+          const: 430
+          description: "Standing with long lever"
+        - title: "STANDING_SHORT_LEVER"
+          const: 440
+          description: "Standing with short lever"
+        - title: "KNEE_60_DEGREES"
+          const: 450
+          description: "Knee at 60 degrees"
+        - title: "KICKER"
+          const: 460
+          description: "Kicker position"
+        - title: "LONG_SITTING_PLANTAR_FLEXED"
+          const: 500
+          description: "Long sitting with plantar flexed"
+        - title: "LONG_SITTING_PLANTIGRADE"
+          const: 510
+          description: "Long sitting with plantigrade"
+        - title: "LONG_SITTING"
+          const: 520
+          description: "Long sitting position"
+        - title: "SIDE_LYING"
+          const: 600
+          description: "Side lying position"
+        - title: "SIDE_LYING_LONG_LEVER"
+          const: 610
+          description: "Side lying with long lever"
+        - title: "SIDE_LYING_SHORT_LEVER"
+          const: 620
+          description: "Side lying with short lever"
+        - title: "PRONE"
+          const: 700
+          description: "Prone position"
+        - title: "MID_PRONE"
+          const: 710
+          description: "Mid-prone position"
+        - title: "PRONE_LONG_LEVER"
+          const: 720
+          description: "Prone with long lever"
+        - title: "PRONE_90_DEGREE_KNEE_FLEXION"
+          const: 730
+          description: "Prone with 90 degrees knee flexion"
+        - title: "PRONE_SHORT_LEVER"
+          const: 740
+          description: "Prone with short lever"
+        - title: "SEMI_PRONE"
+          const: 750
+          description: "Semi-prone position"
+        - title: "SUPINE"
+          const: 800
+          description: "Supine position"
+        - title: "SUPINE_90_DEGREES_HIP_FLEXION"
+          const: 810
+          description: "Supine with 90 degrees hip flexion"
+        - title: "SUPINE_ELBOW_90_DEGREES_90_DEGREE_SHOULDER_ABDUCTION"
+          const: 820
+          description: "Supine with elbow and shoulder at 90 degrees abduction"
+        - title: "SUPINE_ELBOW_90_DEGREES"
+          const: 830
+          description: "Supine with elbow at 90 degrees"
+        - title: "SUPINE_ELBOW_90_DEGREES_120_SHOULDER_ABDUCTION"
+          const: 840
+          description: "Supine with elbow at 90 degrees and shoulder at 120 degrees abduction"
+        - title: "SUPINE_LONG_LEVER"
+          const: 850
+          description: "Supine with long lever"
+        - title: "SUPINE_SHORT_LEVER"
+          const: 860
+          description: "Supine with short lever"
+        - title: "SUPINE_KNEES_45_DEGREES"
+          const: 870
+          description: "Supine with knees at 45 degrees"
+        - title: "SUPINE_KNEES_90_DEGREES"
+          const: 880
+          description: "Supine with knees at 90 degrees"
+        - title: "SUPINE_45_DEGREES"
+          const: 890
+          description: "Supine at 45 degrees"
+        - title: "SUPINE_10_DEGREES"
+          const: 900
+          description: "Supine at 10 degrees"
+        - title: "SUPINE_90_DEGREES"
+          const: 910
+          description: "Supine at 90 degrees"
+        - title: "P45_DEGREES"
+          const: 1000
+          description: "45 degrees position"
+        - title: "P60_DEGREES"
+          const: 1005
+          description: "60 degrees position"
+        - title: "P90_DEGREES"
+          const: 1010
+          description: "90 degrees position"
+        - title: "ELBOW_EXTENDED"
+          const: 1020
+          description: "Elbow extended"
+        - title: "PRONATED"
+          const: 1030
+          description: "Pronated position"
+        - title: "SUPINATED"
+          const: 1040
+          description: "Supinated position"
+        - title: "KNEE_0_DEGREES"
+          const: 1050
+          description: "Knee at 0 degrees"
+        - title: "KNEE_45_DEGREES"
+          const: 1060
+          description: "Knee at 45 degrees"
+        - title: "KNEE_90_DEGREES"
+          const: 1070
+          description: "Knee at 90 degrees"
+        - title: "KNEE_30_DEGREES"
+          const: 1080
+          description: "Knee at 30 degrees"
+        - title: "ISOMETRIC_MID_THIGH_PULL"
+          const: 1090
+          description: "Isometric mid-thigh pull position"
+        - title: "P90_DEGREE_ELBOW_FLEXION_WRIST_NEUTRAL"
+          const: 1100
+          description: "90 degrees elbow flexion with wrist neutral"
+        - title: "P90_DEGREE_ELBOW_FLEXION_WRIST_SUPINATED"
+          const: 1110
+          description: "90 degrees elbow flexion with wrist supinated"
+        - title: "P90_DEGREE_ELBOW_FLEXION_WRIST_PRONATED"
+          const: 1120
+          description: "90 degrees elbow flexion with wrist pronated"
+        - title: "P90_DEGREE_ELBOW_FLEXION_90_ABDUCTION_WRIST_NEUTRAL"
+          const: 1130
+          description: "90 degrees elbow flexion, 90 degrees abduction, wrist neutral"
+        - title: "P90_DEGREE_ELBOW_FLEXION_90_ABDUCTION_WRIST_SUPINATED"
+          const: 1140
+          description: "90 degrees elbow flexion, 90 degrees abduction, wrist supinated"
+        - title: "P90_DEGREE_ELBOW_FLEXION_90_ABDUCTION_WRIST_PRONATED"
+          const: 1150
+          description: "90 degrees elbow flexion, 90 degrees abduction, wrist pronated"
+        - title: "P90_DEGREES_ELBOW_FLEXION_WRIST_NEUTRAL"
+          const: 1160
+          description: "90 degrees elbow flexion with wrist neutral"
+        - title: "P90_DEGREES_ELBOW_FLEXION_WRIST_SUPINATED"
+          const: 1170
+          description: "90 degrees elbow flexion with wrist supinated"
+        - title: "P90_DEGREES_ELBOW_FLEXION_WRIST_PRONATED"
+          const: 1180
+          description: "90 degrees elbow flexion with wrist pronated"
+        - title: "QUADRUPED"
+          const: 1190
+          description: "Quadruped position"
+
+    StatisticType:
+      type: integer
+      description: "Type of statistic"
+      oneOf:
+        - title: "NA"
+          const: -1
+          description: "Not applicable"
+        - title: "AVG"
+          const: 1
+          description: "Average value"
+        - title: "MIN"
+          const: 2
+          description: "Minimum value"
+        - title: "MAX"
+          const: 3
+          description: "Maximum value"
+        - title: "TOTAL"
+          const: 4
+          description: "Total value"
+        - title: "INSTANTANEOUS"
+          const: 5
+          description: "Instantaneous value"
+
+    MotionDynamic:
+      type: integer
+      description: "Type of motion dynamic"
+      oneOf:
+        - title: "NA"
+          const: -1
+          description: "Not applicable"
+        - title: "ACCELERATION"
+          const: 0
+          description: "Acceleration"
+        - title: "DECELERATION"
+          const: 1
+          description: "Deceleration"
+        - title: "BRAKING"
+          const: 2
+          description: "Braking"
+
+    TestCategory:
+      type: integer
+      description: "Category of the test"
+      oneOf:
+        - title: "UNKNOWN"
+          const: 0
+          description: "Unknown category"
+        - title: "ISOMETRIC_STRENGTH"
+          const: 1
+          description: "Isometric strength test"
+        - title: "STRENGTH"
+          const: 2
+          description: "Strength test"
+        - title: "RANGE_OF_MOTION"
+          const: 3
+          description: "Range of motion test"
+
+    BodyRegion:
+      type: integer
+      description: "Body region tested"
+      oneOf:
+        - title: "NA"
+          const: 0
+          description: "Not applicable"
+        - title: "NECK"
+          const: 1
+          description: "Neck"
+        - title: "SHOULDER"
+          const: 2
+          description: "Shoulder"
+        - title: "TRUNK"
+          const: 3
+          description: "Trunk"
+        - title: "HIP"
+          const: 4
+          description: "Hip"
+        - title: "ELBOW"
+          const: 5
+          description: "Elbow"
+        - title: "WRIST"
+          const: 6
+          description: "Wrist"
+        - title: "HAND"
+          const: 7
+          description: "Hand"
+        - title: "KNEE"
+          const: 8
+          description: "Knee"
+        - title: "ANKLE"
+          const: 9
+          description: "Ankle"
+        - title: "FOOT"
+          const: 10
+          description: "Foot"
+        - title: "SCAPULA"
+          const: 11
+          description: "Scapula"
+
+    ContractionType:
+      type: integer
+      description: "Type of muscle contraction"
+      oneOf:
+        - title: "UNKNOWN"
+          const: -1
+          description: "Unknown contraction type"
+        - title: "NA"
+          const: 0
+          description: "Not applicable"
+        - title: "ECCENTRIC"
+          const: 1
+          description: "Eccentric contraction"
+        - title: "CONCENTRIC"
+          const: 2
+          description: "Concentric contraction"
+        - title: "ISOMETRIC"
+          const: 3
+          description: "Isometric contraction"
+        - title: "ISOINERTIAL"
+          const: 4
+          description: "Isoinertial contraction"
+        - title: "ISOKINETIC"
+          const: 5
+          description: "Isokinetic contraction"
+        - title: "ISOTONIC"
+          const: 6
+          description: "Isotonic contraction"
+
+    Movement:
+      type: integer
+      description: "Type of movement"
+      oneOf:
+        - title: "UNKNOWN"
+          const: -1
+          description: "Unknown movement"
+        - title: "ABDUCTION"
+          const: 10
+          description: "Abduction"
+        - title: "ADDUCTION"
+          const: 20
+          description: "Adduction"
+        - title: "ADDUCTION_SQUEEZE"
+          const: 30
+          description: "Adduction squeeze"
+        - title: "FLEXION"
+          const: 40
+          description: "Flexion"
+        - title: "EXTENSION"
+          const: 50
+          description: "Extension"
+        - title: "EXTERNAL_ROTATION"
+          const: 60
+          description: "External rotation"
+        - title: "INTERNAL_ROTATION"
+          const: 70
+          description: "Internal rotation"
+        - title: "HORIZONTAL_ABDUCTION"
+          const: 80
+          description: "Horizontal abduction"
+        - title: "HORIZONTAL_ADDUCTION"
+          const: 90
+          description: "Horizontal adduction"
+        - title: "SCAPTION"
+          const: 100
+          description: "Scaption"
+        - title: "DORSIFLEXION"
+          const: 110
+          description: "Dorsiflexion"
+        - title: "PLANTAR_FLEXION"
+          const: 120
+          description: "Plantar flexion"
+        - title: "EVERSION"
+          const: 130
+          description: "Eversion"
+        - title: "INVERSION"
+          const: 140
+          description: "Inversion"
+        - title: "TOE_FLEXION"
+          const: 150
+          description: "Toe flexion"
+        - title: "TOE_EXTENSION"
+          const: 160
+          description: "Toe extension"
+        - title: "ISOMETRIC_MID_THIGH_PULL"
+          const: 170
+          description: "Isometric mid-thigh pull"
+        - title: "JUMP"
+          const: 180
+          description: "Jump"
+        - title: "LATERAL_FLEXION_LEFT"
+          const: 190
+          description: "Lateral flexion left"
+        - title: "LATERAL_FLEXION_RIGHT"
+          const: 200
+          description: "Lateral flexion right"
+        - title: "ROTATION_LEFT"
+          const: 210
+          description: "Rotation left"
+        - title: "ROTATION_RIGHT"
+          const: 220
+          description: "Rotation right"
+        - title: "PROTRACTION"
+          const: 230
+          description: "Protraction"
+        - title: "RETRACTION"
+          const: 240
+          description: "Retraction"
+        - title: "ELEVATION"
+          const: 250
+          description: "Elevation"
+        - title: "ROTATION"
+          const: 260
+          description: "Rotation"
+        - title: "INTERNAL_ROTATION_EXTERNAL_ROTATION"
+          const: 270
+          description: "Internal and external rotation"
+        - title: "FLEXION_EXTENSION"
+          const: 280
+          description: "Flexion and extension"
+        - title: "ADDUCTION_ABDUCTION"
+          const: 290
+          description: "Adduction and abduction"
+        - title: "DORSIFLEXION_PLANTAR_FLEXION"
+          const: 300
+          description: "Dorsiflexion and plantar flexion"
+        - title: "INVERSION_EVERSION"
+          const: 310
+          description: "Inversion and eversion"
+        - title: "LATERAL_FLEXION_LEFT_LATERAL_FLEXION_RIGHT"
+          const: 320
+          description: "Lateral flexion left and right"
+        - title: "ROTATION_LEFT_ROTATION_RIGHT"
+          const: 330
+          description: "Rotation left and right"
+        - title: "SUPINATION_PRONATION"
+          const: 340
+          description: "Supination and pronation"
+        - title: "HORIZONTAL_ABDUCTION_ADDUCTION"
+          const: 350
+          description: "Horizontal abduction and adduction"
+        - title: "RADIAL_DEVIATION_ULNA_DEVIATION"
+          const: 360
+          description: "Radial and ulnar deviation"
+        - title: "GRIP_SQUEEZE"
+          const: 370
+          description: "Grip squeeze"
+        - title: "RADIAL_DEVIATION"
+          const: 380
+          description: "Radial deviation"
+        - title: "ULNA_DEVIATION"
+          const: 390
+          description: "Ulnar deviation"
+        - title: "SUPINATION"
+          const: 400
+          description: "Supination"
+        - title: "PRONATION"
+          const: 410
+          description: "Pronation"
+        - title: "PINCH_GRIP"
+          const: 420
+          description: "Pinch grip"
+        - title: "FIRST_FINGER_PINCH"
+          const: 430
+          description: "First finger pinch"
+        - title: "SECOND_FINGER_PINCH"
+          const: 440
+          description: "Second finger pinch"
+        - title: "THIRD_FINGER_PINCH"
+          const: 450
+          description: "Third finger pinch"
+        - title: "FOURTH_FINGER_PINCH"
+          const: 460
+          description: "Fourth finger pinch"
+        - title: "THREE_POINT_PINCH"
+          const: 470
+          description: "Three-point pinch"
+        - title: "NORDIC"
+          const: 480
+          description: "Nordic exercise"
+        - title: "RAZOR_CURL"
+          const: 490
+          description: "Razor curl"
+        - title: "DEADLIFT"
+          const: 500
+          description: "Deadlift"
+        - title: "ABDOMINAL_CRUNCH"
+          const: 510
+          description: "Abdominal crunch"
+        - title: "BENCH_PRESS"
+          const: 520
+          description: "Bench press"
+        - title: "BENCH_PULL"
+          const: 530
+          description: "Bench pull"
+        - title: "BENCH_THROW"
+          const: 540
+          description: "Bench throw"
+        - title: "BENT_ARM_PULLOVER"
+          const: 550
+          description: "Bent-arm pullover"
+        - title: "BICEP_CURLS"
+          const: 560
+          description: "Bicep curls"
+        - title: "CALF_RAISE"
+          const: 570
+          description: "Calf raise"
+        - title: "CHEST_PRESS"
+          const: 580
+          description: "Chest press"
+        - title: "CHIN_UP"
+          const: 590
+          description: "Chin-up"
+        - title: "CLEAN"
+          const: 600
+          description: "Clean"
+        - title: "CLEAN_PULL"
+          const: 610
+          description: "Clean pull"
+        - title: "CLEAN_AND_JERK"
+          const: 620
+          description: "Clean and jerk"
+        - title: "CORMAX_BENCH_THROW"
+          const: 630
+          description: "Cormax bench throw"
+        - title: "SHOULDER_RAISE"
+          const: 640
+          description: "Shoulder raise"
+        - title: "DECLINE_BENCH"
+          const: 650
+          description: "Decline bench"
+        - title: "DIP_SEATED"
+          const: 660
+          description: "Seated dip"
+        - title: "DIPS"
+          const: 670
+          description: "Dips"
+        - title: "DOMINATOR"
+          const: 680
+          description: "Dominator exercise"
+        - title: "DROP_JUMP"
+          const: 690
+          description: "Drop jump"
+        - title: "EXTENSION_TRICEPS"
+          const: 700
+          description: "Triceps extension"
+        - title: "EXTENSION_TRUNK"
+          const: 710
+          description: "Trunk extension"
+        - title: "FLOOR_PRESS"
+          const: 720
+          description: "Floor press"
+        - title: "FULL_CLEAN"
+          const: 730
+          description: "Full clean"
+        - title: "GOOD_MORNING"
+          const: 740
+          description: "Good morning"
+        - title: "GOOD_MORNINGS"
+          const: 750
+          description: "Good mornings"
+        - title: "HIGH_PULL"
+          const: 760
+          description: "High pull"
+        - title: "HIP_EXTENSION"
+          const: 770
+          description: "Hip extension"
+        - title: "HIP_SWING"
+          const: 780
+          description: "Hip swing"
+        - title: "HIP_THRUST"
+          const: 790
+          description: "Hip thrust"
+        - title: "INCLINE_PRESS"
+          const: 800
+          description: "Incline press"
+        - title: "JAMMER"
+          const: 810
+          description: "Jammer"
+        - title: "JERK"
+          const: 820
+          description: "Jerk"
+        - title: "LANDMINE"
+          const: 830
+          description: "Landmine exercise"
+        - title: "LAT_PULLDOWN"
+          const: 840
+          description: "Lat pulldown"
+        - title: "LATERAL_BOUND"
+          const: 850
+          description: "Lateral bound"
+        - title: "LATERAL_HOP"
+          const: 860
+          description: "Lateral hop"
+        - title: "LATERAL_SHUFFLE"
+          const: 870
+          description: "Lateral shuffle"
+        - title: "LEG_CURL"
+          const: 880
+          description: "Leg curl"
+        - title: "LEG_EXTENSION"
+          const: 890
+          description: "Leg extension"
+        - title: "LEG_PRESS"
+          const: 900
+          description: "Leg press"
+        - title: "LEG_RAISE"
+          const: 910
+          description: "Leg raise"
+        - title: "LUNGE"
+          const: 920
+          description: "Lunge"
+        - title: "MILITARY_PRESS"
+          const: 930
+          description: "Military press"
+        - title: "MUSCLE_CLEAN"
+          const: 940
+          description: "Muscle clean"
+        - title: "NORDIC_HAMSTRING"
+          const: 950
+          description: "Nordic hamstring exercise"
+        - title: "POWER_CLEAN"
+          const: 960
+          description: "Power clean"
+        - title: "POWER_SHRUG"
+          const: 970
+          description: "Power shrug"
+        - title: "POWER_SNATCH"
+          const: 980
+          description: "Power snatch"
+        - title: "PRESS"
+          const: 990
+          description: "Press"
+        - title: "PULL"
+          const: 1000
+          description: "Pull"
+        - title: "PULLDOWN"
+          const: 1010
+          description: "Pulldown"
+        - title: "PULLUP"
+          const: 1020
+          description: "Pull-up"
+        - title: "PUSHUP"
+          const: 1030
+          description: "Push-up"
+        - title: "RACK_PULL"
+          const: 1040
+          description: "Rack pull"
+        - title: "ROW"
+          const: 1050
+          description: "Row"
+        - title: "ROW_LOW"
+          const: 1060
+          description: "Low row"
+        - title: "ROW_SEATED"
+          const: 1070
+          description: "Seated row"
+        - title: "ROW_TBAR"
+          const: 1080
+          description: "T-bar row"
+        - title: "SCRUM_SLED"
+          const: 1090
+          description: "Scrum sled"
+        - title: "SHOULDER_PRESS"
+          const: 1100
+          description: "Shoulder press"
+        - title: "SHRUG"
+          const: 1110
+          description: "Shrug"
+        - title: "SHUTTLE_PRESS"
+          const: 1120
+          description: "Shuttle press"
+        - title: "SKATER"
+          const: 1130
+          description: "Skater exercise"
+        - title: "SNATCH"
+          const: 1140
+          description: "Snatch"
+        - title: "SQUAT"
+          const: 1150
+          description: "Squat"
+        - title: "SQUAT_JUMP"
+          const: 1160
+          description: "Squat jump"
+        - title: "STEP_UPS"
+          const: 1170
+          description: "Step-ups"
+        - title: "STRAIGHT_ARM_PULLDOWN"
+          const: 1180
+          description: "Straight-arm pulldown"
+        - title: "THRUSTER"
+          const: 1190
+          description: "Thruster"
+        - title: "TORSO"
+          const: 1200
+          description: "Torso exercise"
+        - title: "VIKING_PRESS"
+          const: 1210
+          description: "Viking press"
+        - title: "ISOI_TEST"
+          const: 1220
+          description: "ISOI test"
+        - title: "ISOY_TEST"
+          const: 1230
+          description: "ISOY test"
+        - title: "ISOT_TEST"
+          const: 1240
+          description: "ISOT test"
+        - title: "CUSTOM"
+          const: 1250
+          description: "Custom movement"
+    Variation:
+      type: integer
+      description: "Exercise variation"
+      oneOf:
+        - title: "BARBELL"
+          const: 10
+          description: "Using a barbell"
+        - title: "DUMBBELL"
+          const: 20
+          description: "Using dumbbells"
+        - title: "BAND"
+          const: 30
+          description: "Using resistance bands"
+        - title: "CHAIN"
+          const: 40
+          description: "Using chains"
+        - title: "LOG_BAR"
+          const: 50
+          description: "Using a log bar"
+        - title: "KADILLAC_BAR"
+          const: 60
+          description: "Using a Kadillac bar"
+        - title: "SWISS_BAR"
+          const: 70
+          description: "Using a Swiss bar"
+        - title: "SMITH_MACHINE"
+          const: 80
+          description: "Using a Smith machine"
+        - title: "TRAP_BAR"
+          const: 90
+          description: "Using a trap bar"
+        - title: "KETTLE_BELL"
+          const: 100
+          description: "Using kettlebells"
+        - title: "CAMBER_BAR"
+          const: 110
+          description: "Using a camber bar"
+        - title: "DUFFALO_BAR"
+          const: 120
+          description: "Using a Duffalo bar"
+        - title: "SSB"
+          const: 130
+          description: "Using a safety squat bar"
+        - title: "KEISER"
+          const: 140
+          description: "Using Keiser equipment"
+        - title: "SORINEX"
+          const: 150
+          description: "Using Sorinex equipment"
+        - title: "INCLINE"
+          const: 160
+          description: "Incline variation"
+        - title: "INCLINE_30_DEGREES"
+          const: 170
+          description: "Incline at 30 degrees"
+        - title: "INCLINE_45_DEGREES"
+          const: 180
+          description: "Incline at 45 degrees"
+        - title: "INCLINE_60_DEGREES"
+          const: 190
+          description: "Incline at 60 degrees"
+        - title: "DECLINE"
+          const: 200
+          description: "Decline variation"
+        - title: "CLOSE_GRIP"
+          const: 210
+          description: "Close grip"
+        - title: "WIDE_GRIP"
+          const: 220
+          description: "Wide grip"
+        - title: "NEUTRAL_GRIP"
+          const: 230
+          description: "Neutral grip"
+        - title: "OVERHAND_GRIP"
+          const: 240
+          description: "Overhand (pronated) grip"
+        - title: "UNDERHAND_GRIP"
+          const: 250
+          description: "Underhand (supinated) grip"
+        - title: "SNATCH_GRIP"
+          const: 260
+          description: "Snatch grip"
+        - title: "ALTERNATING_GRIP"
+          const: 270
+          description: "Alternating grip"
+        - title: "PARALLEL_GRIP"
+          const: 280
+          description: "Parallel grip"
+        - title: "HOOK_GRIP"
+          const: 290
+          description: "Hook grip"
+        - title: "HIGH_BAR"
+          const: 300
+          description: "High bar position"
+        - title: "LOW_BAR"
+          const: 310
+          description: "Low bar position"
+        - title: "OVERHEAD"
+          const: 320
+          description: "Overhead position"
+        - title: "BEHIND_NECK"
+          const: 330
+          description: "Behind the neck position"
+        - title: "FRONT"
+          const: 340
+          description: "Front position"
+        - title: "BEHIND"
+          const: 350
+          description: "Behind position"
+        - title: "SEATED"
+          const: 360
+          description: "Seated variation"
+        - title: "STANDING"
+          const: 370
+          description: "Standing variation"
+        - title: "HANG"
+          const: 380
+          description: "Hang position"
+        - title: "HIGH_PULL"
+          const: 390
+          description: "High pull"
+        - title: "SPLIT"
+          const: 400
+          description: "Split stance"
+        - title: "BLOCK"
+          const: 410
+          description: "Using blocks"
+        - title: "BLOCK_7_5_CM"
+          const: 420
+          description: "Block height 7.5 cm"
+        - title: "BLOCK_15_CM"
+          const: 430
+          description: "Block height 15 cm"
+        - title: "BLOCK_22_5_CM"
+          const: 440
+          description: "Block height 22.5 cm"
+        - title: "BLOCK_30_CM"
+          const: 450
+          description: "Block height 30 cm"
+        - title: "BLOCK_35_CM"
+          const: 460
+          description: "Block height 35 cm"
+        - title: "BLOCK_40_CM"
+          const: 470
+          description: "Block height 40 cm"
+        - title: "DEFICIT"
+          const: 480
+          description: "Deficit variation"
+        - title: "MID_THIGH"
+          const: 490
+          description: "Mid-thigh position"
+        - title: "LOW"
+          const: 500
+          description: "Low position"
+        - title: "HIGH"
+          const: 510
+          description: "High position"
+        - title: "BOX"
+          const: 520
+          description: "Using a box"
+        - title: "PIN_LOADED"
+          const: 530
+          description: "Pin-loaded equipment"
+        - title: "PLATE_LOADED"
+          const: 540
+          description: "Plate-loaded equipment"
+        - title: "DYNAMIC"
+          const: 550
+          description: "Dynamic movement"
+        - title: "REVERSE_DYNAMIC"
+          const: 560
+          description: "Reverse dynamic movement"
+        - title: "PAUSE"
+          const: 570
+          description: "Pause variation"
+        - title: "PINS"
+          const: 580
+          description: "Using pins"
+        - title: "REBOUND"
+          const: 590
+          description: "Rebound variation"
+        - title: "RESET"
+          const: 600
+          description: "Reset between reps"
+        - title: "CONCENTRIC"
+          const: 610
+          description: "Concentric movement"
+        - title: "ECCENTRIC"
+          const: 620
+          description: "Eccentric movement"
+        - title: "JUMP"
+          const: 630
+          description: "Jump variation"
+        - title: "SHRUG"
+          const: 640
+          description: "Shrug variation"
+        - title: "RAISE"
+          const: 650
+          description: "Raise movement"
+        - title: "EXTENSION"
+          const: 660
+          description: "Extension movement"
+        - title: "BULGARIAN"
+          const: 670
+          description: "Bulgarian variation"
+        - title: "LEG_EXT"
+          const: 680
+          description: "Leg extension"
+        - title: "HIP_EXT"
+          const: 690
+          description: "Hip extension"
+        - title: "PENDLAY"
+          const: 700
+          description: "Pendlay variation"
+        - title: "FORWARD"
+          const: 710
+          description: "Forward movement"
+        - title: "LATERAL"
+          const: 720
+          description: "Lateral movement"
+        - title: "STIFF_LEG"
+          const: 730
+          description: "Stiff leg variation"
+        - title: "ROMANIAN"
+          const: 740
+          description: "Romanian variation"
+        - title: "HACK"
+          const: 750
+          description: "Hack variation"
+        - title: "GOOD_MORNING"
+          const: 760
+          description: "Good morning variation"
+        - title: "AB"
+          const: 770
+          description: "Abdominal focus"
+        - title: "DOMINATOR"
+          const: 780
+          description: "Dominator variation"
+        - title: "SKATER"
+          const: 790
+          description: "Skater variation"
+        - title: "LANDMINE"
+          const: 800
+          description: "Landmine variation"
+        - title: "RACK_PULL"
+          const: 810
+          description: "Rack pull"
+        - title: "SISSY"
+          const: 820
+          description: "Sissy squat"
+        - title: "SHUTTLE_PRESS"
+          const: 830
+          description: "Shuttle press"
+        - title: "POGO"
+          const: 840
+          description: "Pogo variation"
+        - title: "SPEED"
+          const: 850
+          description: "Speed focus"
+        - title: "THRUSTER"
+          const: 860
+          description: "Thruster variation"
+        - title: "TWISTS"
+          const: 870
+          description: "Twisting movement"
+        - title: "WOODCHOP"
+          const: 880
+          description: "Woodchop movement"
+        - title: "HAND_SUPPORTED"
+          const: 890
+          description: "Hand-supported variation"
+        - title: "SPLIT_STANCE"
+          const: 900
+          description: "Split stance"
+        - title: "BOSCH"
+          const: 910
+          description: "Bosch variation"
+        - title: "ALTERNATE"
+          const: 920
+          description: "Alternate movement"
+        - title: "COUNT_MOVEMENT"
+          const: 930
+          description: "Count movement"
+        - title: "SCRUM_SLED"
+          const: 940
+          description: "Using scrum sled"
+        - title: "WEIGHTLIFTING_SHOES"
+          const: 950
+          description: "Using weightlifting shoes"
+
+    LoadType:
+      type: integer
+      description: "Type of load measurement"
+      oneOf:
+        - title: "ABSOLUTE"
+          const: 1
+          description: "Absolute load"
+        - title: "RELATIVE_TO_BODYMASS"
+          const: 2
+          description: "Load relative to body mass"
+        - title: "NET"
+          const: 3
+          description: "Net load"
+
+    MetricType:
+      type: integer
+      description: "Type of metric"
+      oneOf:
+        - title: "BODY_MASS"
+          const: 1
+          description: "Body mass"
+        - title: "FORCE"
+          const: 2
+          description: "Force"
+        - title: "ACCELERATION"
+          const: 3
+          description: "Acceleration"
+        - title: "IMPULSE"
+          const: 4
+          description: "Impulse"
+        - title: "BRAKING_IMPULSE"
+          const: 5
+          description: "Braking impulse"
+        - title: "VELOCITY"
+          const: 6
+          description: "Velocity"
+        - title: "POWER"
+          const: 7
+          description: "Power"
+        - title: "REPETITIONS"
+          const: 8
+          description: "Repetitions"
+        - title: "TORQUE"
+          const: 9
+          description: "Torque"
+        - title: "CALIBRATION"
+          const: 10
+          description: "Calibration"
+        - title: "ROM_DEGREES"
+          const: 11
+          description: "Range of motion in degrees"
+        - title: "TIME_TO_PEAK_FORCE"
+          const: 12
+          description: "Time to peak force"
+        - title: "TIME_TO_PEAK_POWER"
+          const: 13
+          description: "Time to peak power"
+        - title: "TIME_TO_PEAK_VELOCITY"
+          const: 14
+          description: "Time to peak velocity"
+        - title: "RATE_OF_FORCE_DEVELOPMENT"
+          const: 15
+          description: "Rate of force development"
+        - title: "HEIGHT"
+          const: 16
+          description: "Height"
+        - title: "DIP"
+          const: 17
+          description: "Dip"
+        - title: "WATTS_PER_KG"
+          const: 18
+          description: "Watts per kilogram"
+        - title: "WORK"
+          const: 19
+          description: "Work"
+        - title: "CONTACT_TIME"
+          const: 20
+          description: "Contact time"
+        - title: "FLIGHT_TIME"
+          const: 21
+          description: "Flight time"
+        - title: "ROM_DISTANCE"
+          const: 22
+          description: "Range of motion distance"
+        - title: "HORIZONTAL_DISTANCE"
+          const: 23
+          description: "Horizontal distance"
+        - title: "LIFT_DISTANCE"
+          const: 24
+          description: "Lift distance"
+        - title: "MAX_BACK"
+          const: 25
+          description: "Maximum back movement"
+        - title: "MAX_FORWARD"
+          const: 26
+          description: "Maximum forward movement"
+        - title: "DURATION"
+          const: 27
+          description: "Duration"
+        - title: "REP_RATE"
+          const: 28
+          description: "Repetition rate"
+        - title: "TOTAL_TRAVEL_PATH"
+          const: 29
+          description: "Total travel path"
+        - title: "VERTICAL_DISTANCE"
+          const: 30
+          description: "Vertical distance"
+        - title: "REACTIVE_STRENGTH_INDEX"
+          const: 31
+          description: "Reactive strength index"
+        - title: "REPETITION_RATE"
+          const: 32
+          description: "Repetition rate"
+        - title: "JUMP_HEIGHT"
+          const: 33
+          description: "Jump height"
+      
+webhooks:
+  coachRegistered:
+    post:
+      summary: Webhook to notify about a coach registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoachRegistered'
+      responses:
+        '200':
+          description: Webhook processed
+  athleteRegistered:
+    post:
+      summary: Webhook to notify about one or more athlete registrations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AthletesRegistered'
+      responses:
+        '200':
+          description: Webhook processed
