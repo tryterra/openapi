@@ -33,9 +33,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Coach'
+                $ref: '#/components/schemas/CoachesReturned'
       tags:
         - Coaches
     post:
@@ -97,9 +95,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Athlete'
+                allOf:
+                  - $ref: '#/components/schemas/CoachDataReturned'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Athlete'
       tags:
           - Coaches
   /coaches/{coachId}/activities:
@@ -129,7 +132,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CoachDataReturned'
+                allOf:
+                  - $ref: '#/components/schemas/CoachDataReturned'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TeamActivity'
       tags:
         - Coaches
   /coaches/{coachId}/activities/metrics/schema:
@@ -149,7 +159,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CoachDataReturned'
+                allOf:
+                  - $ref: '#/components/schemas/CoachDataReturned'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MetricSchema'
         '404':
           description: Coach not found.
           content:
@@ -185,9 +202,14 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Test'
+                allOf:
+                  - $ref: '#/components/schemas/CoachDataReturned'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Test'
       tags:
         - Coaches
   /athletes:
@@ -197,11 +219,7 @@ paths:
         '200':
           description: An array of athletes
           content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Athlete'
+            $ref: '#/components/schemas/AthletesReturned'
       tags:
         - Athletes
   /athletes/{athleteId}:
@@ -756,6 +774,20 @@ components:
           title: "Forbidden"
           status: 403
           detail: "You do not have permission to access this resource."
+    CoachesReturned:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Coach'
+    AthletesReturned:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Athlete'
     CoachDataReturned:
       type: object
       properties:
@@ -768,6 +800,7 @@ components:
             - $ref: '#/components/schemas/MetricSchema'
             - $ref: '#/components/schemas/Test'
             - $ref: '#/components/schemas/TeamActivity'
+            - $ref: '#/components/schemas/Athlete'
     MetricSchema:
       type: object
       properties:
