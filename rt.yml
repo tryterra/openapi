@@ -1,0 +1,109 @@
+openapi: 3.1.0
+info:
+  title: Real Time Streaming API
+  version: 2.0
+servers:
+  - url: https://ws.tryterra.co
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+    devIdAuth:
+      type: apiKey
+      in: header
+      name: dev-id
+security:
+  - apiKeyAuth: []
+    devIdAuth: []
+paths:
+  /auth/developer:
+    post:
+      parameters:
+        - name: dev-id
+          in: header
+          description: your developer ID
+          required: true
+          schema:
+            type: string
+        - name: x-api-key
+          in: header
+          description: your API key
+          required: true
+          schema:
+            type: string
+      summary: Stream - Generate developer token
+      description: Endpoint for generation of a token for a developer (consumer) connection
+      operationId: generate-developer-token
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: cG9RvLY5.yvKm778XMIPm1ig93BJEoRCVGHzlrBNjzWdeXePTaMM
+              examples:
+                Result:
+                  value: |
+                    {
+                      "token": "cG9RvLY5.yvKm778XMIPm1ig93BJEoRCVGHzlrBNjzWdeXePTaMM"
+                    }
+        '403':
+          description: Forbidden
+          content:
+            text/plain:
+              examples:
+                Result:
+                  value: ""
+  /auth/user:
+    post:
+      summary: Stream - Generate user token
+      description: Endpoint for generation of a token for a user (producer) connection
+      operationId: generate-user-token
+      parameters:
+        - name: id
+          in: query
+          description: The ID of the user to generate a token for
+          schema:
+            type: string
+        - name: dev-id
+          in: header
+          description: your developer ID
+          required: true
+          schema:
+            type: string
+        - name: x-api-key
+          in: header
+          description: your API key
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: OTYwNWFi5ZWQMTAxMjg0Y2Qw.gzrPzZcS3Gy8QDOxbiPRwu30PTB3VxW0eE
+              examples:
+                Result:
+                  value: |
+                    {
+                      "token": "OTYwNWFi5ZWQMTAxMjg0Y2Qw.gzrPzZcS3Gy8QDOxbiPRwu30PTB3VxW0eE"
+                    }
+        '403':
+          description: Forbidden
+          content:
+            text/plain:
+              examples:
+                Result:
+                  value: ""
