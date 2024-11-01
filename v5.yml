@@ -1,3 +1,4 @@
+openapi: 3.1.0
 info:
   description: The Terra API
   title: TerraAPI
@@ -128,18 +129,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                providers:
-                  type: string
-                language:
-                  type: string
-                reference_id:
-                  type: string
-                auth_success_redirect_url:
-                  type: string
-                auth_failure_redirect_url:
-                  type: string
+              #ref: "#/components/schemas/WidgetSessionParams"
         required: true
       responses:
         '200':
@@ -2365,9 +2355,28 @@ paths:
                     type: string
                     default: success
       security: []
-openapi: 3.0.2
 components:
   schemas:
+    WidgetSessionParams:
+      type: object
+      properties:
+        providers:
+          type: string
+          description: "Comma separated list of providers to display on the device selection page"
+          example: "GARMIN,FITBIT,OURA,WITHINGS,SUUNTO"
+        language:
+          type: string
+          description: "Display language of the widget"
+          example: "en"
+        reference_id:
+          type: string
+          description: "Identifier of the end user on your system, such as a user ID or email associated with them"
+        auth_success_redirect_url:
+          type: string
+          description: "URL the user is redirected to upon successful authentication"
+        auth_failure_redirect_url:
+          type: string
+          description: "URL the user is redirected to upon unsuccessful authentication"
     User:
       type: object
       properties:
