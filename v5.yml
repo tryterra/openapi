@@ -129,7 +129,7 @@ paths:
         content:
           application/json:
             schema:
-              #ref: "#/components/schemas/WidgetSessionParams"
+              $ref: "#/components/schemas/WidgetSessionParams"
         required: true
       responses:
         '200':
