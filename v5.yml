@@ -2371,12 +2371,15 @@ components:
         reference_id:
           type: string
           description: "Identifier of the end user on your system, such as a user ID or email associated with them"
+          example: "user123@email.com"
         auth_success_redirect_url:
           type: string
           description: "URL the user is redirected to upon successful authentication"
+          example: "https://myapp.com/success"
         auth_failure_redirect_url:
           type: string
           description: "URL the user is redirected to upon unsuccessful authentication"
+          example: "https://myapp.com/failure"
     User:
       type: object
       properties:
@@ -2385,6 +2388,7 @@ components:
           description: Connection identifier on the developer's end, used to tie connection
             back to a user on the developer's platform
           nullable: true
+          example: "user123@email.com"
         last_webhook_update:
           type: string
           description: Last time at which a webhook update was sent for the connection
@@ -2396,14 +2400,17 @@ components:
           description: (when available) Permissions granted by the user during authentication
             - to be used as debugging metadata
           nullable: true
+          example: "activity:read,sleep:read"
         user_id:
           type: string
           description: Terra identifier for the wearable connection
           nullable: true
+          example: "123e4567-e89b-12d3-a456-426614174000"
         provider:
           type: string
           description: Connection data source
           nullable: true
+          example: "FITBIT"
     NoDataReturned:
       type: object
       properties:
@@ -2411,12 +2418,15 @@ components:
           type: string
           enum: [success, error]
           nullable: false
+          example: "error"
         message:
           type: string
           nullable: false
+          example: "No data available for specified time range"
         type:
           type: string
           nullable: true
+          example: "no_data"
         user:
           description: Terra User object
           type: object
@@ -2436,6 +2446,7 @@ components:
         type:
           type: string
           nullable: true
+          example: "activity"
         user:
           description: Terra User object
           type: object
@@ -2448,12 +2459,15 @@ components:
           type: number
           description: Recommended time after which the request may be retried
           nullable: true
+          example: 30
         message:
           type: string
           nullable: false
+          example: "Request is being processed"
         type:
           type: string
           nullable: false
+          example: "processing"
         user:
           description: Terra User object
           type: object
@@ -2465,9 +2479,11 @@ components:
         message:
           type: string
           nullable: false
+          example: "Rate limit exceeded"
         type:
           type: string
           nullable: false
+          example: "rate_limit"
         user:
           $ref: '#/components/schemas/User'
       required:
@@ -2480,12 +2496,15 @@ components:
           description: Payload reference, tying the request to the webhook payload
             which will be received
           nullable: true
+          example: "webhook_ref_123"
         message:
           type: string
           nullable: false
+          example: "Data will be sent to webhook"
         type:
           type: string
           nullable: false
+          example: "webhook"
         user:
           description: Terra User object
           type: object
@@ -2505,10 +2524,11 @@ components:
           - LOW_INTENSITY
           - MEDIUM_INTENSITY
           - HIGH_INTENSITY
+          example: "MEDIUM_INTENSITY"
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
-            with microsecond precision. TimeZone info will be provided whenever possible.
+            with microsecond prexcision. TimeZone info will be provided whenever possible.
             If absent, the time corresponds to the user's local time
           example: '2022-11-23T09:00:00.000000+02:00'
           format: date-time
@@ -2528,41 +2548,48 @@ components:
             during the workout
           minimum: 0
           nullable: true
+          example: 3
         inactivity_seconds:
           type: number
           description: Total number of seconds spent in an inactive state during the
             workout
           minimum: 0
           nullable: true
+          example: 600
         vigorous_intensity_seconds:
           type: number
           description: Total number of seconds spent in a state of vigorous intensity
             during the workout
           minimum: 0
           nullable: true
+          example: 300
         activity_seconds:
           type: number
           description: Total number of seconds spent in an active state during the
             workout
           minimum: 0
           nullable: true
+          example: 1800
         low_intensity_seconds:
           type: number
           description: Total number of seconds spent in a low intensity state during
             the workout
           minimum: 0
           nullable: true
+          example: 900
         rest_seconds:
           type: number
           description: Total number of seconds spent resting during the workout
           minimum: 0
           nullable: true
+          example: 120
         moderate_intensity_seconds:
           type: number
           description: Total number of seconds spent in a moderate intensity state
             during the workout
           minimum: 0
           nullable: true
+          example: 600
     LapSample:
       type: object
       properties:
@@ -2570,10 +2597,12 @@ components:
           type: number
           description: Calories burned during the lap
           nullable: true
+          example: 50
         avg_hr_bpm:
           type: number
           description: Average heart rate in bpm, for the Lap sample
           nullable: true
+          example: 145
         start_time:
           type: string
           description: The start time of the associated lap, in ISO8601 format with
@@ -2586,15 +2615,18 @@ components:
           type: number
           description: Average speed of the user during the lap
           nullable: true
+          example: 3.5
         distance_meters:
           type: number
           description: Distance covered during the lap
           nullable: true
+          example: 400
         total_strokes:
           type: number
           description: Total strokes performed during the lap - only relevant for
             swimming activities
           nullable: true
+          example: 20
         end_time:
           type: string
           description: The end time of the associated lap, in ISO8601 format with
@@ -2614,6 +2646,7 @@ components:
           - BREASTSTROKE
           - BUTTERFLY
           - REST
+          example: "FREESTYLE"
     LapData:
       type: object
       properties:
@@ -2631,6 +2664,7 @@ components:
           description: The polyline representation of the user's trajectory throughout
             the workout
           nullable: true
+          example: "}_p~iF~ps|U_ulLnnqC_mqNvxq`@"
     StrainData:
       type: object
       properties:
@@ -2638,6 +2672,7 @@ components:
           type: number
           description: Strain level achieved by the user for the given workout
           nullable: true
+          example: 8.5
     PositionSample:
       type: object
       properties:
@@ -2654,6 +2689,7 @@ components:
           description: Time elapsed since the start of the workout, subtracting time
             during which the recording was paused
           nullable: true
+          example: 300
         coords_lat_lng_deg:
           type: array
           description: Position of the user a given point in time, represented by
@@ -2715,6 +2751,7 @@ components:
           description: Time elapsed since the start of the workout, subtracting time
             during which the recording was paused
           nullable: true
+          example: 300
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -2728,6 +2765,7 @@ components:
           description: Cadence of the user at a given instant in time - only relevant
             to cycling
           nullable: true
+          example: 85
     TorqueSample:
       type: object
       properties:
@@ -2735,6 +2773,7 @@ components:
           type: number
           description: Torque generated at a given instant in time
           nullable: true
+          example: 45.5
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -2748,6 +2787,7 @@ components:
           description: Time elapsed since the start of the workout, subtracting time
             during which the recording was paused
           nullable: true
+          example: 300
     SpeedSample:
       type: object
       properties:
@@ -2764,10 +2804,12 @@ components:
           description: Time elapsed since the start of the workout, subtracting time
             during which the recording was paused
           nullable: true
+          example: 300
         speed_meters_per_second:
           type: number
           description: User's speed at a given instant in time
           nullable: true
+          example: 3.5
     MovementData:
       type: object
       properties:
@@ -2776,6 +2818,7 @@ components:
           description: Maximum pace of the user during the workout
           minimum: 0
           nullable: true
+          example: 6.5
         adjusted_max_speed_meters_per_second:
           type: number
           description: Adjusted max speed of the user during the workout - generated
@@ -2783,29 +2826,34 @@ components:
             max speed measurement
           minimum: 0
           nullable: true
+          example: 4.2
         avg_velocity_meters_per_second:
           type: number
           description: Average velocity of the user during the workout - only calculated
             by certain providers, representing a separate quantity from speed
           minimum: 0
           nullable: true
+          example: 3.0
         max_velocity_meters_per_second:
           type: number
           description: Maximum velocity of the user during the workout - only calculated
             by certain providers, representing a separate quantity from speed
           minimum: 0
           nullable: true
+          example: 4.5
         avg_speed_meters_per_second:
           type: number
           description: Average speed of the user during the workout
           minimum: 0
           nullable: true
+          example: 3.2
         avg_torque_newton_meters:
           type: number
           description: Average torque generated by the user during the workout - mainly
             relevant for cycling activities
           minimum: 0
           nullable: true
+          example: 40.0
         cadence_samples:
           type: array
           description: Array of cadence values recorded throughout the workout, sampled
@@ -2817,22 +2865,26 @@ components:
           description: Maximum speed of the user during the workout
           minimum: 0
           nullable: true
+          example: 4.5
         avg_pace_minutes_per_kilometer:
           type: number
           description: Average pace of the user during the workout
           minimum: 0
           nullable: true
+          example: 6.2
         avg_cadence_rpm:
           type: number
           description: Maximum speed of the user during the workout
           minimum: 0
           nullable: true
+          example: 85
         max_torque_newton_meters:
           type: number
           description: Maximum torque generated by the user during the workout - mainly
             relevant for cycling activities
           minimum: 0
           nullable: true
+          example: 55.5
         torque_samples:
           type: array
           description: Array of the datapoints for the user's torque sampled throughout
@@ -2846,12 +2898,14 @@ components:
             speed
           minimum: 0
           nullable: true
+          example: 3.8
         max_cadence_rpm:
           type: number
           description: Maximum cadence of the user during the workout - mainly relevant
             for cycling activities
           minimum: 0
           nullable: true
+          example: 110
         speed_samples:
           type: array
           description: Array of the datapoints for the user's speed sampled throughout
@@ -2866,6 +2920,7 @@ components:
           description: User's VO2Max - maximum amount of oxygen the user's body can
             utilize during exercise
           nullable: true
+          example: 45.5
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -2881,6 +2936,7 @@ components:
           type: number
           description: User's RR Interval for a specific heart beat in milliseconds
           nullable: true
+          example: 850
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -2893,6 +2949,7 @@ components:
           type: number
           description: The heart beat value at that specific instance
           nullable: true
+          example: 72
     OxygenSaturationSample:
       type: object
       properties:
@@ -2901,6 +2958,7 @@ components:
           description: User's oxygen saturation percentage - referring to either SpO2
             or SmO2, based on the `type` field
           nullable: true
+          example: 98
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -2923,11 +2981,13 @@ components:
           type: number
           description: VO2Max for the given user
           nullable: true
+          example: 42.5
         avg_saturation_percentage:
           type: number
           description: Average Oxygen Saturation percentage of the user during the
             workout (SpO2 or SmO2)
           nullable: true
+          example: 97
         vo2_samples:
           type: array
           description: Array of VO2 datapoints sampled throughout the workout
@@ -2946,24 +3006,29 @@ components:
           type: string
           description: Device manufacturer name
           nullable: true
+          example: "Garmin"
         hardware_version:
           type: string
           description: Hardware version of the device
           nullable: true
+          example: "v2.1"
         serial_number:
           type: string
           description: Device Serial Number
           nullable: true
+          example: "GR123456789"
         name:
           type: string
           description: Device name - note that this can also be the name of the application/package
             which the data comes from, if coming from a data aggregator such as Google
             Fit
           nullable: true
+          example: "Forerunner 945"
         software_version:
           type: string
           description: Device Software Version
           nullable: true
+          example: "5.2.1"
     DeviceData:
       type: object
       properties:
@@ -2971,10 +3036,12 @@ components:
           type: string
           description: Device manufacturer name
           nullable: true
+          example: "Garmin"
         hardware_version:
           type: string
           description: Hardware version of the device
           nullable: true
+          example: "v2.1"
         other_devices:
           type: array
           description: Data pertaining to other devices which may have contributed
@@ -2991,16 +3058,19 @@ components:
           type: string
           description: Device Serial Number
           nullable: true
+          example: "GR123456789"
         name:
           type: string
           description: Device name - note that this can also be the name of the application/package
             which the data comes from, if coming from a data aggregator such as Google
             Fit
           nullable: true
+          example: "Forerunner 945"
         software_version:
           type: string
           description: Device Software Version
           nullable: true
+          example: "5.2.1"
     EnergyData:
       type: object
       properties:
@@ -3009,10 +3079,12 @@ components:
           description: Total number of kiloJoules planned to be expended during the
             workout - represents the user's predefined goal for the workout
           nullable: true
+          example: 1200
         energy_kilojoules:
           type: number
           description: Total number of kiloJoules expended during the workout
           nullable: true
+          example: 1150
     METSample:
       type: object
       properties:
@@ -3029,6 +3101,7 @@ components:
           description: Metabolic Equivalent of Task of the user's activity level at
             an instant in time
           nullable: true
+          example: 4.2
     METData:
       type: object
       properties:
@@ -3038,6 +3111,7 @@ components:
             - based off MET scale
           minimum: 0
           nullable: true
+          example: 5
         MET_samples:
           type: array
           description: An array of Metabolic Equivalent Time samples, as calculated
@@ -3050,22 +3124,26 @@ components:
             - based off MET scale
           minimum: 0
           nullable: true
+          example: 15
         num_moderate_intensity_minutes:
           type: number
           description: Number of minutes spent in Moderate Intensity during the workout
             - based off MET scale
           minimum: 0
           nullable: true
+          example: 25
         avg_level:
           type: number
           description: The average MET level of the activity
           nullable: true
+          example: 3.8
         num_high_intensity_minutes:
           type: number
           description: Number of minutes spent in High Intensity during the workout
             - based off MET scale
           minimum: 0
           nullable: true
+          example: 10
     PowerSample:
       type: object
       properties:
@@ -3082,10 +3160,12 @@ components:
           description: Time elapsed since the start of the workout, subtracting time
             during which the recording was paused
           nullable: true
+          example: 1800
         watts:
           type: number
           description: Power generated at a given instant in time
           nullable: true
+          example: 250
     PowerData:
       type: object
       properties:
@@ -3094,11 +3174,13 @@ components:
           description: Average power output of the user during the workout
           minimum: 0
           nullable: true
+          example: 185
         max_watts:
           type: number
           description: Maximum power output of the user during the workout
           minimum: 0
           nullable: true
+          example: 350
         power_samples:
           type: array
           description: Array containing datapoints of the power output of the user
@@ -3114,28 +3196,34 @@ components:
             all elevation gain, and does _not_ represent net gain
           minimum: 0
           nullable: true
+          example: 500
         loss_actual_meters:
           type: number
           description: Elevation loss of the user throughout the workout
           minimum: 0
           nullable: true
+          example: 450
         max_meters:
           type: number
           description: Maximum elevation of the user during the workout
           nullable: true
+          example: 1200
         min_meters:
           type: number
           description: Minimum elevation of the user during the workout
           nullable: true
+          example: 800
         gain_actual_meters:
           type: number
           description: Planned elevation gain for the workout
           minimum: 0
           nullable: true
+          example: 550
         avg_meters:
           type: number
           description: Average elevation of the user throughout the workout
           nullable: true
+          example: 950
     SwimmingSummary:
       type: object
       properties:
@@ -3144,16 +3232,19 @@ components:
           description: Total number of swimming laps performed during the workout
           minimum: 0
           nullable: true
+          example: 20
         num_strokes:
           type: integer
           description: Total number of swimming strokes performed during the workout
           minimum: 0
           nullable: true
+          example: 500
         pool_length_meters:
           type: integer
           description: Pool length for associated with the workout
           minimum: 0
           nullable: true
+          example: 25
     DistanceDataSummary:
       type: object
       properties:
@@ -3161,6 +3252,7 @@ components:
           type: number
           description: Total distance covered by the user throughout the workout
           nullable: true
+          example: 5000
         elevation:
           description: Average elevation of the user throughout the workout
           type: object
@@ -3170,12 +3262,14 @@ components:
           type: integer
           description: Total number of steps performed during the workout
           nullable: true
+          example: 6500
         floors_climbed:
           type: integer
           description: Total number of elevation gain in floors climbed equivalent
             throughout the workout, as determined by the fitness data provider
           minimum: 0
           nullable: true
+          example: 10
         swimming:
           description: Summary information of the user's swimming statistics for the
             workout, if applicable
@@ -3189,6 +3283,7 @@ components:
           type: number
           description: User's altitude at a given point in time
           nullable: true
+          example: 925
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -3202,6 +3297,7 @@ components:
           description: Time elapsed since the start of the workout, subtracting time
             during which the recording was paused
           nullable: true
+          example: 1200
     DistanceSample:
       type: object
       properties:
@@ -3218,11 +3314,13 @@ components:
           description: Cumulative distance covered up to associated timestamp, since
             the start of the payload
           nullable: true
+          example: 2500
         timer_duration_seconds:
           type: number
           description: Time elapsed since the start of the workout, subtracting time
             during which the recording was paused
           nullable: true
+          example: 900
     FloorsClimbedSample:
       type: object
       properties:
@@ -3231,6 +3329,7 @@ components:
           description: Cumulative number of elevation gain measured in floors climbed
             up to associated timestamp, since the start of the payload
           nullable: true
+          example: 5
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -3244,6 +3343,7 @@ components:
           description: Time elapsed since the start of the workout, subtracting time
             during which the recording was paused
           nullable: true
+          example: 600
     StepSample:
       type: object
       properties:
@@ -3252,6 +3352,7 @@ components:
           description: Cumulative steps performed up to associated timestamp, since
             the start of the payload
           nullable: true
+          example: 3250
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -3265,6 +3366,7 @@ components:
           description: Time elapsed since the start of the workout, subtracting time
             during which the recording was paused
           nullable: true
+          example: 900
     DistanceDataDetailed:
       type: object
       properties:
@@ -3320,26 +3422,31 @@ components:
           - ZONE_4
           - ZONE_5
           - OTHER
+          example: ZONE_2
         start_percentage:
           type: number
           description: Start percentage (based off user's max HR) of the HR zone
           minimum: 0
           maximum: 100
           nullable: true
+          example: 60
         end_percentage:
           type: number
           description: End percentage (based off user's max HR) of the HR zone
           minimum: 0
           maximum: 100
           nullable: true
+          example: 70
         duration_seconds:
           type: number
           description: Duration spent in the hart rate zone
           nullable: true
+          example: 300
         name:
           type: string
           description: Name of the associated heart rate zone
           nullable: true
+          example: Aerobic
     HeartRateDataSummary:
       type: object
       properties:
@@ -3349,21 +3456,25 @@ components:
             data provider
           minimum: 0
           nullable: true
+          example: 65
         avg_hr_bpm:
           type: number
           description: Average HeartRate of the user during the workout
           minimum: 0
           nullable: true
+          example: 145
         max_hr_bpm:
           type: number
           description: Maximum HeartRate of the user during the workout
           minimum: 0
           nullable: true
+          example: 180
         avg_hrv_sdnn:
           type: number
           description: Average HeartRate Variability of the user during the workout,
             computed using SDNN
           nullable: true
+          example: 45.5
         hr_zone_data:
           type: array
           description: Array of time spent in various HR zones throughout the workout
@@ -3374,16 +3485,19 @@ components:
           description: Minimum HeartRate of the user during the workout
           minimum: 0
           nullable: true
+          example: 85
         avg_hrv_rmssd:
           type: number
           description: Average HeartRate Variability of the user during the workout,
             computed using RMSSD
           nullable: true
+          example: 35.2
         user_max_hr_bpm:
           type: number
           description: User's maximum HeartRate based on their age, and other factors
             as determined by the fitness data provider
           nullable: true
+          example: 190
     HeartRateVariabilityDataSampleRMSSD:
       type: object
       properties:
@@ -3391,6 +3505,7 @@ components:
           type: number
           description: User's Heart Rate Variability, computed using RMSSD
           nullable: true
+          example: 42.1
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -3414,6 +3529,7 @@ components:
           type: number
           description: User's heart rate in bpm
           nullable: true
+          example: 142
     HeartRateVariabilityDataSampleSDNN:
       type: object
       properties:
@@ -3429,6 +3545,7 @@ components:
           type: number
           description: User's Heart Rate Variability, computed using SDNN
           nullable: true
+          example: 48.3
     HeartRateDataDetailed:
       type: object
       properties:
@@ -3472,11 +3589,13 @@ components:
           type: number
           description: Planned
           nullable: true
+          example: 0.85
         intensity_factor_actual:
           type: number
           description: Ratio of Normalized Power to Functional Threshold Power (FTP).
             IF takes into account differences in fitness within or between individuals
           nullable: true
+          example: 0.82
         normalized_power_watts:
           type: number
           description: Adjusted Power calculated using an algorithm that into account
@@ -3485,14 +3604,17 @@ components:
             rapid changes in intensity, as well as critical responses in the body
             associated with those changes.
           nullable: true
+          example: 225
         planned:
           type: number
           description: Planned Training Stress Score (TSS)
           nullable: true
+          example: 85
         actual:
           type: number
           description: Achieved Training Stress Score (TSS)
           nullable: true
+          example: 82
         method:
           type: string
           description: Method of measurement of the Training Stress Score
@@ -3514,6 +3636,7 @@ components:
           description: Cumulative calories burned up to associated timestamp, since
             the start of the payload
           nullable: true
+          example: 450
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -3527,6 +3650,7 @@ components:
           description: Time elapsed since the start of the workout, subtracting time
             during which the recording was paused
           nullable: true
+          example: 1800
     CaloriesData:
       type: object
       properties:
@@ -3536,23 +3660,27 @@ components:
             total calories burned during the workout
           minimum: 0
           nullable: true
+          example: 1800
         net_activity_calories:
           type: number
           description: Net calorie burn coming just from the workout itself, excluding
             BMR
           minimum: 0
           nullable: true
+          example: 450
         total_burned_calories:
           type: number
           description: Total number of calories burned during the workout, including
             BMR
           minimum: 0
           nullable: true
+          example: 2250
         net_intake_calories:
           type: number
           description: Net intake of calories during the period of the workout
           minimum: 0
           nullable: true
+          example: 200
         calorie_samples:
           type: array
           description: Detailed samples of cumulative calories burned at various timestamps
@@ -3566,10 +3694,12 @@ components:
           type: string
           description: The State in which the workout was performed
           nullable: true
+          example: California
         country:
           type: string
           description: The Country in which the workout was performed
           nullable: true
+          example: United States
         start_time:
           type: string
           description: The start time of the associated workout, in ISO8601 format
@@ -3583,10 +3713,12 @@ components:
           description: A unique identifier for the workout - note that this is unique
             for the given user, and may not be globally unique
           nullable: true
+          example: 123e4567-e89b-12d3-a456-426614174000
         city:
           type: string
           description: The City in which the workout was performed
           nullable: true
+          example: San Francisco
         type:
           description: The type of activity performed for the associated workout
           nullable: false
@@ -3717,6 +3849,7 @@ components:
           - FISHING
           - WATER_SKIING
           - INDOOR_RUNNING
+          example: RUNNING
         end_time:
           type: string
           description: The end time of the associated workout, in ISO8601 format with
@@ -3730,6 +3863,7 @@ components:
           description: The name - either user-entered or given by the fitness data
             provider - of the associated workout
           nullable: true
+          example: Morning Run
         upload_type:
           description: The upload type for the associated workout, providing information
             on whether this was an automatic workout or user-entered
@@ -3749,6 +3883,7 @@ components:
           type: number
           description: Total work output of the user for the workout
           nullable: true
+          example: 450.5
     Activity:
       type: object
       properties:
@@ -3769,6 +3904,7 @@ components:
           type: number
           description: Cheat detection flag
           nullable: true
+          example: 0
         polyline_map_data:
           description: Object containing polyline-representation map data, plotting
             the user's trajectory throughout the workout
@@ -3864,62 +4000,77 @@ components:
           type: integer
           default: null
           nullable: true
+          example: 25
         calories:
           type: number
           default: null
           nullable: true
+          example: 150.5
         spo2_percentage:
           type: number
           default: null
           nullable: true
+          example: 98.5
         vo2_max_volume_ml_per_min_per_kg:
           type: number
           default: null
           nullable: true
+          example: 45.2
         rep_count:
           type: integer
           default: null
           nullable: true
+          example: 12
         vo2_volume_ml_per_min_per_kg:
           type: number
           default: null
           nullable: true
+          example: 42.8
         speed_in_meters_per_seconds:
           type: number
           default: null
           nullable: true
+          example: 3.5
         active_duration_seconds:
           type: integer
           default: null
           nullable: true
+          example: 3600
         heartrate_bpm:
           type: number
           default: null
           nullable: true
+          example: 145
         swimming_laps:
           type: number
           default: null
           nullable: true
+          example: 10
         altitude_in_meters:
           type: number
           default: null
           nullable: true
+          example: 250.5
         status:
           type: string
           default: null
           nullable: true
+          example: "active"
         distance_in_km:
           type: number
           default: null
           nullable: true
+          example: 5.2
         timestamp:
           type: string
           default: null
           nullable: true
+          example: "2023-08-15T14:30:00.000000+00:00"
         resting_duration_seconds:
           type: integer
           default: null
           nullable: true
+          example: 300
         coordinates_lat_lng:
           type: array
           items:
@@ -3931,6 +4082,7 @@ components:
           type: string
           description: User's gender
           nullable: true
+          example: "male"
         state:
           type: string
           description: User's state of residence
@@ -3940,18 +4092,22 @@ components:
           type: string
           description: User's bio - a short description they display on their profile
           nullable: true
+          example: "Passionate runner and cyclist"
         age:
           type: string
           description: User's age
           nullable: true
+          example: "28"
         country:
           type: string
           description: User's country of residence
           nullable: true
+          example: "United States"
         sex:
           type: string
           description: User's sex
           nullable: true
+          example: "male"
         date_of_birth:
           type: string
           description: User's date of birth, in ISO8601 format
@@ -3962,22 +4118,27 @@ components:
           type: string
           description: User's city of residence
           nullable: true
+          example: "San Francisco"
         account_creation_date:
           type: string
           description: User's account creation date
           nullable: true
+          example: "2023-01-15"
         email:
           type: string
           description: User's email
           nullable: true
+          example: "user@example.com"
         last_name:
           type: string
           description: User's last name
           nullable: true
+          example: "Smith"
         first_name:
           type: string
           description: User's first name
           nullable: true
+          example: "John"
     AthleteCollection:
       type: object
       properties:
@@ -3989,6 +4150,7 @@ components:
         type:
           type: string
           nullable: true
+          example: "athlete"
         user:
           description: Terra User object
           type: object
@@ -4001,22 +4163,26 @@ components:
           type: number
           description: User's body weight
           nullable: true
+          example: 75.5
         bodyfat_percentage:
           type: number
           description: User's body far percentage
           minimum: 0
           maximum: 100
           nullable: true
+          example: 18.5
         BMI:
           type: number
           description: User's Body Mass Index (BMI)
           nullable: true
+          example: 22.4
         water_percentage:
           type: number
           description: Total amount of fluid in the user's body
           minimum: 0
           maximum: 100
           nullable: true
+          example: 60.5
         measurement_time:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -4030,50 +4196,61 @@ components:
           description: Total lean mass of the user - calculated as the difference
             between total body weight and body fat weight
           nullable: true
+          example: 61500
         estimated_fitness_age:
           type: string
           description: Estimate of how fit the user is compared to their actual age,
             as measured by the device
           nullable: true
+          example: "25"
         skin_fold_mm:
           type: number
           description: User's skin fold measurement
           nullable: true
+          example: 12.5
         height_cm:
           type: number
           description: User's height
           nullable: true
+          example: 178
         bone_mass_g:
           type: number
           description: User's total bone mass
           nullable: true
+          example: 3200
         insulin_units:
           type: number
           description: Quantity of insulin administered to the user
           nullable: true
+          example: 10.5
         muscle_mass_g:
           type: number
           description: User's total muscle mass (i.e. skeletal muscle mass)
           nullable: true
+          example: 35000
         BMR:
           type: number
           description: User's Basal Metabolic Rate - minimum amount of calories that
             a person's body needs to perform necessary functions
           nullable: true
+          example: 1800
         urine_color:
           type: string
           description: Color of the user's urine
           nullable: true
+          example: "pale yellow"
         RMR:
           type: number
           description: User's Resting Metabolic Rate - amount of energy that a person's
             body needs to function while at rest. RMR accounts for additional low-effort
             daily activities on top of basic body functions
           nullable: true
+          example: 2000
         insulin_type:
           type: string
           description: Type of insulin administered to the user
           nullable: true
+          example: "rapid-acting"
     MeasurementsData:
       type: object
       properties:
@@ -4090,6 +4267,7 @@ components:
           type: number
           description: Ketone in mg per dL
           nullable: true
+          example: 1.5
         sample_type:
           description: Flag indicating the ketone sample type (e.g. blood, breath,
             urine)
@@ -4123,10 +4301,12 @@ components:
           type: number
           description: User's body water content
           nullable: true
+          example: 65.5
         day_total_water_consumption_ml:
           type: number
           description: User's total water consumption throughout the day
           nullable: true
+          example: 2500
     DailyHeartRateDataSummary:
       type: object
       properties:
@@ -4136,21 +4316,25 @@ components:
             data provider
           minimum: 0
           nullable: true
+          example: 60
         avg_hr_bpm:
           type: number
           description: Average HeartRate of the user during the day
           minimum: 0
           nullable: true
+          example: 75
         max_hr_bpm:
           type: number
           description: Maximum HeartRate of the user during the day
           minimum: 0
           nullable: true
+          example: 180
         avg_hrv_sdnn:
           type: number
           description: Average HeartRate Variability of the user during the day, computed
             using SDNN
           nullable: true
+          example: 45.5
         hr_zone_data:
           type: array
           description: Array of time spent in various HR zones throughout the day
@@ -4161,16 +4345,19 @@ components:
           description: Minimum HeartRate of the user during the day
           minimum: 0
           nullable: true
+          example: 45
         avg_hrv_rmssd:
           type: number
           description: Average HeartRate Variability of the user during the day, computed
             using RMSSD
           nullable: true
+          example: 42.8
         user_max_hr_bpm:
           type: number
           description: User's maximum HeartRate based on their age, and other factors
             as determined by the fitness data provider
           nullable: true
+          example: 190
     DailyHeartRateDataDetailed:
       type: object
       properties:
@@ -4214,6 +4401,7 @@ components:
           description: User's Pulse Wave Velocity measurement -  velocity at which
             the blood pressure pulse propagates through the circulatory system
           nullable: true
+          example: 7.2
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -4238,6 +4426,7 @@ components:
           description: Flag indicating the atrial fibrillation classification of the
             individual
           nullable: true
+          example: "NORMAL"
     RawECGSample:
       type: object
       properties:
@@ -4245,6 +4434,7 @@ components:
           type: number
           description: Potential uV in the RawECG Sample
           nullable: true
+          example: 1250.5
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -4268,10 +4458,12 @@ components:
           type: number
           description: User's average heart rate throughout the day
           nullable: true
+          example: 72.5
         afib_classfication:
           type: integer
           description: User's afib classification throught the day
           nullable: true
+          example: 1
         raw_signal:
           type: array
           description: List of raw ECG readings sampled through the day.
@@ -4319,6 +4511,7 @@ components:
           - NORMAL
           - HIGH
           - LOW
+          example: "NORMAL"
         trend_arrow:
           description: Flag indicating the current trend in the user's blood glucose
             level (e.g. rising, constant, falling)
@@ -4331,10 +4524,12 @@ components:
           - FLAT
           - RISING
           - RISING_QUICKLY
+          example: "FLAT"
         blood_glucose_mg_per_dL:
           type: integer
           description: User's blood glucose reading
           nullable: true
+          example: 95
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -4363,6 +4558,7 @@ components:
           type: number
           description: User's average glucose level throughout the day
           nullable: true
+          example: 92.5
     BodyMetadata:
       type: object
       properties:
@@ -4393,6 +4589,7 @@ components:
           type: number
           description: User's diastolic blood pressure, in mmHg
           nullable: true
+          example: 80.5
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -4405,6 +4602,7 @@ components:
           type: number
           description: User's systolic blood pressure, in mmHg
           nullable: true
+          example: 120.5
     BloodPressureData:
       type: object
       properties:
@@ -4421,6 +4619,7 @@ components:
           type: number
           description: ''
           nullable: true
+          example: 37.2
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -4524,41 +4723,48 @@ components:
             during the day
           minimum: 0
           nullable: true
+          example: 3
         inactivity_seconds:
           type: number
           description: Total number of seconds spent in an inactive state during the
             day
           minimum: 0
           nullable: true
+          example: 28800
         vigorous_intensity_seconds:
           type: number
           description: Total number of seconds spent in a state of vigorous intensity
             during the day
           minimum: 0
           nullable: true
+          example: 1800
         activity_seconds:
           type: number
           description: Total number of seconds spent in an active state during the
             day
           minimum: 0
           nullable: true
+          example: 14400
         low_intensity_seconds:
           type: number
           description: Total number of seconds spent in a low intensity state during
             the day
           minimum: 0
           nullable: true
+          example: 7200
         rest_seconds:
           type: number
           description: Total number of seconds spent resting during the day
           minimum: 0
           nullable: true
+          example: 28800
         moderate_intensity_seconds:
           type: number
           description: Total number of seconds spent in a moderate intensity state
             during the day
           minimum: 0
           nullable: true
+          example: 5400
     Scores:
       type: object
       properties:
@@ -4569,18 +4775,21 @@ components:
           minimum: 0
           maximum: 100
           nullable: true
+          example: 85
         recovery:
           type: number
           description: Recovery score for the given day
           minimum: 0
           maximum: 100
           nullable: true
+          example: 78
         activity:
           type: number
           description: Activity score for the given day
           minimum: 0
           maximum: 100
           nullable: true
+          example: 92
     DailyStrainData:
       type: object
       properties:
@@ -4589,6 +4798,7 @@ components:
           description: Object containing information on the cardiovascular strain
             imposed on the user during the day.
           nullable: true
+          example: 14.5
     StressData:
       type: object
       properties:
@@ -4596,28 +4806,33 @@ components:
           type: number
           description: Average stress level for the day
           nullable: true
+          example: 45.5
         activity_stress_duration_seconds:
           type: number
           description: Total number of seconds spent in a stressed state while active
             during the day
           minimum: 0
           nullable: true
+          example: 3600
         low_stress_duration_seconds:
           type: number
           description: Total number of seconds spent in a state of low stress during
             the day
           minimum: 0
           nullable: true
+          example: 28800
         max_stress_level:
           type: number
           description: Maximum stress level recorded during the day
           nullable: true
+          example: 85
         medium_stress_duration_seconds:
           type: number
           description: Total number of seconds spent in a state of medium stress during
             the day
           minimum: 0
           nullable: true
+          example: 7200
         samples:
           type: array
           description: Array of stress level data points sampled throughout the day
@@ -4629,18 +4844,21 @@ components:
             rest during the day
           minimum: 0
           nullable: true
+          example: 1800
         high_stress_duration_seconds:
           type: number
           description: Total number of seconds spent in a state of high stress during
             the day
           minimum: 0
           nullable: true
+          example: 900
         stress_duration_seconds:
           type: number
           description: Total number of seconds spent in a stressed state while at
             rest during the day
           minimum: 0
           nullable: true
+          example: 5400
     TagEntry:
       type: object
       properties:
@@ -4648,6 +4866,7 @@ components:
           type: string
           description: User-input notes associated with the given tag
           nullable: true
+          example: "Felt refreshed after"
         tag_name:
           type: string
           description: Tag name, representing a certain event associated with the
@@ -4679,6 +4898,7 @@ components:
             - based off MET scale
           minimum: 0
           nullable: true
+          example: 480
         MET_samples:
           type: array
           description: An array of Metabolic Equivalent Time samples, as calculated
@@ -4691,22 +4911,26 @@ components:
             off MET scale
           minimum: 0
           nullable: true
+          example: 720
         num_moderate_intensity_minutes:
           type: number
           description: Number of minutes spent in Moderate Intensity during the day
             - based off MET scale
           minimum: 0
           nullable: true
+          example: 180
         avg_level:
           type: number
           description: The average MET level of the activity
           nullable: true
+          example: 1.8
         num_high_intensity_minutes:
           type: number
           description: Number of minutes spent in High Intensity during the day -
             based off MET scale
           minimum: 0
           nullable: true
+          example: 60
     DailyDistanceDataDetailed:
       type: object
       properties:
@@ -4742,28 +4966,34 @@ components:
             all elevation gain, and does _not_ represent net gain
           minimum: 0
           nullable: true
+          example: 150
         loss_actual_meters:
           type: number
           description: Elevation loss of the user throughout the day
           minimum: 0
           nullable: true
+          example: 120
         max_meters:
           type: number
           description: Maximum elevation of the user during the day
           nullable: true
+          example: 450
         min_meters:
           type: number
           description: Minimum elevation of the user during the day
           nullable: true
+          example: 300
         gain_actual_meters:
           type: number
           description: Planned elevation gain for the day
           minimum: 0
           nullable: true
+          example: 130
         avg_meters:
           type: number
           description: Average elevation of the user throughout the day
           nullable: true
+          example: 375
     DailySwimmingSummary:
       type: object
       properties:
@@ -4772,16 +5002,19 @@ components:
           description: Total number of swimming laps performed during the day
           minimum: 0
           nullable: true
+          example: 20
         num_strokes:
           type: integer
           description: Total number of swimming strokes performed during the day
           minimum: 0
           nullable: true
+          example: 500
         pool_length_meters:
           type: integer
           description: Pool length for associated with the day
           minimum: 0
           nullable: true
+          example: 25
     DailyDistanceData:
       type: object
       properties:
@@ -4795,6 +5028,7 @@ components:
           type: number
           description: Total distance covered by the user throughout the day
           nullable: true
+          example: 8500
         elevation:
           description: Average elevation of the user throughout the day
           type: object
@@ -4804,12 +5038,14 @@ components:
           type: integer
           description: Total number of steps performed during the day
           nullable: true
+          example: 12000
         floors_climbed:
           type: integer
           description: Total number of elevation gain in floors climbed equivalent
             throughout the day, as determined by the fitness data provider
           minimum: 0
           nullable: true
+          example: 15
         swimming:
           description: Summary information of the user's swimming statistics for the
             day, if applicable
@@ -4823,11 +5059,13 @@ components:
           type: number
           description: VO2Max for the given user
           nullable: true
+          example: 45.5
         avg_saturation_percentage:
           type: number
           description: Average Oxygen Saturation percentage of the user during the
             day (SpO2 or SmO2)
           nullable: true
+          example: 98
         vo2_samples:
           type: array
           description: Array of VO2 datapoints sampled throughout the day
@@ -4848,21 +5086,25 @@ components:
             total calories burned during the day
           minimum: 0
           nullable: true
+          example: 1800
         net_activity_calories:
           type: number
           description: Net calorie burn coming just from exercise, excluding BMR
           minimum: 0
           nullable: true
+          example: 500
         total_burned_calories:
           type: number
           description: Total number of calories burned during the day, including BMR
           minimum: 0
           nullable: true
+          example: 2300
         net_intake_calories:
           type: number
           description: Net intake of calories during the period of the day
           minimum: 0
           nullable: true
+          example: 2000
         calorie_samples:
           type: array
           description: Detailed samples of cumulative calories burned at various timestamps
@@ -5030,23 +5272,28 @@ components:
           type: integer
           description: Length of current phase
           nullable: true
+          example: 5
         period_length_days:
           type: integer
           description: Total length of period (i.e. menstrual bleeding)
           nullable: true
+          example: 5
         cycle_length_days:
           type: string
           description: Total cycle length
           nullable: true
+          example: "28"
         days_until_next_phase:
           type: integer
           description: Number of days to reach the next phase (predicted)
           nullable: true
+          example: 23
         is_predicted_cycle:
           type: string
           description: Flag indicating whether associated object is a prediction or
             user-logged information
           nullable: true
+          example: "true"
         last_updated_time:
           type: string
           description: Last time when the user recorded information regarding their
@@ -5058,6 +5305,7 @@ components:
           type: integer
           description: Phase in associated cycle, (i.e. menstruation, fertile etc)
           nullable: true
+          example: 1
         period_start_date:
           type: string
           description: Start date of menstrual cycle, in ISO8601 format
@@ -5068,6 +5316,7 @@ components:
           type: integer
           description: Prediction of the cycle's total length
           nullable: true
+          example: 28
         menstruation_flow:
           type: array
           description: List of user logs of information related to the strength of
@@ -5100,186 +5349,232 @@ components:
           type: number
           description: Iron content of the associated food(s)
           nullable: true
+          example: 8.5
         magnesium_mg:
           type: number
           description: Magnesium content of the associated food(s)
           nullable: true
+          example: 320
         vitamin_A_mg:
           type: number
           description: Vitamin A content of the associated food(s)
           nullable: true
+          example: 0.9
         vitamin_B12_mg:
           type: number
           description: Vitamin B12 content of the associated food(s)
           nullable: true
+          example: 0.0024
         biotin_mg:
           type: number
           description: Biotin content of the associated food(s)
           nullable: true
+          example: 0.03
         cystine_g:
           type: number
           description: Cystine content of the associated food(s)
           nullable: true
+          example: 0.3
         phenylalanine_g:
           type: number
           description: Phenylalanine content of the associated food(s)
           nullable: true
+          example: 0.9
         chloride_mg:
           type: number
           description: Chloride content of the associated food(s)
           nullable: true
+          example: 2300
         vitamin_D3_mg:
           type: number
           description: Vitamin D3 content of the associated food(s)
           nullable: true
+          example: 0.015
         isoleucine_g:
           type: number
           description: Isoleucine content of the associated food(s)
           nullable: true
+          example: 0.8
         calcium_mg:
           type: number
           description: Calcium content of the associated food(s)
           nullable: true
+          example: 1000
         iodine_mg:
           type: number
           description: Iodine content of the associated food(s)
           nullable: true
+          example: 0.15
         histidine_g:
           type: number
           description: Histidine content of the associated food(s)
           nullable: true
+          example: 0.6
         chromium_mg:
           type: number
           description: Chromium content of the associated food(s)
           nullable: true
+          example: 0.035
         vitamin_K_mg:
           type: number
           description: Vitamin K content of the associated food(s)
           nullable: true
+          example: 0.12
         manganese_mg:
           type: number
           description: Manganese content of the associated food(s)
           nullable: true
+          example: 2.3
         folic_acid_mg:
           type: number
           description: Folic Acid content of the associated food(s)
           nullable: true
+          example: 0.4
         leucine_g:
           type: number
           description: Leucine content of the associated food(s)
           nullable: true
+          example: 1.2
         caffeine_mg:
           type: number
           description: Caffeine content of the associated food(s)
           nullable: true
+          example: 95
         potassium_mg:
           type: number
           description: Potassium content of the associated food(s)
           nullable: true
+          example: 3500
         molybdenum_mg:
           type: number
           description: Molybdenum content of the associated food(s)
           nullable: true
+          example: 0.045
         lysine_g:
           type: number
           description: Lysine content of the associated food(s)
           nullable: true
+          example: 0.9
         tyrosine_g:
           type: number
           description: Tyrosine content of the associated food(s)
           nullable: true
+          example: 0.7
         valine_g:
           type: number
           description: Valine content of the associated food(s)
           nullable: true
+          example: 0.8
         omega6_g:
           type: number
           description: Omega6 content of the associated food(s)
           nullable: true
+          example: 17
         omega3_g:
           type: number
           description: Omega3 content of the associated food(s)
           nullable: true
+          example: 1.6
         vitamin_C_mg:
           type: number
           description: Vitamin C content of the associated food(s)
           nullable: true
+          example: 90
         zinc_mg:
           type: number
           description: Zinc content of the associated food(s)
           nullable: true
+          example: 11
         vitamin_D2_mg:
           type: number
           description: Vitamin D2 content of the associated food(s)
           nullable: true
+          example: 0.01
         vitamin_E_mg:
           type: number
           description: Vitamin E content of the associated food(s)
           nullable: true
+          example: 15
         pantothenic_acid_mg:
           type: number
           description: Pantothenic content of the associated food(s)
           nullable: true
+          example: 5
         riboflavin_mg:
           type: number
           description: Riboflavin content of the associated food(s)
           nullable: true
+          example: 1.3
         phosphorus_mg:
           type: number
           description: Phosphorus content of the associated food(s)
           nullable: true
+          example: 1000
         vitamin_D_mg:
           type: number
           description: Vitamin D content of the associated food(s)
           nullable: true
+          example: 0.02
         tryptophan_g:
           type: number
           description: Tryptophan content of the associated food(s)
           nullable: true
+          example: 0.3
         niacin_mg:
           type: number
           description: Niacin content of the associated food(s)
           nullable: true
+          example: 16
         copper_mg:
           type: number
           description: Copper content of the associated food(s)
           nullable: true
+          example: 0.9
         threonine_g:
           type: number
           description: Threonine content of the associated food(s)
           nullable: true
+          example: 0.5
         monounsaturated_fat_g:
           type: number
           description: Monounsaturated fat content of the associated food(s)
           nullable: true
+          example: 15
         folate_mg:
           type: number
           description: Folate content of the associated food(s)
           nullable: true
+          example: 0.4
         selenium_mg:
           type: number
           description: Selenium content of the associated food(s)
           nullable: true
+          example: 0.055
         vitamin_B6_mg:
           type: number
           description: Vitamin B6 content of the associated food(s)
           nullable: true
+          example: 1.7
         thiamin_mg:
           type: number
           description: Thiamin content of the associated food(s)
           nullable: true
+          example: 1.2
         polyunsaturated_fat_g:
           type: number
           description: Polyunsaturated fat content of the associated food(s)
           nullable: true
+          example: 13
         methionine_g:
           type: number
           description: Methionine content of the associated food(s)
           nullable: true
+          example: 0.6
         starch_g:
           type: number
           description: Starch content of the associated food(s)
           nullable: true
+          example: 25
     Macros:
       type: object
       properties:
@@ -5287,50 +5582,62 @@ components:
           type: number
           description: Fiber content of the associated food(s)
           nullable: true
+          example: 25
         calories:
           type: number
           description: Calorie content of the associated food(s)
           nullable: true
+          example: 2000
         fat_g:
           type: number
           description: Fat content of the associated food(s)
           nullable: true
+          example: 65
         sodium_mg:
           type: number
           description: Sodium content of the associated food(s)
           nullable: true
+          example: 2300
         alcohol_g:
           type: number
           description: Alcohol content of the associated food(s)
           nullable: true
+          example: 14
         trans_fat_g:
           type: number
           description: Trans fat content of the associated food(s)
           nullable: true
+          example: 2
         carbohydrates_g:
           type: number
           description: Carbohydrates content of the associated food(s)
           nullable: true
+          example: 300
         protein_g:
           type: number
           description: Protein content of the associated food(s)
           nullable: true
+          example: 50
         saturated_fat_g:
           type: number
           description: Saturated fat content of the associated food(s)
           nullable: true
+          example: 20
         sugar_g:
           type: number
           description: Sugar content of the associated food(s)
           nullable: true
+          example: 25
         cholesterol_mg:
           type: number
           description: Cholesterol content of the associated food(s)
           nullable: true
+          example: 300
         net_carbohydrates_g:
           type: number
           description: Net carbs content of the associated food(s)
           nullable: true
+          example: 275
     NutritionSummary:
       type: object
       properties:
@@ -5348,6 +5655,7 @@ components:
           type: number
           description: Water consumption of the user for a given day
           nullable: true
+          example: 2000
     DrinkSample:
       type: object
       properties:
@@ -5355,6 +5663,7 @@ components:
           type: string
           description: Unit of measurement for the drink
           nullable: true
+          example: "ml"
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -5367,10 +5676,12 @@ components:
           type: string
           description: Name of drink consumed
           nullable: true
+          example: "Water"
         drink_volume:
           type: string
           description: Volume of drink consumed
           nullable: true
+          example: "250"
     NutritionMetadata:
       type: object
       properties:
@@ -5429,10 +5740,12 @@ components:
           - AFTERNOON_SNACK
           - DINNER
           - SNACK
+          example: "BREAKFAST"
         id:
           type: string
           description: Identifier for food logged by the user
           nullable: true
+          example: "food_123"
         timestamp:
           type: string
           description: Timestamp the food is associated with, in ISO8601 format, with
@@ -5450,6 +5763,7 @@ components:
           type: string
           description: Name of food logged by the user
           nullable: true
+          example: "Oatmeal"
         macros:
           description: Macronutrient information for associated food
           type: object
@@ -5486,6 +5800,7 @@ components:
           type: number
           description: Duration of snoring episode
           nullable: true
+          example: 120
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -5511,6 +5826,7 @@ components:
           type: number
           description: Total duration for which the user was snoring
           nullable: true
+          example: 3600
         samples:
           type: array
           description: List of snoring information data points sampled throughout
@@ -5530,6 +5846,7 @@ components:
           description: Number of times over the sleep period when the user started
             snoring, as determined by the device
           nullable: true
+          example: 12
     BreathSample:
       type: object
       properties:
@@ -5537,6 +5854,7 @@ components:
           type: number
           description: User's respiration rate
           nullable: true
+          example: 16
         timestamp:
           type: string
           description: Time with which the record is associated, in ISO8601 format
@@ -5552,10 +5870,12 @@ components:
           type: number
           description: Average breathing rate of the user during the sleep session
           nullable: true
+          example: 14
         max_breaths_per_min:
           type: number
           description: Maximum breathing rate of the user during the sleep session
           nullable: true
+          example: 18
         start_time:
           type: string
           description: The start time of the recording of breathing rate data, in
@@ -5570,6 +5890,7 @@ components:
           type: number
           description: Minimum breathing rate of the user during the sleep session
           nullable: true
+          example: 10
         samples:
           type: array
           description: List of breathing rate information sampled throughout the sleep
@@ -5581,6 +5902,7 @@ components:
           description: Flag indicating if the reading was performed on demand, or
             if it was automatically captured by the device
           nullable: true
+          example: false
         end_time:
           type: string
           description: The end time of the recording of breathing rate data, in ISO8601
@@ -5613,6 +5935,7 @@ components:
           description: Average Oxygen Saturation percentage of the user during the
             sleep session
           nullable: true
+          example: 97
         end_time:
           type: string
           description: The end time of the recording of oxygen saturation, in ISO8601
@@ -5650,35 +5973,42 @@ components:
           description: Total duration for which the user was awake during the sleep
             session, when the interruption of their sleep was less than 90 seconds
           nullable: true
+          example: 180
         duration_awake_state_seconds:
           type: number
           description: Total duration for which the user was awake during the sleep
             session
           nullable: true
+          example: 1200
         wake_up_latency_seconds:
           type: number
           description: Wake up latency, defined as time between the moment the user
             wakes up and the moment they get out of bed
           nullable: true
+          example: 300
         num_wakeup_events:
           type: integer
           description: Number of times the user woke up during the sleep session
           nullable: true
+          example: 3
         duration_long_interruption_seconds:
           type: number
           description: Total duration for which the user was awake during the sleep
             session, when the interruption of their sleep was greater than 90 seconds.
           nullable: true
+          example: 600
         sleep_latency_seconds:
           type: number
           description: Sleep latency, defined as time between the moment the user
             lays in bed with the intention to sleep and the moment they actually fall
             asleep
           nullable: true
+          example: 900
         num_out_of_bed_events:
           type: integer
           description: Number of times the user got out of bed during the sleep session
           nullable: true
+          example: 1
     SleepDurationsAsleepData:
       type: object
       properties:
@@ -5686,22 +6016,27 @@ components:
           type: integer
           description: Number of periods of REM sleep captured during the sleep session
           nullable: true
+          example: 4
         duration_asleep_state_seconds:
           type: number
           description: Total duration for which the user was asleep, in any state
           nullable: true
+          example: 25200
         duration_REM_sleep_state_seconds:
           type: number
           description: Total duration for which the user was in a state of REM sleep
           nullable: true
+          example: 5400
         duration_light_sleep_state_seconds:
           type: number
           description: Total duration for which the user was in a state of light sleep
           nullable: true
+          example: 14400
         duration_deep_sleep_state_seconds:
           type: number
           description: Total duration for which the user was in a state of deep sleep
           nullable: true
+          example: 5400
     SleepHypnogramSample:
       type: object
       properties:
@@ -5734,10 +6069,12 @@ components:
           description: Total duration during which the user's state (awake, asleep,
             REM, etc) was unmeasurable during the sleep session
           nullable: true
+          example: 300
         duration_in_bed_seconds:
           type: number
           description: Total duration of time spent in bed
           nullable: true
+          example: 28800
     SleepDurationsData:
       type: object
       properties:
@@ -5748,6 +6085,7 @@ components:
           minimum: 0
           maximum: 100
           nullable: true
+          example: 87.5
         awake:
           description: Object containing information on the duration the user spent
             awake during the sleep recording session
@@ -5781,36 +6119,43 @@ components:
             data provider
           minimum: 0
           nullable: true
+          example: 55
         avg_hr_bpm:
           type: number
           description: Average HeartRate of the user during the sleep session
           minimum: 0
           nullable: true
+          example: 60
         max_hr_bpm:
           type: number
           description: Maximum HeartRate of the user during the sleep session
           minimum: 0
           nullable: true
+          example: 75
         avg_hrv_sdnn:
           type: number
           description: Average HeartRate Variability of the user during the sleep
             session, computed using SDNN
           nullable: true
+          example: 45
         min_hr_bpm:
           type: number
           description: Minimum HeartRate of the user during the sleep session
           minimum: 0
           nullable: true
+          example: 48
         avg_hrv_rmssd:
           type: number
           description: Average HeartRate Variability of the user during the sleep
             session, computed using RMSSD
           nullable: true
+          example: 35
         user_max_hr_bpm:
           type: number
           description: User's maximum HeartRate based on their age, and other factors
             as determined by the fitness data provider
           nullable: true
+          example: 185
     SleepHeartRateDataDetailed:
       type: object
       properties:
@@ -5855,6 +6200,7 @@ components:
           description: Flag indicating whether the sleep session was a nap, or the
             user's main sleep session for the day
           nullable: true
+          example: false
         start_time:
           type: string
           description: The start time of the associated sleep session, in ISO8601
@@ -5870,6 +6216,7 @@ components:
           description: The upload type for the associated sleep session, providing
             information on whether this was an automatic sleep or user-entered
           nullable: false
+          example: 1
         end_time:
           type: string
           description: The end time of the associated sleep session, in ISO8601 format
@@ -5888,6 +6235,7 @@ components:
           minimum: 0
           maximum: 100
           nullable: true
+          example: 85
         recovery_level:
           type: integer
           description: User's recovery score for a given day, resulting from the sleep
@@ -5895,6 +6243,7 @@ components:
           minimum: 0
           maximum: 6
           nullable: false
+          example: 4
     SleepTemperatureData:
       type: object
       properties:
@@ -5902,6 +6251,7 @@ components:
           type: number
           description: Variation in user's skin temperature from their baseline
           nullable: true
+          example: 0.5
     Sleep:
       type: object
       properties:
@@ -5974,6 +6324,7 @@ components:
           - REPETITION
           - TSS
           - IF
+          example: "HEART_RATE"
     CadencePlannedWorkoutStepTarget:
       type: object
       properties:
@@ -5981,6 +6332,7 @@ components:
           type: integer
           description: Ideal cadence value to be maintained for the workout step
           nullable: true
+          example: 90
         target_type:
           description: Type of target for the workout - i.e. metric type for which
             a criterion must be met for the workout to be completed
@@ -6006,16 +6358,19 @@ components:
           - REPETITION
           - TSS
           - IF
+          example: "CADENCE"
         cadence_low:
           type: integer
           description: Minimum cadence threshold for the workout step - i.e. the user
             is to stay above this value during the workout
           nullable: true
+          example: 85
         cadence_high:
           type: integer
           description: Maximum cadence threshold for the workout step - i.e. the user
             is to stay under this value during the workout step
           nullable: true
+          example: 95
     HRPlannedWorkoutStepTarget:
       type: object
       properties:
@@ -6024,6 +6379,7 @@ components:
           description: Maximum max heart rate percentage threshold for the workout
             step - i.e. the user is to stay under this value during the workout step
           nullable: true
+          example: 65.5
         target_type:
           description: Type of target for the workout - i.e. metric type for which
             a criterion must be met for the workout to be completed
@@ -6049,26 +6405,31 @@ components:
           - REPETITION
           - TSS
           - IF
+          example: "HEART_RATE"
         hr_percentage_high:
           type: number
           description: Minimum heart rate percentage threshold for the workout step
             - i.e. the user is to stay above this value during the workout
           nullable: true
+          example: 85.5
         hr_percentage:
           type: number
           description: Ideal percentage of user's maximum HR to be maintained workout
             step
           nullable: true
+          example: 75.5
         hr_bpm_high:
           type: integer
           description: Maximum heart rate threshold for the workout step - i.e. the
             user is to stay under this value during the workout step
           nullable: true
+          example: 175
         hr_bpm_low:
           type: integer
           description: Minimum heart rate threshold for the workout step - i.e. the
             user is to stay above this value during the workout
           nullable: true
+          example: 130
     PowerPlannedWorkoutStepTarget:
       type: object
       properties:
@@ -6097,35 +6458,42 @@ components:
           - REPETITION
           - TSS
           - IF
+          example: "POWER"
         power_percentage_low:
           type: number
           description: Maximum percentage of Functional Threshold Power for the workout
             step - i.e. the user is to stay under this value during the workout step
           nullable: true
+          example: 65.5
         power_percentage_high:
           type: number
           description: Minimum percentage of Functional Threshold Power for the workout
             step - i.e. the user is to stay above this value during the workout
           nullable: true
+          example: 85.5
         power_watt_high:
           type: integer
           description: Maximum power threshold for the workout step - i.e. the user
             is to stay under this value during the workout step
           nullable: true
+          example: 300
         power_watt_low:
           type: integer
           description: Minimum power threshold for the workout step - i.e. the user
             is to stay above this value during the workout
           nullable: true
+          example: 200
         power_watt:
           type: integer
           default: null
           nullable: true
+          example: 250
         power_percentage:
           type: number
           description: Ideal percentage of user's Functional Threshold Power to be
             maintained workout step
           nullable: true
+          example: 75.5
     SpeedPlannedWorkoutStepTarget:
       type: object
       properties:
@@ -6154,26 +6522,31 @@ components:
           - REPETITION
           - TSS
           - IF
+          example: "SPEED"
         speed_percentage_high:
           type: number
           description: Maximum speed threshold for the workout step - i.e. the user
             is to stay under this value during the workout step
           nullable: true
+          example: 85.5
         speed_percentage_low:
           type: number
           description: Minimum speed threshold for the workout step - i.e. the user
             is to stay above this value during the workout step
           nullable: true
+          example: 65.5
         speed_percentage:
           type: number
           description: Ideal percentage of user's Threshold Speed, based off their
             Threshold Pace, to be maintained workout step. Usually, the Threshold
             Pace is defined as the pace one could race at for 50 to 60 minutes
           nullable: true
+          example: 75.5
         speed_meters_per_second:
           type: number
           description: Ideal speed value to be maintained for the workout step
           nullable: true
+          example: 4.2
     PacePlannedWorkoutStepTarget:
       type: object
       properties:
@@ -6202,10 +6575,12 @@ components:
           - REPETITION
           - TSS
           - IF
+          example: "PACE"
         pace_minutes_per_kilometer:
           type: number
           description: Ideal pace value to be maintained for the workout step
           nullable: true
+          example: 5.5
     TSSPlannedWorkoutStepTarget:
       type: object
       properties:
@@ -6234,11 +6609,13 @@ components:
           - REPETITION
           - TSS
           - IF
+          example: "TSS"
         tss:
           type: number
           description: Planned Training Stress Score to be achieved for the workout
             step
           nullable: true
+          example: 100.5
     IFPlannedWorkoutStepTarget:
       type: object
       properties:
@@ -6246,6 +6623,7 @@ components:
           type: number
           description: Maximum Intensity Factor to be achieved for the workout step
           nullable: true
+          example: 1.2
         target_type:
           description: Type of target for the workout - i.e. metric type for which
             a criterion must be met for the workout to be completed
@@ -6271,10 +6649,12 @@ components:
           - REPETITION
           - TSS
           - IF
+          example: "IF"
         if_low:
           type: number
           description: Minimum Intensity Factor to be achieved for the workout step
           nullable: true
+          example: 0.8
     RepetitionPlannedWorkoutStepTarget:
       type: object
       properties:
@@ -6303,10 +6683,12 @@ components:
           - REPETITION
           - TSS
           - IF
+          example: "REPETITION"
         repetitions:
           type: number
           description: Number of repetitions of the workout step to be performed
           nullable: true
+          example: 10
     SwimStrokePlannedWorkoutStepTarget:
       type: object
       properties:
@@ -6335,10 +6717,12 @@ components:
           - REPETITION
           - TSS
           - IF
+          example: "SWIM_STROKE"
         swim_strokes:
           type: integer
           description: Number of swim strokes to be performed during the workout step
           nullable: true
+          example: 50
     PlannedWorkoutStepTargets:
       type: object
       properties: {}
