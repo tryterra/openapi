@@ -2463,18 +2463,12 @@ paths:
                     type: array
                     items:
                       type: string
-                      examples: 
-                        - "FITBIT"
-                        - "OURA"
-                        - "WITHINGS"
-                        - "GARMIN"
+                      example: FITBIT
                   sdk_resource:
                     type: array
                     items:
                       type: string
-                      examples:
-                        - "APPLE"
-                        - "SAMSUNG"
+                      example: APPLE
                   status:
                     enum: [success, error]
                     type: string
