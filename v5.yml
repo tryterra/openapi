@@ -29,12 +29,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -62,13 +64,16 @@ paths:
                     type: string
                     enum: [success, error]
                     description: indicates that the request was successful
+                    example: success
                   user_id:
                     description: User ID for the user being created
                     type: string
+                    example: 23dc2540-7139-44c6-8158-f81196e2cf2e
                   auth_url:
                     type: string
                     description: authentication URL the user must be redirected to
                       in order to link their account
+                    example: https://www.fitbit.com/oauth2/authorize?response_type=code&client_id=23BBG9&scope=settings+nutrition+sleep+heartrate+electrocardiogram+weight+respiratory_rate+oxygen_saturation+profile+temperature+cardio_fitness+activity+location&state=bLqqjPie9ptwoWm6VBxHCu6JkkoWJp
         '400':
           description: Returned when one or more parameters is malformed - an appropriate
             error message will be returned
@@ -127,12 +132,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -147,20 +154,24 @@ paths:
               schema:
                 type: object
                 properties:
-                  user_id:
-                    description: User ID for the user being created
+                  session_id:
+                    description: Session ID for the widget authentication session
                     type: string
+                    example: 23dc2540-7139-44c6-8158-f81196e2cf2e
                   url:
                     type: string
                     description: the widget URL the user must be redirected to
                       in order to link their account
+                    example: https://widget.tryterra.co/session/344d475f-296a-489a-a88c-54183671dafd
                   status:
                     type: string
                     enum: [success, error]
                     description: indicates that an error happened (value is success)
+                    example: success
                   expires_in:
                     type: number
                     description: a number in seconds depicting how long the url is valid for
+                    example: 900
         '400':
           description: Returned when one or more parameters is malformed - an appropriate
             error message will be returned
@@ -210,12 +221,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         '200':
           description: Returned when authentication link could be successfully generated
@@ -270,12 +283,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         '200':
           description: '200'
@@ -376,12 +391,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         '200':
           description: Returned upon successful data request
@@ -475,12 +492,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -586,12 +605,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         '200':
           description: Returned upon successful data request
@@ -713,12 +734,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         '200':
           description: Returned upon successful data request
@@ -812,12 +835,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -914,12 +939,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -1092,12 +1119,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         '200':
           description: Returned upon successful data request
@@ -1233,12 +1262,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         '200':
           description: Returned upon successful data request
@@ -1374,12 +1405,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         '200':
           description: Returned upon successful data request
@@ -1473,12 +1506,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -1576,12 +1611,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -1754,12 +1791,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         '200':
           description: Returned upon successful data request
@@ -1855,12 +1894,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -1986,12 +2027,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         '200':
           description: Returned upon successful data request
@@ -2090,12 +2133,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -2240,12 +2285,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         '200':
           description: Returned when the provided resources are found
@@ -2327,12 +2374,14 @@ paths:
         required: true
         schema:
           type: string
+        example: testingTerra
       - name: x-api-key
         in: header
         description: your API key
         required: true
         schema:
           type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -2414,10 +2463,18 @@ paths:
                     type: array
                     items:
                       type: string
+                      examples: 
+                        - "FITBIT"
+                        - "OURA"
+                        - "WITHINGS"
+                        - "GARMIN"
                   sdk_resource:
                     type: array
                     items:
                       type: string
+                      examples:
+                        - "APPLE"
+                        - "SAMSUNG"
                   status:
                     enum: [success, error]
                     type: string
