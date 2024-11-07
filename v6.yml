@@ -1,0 +1,120 @@
+openapi: 3.1.0
+info:
+  title: Terra API Team-Based API
+  description: API to manage and retrieve data from team-based fitness tracking devices used in sports training and monitoring.
+  version: 1.0.0
+security:
+  - apiKeyAuth: []
+    devIdAuth: []
+servers:
+  - url: 'https://access.tryterra.co/v2/api'
+    description: Main teams API base URL
+paths:
+  /auth/generateWidgetSession:
+    post:
+      summary: Generate an authentication link, using the Terra Authentication Widget
+      description: Generates a link to redirect an end user to for them to select an integration and log in with their fitness data provider
+      tags:
+        - Authentication
+      operationId: GenerateWidgetSession
+      parameters:
+      - name: dev-id
+        in: header
+        description: your developer ID
+        required: true
+        schema:
+          type: string
+        example: testingTerra
+      - name: x-api-key
+        in: header
+        description: your API key
+        required: true
+        schema:
+          type: string
+        example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WidgetSessionParams"
+        required: true
+      responses:
+        '200':
+          description: Returned when authentication link could be successfully generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    description: Session ID for the widget authentication session
+                    type: string
+                    example: 23dc2540-7139-44c6-8158-f81196e2cf2e
+                  url:
+                    type: string
+                    description: the widget URL the user must be redirected to
+                      in order to link their account
+                    example: https://widget.tryterra.co/session/344d475f-296a-489a-a88c-54183671dafd
+                  status:
+                    type: string
+                    enum: [success, error]
+                    description: indicates that an error happened (value is success)
+                    example: success
+                  expires_in:
+                    type: number
+                    description: a number in seconds depicting how long the url is valid for
+                    example: 900
+        '400':
+          description: Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [success, error]
+                    description: indicates that an error happened (value is error)
+        '403':
+          description: Returned when credentials (dev ID and API key) are invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [success, error]
+                    description: indicates that an error happened (value is error)
+components:
+  schemas:
+    WidgetSessionParams:
+      type: object
+      properties:
+        providers:
+          type: string
+          description: "Comma separated list of providers to display on the device selection page"
+          example: "VALD,CATAPULT"
+        language:
+          type: string
+          description: "Display language of the widget"
+          example: "en"
+        reference_id:
+          type: string
+          description: "Identifier of the end user on your system, such as a user ID or email associated with them"
+          example: "user123@email.com"
+        auth_success_redirect_url:
+          type: string
+          description: "URL the user is redirected to upon successful authentication"
+          example: "https://myapp.com/success"
+        auth_failure_redirect_url:
+          type: string
+          description: "URL the user is redirected to upon unsuccessful authentication"
+          example: "https://myapp.com/failure"
