@@ -7,7 +7,7 @@ security:
   - apiKeyAuth: []
     devIdAuth: []
 servers:
-  - url: 'https://access.tryterra.co/v2'
+  - url: 'https://access.tryterra.co'
     description: Main teams API base URL
 paths:
   /widget/api/session:
