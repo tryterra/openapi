@@ -7,10 +7,10 @@ security:
   - apiKeyAuth: []
     devIdAuth: []
 servers:
-  - url: 'https://access.tryterra.co/v2/api'
+  - url: 'https://access.tryterra.co/v2'
     description: Main teams API base URL
 paths:
-  /auth/generateWidgetSession:
+  /widget/api/session:
     post:
       summary: Generate an authentication link, using the Terra Authentication Widget
       description: Generates a link to redirect an end user to for them to select an integration and log in with their fitness data provider
