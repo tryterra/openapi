@@ -564,6 +564,10 @@ components:
           type: integer
           nullable: true
           description: "End timestamp of the period in microseconds"
+        athlete_metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/AthleteMetrics'
     TeamInfo:
       type: object
       properties:
