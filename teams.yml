@@ -190,67 +190,6 @@ paths:
                           $ref: '#/components/schemas/Athlete'
       tags:
           - Coaches
-    patch:
-      summary: Bulk update multiple athletes
-      description: Allows a developer to partially update multiple athlete records in a single request.
-      tags:
-        - Athletes
-      operationId: bulkPatchAthletes
-      parameters:
-        - name: dev-id
-          in: header
-          description: Your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: Your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
-      requestBody:
-        description: JSON payload containing an array of athlete updates.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                data:
-                  type: array
-                  description: Array of partial athlete objects for update.
-                  items:
-                    $ref: '#/components/schemas/AthletePartialUpdate'
-              required:
-                - data
-      responses:
-        '200':
-          description: All athlete updates were successful.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BulkPatchResponse'
-        '207':
-          description: Partial success, some athletes updated while others failed.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BulkPatchResponse'
-        '400':
-          description: Bad Request. Invalid input or all updates failed due to validation errors.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Unauthorized. Invalid credentials provided.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /coaches/{coachId}/activities:
     get:
       summary: Retrieve all activities recorded by athletes under a specific coach
@@ -368,6 +307,67 @@ paths:
             $ref: '#/components/schemas/AthletesReturned'
       tags:
         - Athletes
+    patch:
+      summary: Bulk update multiple athletes
+      description: Allows a developer to partially update multiple athlete records in a single request.
+      tags:
+        - Athletes
+      operationId: bulkPatchAthletes
+      parameters:
+        - name: dev-id
+          in: header
+          description: Your developer ID
+          required: true
+          schema:
+            type: string
+          example: testingTerra
+        - name: x-api-key
+          in: header
+          description: Your API key
+          required: true
+          schema:
+            type: string
+          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
+      requestBody:
+        description: JSON payload containing an array of athlete updates.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  description: Array of partial athlete objects for update.
+                  items:
+                    $ref: '#/components/schemas/AthletePartialUpdate'
+              required:
+                - data
+      responses:
+        '200':
+          description: All athlete updates were successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkPatchResponse'
+        '207':
+          description: Partial success, some athletes updated while others failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkPatchResponse'
+        '400':
+          description: Bad Request. Invalid input or all updates failed due to validation errors.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Unauthorized. Invalid credentials provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /athletes/{athleteId}:
     get:
       summary: Retrieve a specific athlete by their ID
