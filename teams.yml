@@ -797,7 +797,7 @@ components:
           items:
             $ref: '#/components/schemas/Variation'
         movement:
-          $ref: '#/components/schemas/Movement'
+          $ref: '#/components/schemas/BiomechanicalMovement'
           default: -1
   
     Test:
@@ -811,12 +811,16 @@ components:
           type: integer
           nullable: true
           description: "Timestamp of the test in microseconds"
+        test_type:
+          $ref: '#/components/schemas/TestType'
+        exercise_type:
+          $ref: '#/components/schemas/ExerciseType'
         athlete_weight:
           type: number
           nullable: true
           description: "Weight of the athlete during the test"
         movement:
-          $ref: '#/components/schemas/Movement'
+          $ref: '#/components/schemas/BiomechanicalMovement'
           nullable: true
         tz_offset_seconds:
           type: integer
@@ -1537,13 +1541,18 @@ components:
           const: 6
           description: "Isotonic contraction"
 
-    Movement:
+    BiomechanicalMovement:
       type: integer
-      description: "Type of movement"
+      description: "Type of movement, including biomechanical actions and custom movements"
       oneOf:
         - title: "UNKNOWN"
           const: -1
           description: "Unknown movement"
+        - title: "CUSTOM"
+          const: 9999
+          description: "Custom or user-defined movement"
+
+        # Upper Limb Movements
         - title: "ABDUCTION"
           const: 10
           description: "Abduction"
@@ -1574,6 +1583,8 @@ components:
         - title: "SCAPTION"
           const: 100
           description: "Scaption"
+
+        # Lower Limb Movements
         - title: "DORSIFLEXION"
           const: 110
           description: "Dorsiflexion"
@@ -1598,6 +1609,8 @@ components:
         - title: "JUMP"
           const: 180
           description: "Jump"
+
+        # Spine Movements
         - title: "LATERAL_FLEXION_LEFT"
           const: 190
           description: "Lateral flexion left"
@@ -1622,6 +1635,8 @@ components:
         - title: "ROTATION"
           const: 260
           description: "Rotation"
+
+        # Combined Movements
         - title: "INTERNAL_ROTATION_EXTERNAL_ROTATION"
           const: 270
           description: "Internal and external rotation"
@@ -1652,6 +1667,8 @@ components:
         - title: "RADIAL_DEVIATION_ULNA_DEVIATION"
           const: 360
           description: "Radial and ulnar deviation"
+
+        # Hand and Wrist Movements
         - title: "GRIP_SQUEEZE"
           const: 370
           description: "Grip squeeze"
@@ -1685,240 +1702,365 @@ components:
         - title: "THREE_POINT_PINCH"
           const: 470
           description: "Three-point pinch"
+    ExerciseType:
+      type: integer
+      description: "Type of exercise"
+      oneOf:
+        - title: "UNKNOWN"
+          const: -1
+          description: "Unknown or undefined exercise type"
+        - title: "CUSTOM"
+          const: 1250
+          description: "Custom or user-defined exercise type"
+
+        # Classic Lifts
         - title: "NORDIC"
           const: 480
           description: "Nordic exercise"
         - title: "RAZOR_CURL"
           const: 490
-          description: "Razor curl"
+          description: "Razor Curl exercise"
         - title: "DEADLIFT"
           const: 500
-          description: "Deadlift"
+          description: "Deadlift exercise"
         - title: "ABDOMINAL_CRUNCH"
           const: 510
-          description: "Abdominal crunch"
+          description: "Abdominal Crunch exercise"
         - title: "BENCH_PRESS"
           const: 520
-          description: "Bench press"
+          description: "Bench Press exercise"
         - title: "BENCH_PULL"
           const: 530
-          description: "Bench pull"
+          description: "Bench Pull exercise"
         - title: "BENCH_THROW"
           const: 540
-          description: "Bench throw"
+          description: "Bench Throw exercise"
         - title: "BENT_ARM_PULLOVER"
           const: 550
-          description: "Bent-arm pullover"
+          description: "Bent Arm Pullover exercise"
         - title: "BICEP_CURLS"
           const: 560
-          description: "Bicep curls"
+          description: "Bicep Curls exercise"
         - title: "CALF_RAISE"
           const: 570
-          description: "Calf raise"
+          description: "Calf Raise exercise"
         - title: "CHEST_PRESS"
           const: 580
-          description: "Chest press"
+          description: "Chest Press exercise"
         - title: "CHIN_UP"
           const: 590
-          description: "Chin-up"
+          description: "Chin-Up exercise"
         - title: "CLEAN"
           const: 600
-          description: "Clean"
+          description: "Clean exercise"
         - title: "CLEAN_PULL"
           const: 610
-          description: "Clean pull"
+          description: "Clean Pull exercise"
         - title: "CLEAN_AND_JERK"
           const: 620
-          description: "Clean and jerk"
+          description: "Clean and Jerk exercise"
         - title: "CORMAX_BENCH_THROW"
           const: 630
-          description: "Cormax bench throw"
+          description: "Cormax Bench Throw exercise"
         - title: "SHOULDER_RAISE"
           const: 640
-          description: "Shoulder raise"
+          description: "Shoulder Raise exercise"
         - title: "DECLINE_BENCH"
           const: 650
-          description: "Decline bench"
+          description: "Decline Bench exercise"
         - title: "DIP_SEATED"
           const: 660
-          description: "Seated dip"
+          description: "Seated Dip exercise"
         - title: "DIPS"
           const: 670
-          description: "Dips"
+          description: "Dips exercise"
         - title: "DOMINATOR"
           const: 680
           description: "Dominator exercise"
         - title: "DROP_JUMP"
           const: 690
-          description: "Drop jump"
+          description: "Drop Jump exercise"
         - title: "EXTENSION_TRICEPS"
           const: 700
-          description: "Triceps extension"
+          description: "Triceps Extension exercise"
         - title: "EXTENSION_TRUNK"
           const: 710
-          description: "Trunk extension"
+          description: "Trunk Extension exercise"
         - title: "FLOOR_PRESS"
           const: 720
-          description: "Floor press"
+          description: "Floor Press exercise"
         - title: "FULL_CLEAN"
           const: 730
-          description: "Full clean"
+          description: "Full Clean exercise"
         - title: "GOOD_MORNING"
           const: 740
-          description: "Good morning"
+          description: "Good Morning exercise"
         - title: "GOOD_MORNINGS"
           const: 750
-          description: "Good mornings"
+          description: "Good Mornings exercise"
         - title: "HIGH_PULL"
           const: 760
-          description: "High pull"
+          description: "High Pull exercise"
         - title: "HIP_EXTENSION"
           const: 770
-          description: "Hip extension"
+          description: "Hip Extension exercise"
         - title: "HIP_SWING"
           const: 780
-          description: "Hip swing"
+          description: "Hip Swing exercise"
         - title: "HIP_THRUST"
           const: 790
-          description: "Hip thrust"
+          description: "Hip Thrust exercise"
         - title: "INCLINE_PRESS"
           const: 800
-          description: "Incline press"
+          description: "Incline Press exercise"
         - title: "JAMMER"
           const: 810
-          description: "Jammer"
+          description: "Jammer exercise"
         - title: "JERK"
           const: 820
-          description: "Jerk"
+          description: "Jerk exercise"
         - title: "LANDMINE"
           const: 830
           description: "Landmine exercise"
         - title: "LAT_PULLDOWN"
           const: 840
-          description: "Lat pulldown"
+          description: "Lat Pulldown exercise"
         - title: "LATERAL_BOUND"
           const: 850
-          description: "Lateral bound"
+          description: "Lateral Bound exercise"
         - title: "LATERAL_HOP"
           const: 860
-          description: "Lateral hop"
+          description: "Lateral Hop exercise"
         - title: "LATERAL_SHUFFLE"
           const: 870
-          description: "Lateral shuffle"
+          description: "Lateral Shuffle exercise"
         - title: "LEG_CURL"
           const: 880
-          description: "Leg curl"
+          description: "Leg Curl exercise"
         - title: "LEG_EXTENSION"
           const: 890
-          description: "Leg extension"
+          description: "Leg Extension exercise"
         - title: "LEG_PRESS"
           const: 900
-          description: "Leg press"
+          description: "Leg Press exercise"
         - title: "LEG_RAISE"
           const: 910
-          description: "Leg raise"
+          description: "Leg Raise exercise"
         - title: "LUNGE"
           const: 920
-          description: "Lunge"
+          description: "Lunge exercise"
         - title: "MILITARY_PRESS"
           const: 930
-          description: "Military press"
+          description: "Military Press exercise"
         - title: "MUSCLE_CLEAN"
           const: 940
-          description: "Muscle clean"
+          description: "Muscle Clean exercise"
         - title: "NORDIC_HAMSTRING"
           const: 950
-          description: "Nordic hamstring exercise"
+          description: "Nordic Hamstring exercise"
         - title: "POWER_CLEAN"
           const: 960
-          description: "Power clean"
+          description: "Power Clean exercise"
         - title: "POWER_SHRUG"
           const: 970
-          description: "Power shrug"
+          description: "Power Shrug exercise"
         - title: "POWER_SNATCH"
           const: 980
-          description: "Power snatch"
+          description: "Power Snatch exercise"
         - title: "PRESS"
           const: 990
-          description: "Press"
+          description: "Press exercise"
         - title: "PULL"
           const: 1000
-          description: "Pull"
+          description: "Pull exercise"
         - title: "PULLDOWN"
           const: 1010
-          description: "Pulldown"
+          description: "Pulldown exercise"
         - title: "PULLUP"
           const: 1020
-          description: "Pull-up"
+          description: "Pull-Up exercise"
         - title: "PUSHUP"
           const: 1030
-          description: "Push-up"
+          description: "Push-Up exercise"
         - title: "RACK_PULL"
           const: 1040
-          description: "Rack pull"
+          description: "Rack Pull exercise"
         - title: "ROW"
           const: 1050
-          description: "Row"
+          description: "Row exercise"
         - title: "ROW_LOW"
           const: 1060
-          description: "Low row"
+          description: "Low Row exercise"
         - title: "ROW_SEATED"
           const: 1070
-          description: "Seated row"
+          description: "Seated Row exercise"
         - title: "ROW_TBAR"
           const: 1080
-          description: "T-bar row"
+          description: "T-Bar Row exercise"
         - title: "SCRUM_SLED"
           const: 1090
-          description: "Scrum sled"
+          description: "Scrum Sled exercise"
         - title: "SHOULDER_PRESS"
           const: 1100
-          description: "Shoulder press"
+          description: "Shoulder Press exercise"
         - title: "SHRUG"
           const: 1110
-          description: "Shrug"
+          description: "Shrug exercise"
         - title: "SHUTTLE_PRESS"
           const: 1120
-          description: "Shuttle press"
+          description: "Shuttle Press exercise"
         - title: "SKATER"
           const: 1130
           description: "Skater exercise"
         - title: "SNATCH"
           const: 1140
-          description: "Snatch"
+          description: "Snatch exercise"
         - title: "SQUAT"
           const: 1150
-          description: "Squat"
+          description: "Squat exercise"
         - title: "SQUAT_JUMP"
           const: 1160
-          description: "Squat jump"
+          description: "Squat Jump exercise"
         - title: "STEP_UPS"
           const: 1170
-          description: "Step-ups"
+          description: "Step-Ups exercise"
         - title: "STRAIGHT_ARM_PULLDOWN"
           const: 1180
-          description: "Straight-arm pulldown"
+          description: "Straight Arm Pulldown exercise"
         - title: "THRUSTER"
           const: 1190
-          description: "Thruster"
+          description: "Thruster exercise"
         - title: "TORSO"
           const: 1200
           description: "Torso exercise"
         - title: "VIKING_PRESS"
           const: 1210
-          description: "Viking press"
-        - title: "ISOI_TEST"
-          const: 1220
-          description: "ISOI test"
-        - title: "ISOY_TEST"
-          const: 1230
-          description: "ISOY test"
-        - title: "ISOT_TEST"
-          const: 1240
-          description: "ISOT test"
+          description: "Viking Press exercise"
+    TestType:
+      type: integer
+      description: "Type of test"
+      oneOf:
+        - title: "UNKNOWN"
+          const: -1
+          description: "Unknown or undefined test type"
         - title: "CUSTOM"
-          const: 1250
-          description: "Custom movement"
+          const: 9999
+          description: "Custom or user-defined test type"
+
+        # Force Plate Tests
+        - title: "ABALAKOV_JUMP"
+          const: 1
+          description: "Abalakov Jump"
+        - title: "COUNTERMOVEMENT_JUMP"
+          const: 2
+          description: "Countermovement Jump"
+        - title: "COUNTERMOVEMENT_JUMP_LOADED"
+          const: 3
+          description: "Countermovement Jump - Loaded"
+        - title: "COUNTERMOVEMENT_REBOUND_JUMP"
+          const: 4
+          description: "Countermovement Rebound Jump"
+        - title: "DROP_JUMP"
+          const: 5
+          description: "Drop Jump"
+        - title: "SINGLE_LEG_HOP_AND_RETURN"
+          const: 6
+          description: "Single Leg Hop and Return"
+        - title: "HOP_TEST"
+          const: 7
+          description: "Hop Test"
+        - title: "SINGLE_LEG_COUNTERMOVEMENT_REBOUND_JUMP"
+          const: 8
+          description: "Single Leg Countermovement Rebound Jump"
+        - title: "SINGLE_LEG_DROP_JUMP"
+          const: 9
+          description: "Single Leg Drop Jump"
+        - title: "SINGLE_LEG_HOP_TEST"
+          const: 10
+          description: "Single Leg Hop Test"
+        - title: "SINGLE_LEG_JUMP"
+          const: 11
+          description: "Single Leg Jump"
+        - title: "SQUAT_JUMP"
+          const: 12
+          description: "Squat Jump"
+        - title: "SQUAT_JUMP_LOADED"
+          const: 13
+          description: "Squat Jump - Loaded"
+
+        # Isometric Tests
+        - title: "ISOMETRIC_BELT_SQUAT"
+          const: 100
+          description: "Isometric Belt Squat"
+        - title: "ISOMETRIC_MID_THIGH_PULL"
+          const: 101
+          description: "Isometric Mid-Thigh Pull"
+        - title: "ISOMETRIC_PUSH_UP"
+          const: 102
+          description: "Isometric Push-Up"
+        - title: "ISOMETRIC_SQUAT_HOLD"
+          const: 103
+          description: "Isometric Squat Hold"
+        - title: "RUN_SPECIFIC_ANKLE_ISO_PUSH"
+          const: 104
+          description: "Run-Specific Ankle Iso-Push"
+        - title: "RUN_SPECIFIC_HIP_ISO_PUSH"
+          const: 105
+          description: "Run-Specific Hip Iso-Push"
+        - title: "RUN_SPECIFIC_KNEE_ISO_PUSH"
+          const: 106
+          description: "Run-Specific Knee Iso-Push"
+        - title: "SEATED_ISOMETRIC_CALF_RAISE"
+          const: 107
+          description: "Seated Isometric Calf Raise"
+        - title: "SHOULDER_ISO_I"
+          const: 108
+          description: "Shoulder ISO-I"
+        - title: "SHOULDER_ISO_T"
+          const: 109
+          description: "Shoulder ISO-T"
+        - title: "SHOULDER_ISO_Y"
+          const: 110
+          description: "Shoulder ISO-Y"
+
+        # Balance Tests
+        - title: "QUIET_STAND"
+          const: 200
+          description: "Quiet Stand"
+        - title: "SINGLE_LEG_RANGE_OF_STABILITY"
+          const: 201
+          description: "Single Leg Range of Stability"
+        - title: "SINGLE_LEG_STAND"
+          const: 202
+          description: "Single Leg Stand"
+
+        # Functional Tests
+        - title: "LAND_AND_HOLD"
+          const: 300
+          description: "Land and Hold"
+        - title: "PUSH_UP_TEST"
+          const: 301
+          description: "Push-Up Test"
+        - title: "PLYOMETRIC_PUSH_UP"
+          const: 302
+          description: "Plyometric Push-Up"
+        - title: "SINGLE_LEG_LAND_AND_HOLD"
+          const: 303
+          description: "Single Leg Land and Hold"
+        - title: "SINGLE_LEG_SQUAT"
+          const: 304
+          description: "Single Leg Squat"
+        - title: "SIT_TO_STAND_TO_SIT"
+          const: 305
+          description: "Sit to Stand to Sit"
+        - title: "SQUAT_ASSESSMENT"
+          const: 306
+          description: "Squat Assessment"
+
+        # Other Tests
+        - title: "GENERAL_FORCE_TIME_ANALYSIS"
+          const: 400
+          description: "General Force-Time Analysis"
     Variation:
       type: integer
       description: "Exercise variation"
