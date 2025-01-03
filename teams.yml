@@ -665,6 +665,12 @@ components:
             $ref: '#/components/schemas/TeamInfo'
           nullable: true
           description: "List of teams involved in the activity"
+        athletes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Athlete'
+          nullable: true
+          description: "List of athletes involved in the activity"
         athlete_participation:
           $ref: '#/components/schemas/ParticipationStatus'
           nullable: true
