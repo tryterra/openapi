@@ -12,7 +12,7 @@ paths:
   /auth/authenticateUser:
     post:
       summary: Generate an authentication link 
-      description: Generates a link to redirect an end user to for them to log in with their fitness data provider
+      description: Creates a login link that allows end users to connect their fitness tracking account
       tags:
         - Authentication
       operationId: AuthenticateUser
@@ -3116,10 +3116,13 @@ components:
         type:
           description: Type of oxygen saturation measurement (i.e. blood vs muscle)
           nullable: false
-          type: string
-          enum:
-          - BLOOD
-          - MUSCLE
+          oneOf:
+            - type: integer
+              enum: [0]
+              description: Oxygen saturation measurement for blood.
+            - type: integer
+              enum: [1]
+              description: Oxygen saturation measurement for muscle.
     OxygenData:
       type: object
       properties:
