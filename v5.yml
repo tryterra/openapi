@@ -7953,6 +7953,34 @@ components:
         version:
           type: string
           nullable: false
+    PermissionChangeWebhook:
+      type: object
+      properties:
+        type:
+          type: string
+          description: The type of webhook event received. For this webhook, this would be 'permission_change'.
+        user:
+          type: object
+          description: The user for which this permission change webhook is for
+          items:
+            $ref: '#/components/schemas/User'
+        status:
+          type: string
+          enum: [success]
+          description: Status of the webhook event.
+        message:
+          type: string
+          description: A message describing the webhook event.
+        version:
+          type: string
+          description: The version of the webhook.
+          nullable: false
+        scopes_added:
+          type: string
+          description: A comma-separated list of scopes that were added during the permission change.
+        scopes_removed:
+          type: string
+          description: A comma-separated list of scopes that were removed during the permission change.
     UserReauthWebhook:
       type: object
       properties:
