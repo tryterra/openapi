@@ -201,6 +201,77 @@ paths:
                     type: string
                     enum: [success, error]
                     description: indicates that an error happened (value is error)
+  /users/{user_id}:
+    patch:
+      summary: Modify user
+      description: Update a Terra user's reference_id or active status
+      tags:
+        - User Management
+      operationId: ModifyUser
+      parameters:
+        - name: user_id
+          in: path
+          description: Terra user ID to update
+          required: true
+          schema:
+            type: string
+        - name: dev-id
+          in: header
+          description: Your developer ID
+          required: true
+          schema:
+            type: string
+          example: testingTerra
+        - name: x-api-key
+          in: header
+          description: Your API key
+          required: true
+          schema:
+            type: string
+          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reference_id:
+                  type: string
+                  description: Identifier on your system to associate with this user
+                  example: "updatedUser123"
+                active:
+                  type: boolean
+                  description: Whether the user should remain active
+      responses:
+        '200':
+          description: Returned upon successful user modification
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  status:
+                    type: string
+                    enum: [success, error]
+                    description: Indicates that the request was successful
+                    example: success
+        '400':
+          description: Returned if the parameters are malformed or no user is found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: A detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [success, error]
+                    description: Indicates an error happened
   /auth/deauthenticateUser:
     delete:
       summary: Deauthenticates a user and deletes any cached data for them
@@ -2508,7 +2579,7 @@ components:
       properties:
         providers:
           type: string
-          description: "Comma separated list of providers to display on the device selection page"
+          description: "Comma separated list of providers to display on the device selection page. This overrides your selected sources on your dashboard"
           example: "GARMIN,FITBIT,OURA,WITHINGS,SUUNTO"
         language:
           type: string
