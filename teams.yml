@@ -813,6 +813,10 @@ components:
           type: string
           nullable: true
           description: "Unique identifier for the test"
+        display_name:
+          type: string
+          nullable: true
+          description: "Human-readable name of the test performed"
         timestamp_us:
           type: integer
           nullable: true
