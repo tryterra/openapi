@@ -87,22 +87,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
-        '403':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             resource)
@@ -185,22 +172,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
-        '403':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+
   /users/{user_id}:
     patch:
       summary: Modify user
@@ -312,20 +286,7 @@ paths:
                     enum: [success, error]
                     description: indicates that an error happened (value is success)
                     type: string
-        '403':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+
         '404':
           description: Returned when the user_id is not existent
           content:
@@ -506,23 +467,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
         '401':
-          description: Returned when authorization with a data provider has failed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
-        '403':
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -530,12 +477,9 @@ paths:
                 type: object
                 properties:
                   message:
-                    description: a detailed message describing the error
+                    description: An error message
                     type: string
-                  status:
-                    enum: [success, error]
-                    type: string
-                    description: indicates that an error happened (value is error)
+                    example: unauthorized
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -549,7 +493,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
     post:
       tags:
@@ -618,22 +562,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
-        '403':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -647,7 +578,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
   /athlete:
     get:
@@ -706,24 +637,10 @@ paths:
                     description: a detailed message describing the error
                     type: string
                   status:
-                    enum: [success, error]
                     type: string
+                    enum: [error]
                     description: indicates that an error happened (value is error)
         '401':
-          description: Returned when authorization with a data provider has failed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
-        '403':
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -731,12 +648,10 @@ paths:
                 type: object
                 properties:
                   message:
-                    description: a detailed message describing the error
+                    description: An error message
                     type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+                    example: unauthorized
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -750,7 +665,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
   /body:
     get:
@@ -849,23 +764,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
         '401':
-          description: Returned when authorization with a data provider has failed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
-        '403':
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -873,12 +774,10 @@ paths:
                 type: object
                 properties:
                   message:
-                    description: a detailed message describing the error
+                    description: An error message
                     type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+                    example: unauthorized
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -892,7 +791,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
     post:
       tags:
@@ -961,22 +860,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
-        '403':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -990,7 +876,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
     delete:
       tags:
@@ -1092,23 +978,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
         '401':
-          description: Returned when authorization with a data provider has failed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
-        '403':
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -1116,12 +988,10 @@ paths:
                 type: object
                 properties:
                   message:
-                    description: a detailed message describing the error
+                    description: An error message
                     type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+                    example: unauthorized
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -1135,7 +1005,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
   /daily:
     get:
@@ -1234,23 +1104,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
         '401':
-          description: Returned when authorization with a data provider has failed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
-        '403':
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -1258,12 +1114,10 @@ paths:
                 type: object
                 properties:
                   message:
-                    description: a detailed message describing the error
+                    description: An error message
                     type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+                    example: unauthorized
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -1277,7 +1131,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
   /menstruation:
     get:
@@ -1377,23 +1231,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
         '401':
-          description: Returned when authorization with a data provider has failed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
-        '403':
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -1401,12 +1241,10 @@ paths:
                 type: object
                 properties:
                   message:
-                    description: a detailed message describing the error
+                    description: An error message
                     type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+                    example: unauthorized
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -1420,7 +1258,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
   /nutrition:
     get:
@@ -1520,23 +1358,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
         '401':
-          description: Returned when authorization with a data provider has failed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
-        '403':
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -1544,12 +1368,10 @@ paths:
                 type: object
                 properties:
                   message:
-                    description: a detailed message describing the error
+                    description: An error message
                     type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+                    example: unauthorized
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -1563,7 +1385,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
     post:
       tags:
@@ -1632,22 +1454,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
-        '403':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -1661,7 +1470,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
     delete:
       tags:
@@ -1763,23 +1572,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
         '401':
-          description: Returned when authorization with a data provider has failed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
-        '403':
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -1787,12 +1582,10 @@ paths:
                 type: object
                 properties:
                   message:
-                    description: a detailed message describing the error
+                    description: An error message
                     type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+                    example: unauthorized
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -1906,23 +1699,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
         '401':
-          description: Returned when authorization with a data provider has failed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
-        '403':
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -1930,12 +1709,10 @@ paths:
                 type: object
                 properties:
                   message:
-                    description: a detailed message describing the error
+                    description: An error message
                     type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+                    example: unauthorized
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -1949,7 +1726,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
   /plannedWorkout:
     post:
@@ -2020,22 +1797,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
-        '403':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -2049,7 +1813,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
     get:
       summary: Retrieve workout plans for a given user ID
@@ -2139,23 +1903,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
         '401':
-          description: Returned when authorization with a data provider has failed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
-        '403':
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -2163,12 +1913,10 @@ paths:
                 type: object
                 properties:
                   message:
-                    description: a detailed message describing the error
+                    description: An error message
                     type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+                    example: unauthorized
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -2182,7 +1930,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
     delete:
       tags:
@@ -2284,7 +2032,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
         '401':
           description: Returned when authorization with a data provider has failed
@@ -2300,20 +2048,7 @@ paths:
                     enum: [success, error]
                     type: string
                     description: indicates that an error happened (value is error)
-        '403':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -2327,7 +2062,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
   /subscriptions: {}
   /userInfo:
@@ -2401,22 +2136,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
-        '403':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -2430,7 +2152,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
   /bulkUserInfo:
     post:
@@ -2485,22 +2207,9 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
-        '403':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum: [success, error]
-                    description: indicates that an error happened (value is error)
+
         '404':
           description: Returned when a parameter does not exist on Terra's end (e.g.
             user_id)
@@ -2514,7 +2223,7 @@ paths:
                     type: string
                   status:
                     type: string
-                    enum: [success, error]
+                    enum: [error]
                     description: indicates that an error happened (value is error)
   /integrations:
     get:
