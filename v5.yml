@@ -3624,6 +3624,17 @@ components:
           description: The State in which the workout was performed
           nullable: true
           example: California
+        timestamp_localization:
+          oneOf:
+            - type: integer
+              enum: [0]
+              description: UTC timestamps with +00:00 offset. This avoids "Z" notation to ensure compatibility across parsers.
+            - type: integer 
+              enum: [1]
+              description: LOCAL timestamps that may include or exclude the timezone, following ISO8601.
+          description: Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC
+          nullable: false
+          example: 0
         country:
           type: string
           description: The Country in which the workout was performed
@@ -4511,6 +4522,17 @@ components:
           example: '2022-10-28T10:00:00.000000+01:00'
           format: date-time
           nullable: true
+        timestamp_localization:
+          oneOf:
+            - type: integer
+              enum: [0]
+              description: UTC timestamps with +00:00 offset. This avoids "Z" notation to ensure compatibility across parsers.
+            - type: integer 
+              enum: [1]
+              description: LOCAL timestamps that may include or exclude the timezone, following ISO8601.
+          description: Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC
+          nullable: false
+          example: 0
     BloodPressureSample:
       type: object
       properties:
@@ -5076,6 +5098,17 @@ components:
           example: '2022-10-28T10:00:00.000000+01:00'
           format: date-time
           nullable: true
+        timestamp_localization:
+          oneOf:
+            - type: integer
+              enum: [0]
+              description: UTC timestamps with +00:00 offset. This avoids "Z" notation to ensure compatibility across parsers.
+            - type: integer 
+              enum: [1]
+              description: LOCAL timestamps that may include or exclude the timezone, following ISO8601.
+          description: Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC
+          nullable: false
+          example: 0
     Daily:
       type: object
       properties:
@@ -5172,6 +5205,17 @@ components:
           example: '2022-10-28T10:00:00.000000+01:00'
           format: date-time
           nullable: true
+        timestamp_localization:
+          oneOf:
+            - type: integer
+              enum: [0]
+              description: UTC timestamps with +00:00 offset. This avoids "Z" notation to ensure compatibility across parsers.
+            - type: integer 
+              enum: [1]
+              description: LOCAL timestamps that may include or exclude the timezone, following ISO8601.
+          description: Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC
+          nullable: false
+          example: 0
     MenstruationFlowSample:
       type: object
       properties:
@@ -5634,6 +5678,17 @@ components:
           example: '2022-10-28T10:00:00.000000+01:00'
           format: date-time
           nullable: true
+        timestamp_localization:
+          oneOf:
+            - type: integer
+              enum: [0]
+              description: UTC timestamps with +00:00 offset. This avoids "Z" notation to ensure compatibility across parsers.
+            - type: integer 
+              enum: [1]
+              description: LOCAL timestamps that may include or exclude the timezone, following ISO8601.
+          description: Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC
+          nullable: false
+          example: 0
     Quantity:
       type: object
       properties:
@@ -6154,6 +6209,17 @@ components:
           example: '2022-11-24T08:00:00.000000+01:00'
           format: date-time
           nullable: true
+        timestamp_localization:
+          oneOf:
+            - type: integer
+              enum: [0]
+              description: UTC timestamps with +00:00 offset. This avoids "Z" notation to ensure compatibility across parsers.
+            - type: integer 
+              enum: [1]
+              description: LOCAL timestamps that may include or exclude the timezone, following ISO8601.
+          description: Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC
+          nullable: false
+          example: 0
     ReadinessData:
       type: object
       properties:
