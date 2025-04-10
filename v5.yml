@@ -5,9 +5,9 @@ info:
   version: 2022.03.16
 servers:
 - url: https://api.tryterra.co/v2
-security:
-  - apiKeyAuth: []
-    devIdAuth: []
+# security:
+#   - apiKeyAuth: []
+#     devIdAuth: []
 paths:
   /auth/authenticateUser:
     post:
@@ -890,6 +890,7 @@ paths:
         schema:
           type: string
         required: true
+        
       - name: dev-id
         in: header
         description: your developer ID
@@ -1505,7 +1506,7 @@ paths:
             schema:
               type: object
               properties:
-                log_ids:
+                data:
                   type: array
                   description: List of identifiers for nutrition entries to be deleted
                   items:
@@ -1966,7 +1967,7 @@ paths:
             schema:
               type: object
               properties:
-                log_ids:
+                data:
                   type: array
                   description: List of identifiers for planned workout entries to
                     be deleted
@@ -2064,7 +2065,6 @@ paths:
                     type: string
                     enum: [error]
                     description: indicates that an error happened (value is error)
-  /subscriptions: {}
   /userInfo:
     get:
       tags:
@@ -2154,6 +2154,86 @@ paths:
                     type: string
                     enum: [error]
                     description: indicates that an error happened (value is error)
+  /subscriptions:
+    get:
+      tags:
+        - User Info
+      operationId: GetAllUsers
+      description: Used to query for information for all Terra User IDs. Supports optional
+        pagination via `page` and `per_page`. If `page` is not provided, it returns all users
+        in one go (backwards compatibility).
+      parameters:
+        - name: dev-id
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Your developer ID
+          example: testingTerra
+        - name: x-api-key
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Your API key
+          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Zero-based page number. If omitted, results are not paginated.
+          example: 0
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Number of results per page (default is 500).
+          example: 500
+      responses:
+        '200':
+          description: Returned upon a successful request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      users:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/User'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          next:
+                            type: integer
+                            nullable: true
+                            description: The next page number, or null if there is no next page
+                          max_page:
+                            type: integer
+                            description: The maximum page index
+                          results:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/User'
+        '400':
+          description: Returned when one or more parameters are malformed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: A detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: Indicates that an error occurred (value is `error`)
   /bulkUserInfo:
     post:
       tags:
@@ -2337,6 +2417,11 @@ components:
           description: Connection data source
           nullable: true
           example: "FITBIT"
+        active:
+          type: string
+          description: whether the user is active or not (inactive users will not receive any data updates and are in considered dormant)
+          nullable: false
+          example: true
     NoDataReturned:
       type: object
       properties:
@@ -8144,12 +8229,12 @@ components:
           DataProcessingWebhook: '#/components/schemas/DataProcessingWebhook'
           LargeRequestSendingWebhook: '#/components/schemas/LargeRequestSendingWebhook'
       
-  securitySchemes:
-    apiKeyAuth:
-      type: apiKey
-      in: header
-      name: x-api-key
-    devIdAuth:
-      type: apiKey
-      in: header
-      name: dev-id
+  # securitySchemes:
+  #   apiKeyAuth:
+  #     type: apiKey
+  #     in: header
+  #     name: x-api-key
+  #   devIdAuth:
+  #     type: apiKey
+  #     in: header
+  #     name: dev-id
