@@ -342,7 +342,6 @@ model MenstruationData {
 
 // Daily Model
 
-// Daily Model
 model Daily {
     active_durations_data?: ActiveDurationsData;
     calories_data?: CaloriesData;
