@@ -155,3 +155,9 @@ enum ActivityType {
     GAELIC_FOOTBALL: 147,
     HURLING: 148,
 }
+
+enum AFibFlag {
+    `Negative (AFib not present)`: 0,
+    `Positive (AFib present)`: 1,
+    Inconclusive: 2,
+}
