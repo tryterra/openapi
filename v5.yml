@@ -2426,6 +2426,7 @@ paths:
     get:
       tags:
         - Integrations
+      operationId: GetDetailedIntegrations
       summary: Get detailed list of integrations
       description: Retrieve a detailed list of supported integrations, optionally filtered by the developer's enabled integrations and the requirement for SDK usage.
       parameters:
