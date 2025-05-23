@@ -176,3 +176,12 @@ enum DeviceDataType {
     Speed: "SPEED",
     Cadence: "CADENCE",
 }
+
+enum ActivityLevel {
+    Unknown: 0,
+    Rest: 1,
+    Inactive: 2,
+    `Low Intensity`: 3,
+    `Medium Intensity`: 4,
+    `High Intensity`: 5,
+}
