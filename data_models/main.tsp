@@ -257,6 +257,65 @@ model WorkData {
 }
 // End of Activity Model
 
+// Body Model
+
+model Body {
+    blood_pressure_data?: BloodPressureData;
+    device_data?: DeviceData;
+    heart_data?: HeartData;
+    hydration_data?: HydrationData;
+    ketone_data?: KetoneData;
+    measurements_data?: MeasurementsData;
+    metadata: BodyMetadata;
+    oxygen_data?: OxygenData;
+    temperature_data?: TemperatureData;
+}
+
+model BloodPressureData {
+    blood_pressure_samples?: Record<unknown>[];
+}
+
+model HeartData {
+    afib_classification_samples?: Record<unknown>[];
+    ecg_signal?: Record<unknown>[];
+    heart_rate_data?: HeartRateData;
+    pulse_wave_velocity_samples?: Record<unknown>[];
+    rr_interval_samples?: Record<unknown>[];
+}
+
+model HydrationData {
+    day_total_water_consumption_ml?: integer;
+    hydration_amount_samples?: Record<unknown>[];
+    hydration_level_samples?: Record<unknown>[];
+}
+
+model KetoneData {
+    ketone_samples?: Record<unknown>[];
+}
+
+model MeasurementsData {
+    measurements?: Record<unknown>[];
+}
+
+model BodyMetadata {
+    end_time: string;
+    start_time: string;
+}
+
+model TemperatureData {
+    ambient_temperature_samples?: Record<unknown>[];
+    body_temperature_samples?: Record<unknown>[];
+    skin_temperature_samples?: Record<unknown>[];
+    day_avg_blood_glucose_mg_per_dL?: integer;
+    daily_patterns?: Record<unknown>[];
+    detailed_blood_glucose_samples?: Record<unknown>[];
+    gmi?: float; // what is this?
+    sensor_usage?: integer;
+    time_in_range?: integer;
+}
+
+// End of Body Model
+
 @doc("Represents a specific type of physical activity.")
 enum ActivityType {
     `In Vehicle`: 0,
