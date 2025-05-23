@@ -8,9 +8,49 @@ namespace Schemas;
 model TerraUser {
     @minLength(1) user_id: string; // not null
     @minLength(1) provider: string; // not null
-    last_webhook_update: string;
-    scopes: string;
-    reference_id: string;
+    last_webhook_update?: string;
+    scopes?: string;
+    reference_id?: string;
+}
+
+model Athlete {
+    age?: int32;
+    country?: string;
+    bio?: string;
+    state?: string;
+    last_name?: string;
+    sex?: string;
+    city?: string;
+    email?: string;
+    date_of_birth?: string;
+    first_name?: string;
+    gender?: string;
+    joined_provider?: string;
+    devices?: DeviceData[];
+}
+
+model DeviceData {
+    activation_timestamp?: string;
+    data_provided?: DeviceDataType[];
+    hardware_version?: string;
+    last_upload_date?: string;
+    manufacturer?: string;
+    name?: string;
+    other_devices?: OtherDeviceData[];
+    sensor_state?: string;
+    serial_number?: string;
+    software_version?: string;
+}
+
+model OtherDeviceData {
+    activation_timestamp?: string;
+    data_provided?: DeviceDataType[];
+    hardware_version?: string;
+    last_upload_date?: string;
+    manufacturer?: string;
+    name?: string;
+    serial_number?: string;
+    software_version?: string;
 }
 
 @doc("Represents a specific type of physical activity.")
