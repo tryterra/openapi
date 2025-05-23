@@ -13,6 +13,7 @@ model TerraUser {
     reference_id: string;
 }
 
+@doc("Represents a specific type of physical activity.")
 enum ActivityType {
     `In Vehicle`: 0,
     Biking: 1,
@@ -160,4 +161,18 @@ enum AFibFlag {
     `Negative (AFib not present)`: 0,
     `Positive (AFib present)`: 1,
     Inconclusive: 2,
+}
+
+@doc("Represents data types that a certain device contributed to.")
+enum DeviceDataType {
+    Steps: "STEPS",
+    `Active Minutes`: "ACTIVE_MINUTES",
+    BMR: "BMR",
+    Calories: "CALORIES",
+    Distance: "DISTANCE",
+    `Heart Rate`: "HEART_RATE",
+    `Oxygen Saturation (SpO2)`: "OXYGEN_SATURATION",
+    `Sleep type classification`: "SLEEP_TYPE",
+    Speed: "SPEED",
+    Cadence: "CADENCE",
 }
