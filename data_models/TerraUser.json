@@ -1,0 +1,32 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "title": "Terra User",
+    "description": "Schema for a Terra user object",
+    "properties": {
+        "user_id": {
+            "type": "string",
+            "description": "The unique identifier for the user"
+        },
+        "provider": {
+            "type": "string",
+            "description": "The provider associated with the user"
+        },
+        "last_webhook_update": {
+            "type": "string",
+            "description": "Timestamp of the last webhook update"
+        },
+        "scopes": {
+            "type": "string",
+            "description": "Permission scopes for the user"
+        },
+        "reference_id": {
+            "type": "string",
+            "description": "Reference identifier for the user"
+        }
+    },
+    "required": [
+        "user_id",
+        "provider"
+    ]
+}
