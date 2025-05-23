@@ -5,6 +5,7 @@ using JsonSchema;
 @jsonSchema
 namespace Schemas;
 
+// Terrauser Model
 model TerraUser {
     @minLength(1) user_id: string; // not null
     @minLength(1) provider: string; // not null
@@ -12,7 +13,9 @@ model TerraUser {
     scopes?: string;
     reference_id?: string;
 }
+// End of Terrauser Model
 
+// Athlete Model
 model Athlete {
     age?: int32;
     country?: string;
@@ -29,6 +32,9 @@ model Athlete {
     devices?: DeviceData[];
 }
 
+// End of Athlete Model
+
+// Device Data Model
 model DeviceData {
     activation_timestamp?: string;
     data_provided?: DeviceDataType[];
@@ -52,6 +58,204 @@ model OtherDeviceData {
     serial_number?: string;
     software_version?: string;
 }
+
+// End of Device Data Model
+
+// Activity Model
+model Activity {
+    active_durations_data?: ActiveDurationsData;
+    calories_data?: CaloriesData;
+    cheat_detection?: Record<unknown>;
+    data_enrichment?: DataEnrichment;
+    device_data?: DeviceData;
+    distance_data?: DistanceData;
+    energy_data?: EnergyData;
+    heart_rate_data?: HeartRateData;
+    lap_data?: LapData;
+    MET_data?: METData;
+    metadata: ActivityMetadata;
+    movement_data?: MovementData;
+    oxygen_data?: OxygenData;
+    polyline_map_data?: PolylineMapData;
+    position_data?: PositionData;
+    power_data?: PowerData;
+    strain_data?: StrainData;
+    TSS_data?: TSSData;
+    work_data?: WorkData;
+}
+
+model ActiveDurationsData {
+    activity_levels_samples?: Record<unknown>[];
+    activity_seconds?: integer;
+    inactivity_seconds?: integer;
+    low_intensity_seconds?: integer;
+    moderate_intensity_seconds?: integer;
+    num_continuous_inactive_periods?: integer;
+    rest_seconds?: integer;
+    standing_hours_count?: integer;
+    standing_seconds?: integer;
+    vigorous_intensity_seconds?: integer;
+}
+
+model CaloriesData {
+    BMR_calories?: integer;
+    calorie_samples?: Record<unknown>[];
+    net_activity_calories?: integer;
+    net_intake_calories?: integer;
+    total_burned_calories?: integer;
+}
+
+model DataEnrichment {
+    stress_score?: integer;
+}
+
+model DistanceData {
+    detailed?: DistanceDataDetailed;
+    summary?: DistanceDataSummary;
+}
+
+model DistanceDataDetailed {
+    distance_samples?: Record<unknown>[];
+    elevation_samples?: Record<unknown>[];
+    floors_climbed_samples?: Record<unknown>[];
+    step_samples?: Record<unknown>[];
+}
+
+model DistanceDataSummary {
+    distance_meters?: integer;
+    elevation?: ElevationData;
+    floors_climbed?: integer;
+    steps?: integer;
+    swimming?: SwimmingData;
+}
+
+model ElevationData {
+    avg_meters?: integer;
+    gain_actual_meters?: integer;
+    gain_planned_meters?: integer;
+    loss_actual_meters?: integer;
+    max_meters?: integer;
+    min_meters?: integer;
+}
+
+model SwimmingData {
+    num_laps?: integer;
+    num_strokes?: integer;
+    pool_length_meters?: integer;
+}
+
+model EnergyData {
+    energy_kilojoules?: integer;
+    energy_planned_kilojoules?: integer;
+}
+
+model HeartRateData {
+    detailed?: HeartRateDataDetailed;
+    summary?: HeartRateDataSummary;
+}
+
+model HeartRateDataDetailed {
+    hr_samples?: Record<unknown>[];
+    hrv_samples_rmssd?: Record<unknown>[];
+    hrv_samples_sdnn?: Record<unknown>[];
+}
+
+model HeartRateDataSummary {
+    avg_hr_bpm?: integer;
+    avg_hrv_rmssd?: integer;
+    avg_hrv_sdnn?: integer;
+    hr_zone_data?: Record<unknown>[];
+    max_hr_bpm?: integer;
+    min_hr_bpm?: integer;
+    resting_hr_bpm?: integer;
+    user_max_hr_bpm?: integer;
+}
+
+model LapData {
+    laps?: Record<unknown>[];
+}
+
+model METData {
+    MET_samples?: METSample[];
+    avg_level?: integer;
+    num_high_intensity_minutes?: integer;
+    num_inactive_minutes?: integer;
+    num_low_intensity_minutes?: integer;
+    num_moderate_intensity_minutes?: integer;
+}
+
+model METSample {
+    time?: string;
+    val?: integer;
+}
+
+model ActivityMetadata {
+    city?: string;
+    country?: string;
+    end_time: string;
+    name?: string;
+    start_time: string;
+    state?: string;
+    summary_id: string;
+    timestamp_localization?: integer; // what is this?
+    type: ActivityType;
+    upload_type: UploadType;
+}
+
+model MovementData {
+    adjusted_max_speed_meters_per_second?: float;
+    avg_cadence_rpm?: float;
+    avg_pace_minutes_per_kilometer?: float;
+    avg_speed_meters_per_second?: float;
+    avg_torque_newton_meters?: float;
+    avg_velocity_meters_per_second?: float;
+    cadence_samples?: Record<unknown>[];
+    max_cadence_rpm?: float;
+    max_pace_minutes_per_kilometer?: float;
+    max_speed_meters_per_second?: float;
+    max_torque_newton_meters?: float;
+    max_velocity_meters_per_second?: float;
+    normalized_speed_meters_per_second?: float;
+    speed_samples?: Record<unknown>[];
+    torque_samples?: Record<unknown>[];
+}
+
+model OxygenData {
+    avg_saturation_percentage?: float;
+    saturation_samples?: Record<unknown>[];
+    vo2_samples?: Record<unknown>[];
+    vo2max_ml_per_min_per_kg?: float;
+}
+
+model PolylineMapData {
+    summary_polyline?: string;
+}
+
+model PositionData {
+    center_pos_lat_lng_deg?: float[];
+    end_pos_lat_lng_deg?: float[];
+    position_samples?: Record<unknown>[];
+    start_pos_lat_lng_deg?: float[];
+}
+
+model PowerData {
+    avg_watts?: float;
+    max_watts?: float;
+    power_samples?: Record<unknown>[];
+}
+
+model StrainData {
+    strain_level?: float;
+}
+
+model TSSData {
+    TSS_samples?: Record<unknown>[];
+}
+
+model WorkData {
+    work_kilojoules?: float;
+}
+// End of Activity Model
 
 @doc("Represents a specific type of physical activity.")
 enum ActivityType {
