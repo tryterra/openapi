@@ -185,3 +185,13 @@ enum ActivityLevel {
     `Medium Intensity`: 4,
     `High Intensity`: 5,
 }
+
+enum HeartRateZone {
+    `Zone 0`: 0,
+    `Zone 1`: 1,
+    `Zone 2`: 2,
+    `Zone 3`: 3,
+    `Zone 4`: 4,
+    `Zone 5`: 5,
+    `Other/custom classification`: 6,
+}
