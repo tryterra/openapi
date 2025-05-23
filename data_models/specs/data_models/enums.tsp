@@ -164,23 +164,26 @@ enum DeviceDataType {
     Cadence: "CADENCE",
 }
 
+@doc("Intensity of the user's activity at an instant in time")
+@example(ActivityLevel.MEDIUM_INTENSITY)
 enum ActivityLevel {
-    Unknown: 0,
-    Rest: 1,
-    Inactive: 2,
-    `Low Intensity`: 3,
-    `Medium Intensity`: 4,
-    `High Intensity`: 5,
+    UNKNOWN: 0,
+    REST: 1,
+    INACTIVE: 2,
+    LOW_INTENSITY: 3,
+    MEDIUM_INTENSITY: 4,
+    HIGH_INTENSITY: 5,
 }
 
+@example(HeartRateZone.ZONE_2)
 enum HeartRateZone {
-    `Zone 0`: 0,
-    `Zone 1`: 1,
-    `Zone 2`: 2,
-    `Zone 3`: 3,
-    `Zone 4`: 4,
-    `Zone 5`: 5,
-    `Other/custom classification`: 6,
+    ZONE_0: 0,
+    ZONE_1: 1,
+    ZONE_2: 2,
+    ZONE_3: 3,
+    ZONE_4: 4,
+    ZONE_5: 5,
+    OTHER: 6,
 }
 
 enum SleepLevel {
