@@ -1,0 +1,24 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PositionSample.json",
+    "type": "object",
+    "properties": {
+        "timestamp": {
+            "type": "string"
+        },
+        "coords_lat_lng_deg": {
+            "type": "array",
+            "items": {
+                "type": "number"
+            }
+        },
+        "timer_duration_seconds": {
+            "type": "number"
+        }
+    },
+    "required": [
+        "timestamp",
+        "coords_lat_lng_deg",
+        "timer_duration_seconds"
+    ]
+}

@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationData.json",
+    "type": "object",
+    "properties": {
+        "avg_saturation_percentage": {
+            "type": "integer"
+        },
+        "end_time": {
+            "type": "string"
+        },
+        "samples": {
+            "type": "array",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationSample.json"
+            }
+        },
+        "start_time": {
+            "type": "string"
+        }
+    }
+}

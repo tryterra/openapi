@@ -1,0 +1,16 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SwimmingData.json",
+    "type": "object",
+    "properties": {
+        "num_laps": {
+            "type": "integer"
+        },
+        "num_strokes": {
+            "type": "integer"
+        },
+        "pool_length_meters": {
+            "type": "integer"
+        }
+    }
+}

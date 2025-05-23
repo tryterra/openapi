@@ -1,0 +1,25 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DrinkSample.json",
+    "type": "object",
+    "properties": {
+        "timestamp": {
+            "type": "string"
+        },
+        "drink_volume": {
+            "type": "number"
+        },
+        "drink_unit": {
+            "type": "string"
+        },
+        "drink_name": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "timestamp",
+        "drink_volume",
+        "drink_unit",
+        "drink_name"
+    ]
+}

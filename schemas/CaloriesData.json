@@ -1,0 +1,25 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/CaloriesData.json",
+    "type": "object",
+    "properties": {
+        "BMR_calories": {
+            "type": "integer"
+        },
+        "calorie_samples": {
+            "type": "array",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/CalorieSample.json"
+            }
+        },
+        "net_activity_calories": {
+            "type": "integer"
+        },
+        "net_intake_calories": {
+            "type": "integer"
+        },
+        "total_burned_calories": {
+            "type": "integer"
+        }
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/METData.json",
+    "type": "object",
+    "properties": {
+        "MET_samples": {
+            "type": "array",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/METSample.json"
+            }
+        },
+        "avg_level": {
+            "type": "integer"
+        },
+        "num_high_intensity_minutes": {
+            "type": "integer"
+        },
+        "num_inactive_minutes": {
+            "type": "integer"
+        },
+        "num_low_intensity_minutes": {
+            "type": "integer"
+        },
+        "num_moderate_intensity_minutes": {
+            "type": "integer"
+        }
+    }
+}

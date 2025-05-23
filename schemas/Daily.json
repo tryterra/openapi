@@ -1,0 +1,49 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Daily.json",
+    "type": "object",
+    "properties": {
+        "active_durations_data": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActiveDurationsData.json"
+        },
+        "calories_data": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/CaloriesData.json"
+        },
+        "data_enrichment": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyDataEnrichment.json"
+        },
+        "device_data": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeviceData.json"
+        },
+        "distance_data": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyDistanceData.json"
+        },
+        "heart_rate_data": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateData.json"
+        },
+        "MET_data": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/METData.json"
+        },
+        "metadata": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyMetadata.json"
+        },
+        "oxygen_data": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenData.json"
+        },
+        "scores": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ScoreData.json"
+        },
+        "strain_data": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StrainData.json"
+        },
+        "stress_data": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StressData.json"
+        },
+        "tag_data": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TagData.json"
+        }
+    },
+    "required": [
+        "metadata"
+    ]
+}

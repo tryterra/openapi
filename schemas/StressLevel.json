@@ -1,0 +1,13 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StressLevel.json",
+    "type": "number",
+    "enum": [
+        0,
+        1,
+        2,
+        3,
+        4
+    ],
+    "description": "Represents stress level ranges."
+}

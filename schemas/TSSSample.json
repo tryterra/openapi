@@ -1,0 +1,33 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TSSSample.json",
+    "type": "object",
+    "properties": {
+        "planned": {
+            "type": "number"
+        },
+        "actual": {
+            "type": "number"
+        },
+        "method": {
+            "type": "string"
+        },
+        "intensity_factor_planned": {
+            "type": "number"
+        },
+        "intensity_factor_actual": {
+            "type": "number"
+        },
+        "normalized_power_watts": {
+            "type": "number"
+        }
+    },
+    "required": [
+        "planned",
+        "actual",
+        "method",
+        "intensity_factor_planned",
+        "intensity_factor_actual",
+        "normalized_power_watts"
+    ]
+}

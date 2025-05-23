@@ -1,0 +1,16 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Menstruation.json",
+    "type": "object",
+    "properties": {
+        "metadata": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationMetadata.json"
+        },
+        "menstruation_data": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationData.json"
+        }
+    },
+    "required": [
+        "metadata"
+    ]
+}

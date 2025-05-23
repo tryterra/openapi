@@ -1,0 +1,10 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataEnrichment.json",
+    "type": "object",
+    "properties": {
+        "stress_score": {
+            "type": "integer"
+        }
+    }
+}

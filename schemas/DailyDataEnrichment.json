@@ -1,0 +1,55 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyDataEnrichment.json",
+    "type": "object",
+    "properties": {
+        "cardiovascular_contributors": {
+            "type": "array",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.json"
+            }
+        },
+        "cardiovascular_score": {
+            "type": "number"
+        },
+        "immune_contributors": {
+            "type": "array",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.json"
+            }
+        },
+        "immune_index": {
+            "type": "number"
+        },
+        "readiness_contributors": {
+            "type": "array",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.json"
+            }
+        },
+        "readiness_score": {
+            "type": "number"
+        },
+        "respiratory_contributors": {
+            "type": "array",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.json"
+            }
+        },
+        "respiratory_score": {
+            "type": "number"
+        },
+        "start_time": {
+            "type": "string"
+        },
+        "stress_contributors": {
+            "type": "array",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.json"
+            }
+        },
+        "total_stress_score": {
+            "type": "number"
+        }
+    }
+}

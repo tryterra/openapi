@@ -1,0 +1,17 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityLevelSample.json",
+    "type": "object",
+    "properties": {
+        "timestamp": {
+            "type": "string"
+        },
+        "level": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityLevel.json"
+        }
+    },
+    "required": [
+        "timestamp",
+        "level"
+    ]
+}

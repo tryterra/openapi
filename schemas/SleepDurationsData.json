@@ -1,0 +1,25 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepDurationsData.json",
+    "type": "object",
+    "properties": {
+        "asleep": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AsleepDurations.json"
+        },
+        "awake": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AwakeDurations.json"
+        },
+        "hypnogram_samples": {
+            "type": "array",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepHypnogramSample.json"
+            }
+        },
+        "other": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OtherSleepDurations.json"
+        },
+        "sleep_efficiency": {
+            "type": "integer"
+        }
+    }
+}

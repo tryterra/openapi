@@ -1,0 +1,28 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Nutrition.json",
+    "type": "object",
+    "properties": {
+        "drink_samples": {
+            "type": "array",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DrinkSample.json"
+            }
+        },
+        "meals": {
+            "type": "array",
+            "items": {
+                "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Meal.json"
+            }
+        },
+        "metadata": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMetadata.json"
+        },
+        "summary": {
+            "$ref": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionSummary.json"
+        }
+    },
+    "required": [
+        "metadata"
+    ]
+}

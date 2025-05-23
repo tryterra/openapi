@@ -1,0 +1,21 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/CalorieSample.json",
+    "type": "object",
+    "properties": {
+        "timestamp": {
+            "type": "string"
+        },
+        "calories": {
+            "type": "number"
+        },
+        "timer_duration_seconds": {
+            "type": "number"
+        }
+    },
+    "required": [
+        "timestamp",
+        "calories",
+        "timer_duration_seconds"
+    ]
+}

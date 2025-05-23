@@ -1,0 +1,21 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/KetoneSample.json",
+    "type": "object",
+    "properties": {
+        "timestamp": {
+            "type": "string"
+        },
+        "ketone_mg_per_dL": {
+            "type": "number"
+        },
+        "sample_type": {
+            "type": "integer"
+        }
+    },
+    "required": [
+        "timestamp",
+        "ketone_mg_per_dL",
+        "sample_type"
+    ]
+}

@@ -1,0 +1,17 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PulseVelocitySample.json",
+    "type": "object",
+    "properties": {
+        "timestamp": {
+            "type": "string"
+        },
+        "pulse_wave_velocity_meters_per_second": {
+            "type": "number"
+        }
+    },
+    "required": [
+        "timestamp",
+        "pulse_wave_velocity_meters_per_second"
+    ]
+}
