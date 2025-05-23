@@ -195,3 +195,127 @@ enum HeartRateZone {
     `Zone 5`: 5,
     `Other/custom classification`: 6,
 }
+
+enum UploadType {
+    Unknown: 0,
+    Automatic: 1,
+    Manual: 2,
+    Update: 3,
+    Delete: 4,
+    Pending: 5,
+    `Third party upload`: 6,
+}
+
+@doc("Represents the type of sleep upload.")
+enum SleepUploadType {
+    Unknown: 0,
+    Manual: 1,
+    Automatic: 2,
+    Tentative: 3,
+    Indeterminate: 4,
+}
+
+@doc("Represents different swimming stroke types.")
+enum StrokeType {
+    OTHER: "other",
+    FREESTYLE: "freestyle",
+    BACKSTROKE: "backstroke",
+    BREASTSTROKE: "breaststroke",
+    BUTTERFLY: "butterfly",
+}
+
+@doc("Represents glucose measurement status flags.")
+enum GlucoseFlag {
+    Normal: 0,
+    High: 1,
+    Low: 2,
+}
+
+@doc("Represents units used for nutrition measurements.")
+enum NutritionUnits {
+    Unknown: 0,
+    Gram: 1,
+    Teaspoon: 2,
+    Tablespoon: 3,
+    Cup: 4,
+    `Medium Egg`: 5,
+    `Large Egg`: 6,
+    `Small Egg`: 7,
+    Milliliter: 8,
+    Ounce: 9,
+    Count: 10,
+    Scoop: 11,
+    `Fluid Ounce`: 12,
+}
+
+@doc("Represents physical recovery status levels.")
+enum RecoveryLevel {
+    Unknown: 0,
+    `Very Poor`: 1,
+    Poor: 2,
+    Compromised: 3,
+    Ok: 4,
+    Good: 5,
+    `Very Good`: 6,
+}
+
+@doc("Represents glucose trend directions.")
+enum TrendArrow {
+    UNKNOWN: 0,
+    FALLING_QUICKLY: 1,
+    FALLING: 2,
+    FLAT: 3,
+    RISING: 4,
+    RISING_QUICKLY: 5,
+}
+
+@doc("Represents menstruation flow intensity levels.")
+enum MenstruationFlow {
+    UNKNOWN: 0,
+    NONE: 1,
+    LIGHT: 2,
+    MEDIUM: 3,
+    HEAVY: 4,
+    HAD: 5,
+}
+
+@doc("Represents different types of meals.")
+enum MealType {
+    UNKNOWN: 0,
+    BREAKFAST: 1,
+    MORNING_SNACK: 2,
+    LUNCH: 3,
+    AFTERNOON_SNACK: 4,
+    DINNER: 5,
+    SNACK: 6,
+}
+
+@doc("Represents stress level ranges.")
+enum StressLevel {
+    UNKNOWN: 0,
+    REST: 1, // Represents range 1-25
+    LOW: 2, // Represents range 26-50
+    MEDIUM: 3, // Represents range 51-75
+    HIGH: 4, // Represents range 76-100
+}
+
+@doc("Represents the context in which heart rate was measured.")
+enum HeartRateContext {
+    NOT_SET: 0,
+    ACTIVE: 1,
+    NOT_ACTIVE: 2,
+}
+
+@doc("Represents menstrual cycle phases.")
+enum MenstrualPhase {
+    MENSTRUAL: "menstrual",
+    FOLLICULAR: "follicular",
+    OVULATION: "ovulation",
+    LUTEAL: "luteal",
+    PMS: "pms",
+    FERTILE: "fertile",
+    FIRST_TRIMESTER: "first_trimester",
+    SECOND_TRIMESTER: "second_trimester",
+    THIRD_TRIMESTER: "third_trimester",
+    UNKNOWN: "unknown",
+}
