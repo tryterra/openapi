@@ -417,7 +417,7 @@ model TagData {
     tags?: TagEntry[];
 }
 
-// Example of a daily model
+// End of daily model
 
 @doc("Represents a specific type of physical activity.")
 enum ActivityType {
