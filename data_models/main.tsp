@@ -419,6 +419,201 @@ model TagData {
 
 // End of daily model
 
+// Nutrition Model
+model Nutrition {
+    drink_samples?: DrinkSample[];
+    meals?: Meal[];
+    metadata: NutritionMetadata;
+    summary?: NutritionSummary;
+}
+
+model NutritionMetadata {
+    end_time: string;
+    start_time: string;
+    timestamp_localization?: integer;
+}
+
+model NutritionSummary {
+    macros?: NutritionSummaryMacros;
+    micros?: NutritionSummaryMicros;
+    water_ml?: integer;
+    drink_ml?: integer;
+}
+
+model NutritionSummaryMacros {
+    alcohol_g?: integer;
+    calories?: integer;
+    carbohydrates_g?: integer;
+    cholesterol_mg?: integer;
+    fat_g?: integer;
+    fiber_g?: integer;
+    net_carbohydrates_g?: integer;
+    protein_g?: integer;
+    saturated_fat_g?: integer;
+    sodium_mg?: integer;
+    sugar_g?: integer;
+    trans_fat_g?: integer;
+}
+
+model NutritionSummaryMicros {
+    // Vitamins and minerals
+    biotin_mg?: integer;
+
+    caffeine_mg?: integer;
+    calcium_mg?: integer;
+    chloride_mg?: integer;
+    chromium_mg?: integer;
+    copper_mg?: integer;
+    folate_mg?: integer;
+    folic_acid_mg?: integer;
+    iodine_mg?: integer;
+    iron_mg?: integer;
+    magnesium_mg?: integer;
+    manganese_mg?: integer;
+    molybdenum_mg?: integer;
+    niacin_mg?: integer;
+    pantothenic_acid_mg?: integer;
+    phosphorus_mg?: integer;
+    potassium_mg?: integer;
+    riboflavin_mg?: integer;
+    selenium_mg?: integer;
+    thiamin_mg?: integer;
+    vitamin_A_mg?: integer;
+    vitamin_B12_mg?: integer;
+    vitamin_B6_mg?: integer;
+    vitamin_C_mg?: integer;
+    vitamin_D_mg?: integer;
+    vitamin_D2_mg?: integer;
+    vitamin_D3_mg?: integer;
+    vitamin_E_mg?: integer;
+    vitamin_K_mg?: integer;
+    zinc_mg?: integer;
+
+    // Amino acids
+    cystine_g?: integer;
+
+    histidine_g?: integer;
+    isoleucine_g?: integer;
+    leucine_g?: integer;
+    lysine_g?: integer;
+    methionine_g?: integer;
+    phenylalanine_g?: integer;
+    threonine_g?: integer;
+    tryptophan_g?: integer;
+    tyrosine_g?: integer;
+    valine_g?: integer;
+
+    // Fats and fatty acids
+    monounsaturated_fat_g?: integer;
+
+    polyunsaturated_fat_g?: integer;
+    omega3_g?: integer;
+    omega6_g?: integer;
+
+    // Carbohydrates
+    starch_g?: integer;
+}
+
+// End of Nutrition Model
+
+// Sleep Model
+model Sleep {
+    data_enrichment?: SleepDataEnrichment;
+    device_data?: DeviceData;
+    heart_rate_data?: HeartRateData;
+    metadata: SleepMetadata;
+    readiness_data?: ReadinessData;
+    respiration_data?: RespirationData;
+    scores?: ScoreData;
+    sleep_durations_data?: SleepDurationsData;
+    temperature_data?: SleepTemperatureData;
+}
+
+model SleepMetadata {
+    end_time: string;
+    start_time: string;
+    is_nap?: boolean;
+    summary_id?: string;
+    timestamp_localization?: integer;
+    upload_type: SleepUploadType;
+}
+
+model SleepDataEnrichment {
+    sleep_contributors?: DataContributor[];
+    sleep_score?: integer;
+}
+
+model ReadinessData {
+    readiness?: integer;
+    recovery_level?: RecoveryLevel;
+}
+
+model RespirationData {
+    breaths_data?: BreathsData;
+    oxygen_saturation_data?: OxygenSaturationData;
+    snoring_data?: SnoringData;
+}
+
+model BreathsData {
+    avg_breaths_per_min?: integer;
+    end_time?: string;
+    max_breaths_per_min?: integer;
+    min_breaths_per_min?: integer;
+    on_demand_reading?: boolean;
+    samples?: BreathSample[];
+    start_time?: string;
+}
+
+model OxygenSaturationData {
+    avg_saturation_percentage?: integer;
+    end_time?: string;
+    samples?: OxygenSaturationSample[];
+    start_time?: string;
+}
+
+model SnoringData {
+    end_time?: string;
+    num_snoring_events?: integer;
+    samples?: SnoringSample[];
+    start_time?: string;
+    total_snoring_duration_seconds?: integer;
+}
+
+model SleepDurationsData {
+    asleep?: AsleepDurations;
+    awake?: AwakeDurations;
+    hypnogram_samples?: SleepHypnogramSample[];
+    other?: OtherSleepDurations;
+    sleep_efficiency?: integer;
+}
+
+model AsleepDurations {
+    duration_asleep_state_seconds?: integer;
+    duration_deep_sleep_state_seconds?: integer;
+    duration_light_sleep_state_seconds?: integer;
+    duration_REM_sleep_state_seconds?: integer;
+    num_REM_events?: integer;
+}
+
+model AwakeDurations {
+    duration_awake_state_seconds?: integer;
+    duration_long_interruption_seconds?: integer;
+    duration_short_interruption_seconds?: integer;
+    num_out_of_bed_events?: integer;
+    num_wakeup_events?: integer;
+    sleep_latency_seconds?: integer;
+    wake_up_latency_seconds?: integer;
+}
+
+model OtherSleepDurations {
+    duration_in_bed_seconds?: integer;
+    duration_unmeasurable_sleep_seconds?: integer;
+}
+
+model SleepTemperatureData {
+    delta?: integer;
+}
+
 @doc("Represents a specific type of physical activity.")
 enum ActivityType {
     `In Vehicle`: 0,
