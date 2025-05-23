@@ -2,7 +2,7 @@ import "@typespec/json-schema";
 
 using JsonSchema;
 
-@jsonSchema
+@jsonSchema("https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/")
 namespace Schemas;
 
 // Terrauser Model
