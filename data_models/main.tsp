@@ -12,6 +12,7 @@ model TerraUser {
     last_webhook_update?: string;
     scopes?: string;
     reference_id?: string;
+    active?: boolean;
 }
 // End of Terrauser Model
 
