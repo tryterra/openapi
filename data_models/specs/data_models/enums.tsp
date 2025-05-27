@@ -1069,3 +1069,24 @@ union MenstrualPhase {
     @doc("Menstrual cycle phase could not be determined.")
     UNKNOWN: "unknown",
 }
+
+@doc("Flag indicating the ketone sample type (e.g. blood, breath, urine)")
+@example(KetoneSampleType.BLOOD)
+@oneOf
+union KetoneSampleType {
+    @summary("Unknown")
+    @doc("The type of ketone sample is unknown or not specified.")
+    UNKNOWN: 0,
+
+    @summary("Blood")
+    @doc("Ketone sample taken from blood.")
+    BLOOD: 1,
+
+    @summary("Urine")
+    @doc("Ketone sample taken from urine.")
+    URINE: 2,
+
+    @summary("Breath")
+    @doc("Ketone sample taken from breath.")
+    BREATH: 3,
+}

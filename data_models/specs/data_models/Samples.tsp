@@ -26,7 +26,7 @@ model DrinkSample {
 model KetoneSample {
     timestamp: string;
     ketone_mg_per_dL: float;
-    sample_type: integer;
+    sample_type: KetoneSampleType;
 }
 
 model TorqueSample {
