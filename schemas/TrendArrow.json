@@ -10,5 +10,5 @@
         4,
         5
     ],
-    "description": "Represents glucose trend directions."
+    "description": "Flag indicating the current trend in the user's blood glucose level (e.g. rising, constant, falling)"
 }

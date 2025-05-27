@@ -9,5 +9,5 @@
         "breaststroke",
         "butterfly"
     ],
-    "description": "Represents different swimming stroke types."
+    "description": "Stroke type used for the workout step (e.g. breaststroke)"
 }

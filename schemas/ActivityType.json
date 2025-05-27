@@ -144,5 +144,8 @@
         147,
         148
     ],
-    "description": "Represents a specific type of physical activity."
+    "examples": [
+        8
+    ],
+    "description": "The type of activity performed for the associated workout."
 }

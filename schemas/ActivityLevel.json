@@ -9,5 +9,9 @@
         3,
         4,
         5
-    ]
+    ],
+    "examples": [
+        4
+    ],
+    "description": "Intensity of the user's activity at an instant in time"
 }

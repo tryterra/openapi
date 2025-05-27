@@ -9,5 +9,5 @@
         3,
         4
     ],
-    "description": "Represents the type of sleep upload."
+    "description": "The upload type for the associated workout, providing information on whether this was an automatic workout or user-entered"
 }

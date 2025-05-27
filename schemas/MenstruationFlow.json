@@ -10,5 +10,5 @@
         4,
         5
     ],
-    "description": "Represents menstruation flow intensity levels."
+    "description": "Flag indicating the strength of the user's menstrual flow"
 }

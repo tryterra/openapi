@@ -7,5 +7,5 @@
         1,
         2
     ],
-    "description": "Represents glucose measurement status flags."
+    "description": "Flag indicating state of user's blood glucose level"
 }

@@ -11,5 +11,5 @@
         5,
         6
     ],
-    "description": "Represents different types of meals."
+    "description": "Enum representing the category the consumed food/meal falls under (i.e. Breakfast/Lunch/Dinner etc)"
 }
