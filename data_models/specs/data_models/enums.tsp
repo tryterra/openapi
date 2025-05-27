@@ -758,20 +758,52 @@ union UploadType {
 }
 
 @doc("The upload type for the associated workout, providing information on whether this was an automatic workout or user-entered")
-enum SleepUploadType {
-    Unknown: 0,
-    Manual: 1,
-    Automatic: 2,
-    Tentative: 3,
-    Indeterminate: 4,
+@example(SleepUploadType.MANUAL)
+@oneOf
+union SleepUploadType {
+    @summary("Unknown")
+    @doc("The sleep data upload type is unknown or could not be determined.")
+    UNKNOWN: 0,
+
+    @summary("Manual")
+    @doc("The sleep data was manually entered by the user.")
+    MANUAL: 1,
+
+    @summary("Automatic")
+    @doc("The sleep data was automatically detected and recorded by a device or service.")
+    AUTOMATIC: 2,
+
+    @summary("Tentative")
+    @doc("The sleep data is preliminary or tentative and may be subject to change.")
+    TENTATIVE: 3,
+
+    @summary("Indeterminate")
+    @doc("The sleep data upload type cannot be clearly categorized.")
+    INDETERMINATE: 4,
 }
 
 @doc("Stroke type used for the workout step (e.g. breaststroke)")
-enum StrokeType {
+@example(StrokeType.BACKSTROKE)
+@oneOf
+union StrokeType {
+    @summary("Other")
+    @doc("Any swimming stroke style that doesn't fit the standard categories.")
     OTHER: "other",
+
+    @summary("Freestyle")
+    @doc("Front crawl stroke where swimmers alternate arm movements with face in water.")
     FREESTYLE: "freestyle",
+
+    @summary("Backstroke")
+    @doc("Swimming stroke performed on the back with alternating arm movements.")
     BACKSTROKE: "backstroke",
+
+    @summary("Breaststroke")
+    @doc("Swimming stroke where arms move simultaneously in a heart-shaped pattern with a frog kick.")
     BREASTSTROKE: "breaststroke",
+
+    @summary("Butterfly")
+    @doc("Swimming stroke with simultaneous overhead arm movements and dolphin kick.")
     BUTTERFLY: "butterfly",
 }
 
