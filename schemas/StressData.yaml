@@ -1,0 +1,30 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StressData.yaml
+type: object
+properties:
+  activity_stress_duration_seconds:
+    type: number
+  avg_stress_level:
+    type: number
+  body_battery_samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BodyBatterySample.yaml
+  high_stress_duration_seconds:
+    type: number
+  low_stress_duration_seconds:
+    type: number
+  max_stress_level:
+    type: number
+  medium_stress_duration_seconds:
+    type: number
+  rest_stress_duration_seconds:
+    type: number
+  samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StressSample.yaml
+  stress_duration_seconds:
+    type: number
+  stress_rating:
+    type: number

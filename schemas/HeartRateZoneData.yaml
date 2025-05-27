@@ -1,0 +1,20 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateZoneData.yaml
+type: object
+properties:
+  zone:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateZone.yaml
+  start_percentage:
+    type: number
+  end_percentage:
+    type: number
+  name:
+    type: string
+  duration_seconds:
+    type: number
+required:
+  - zone
+  - start_percentage
+  - end_percentage
+  - name
+  - duration_seconds

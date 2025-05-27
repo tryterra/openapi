@@ -1,0 +1,16 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyDistanceData.yaml
+type: object
+properties:
+  detailed:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceDataDetailed.yaml
+  distance_meters:
+    type: integer
+  elevation:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ElevationData.yaml
+  floors_climbed:
+    type: integer
+  steps:
+    type: integer
+  swimming:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SwimmingData.yaml

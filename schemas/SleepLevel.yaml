@@ -1,0 +1,34 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepLevel.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: Sleep level is unknown or could not be determined.
+    title: Unknown
+  - type: number
+    const: 1
+    description: User is awake during the sleep session.
+    title: Awake
+  - type: number
+    const: 2
+    description: User is in a general sleep state.
+    title: Sleeping
+  - type: number
+    const: 3
+    description: User has left the bed during a sleep session.
+    title: Out of bed
+  - type: number
+    const: 4
+    description: User is in light sleep stage.
+    title: Light sleep
+  - type: number
+    const: 5
+    description: User is in deep sleep stage.
+    title: Deep sleep
+  - type: number
+    const: 6
+    description: User is in REM sleep stage.
+    title: REM sleep
+examples:
+  - 2
+description: Represents the sleep level of the user during a sleep session, indicating the depth and quality of sleep

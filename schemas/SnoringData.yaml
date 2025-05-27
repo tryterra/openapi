@@ -1,0 +1,16 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SnoringData.yaml
+type: object
+properties:
+  end_time:
+    type: string
+  num_snoring_events:
+    type: integer
+  samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SnoringSample.yaml
+  start_time:
+    type: string
+  total_snoring_duration_seconds:
+    type: integer

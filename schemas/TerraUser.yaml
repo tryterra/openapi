@@ -1,0 +1,39 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
+type: object
+properties:
+  user_id:
+    type: string
+    examples:
+      - 123e4567-e89b-12d3-a456-426614174000
+    minLength: 1
+    description: Terra identifier for the wearable connection
+  provider:
+    type: string
+    examples:
+      - FITBIT
+    minLength: 1
+    description: Connection data source
+  last_webhook_update:
+    type: string
+    examples:
+      - 2022-12-12T10:00:00.000000+00:00
+    description: Last time at which a webhook update was sent for the connection
+  scopes:
+    type: string
+    examples:
+      - activity:read,sleep:read
+    description: (when available) Permissions granted by the user during authentication - to be used as debugging metadata
+  reference_id:
+    type: string
+    examples:
+      - user123@email.com
+    description: Connection identifier on the developer's end, used to tie connection back to a user on the developer's platform
+  active:
+    type: boolean
+    examples:
+      - true
+    description: "whether the user is active or not (inactive users will not receive any data updates and are in considered "
+required:
+  - user_id
+  - provider

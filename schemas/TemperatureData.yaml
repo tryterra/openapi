@@ -1,0 +1,32 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TemperatureData.yaml
+type: object
+properties:
+  ambient_temperature_samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TemperatureSample.yaml
+  body_temperature_samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TemperatureSample.yaml
+  skin_temperature_samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TemperatureSample.yaml
+  day_avg_blood_glucose_mg_per_dL:
+    type: integer
+  daily_patterns:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyPatternSample.yaml
+  detailed_blood_glucose_samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseDataSample.yaml
+  gmi:
+    type: number
+  sensor_usage:
+    type: integer
+  time_in_range:
+    type: integer

@@ -1,0 +1,11 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TemperatureSample.yaml
+type: object
+properties:
+  timestamp:
+    type: string
+  temperature_celsius:
+    type: number
+required:
+  - timestamp
+  - temperature_celsius

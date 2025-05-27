@@ -1,0 +1,32 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/UploadType.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: The upload type is unknown or could not be determined.
+    title: Unknown
+  - type: number
+    const: 1
+    description: The workout was automatically detected and recorded by a device or service.
+    title: Automatic
+  - type: number
+    const: 2
+    description: The workout was manually entered by the user.
+    title: Manual
+  - type: number
+    const: 3
+    description: The workout data represents an update to a previously recorded workout.
+    title: Update
+  - type: number
+    const: 4
+    description: The workout was marked for deletion.
+    title: Delete
+  - type: number
+    const: 5
+    description: The workout upload is pending processing or confirmation.
+    title: Pending
+  - type: number
+    const: 6
+    description: The workout was uploaded or synced from a third-party service or application.
+    title: Third party upload
+description: The type of upload for the associated workout, providing information on how the workout data was recorded or entered

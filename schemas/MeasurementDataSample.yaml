@@ -1,0 +1,56 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MeasurementDataSample.yaml
+type: object
+properties:
+  measurement_time:
+    type: string
+  BMI:
+    type: number
+  BMR:
+    type: number
+  RMR:
+    type: number
+  estimated_fitness_age:
+    type: number
+  skin_fold_mm:
+    type: number
+  bodyfat_percentage:
+    type: number
+  weight_kg:
+    type: number
+  height_cm:
+    type: number
+  bone_mass_g:
+    type: number
+  muscle_mass_g:
+    type: number
+  lean_mass_g:
+    type: number
+  water_percentage:
+    type: number
+  insulin_units:
+    type: number
+  insulin_type:
+    type: string
+  urine_color:
+    type: string
+  user_notes:
+    type: string
+required:
+  - measurement_time
+  - BMI
+  - BMR
+  - RMR
+  - estimated_fitness_age
+  - skin_fold_mm
+  - bodyfat_percentage
+  - weight_kg
+  - height_cm
+  - bone_mass_g
+  - muscle_mass_g
+  - lean_mass_g
+  - water_percentage
+  - insulin_units
+  - insulin_type
+  - urine_color
+  - user_notes

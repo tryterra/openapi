@@ -1,0 +1,23 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyPatternSample.yaml
+type: object
+properties:
+  time_from_midnight:
+    type: integer
+  percentile_5:
+    type: integer
+  percentile_25:
+    type: integer
+  percentile_50:
+    type: integer
+  percentile_75:
+    type: integer
+  percentile_95:
+    type: integer
+required:
+  - time_from_midnight
+  - percentile_5
+  - percentile_25
+  - percentile_50
+  - percentile_75
+  - percentile_95

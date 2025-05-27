@@ -1,0 +1,18 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseFlag.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: Blood glucose level is within the normal/healthy range.
+    title: Normal
+  - type: number
+    const: 1
+    description: Blood glucose level is above the normal range (hyperglycemia).
+    title: High
+  - type: number
+    const: 2
+    description: Blood glucose level is below the normal range (hypoglycemia).
+    title: Low
+examples:
+  - 1
+description: Flag indicating state of user's blood glucose level

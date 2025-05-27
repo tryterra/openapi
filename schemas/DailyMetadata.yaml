@@ -1,0 +1,16 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyMetadata.yaml
+type: object
+properties:
+  end_time:
+    type: string
+  start_time:
+    type: string
+  timestamp_localization:
+    type: integer
+  upload_type:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/UploadType.yaml
+required:
+  - end_time
+  - start_time
+  - upload_type

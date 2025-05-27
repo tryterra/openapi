@@ -1,0 +1,17 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseDataSample.yaml
+type: object
+properties:
+  timestamp:
+    type: string
+  blood_glucose_mg_per_dL:
+    type: number
+  glucose_level_flag:
+    type: integer
+  trend_arrow:
+    type: integer
+required:
+  - timestamp
+  - blood_glucose_mg_per_dL
+  - glucose_level_flag
+  - trend_arrow

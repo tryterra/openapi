@@ -1,0 +1,26 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LapSample.yaml
+type: object
+properties:
+  start_time:
+    type: string
+  end_time:
+    type: string
+  distance_meters:
+    type: number
+  calories:
+    type: number
+  total_strokes:
+    type: integer
+  stroke_type:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StrokeType.yaml
+  avg_speed_meters_per_second:
+    type: number
+required:
+  - start_time
+  - end_time
+  - distance_meters
+  - calories
+  - total_strokes
+  - stroke_type
+  - avg_speed_meters_per_second

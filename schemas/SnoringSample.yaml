@@ -1,0 +1,11 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SnoringSample.yaml
+type: object
+properties:
+  timestamp:
+    type: string
+  duration_seconds:
+    type: number
+required:
+  - timestamp
+  - duration_seconds

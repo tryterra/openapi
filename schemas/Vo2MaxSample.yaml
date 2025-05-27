@@ -1,0 +1,11 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Vo2MaxSample.yaml
+type: object
+properties:
+  timestamp:
+    type: string
+  vo2max_ml_per_min_per_kg:
+    type: number
+required:
+  - timestamp
+  - vo2max_ml_per_min_per_kg

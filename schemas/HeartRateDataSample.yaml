@@ -1,0 +1,17 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateDataSample.yaml
+type: object
+properties:
+  timestamp:
+    type: string
+  bpm:
+    type: number
+  timer_duration_seconds:
+    type: number
+  context:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateContext.yaml
+required:
+  - timestamp
+  - bpm
+  - timer_duration_seconds
+  - context

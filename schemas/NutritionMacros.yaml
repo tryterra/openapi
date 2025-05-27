@@ -1,0 +1,32 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMacros.yaml
+type: object
+properties:
+  calories:
+    type: number
+  protein_g:
+    type: number
+  carbohydrates_g:
+    type: number
+  fat_g:
+    type: number
+  sugar_g:
+    type: number
+  cholesterol_mg:
+    type: number
+  fiber_g:
+    type: number
+  sodium_mg:
+    type: number
+  alcohol_g:
+    type: number
+required:
+  - calories
+  - protein_g
+  - carbohydrates_g
+  - fat_g
+  - sugar_g
+  - cholesterol_mg
+  - fiber_g
+  - sodium_mg
+  - alcohol_g

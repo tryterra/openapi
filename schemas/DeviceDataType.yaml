@@ -1,0 +1,46 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeviceDataType.yaml
+oneOf:
+  - type: string
+    const: STEPS
+    description: Count of steps taken by the user.
+    title: Steps
+  - type: string
+    const: ACTIVE_MINUTES
+    description: Duration of time the user spent in physical activity.
+    title: Active Minutes
+  - type: string
+    const: BMR
+    description: User's basal metabolic rate - calories burned at rest.
+    title: Basal Metabolic Rate
+  - type: string
+    const: CALORIES
+    description: Calories burned by the user during activity.
+    title: Calories
+  - type: string
+    const: DISTANCE
+    description: Distance traveled by the user during activity.
+    title: Distance
+  - type: string
+    const: HEART_RATE
+    description: User's heart rate measurements.
+    title: Heart Rate
+  - type: string
+    const: OXYGEN_SATURATION
+    description: Blood oxygen saturation level (SpO2) of the user.
+    title: Oxygen Saturation
+  - type: string
+    const: SLEEP_TYPE
+    description: Classification of user's sleep stages or types.
+    title: Sleep Classification
+  - type: string
+    const: SPEED
+    description: User's movement speed during activity.
+    title: Speed
+  - type: string
+    const: CADENCE
+    description: Rate of movement repetition during activity (steps per minute).
+    title: Cadence
+examples:
+  - STEPS
+description: Represents data types that a certain device contributed to.

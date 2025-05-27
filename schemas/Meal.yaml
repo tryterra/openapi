@@ -1,0 +1,26 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Meal.yaml
+type: object
+properties:
+  name:
+    type: string
+  id:
+    type: string
+  timestamp:
+    type: string
+  type:
+    type: integer
+  quantity:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionQuantity.yaml
+  macros:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMacros.yaml
+  micros:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMicros.yaml
+required:
+  - name
+  - id
+  - timestamp
+  - type
+  - quantity
+  - macros
+  - micros

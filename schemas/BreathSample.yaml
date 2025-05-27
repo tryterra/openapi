@@ -1,0 +1,11 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BreathSample.yaml
+type: object
+properties:
+  timestamp:
+    type: string
+  breaths_per_min:
+    type: number
+required:
+  - timestamp
+  - breaths_per_min

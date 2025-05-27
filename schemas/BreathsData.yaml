@@ -1,0 +1,20 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BreathsData.yaml
+type: object
+properties:
+  avg_breaths_per_min:
+    type: integer
+  end_time:
+    type: string
+  max_breaths_per_min:
+    type: integer
+  min_breaths_per_min:
+    type: integer
+  on_demand_reading:
+    type: boolean
+  samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BreathSample.yaml
+  start_time:
+    type: string

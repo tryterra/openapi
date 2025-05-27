@@ -1,0 +1,34 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateZone.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: Resting heart rate zone.
+    title: Zone 0
+  - type: number
+    const: 1
+    description: Very light activity zone.
+    title: Zone 1
+  - type: number
+    const: 2
+    description: Light activity zone.
+    title: Zone 2
+  - type: number
+    const: 3
+    description: Moderate activity zone.
+    title: Zone 3
+  - type: number
+    const: 4
+    description: Hard activity zone.
+    title: Zone 4
+  - type: number
+    const: 5
+    description: Maximum effort zone.
+    title: Zone 5
+  - type: number
+    const: 6
+    description: Heart rate zone that doesn't fit into the standard zones or couldn't be classified.
+    title: Other
+examples:
+  - 2
+description: Represents the heart rate zone the user is currently in during a workout or activity

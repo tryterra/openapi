@@ -1,0 +1,30 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TrendArrow.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: Glucose trend cannot be determined.
+    title: Unknown
+  - type: number
+    const: 1
+    description: Glucose level is decreasing rapidly.
+    title: Falling Quickly
+  - type: number
+    const: 2
+    description: Glucose level is decreasing gradually.
+    title: Falling
+  - type: number
+    const: 3
+    description: Glucose level is remaining stable.
+    title: Flat
+  - type: number
+    const: 4
+    description: Glucose level is increasing gradually.
+    title: Rising
+  - type: number
+    const: 5
+    description: Glucose level is increasing rapidly.
+    title: Rising Quickly
+examples:
+  - 4
+description: Flag indicating the current trend in the user's blood glucose level (e.g. rising, constant, falling)

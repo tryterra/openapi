@@ -1,0 +1,14 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StepSample.yaml
+type: object
+properties:
+  timestamp:
+    type: string
+  steps:
+    type: integer
+  timer_duration_seconds:
+    type: number
+required:
+  - timestamp
+  - steps
+  - timer_duration_seconds
