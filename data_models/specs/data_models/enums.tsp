@@ -659,14 +659,36 @@ union ActivityLevel {
     HIGH_INTENSITY: 5,
 }
 
+@doc("Represents the heart rate zone the user is currently in during a workout or activity")
 @example(HeartRateZone.ZONE_2)
-enum HeartRateZone {
+@oneOf
+union HeartRateZone {
+    @summary("Zone 0")
+    @doc("Resting heart rate zone.")
     ZONE_0: 0,
+
+    @summary("Zone 1")
+    @doc("Very light activity zone.")
     ZONE_1: 1,
+
+    @summary("Zone 2")
+    @doc("Light activity zone.")
     ZONE_2: 2,
+
+    @summary("Zone 3")
+    @doc("Moderate activity zone.")
     ZONE_3: 3,
+
+    @summary("Zone 4")
+    @doc("Hard activity zone.")
     ZONE_4: 4,
+
+    @summary("Zone 5")
+    @doc("Maximum effort zone.")
     ZONE_5: 5,
+
+    @summary("Other")
+    @doc("Heart rate zone that doesn't fit into the standard zones or couldn't be classified.")
     OTHER: 6,
 }
 
