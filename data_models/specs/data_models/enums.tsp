@@ -208,7 +208,7 @@ enum UploadType {
     `Third party upload`: 6,
 }
 
-@doc("Represents the type of sleep upload.")
+@doc("The upload type for the associated workout, providing information on whether this was an automatic workout or user-entered")
 enum SleepUploadType {
     Unknown: 0,
     Manual: 1,
@@ -217,7 +217,7 @@ enum SleepUploadType {
     Indeterminate: 4,
 }
 
-@doc("Represents different swimming stroke types.")
+@doc("Stroke type used for the workout step (e.g. breaststroke)")
 enum StrokeType {
     OTHER: "other",
     FREESTYLE: "freestyle",
@@ -226,14 +226,14 @@ enum StrokeType {
     BUTTERFLY: "butterfly",
 }
 
-@doc("Represents glucose measurement status flags.")
+@doc("Flag indicating state of user's blood glucose level")
 enum GlucoseFlag {
     NORMAL: 0,
     HIGH: 1,
     LOW: 2,
 }
 
-@doc("Represents units used for nutrition measurements.")
+@doc("Represents units used for nutrition measurements")
 enum NutritionUnits {
     Unknown: 0,
     Gram: 1,
@@ -250,7 +250,7 @@ enum NutritionUnits {
     `Fluid Ounce`: 12,
 }
 
-@doc("Represents physical recovery status levels.")
+@doc("User's recovery score for a given day, resulting from the sleep session")
 enum RecoveryLevel {
     Unknown: 0,
     `Very Poor`: 1,
@@ -261,7 +261,7 @@ enum RecoveryLevel {
     `Very Good`: 6,
 }
 
-@doc("Represents glucose trend directions.")
+@doc("Flag indicating the current trend in the user's blood glucose level (e.g. rising, constant, falling)")
 enum TrendArrow {
     UNKNOWN: 0,
     FALLING_QUICKLY: 1,
@@ -271,7 +271,7 @@ enum TrendArrow {
     RISING_QUICKLY: 5,
 }
 
-@doc("Represents menstruation flow intensity levels.")
+@doc("Flag indicating the strength of the user's menstrual flow")
 enum MenstruationFlow {
     UNKNOWN: 0,
     NONE: 1,
@@ -281,7 +281,7 @@ enum MenstruationFlow {
     HAD: 5,
 }
 
-@doc("Represents different types of meals.")
+@doc("Enum representing the category the consumed food/meal falls under (i.e. Breakfast/Lunch/Dinner etc)")
 enum MealType {
     UNKNOWN: 0,
     BREAKFAST: 1,
