@@ -692,13 +692,36 @@ union HeartRateZone {
     OTHER: 6,
 }
 
-enum SleepLevel {
-    Unknown: 0,
-    Awake: 1,
-    Sleeping: 2,
-    `Out of bed`: 3,
-    Light: 4,
-    Deep: 5,
+@doc("Represents the sleep level of the user during a sleep session, indicating the depth and quality of sleep")
+@example(SleepLevel.SLEEPING)
+@oneOf
+union SleepLevel {
+    @summary("Unknown")
+    @doc("Sleep level is unknown or could not be determined.")
+    UNKNOWN: 0,
+
+    @summary("Awake")
+    @doc("User is awake during the sleep session.")
+    AWAKE: 1,
+
+    @summary("Sleeping")
+    @doc("User is in a general sleep state.")
+    SLEEPING: 2,
+
+    @summary("Out of bed")
+    @doc("User has left the bed during a sleep session.")
+    OUT_OF_BED: 3,
+
+    @summary("Light sleep")
+    @doc("User is in light sleep stage.")
+    LIGHT: 4,
+
+    @summary("Deep sleep")
+    @doc("User is in deep sleep stage.")
+    DEEP: 5,
+
+    @summary("REM sleep")
+    @doc("User is in REM sleep stage.")
     REM: 6,
 }
 
