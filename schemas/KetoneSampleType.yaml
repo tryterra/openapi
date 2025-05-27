@@ -1,0 +1,22 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/KetoneSampleType.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: The type of ketone sample is unknown or not specified.
+    title: Unknown
+  - type: number
+    const: 1
+    description: Ketone sample taken from blood.
+    title: Blood
+  - type: number
+    const: 2
+    description: Ketone sample taken from urine.
+    title: Urine
+  - type: number
+    const: 3
+    description: Ketone sample taken from breath.
+    title: Breath
+examples:
+  - 1
+description: Flag indicating the ketone sample type (e.g. blood, breath, urine)

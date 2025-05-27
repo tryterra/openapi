@@ -7,7 +7,7 @@ properties:
   ketone_mg_per_dL:
     type: number
   sample_type:
-    type: integer
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/KetoneSampleType.yaml
 required:
   - timestamp
   - ketone_mg_per_dL
