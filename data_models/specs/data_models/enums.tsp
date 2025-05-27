@@ -882,23 +882,64 @@ union NutritionUnits {
 }
 
 @doc("User's recovery score for a given day, resulting from the sleep session")
-enum RecoveryLevel {
-    Unknown: 0,
-    `Very Poor`: 1,
-    Poor: 2,
-    Compromised: 3,
-    Ok: 4,
-    Good: 5,
-    `Very Good`: 6,
+@example(RecoveryLevel.GOOD)
+@oneOf
+union RecoveryLevel {
+    @summary("Unknown")
+    @doc("Recovery level could not be determined or is not available.")
+    UNKNOWN: 0,
+
+    @summary("Very Poor")
+    @doc("Extremely low recovery.")
+    VERY_POOR: 1,
+
+    @summary("Poor")
+    @doc("Low recovery level.")
+    POOR: 2,
+
+    @summary("Compromised")
+    @doc("Below average recovery.")
+    COMPROMISED: 3,
+
+    @summary("Ok")
+    @doc("Moderate recovery level.")
+    OK: 4,
+
+    @summary("Good")
+    @doc("Above average recovery.")
+    GOOD: 5,
+
+    @summary("Very Good")
+    @doc("Excellent recovery level.")
+    VERY_GOOD: 6,
 }
 
 @doc("Flag indicating the current trend in the user's blood glucose level (e.g. rising, constant, falling)")
-enum TrendArrow {
+@example(TrendArrow.RISING)
+@oneOf
+union TrendArrow {
+    @summary("Unknown")
+    @doc("Glucose trend cannot be determined.")
     UNKNOWN: 0,
+
+    @summary("Falling Quickly")
+    @doc("Glucose level is decreasing rapidly.")
     FALLING_QUICKLY: 1,
+
+    @summary("Falling")
+    @doc("Glucose level is decreasing gradually.")
     FALLING: 2,
+
+    @summary("Flat")
+    @doc("Glucose level is remaining stable.")
     FLAT: 3,
+
+    @summary("Rising")
+    @doc("Glucose level is increasing gradually.")
     RISING: 4,
+
+    @summary("Rising Quickly")
+    @doc("Glucose level is increasing rapidly.")
     RISING_QUICKLY: 5,
 }
 
