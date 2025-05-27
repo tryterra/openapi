@@ -808,27 +808,77 @@ union StrokeType {
 }
 
 @doc("Flag indicating state of user's blood glucose level")
-enum GlucoseFlag {
+@example(GlucoseFlag.HIGH)
+@oneOf
+union GlucoseFlag {
+    @summary("Normal")
+    @doc("Blood glucose level is within the normal/healthy range.")
     NORMAL: 0,
+
+    @summary("High")
+    @doc("Blood glucose level is above the normal range (hyperglycemia).")
     HIGH: 1,
+
+    @summary("Low")
+    @doc("Blood glucose level is below the normal range (hypoglycemia).")
     LOW: 2,
 }
 
 @doc("Represents units used for nutrition measurements")
-enum NutritionUnits {
-    Unknown: 0,
-    Gram: 1,
-    Teaspoon: 2,
-    Tablespoon: 3,
-    Cup: 4,
-    `Medium Egg`: 5,
-    `Large Egg`: 6,
-    `Small Egg`: 7,
-    Milliliter: 8,
-    Ounce: 9,
-    Count: 10,
-    Scoop: 11,
-    `Fluid Ounce`: 12,
+@example(NutritionUnits.CUP)
+@oneOf
+union NutritionUnits {
+    @summary("Unknown")
+    @doc("The unit of measurement is unknown or not specified.")
+    UNKNOWN: 0,
+
+    @summary("Gram")
+    @doc("Measurement in grams, a metric unit of mass.")
+    GRAM: 1,
+
+    @summary("Teaspoon")
+    @doc("Measurement in teaspoons, approximately 5 milliliters.")
+    TEASPOON: 2,
+
+    @summary("Tablespoon")
+    @doc("Measurement in tablespoons, approximately 15 milliliters.")
+    TABLESPOON: 3,
+
+    @summary("Cup")
+    @doc("Measurement in cups, approximately 240 milliliters.")
+    CUP: 4,
+
+    @summary("Medium Egg")
+    @doc("Quantity measured in medium-sized eggs.")
+    MEDIUM_EGG: 5,
+
+    @summary("Large Egg")
+    @doc("Quantity measured in large-sized eggs.")
+    LARGE_EGG: 6,
+
+    @summary("Small Egg")
+    @doc("Quantity measured in small-sized eggs.")
+    SMALL_EGG: 7,
+
+    @summary("Milliliter")
+    @doc("Measurement in milliliters, a metric unit of volume.")
+    MILLILITER: 8,
+
+    @summary("Ounce")
+    @doc("Measurement in ounces, approximately 28 grams.")
+    OUNCE: 9,
+
+    @summary("Count")
+    @doc("Quantity measured by individual count or number of items.")
+    COUNT: 10,
+
+    @summary("Scoop")
+    @doc("Quantity measured in scoops, typically used for protein powder or supplements.")
+    SCOOP: 11,
+
+    @summary("Fluid Ounce")
+    @doc("Measurement in fluid ounces, approximately 30 milliliters.")
+    FLUID_OUNCE: 12,
 }
 
 @doc("User's recovery score for a given day, resulting from the sleep session")
