@@ -9,6 +9,7 @@ import "./specs/data_models/Sleep.tsp";
 import "./specs/data_models/Nutrition.tsp";
 import "./specs/data_models/Menstruation.tsp";
 import "./specs/data_models/Athlete.tsp";
+import "./specs/data_models/Body.tsp";
 
 using JsonSchema;
 
