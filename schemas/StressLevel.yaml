@@ -1,10 +1,26 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StressLevel.yaml
-type: number
-enum:
-  - 0
-  - 1
-  - 2
+oneOf:
+  - type: number
+    const: 0
+    description: Stress level is unknown or could not be determined.
+    title: Unknown
+  - type: number
+    const: 1
+    description: Very low stress level (range 1-25).
+    title: Rest
+  - type: number
+    const: 2
+    description: Low stress level (range 26-50).
+    title: Low
+  - type: number
+    const: 3
+    description: Moderate stress level (range 51-75).
+    title: Medium
+  - type: number
+    const: 4
+    description: High stress level (range 76-100).
+    title: High
+examples:
   - 3
-  - 4
 description: Represents stress level ranges.

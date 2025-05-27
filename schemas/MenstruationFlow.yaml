@@ -1,11 +1,30 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationFlow.yaml
-type: number
-enum:
-  - 0
-  - 1
-  - 2
-  - 3
+oneOf:
+  - type: number
+    const: 0
+    description: Flow status is unknown or not recorded.
+    title: Unknown
+  - type: number
+    const: 1
+    description: No menstrual flow present.
+    title: None
+  - type: number
+    const: 2
+    description: Light menstrual flow.
+    title: Light
+  - type: number
+    const: 3
+    description: Moderate menstrual flow.
+    title: Medium
+  - type: number
+    const: 4
+    description: Heavy menstrual flow.
+    title: Heavy
+  - type: number
+    const: 5
+    description: Menstrual flow occurred but intensity not specified.
+    title: Had
+examples:
   - 4
-  - 5
 description: Flag indicating the strength of the user's menstrual flow
