@@ -586,27 +586,76 @@ union AFibFlag {
 }
 
 @doc("Represents data types that a certain device contributed to.")
-enum DeviceDataType {
-    Steps: "STEPS",
-    `Active Minutes`: "ACTIVE_MINUTES",
+@example(DeviceDataType.STEPS)
+@oneOf
+union DeviceDataType {
+    @summary("Steps")
+    @doc("Count of steps taken by the user.")
+    STEPS: "STEPS",
+
+    @summary("Active Minutes")
+    @doc("Duration of time the user spent in physical activity.")
+    ACTIVE_MINUTES: "ACTIVE_MINUTES",
+
+    @summary("Basal Metabolic Rate")
+    @doc("User's basal metabolic rate - calories burned at rest.")
     BMR: "BMR",
-    Calories: "CALORIES",
-    Distance: "DISTANCE",
-    `Heart Rate`: "HEART_RATE",
-    `Oxygen Saturation (SpO2)`: "OXYGEN_SATURATION",
-    `Sleep type classification`: "SLEEP_TYPE",
-    Speed: "SPEED",
-    Cadence: "CADENCE",
+
+    @summary("Calories")
+    @doc("Calories burned by the user during activity.")
+    CALORIES: "CALORIES",
+
+    @summary("Distance")
+    @doc("Distance traveled by the user during activity.")
+    DISTANCE: "DISTANCE",
+
+    @summary("Heart Rate")
+    @doc("User's heart rate measurements.")
+    HEART_RATE: "HEART_RATE",
+
+    @summary("Oxygen Saturation")
+    @doc("Blood oxygen saturation level (SpO2) of the user.")
+    OXYGEN_SATURATION: "OXYGEN_SATURATION",
+
+    @summary("Sleep Classification")
+    @doc("Classification of user's sleep stages or types.")
+    SLEEP_TYPE: "SLEEP_TYPE",
+
+    @summary("Speed")
+    @doc("User's movement speed during activity.")
+    SPEED: "SPEED",
+
+    @summary("Cadence")
+    @doc("Rate of movement repetition during activity (steps per minute).")
+    CADENCE: "CADENCE",
 }
 
 @doc("Intensity of the user's activity at an instant in time")
 @example(ActivityLevel.MEDIUM_INTENSITY)
-enum ActivityLevel {
+@oneOf
+union ActivityLevel {
+    @summary("Unknown")
+    @doc("Activity level is unknown or could not be determined.")
     UNKNOWN: 0,
+
+    @summary("Rest")
+    @doc("User is at rest, with minimal to no physical activity.")
     REST: 1,
+
+    @summary("Inactive")
+    @doc("User is awake but inactive or sedentary.")
     INACTIVE: 2,
+
+    @summary("Low Intensity")
+    @doc("User is engaged in light physical activity such as casual walking.")
     LOW_INTENSITY: 3,
+
+    @summary("Medium Intensity")
+    @doc("User is engaged in moderate physical activity such as brisk walking or light exercise.")
     MEDIUM_INTENSITY: 4,
+
+    @summary("High Intensity")
+    @doc("User is engaged in vigorous physical activity such as running or intense exercise.")
     HIGH_INTENSITY: 5,
 }
 
