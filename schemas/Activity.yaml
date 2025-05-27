@@ -7,7 +7,7 @@ properties:
   calories_data:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/CaloriesData.yaml
   cheat_detection:
-    $ref: "#/$defs/RecordUnknown"
+    type: number
   data_enrichment:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataEnrichment.yaml
   device_data:
@@ -42,8 +42,3 @@ properties:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WorkData.yaml
 required:
   - metadata
-$defs:
-  RecordUnknown:
-    type: object
-    properties: {}
-    unevaluatedProperties: {}

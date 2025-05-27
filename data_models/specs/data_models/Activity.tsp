@@ -7,7 +7,7 @@ namespace Schemas;
 model Activity {
     active_durations_data?: ActiveDurationsData;
     calories_data?: CaloriesData;
-    cheat_detection?: Record<unknown>;
+    cheat_detection?: float;
     data_enrichment?: DataEnrichment;
     device_data?: DeviceData;
     distance_data?: DistanceData;
