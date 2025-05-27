@@ -725,14 +725,36 @@ union SleepLevel {
     REM: 6,
 }
 
-enum UploadType {
-    Unknown: 0,
-    Automatic: 1,
-    Manual: 2,
-    Update: 3,
-    Delete: 4,
-    Pending: 5,
-    `Third party upload`: 6,
+@doc("The type of upload for the associated workout, providing information on how the workout data was recorded or entered")
+@oneOf
+union UploadType {
+    @summary("Unknown")
+    @doc("The upload type is unknown or could not be determined.")
+    UNKNOWN: 0,
+
+    @summary("Automatic")
+    @doc("The workout was automatically detected and recorded by a device or service.")
+    AUTOMATIC: 1,
+
+    @summary("Manual")
+    @doc("The workout was manually entered by the user.")
+    MANUAL: 2,
+
+    @summary("Update")
+    @doc("The workout data represents an update to a previously recorded workout.")
+    UPDATE: 3,
+
+    @summary("Delete")
+    @doc("The workout was marked for deletion.")
+    DELETE: 4,
+
+    @summary("Pending")
+    @doc("The workout upload is pending processing or confirmation.")
+    PENDING: 5,
+
+    @summary("Third party upload")
+    @doc("The workout was uploaded or synced from a third-party service or application.")
+    THIRD_PARTY_UPLOAD: 6,
 }
 
 @doc("The upload type for the associated workout, providing information on whether this was an automatic workout or user-entered")
