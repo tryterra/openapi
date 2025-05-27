@@ -1,6 +1,7 @@
 namespace Schemas;
 
 @doc("The type of activity performed for the associated workout.")
+@example(ActivityType.RUNNING)
 enum ActivityType {
     IN_VEHICLE: 0,
     BIKING: 1,
@@ -144,6 +145,7 @@ enum ActivityType {
     HURLING: 148,
 }
 
+@doc("Flag indicating the atrial fibrillation classification of the individual")
 enum AFibFlag {
     `Negative (AFib not present)`: 0,
     `Positive (AFib present)`: 1,
@@ -226,9 +228,9 @@ enum StrokeType {
 
 @doc("Represents glucose measurement status flags.")
 enum GlucoseFlag {
-    Normal: 0,
-    High: 1,
-    Low: 2,
+    NORMAL: 0,
+    HIGH: 1,
+    LOW: 2,
 }
 
 @doc("Represents units used for nutrition measurements.")
