@@ -569,10 +569,20 @@ union ActivityType {
 }
 
 @doc("Flag indicating the atrial fibrillation classification of the individual")
-enum AFibFlag {
-    `Negative (AFib not present)`: 0,
-    `Positive (AFib present)`: 1,
-    Inconclusive: 2,
+@example(AFibFlag.POSITIVE)
+@oneOf
+union AFibFlag {
+    @summary("Negative")
+    @doc("AFib was not detected in the heart rhythm analysis.")
+    NEGATIVE: 0,
+
+    @summary("Positive")
+    @doc("AFib was detected in the heart rhythm analysis.")
+    POSITIVE: 1,
+
+    @summary("Inconclusive")
+    @doc("The heart rhythm analysis couldn't determine whether AFib was present or absent.")
+    INCONCLUSIVE: 2,
 }
 
 @doc("Represents data types that a certain device contributed to.")
