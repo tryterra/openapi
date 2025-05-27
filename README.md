@@ -10,5 +10,5 @@ tsp compile . --emit=@typespec/json-schema
 
 ### Bundling
 ```sh
-redocly bundle v5.yml -o v5-joined.yaml
+redocly bundle v5.yml -o v5-bundled.yaml
 ```
