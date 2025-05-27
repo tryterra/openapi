@@ -944,12 +944,31 @@ union TrendArrow {
 }
 
 @doc("Flag indicating the strength of the user's menstrual flow")
-enum MenstruationFlow {
+@example(MenstruationFlow.HEAVY)
+@oneOf
+union MenstruationFlow {
+    @summary("Unknown")
+    @doc("Flow status is unknown or not recorded.")
     UNKNOWN: 0,
+
+    @summary("None")
+    @doc("No menstrual flow present.")
     NONE: 1,
+
+    @summary("Light")
+    @doc("Light menstrual flow.")
     LIGHT: 2,
+
+    @summary("Medium")
+    @doc("Moderate menstrual flow.")
     MEDIUM: 3,
+
+    @summary("Heavy")
+    @doc("Heavy menstrual flow.")
     HEAVY: 4,
+
+    @summary("Had")
+    @doc("Menstrual flow occurred but intensity not specified.")
     HAD: 5,
 }
 
@@ -965,31 +984,88 @@ enum MealType {
 }
 
 @doc("Represents stress level ranges.")
-enum StressLevel {
+@example(StressLevel.MEDIUM)
+@oneOf
+union StressLevel {
+    @summary("Unknown")
+    @doc("Stress level is unknown or could not be determined.")
     UNKNOWN: 0,
-    REST: 1, // Represents range 1-25
-    LOW: 2, // Represents range 26-50
-    MEDIUM: 3, // Represents range 51-75
-    HIGH: 4, // Represents range 76-100
+
+    @summary("Rest")
+    @doc("Very low stress level (range 1-25).")
+    REST: 1,
+
+    @summary("Low")
+    @doc("Low stress level (range 26-50).")
+    LOW: 2,
+
+    @summary("Medium")
+    @doc("Moderate stress level (range 51-75).")
+    MEDIUM: 3,
+
+    @summary("High")
+    @doc("High stress level (range 76-100).")
+    HIGH: 4,
 }
 
 @doc("Represents the context in which heart rate was measured.")
-enum HeartRateContext {
+@example(HeartRateContext.ACTIVE)
+@oneOf
+union HeartRateContext {
+    @summary("Not Set")
+    @doc("Heart rate measurement context is not specified.")
     NOT_SET: 0,
+
+    @summary("Active")
+    @doc("Heart rate was measured during physical activity or exercise.")
     ACTIVE: 1,
+
+    @summary("Not Active")
+    @doc("Heart rate was measured during rest or non-active periods.")
     NOT_ACTIVE: 2,
 }
 
 @doc("Represents menstrual cycle phases.")
-enum MenstrualPhase {
+@example(MenstrualPhase.MENSTRUAL)
+@oneOf
+union MenstrualPhase {
+    @summary("Menstrual")
+    @doc("The menstrual phase when bleeding occurs.")
     MENSTRUAL: "menstrual",
+
+    @summary("Follicular")
+    @doc("The follicular phase when follicles in ovaries develop.")
     FOLLICULAR: "follicular",
+
+    @summary("Ovulation")
+    @doc("The ovulation phase when an egg is released.")
     OVULATION: "ovulation",
+
+    @summary("Luteal")
+    @doc("The luteal phase following ovulation.")
     LUTEAL: "luteal",
+
+    @summary("PMS")
+    @doc("Premenstrual syndrome phase before menstruation begins.")
     PMS: "pms",
+
+    @summary("Fertile")
+    @doc("The fertile window when conception is most likely.")
     FERTILE: "fertile",
+
+    @summary("First Trimester")
+    @doc("First third of pregnancy, weeks 1-12.")
     FIRST_TRIMESTER: "first_trimester",
+
+    @summary("Second Trimester")
+    @doc("Middle third of pregnancy, weeks 13-26.")
     SECOND_TRIMESTER: "second_trimester",
+
+    @summary("Third Trimester")
+    @doc("Final third of pregnancy, weeks 27-40.")
     THIRD_TRIMESTER: "third_trimester",
+
+    @summary("Unknown")
+    @doc("Menstrual cycle phase could not be determined.")
     UNKNOWN: "unknown",
 }
