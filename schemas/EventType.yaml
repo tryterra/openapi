@@ -1,0 +1,23 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/EventType.yaml
+type: string
+enum:
+  - auth
+  - deauth
+  - user_reauth
+  - access_revoked
+  - connection_error
+  - google_no_datasource
+  - processing
+  - large_request_sending
+  - rate_limit_hit
+  - large_request_processing
+  - activity
+  - athlete
+  - body
+  - daily
+  - menstruation
+  - nutrition
+  - sleep
+  - healthcheck
+  - s3_upload

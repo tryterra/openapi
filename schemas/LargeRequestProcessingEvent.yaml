@@ -1,0 +1,29 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LargeRequestProcessingEvent.yaml
+type: object
+properties:
+  type:
+    type: string
+    const: large_request_processing
+  status:
+    type: string
+    const: processing
+    description: Status of the processing
+  message:
+    type: string
+    description: Information about the processing
+  user:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
+    description: User whose data is being processed
+  reference:
+    type: string
+    description: Reference ID for tracking this request
+required:
+  - type
+  - status
+  - message
+  - user
+  - reference
+allOf:
+  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEvent.yaml
+description: Large request processing event

@@ -1,0 +1,13 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEvent.yaml
+type: object
+properties:
+  type:
+    type: string
+    description: The type of event
+  status:
+    type: string
+    description: Status of the event
+required:
+  - type
+description: Base webhook event structure that all events extend from
