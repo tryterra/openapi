@@ -455,7 +455,7 @@ paths:
                   - $ref: '#/components/schemas/DataSentToWebhook'
                   - $ref: '#/components/schemas/RequestProcessing'
                   - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingResponse'
+                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
         '400':
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
@@ -744,7 +744,7 @@ paths:
                   - $ref: '#/components/schemas/DataSentToWebhook'
                   - $ref: '#/components/schemas/RequestProcessing'
                   - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingResponse'
+                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
         '400':
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
@@ -1070,7 +1070,7 @@ paths:
                   - $ref: '#/components/schemas/DataSentToWebhook'
                   - $ref: '#/components/schemas/RequestProcessing'
                   - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingResponse'
+                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
         '400':
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
@@ -1192,7 +1192,7 @@ paths:
                   - $ref: '#/components/schemas/DataSentToWebhook'
                   - $ref: '#/components/schemas/RequestProcessing'
                   - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingResponse'
+                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
         '400':
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
@@ -1314,7 +1314,7 @@ paths:
                   - $ref: '#/components/schemas/DataSentToWebhook'
                   - $ref: '#/components/schemas/RequestProcessing'
                   - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingResponse'
+                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
         '400':
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
@@ -1641,7 +1641,7 @@ paths:
                   - $ref: '#/components/schemas/DataSentToWebhook'
                   - $ref: '#/components/schemas/RequestProcessing'
                   - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingResponse'
+                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
         '400':
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
@@ -4053,316 +4053,32 @@ components:
           type: object
           allOf:
             - $ref: '#/components/schemas/PlannedWorkoutMetadata'
-    UserAuthWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user for which this authentication webhook is for
-          items:
-            $ref: '#/components/schemas/TerraUser'
-        widget_session_id:
-          description: The widget session from which the user authenticated from
-          type: string
-          nullable: true
-        reference_id:
-          type: string
-          description: Connection identifier on the developer's end, used to tie connection back to a user on the developer's platform
-          nullable: true
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'auth'
-        status:
-          type: string
-          enum:
-            - success
-            - error
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
-    PermissionChangeWebhook:
-      type: object
-      properties:
-        type:
-          type: string
-          description: The type of webhook event received. For this webhook, this would be 'permission_change'.
-        user:
-          type: object
-          description: The user for which this permission change webhook is for
-          items:
-            $ref: '#/components/schemas/TerraUser'
-        status:
-          type: string
-          enum:
-            - success
-          description: Status of the webhook event.
-        message:
-          type: string
-          description: A message describing the webhook event.
-        version:
-          type: string
-          description: The version of the webhook.
-          nullable: false
-        scopes_added:
-          type: string
-          description: A comma-separated list of scopes that were added during the permission change.
-        scopes_removed:
-          type: string
-          description: A comma-separated list of scopes that were removed during the permission change.
-    UserReauthWebhook:
-      type: object
-      properties:
-        old_user:
-          type: object
-          description: The old user that was authenticated
-          items:
-            $ref: '#/components/schemas/TerraUser'
-        new_user:
-          type: object
-          description: The new user that was authenticated
-          items:
-            $ref: '#/components/schemas/TerraUser'
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'user_reauth'
-        status:
-          type: string
-          enum:
-            - success
-            - error
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
-    UserDeauthWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user that was deauthenticated
-          items:
-            $ref: '#/components/schemas/TerraUser'
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'deauth'
-        status:
-          type: string
-          enum:
-            - success
-            - error
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
-    AccessRevokedWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user for which has revoked access to Terra or your application
-          items:
-            $ref: '#/components/schemas/TerraUser'
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'access_revoked'
-        status:
-          type: string
-          enum:
-            - success
-            - error
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
-    GoogleNoDataSourceWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user for which no google data sources can be found for.
-          items:
-            $ref: '#/components/schemas/TerraUser'
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'google_no_datasource'
-        status:
-          type: string
-          enum:
-            - success
-            - error
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
-    ConnectionErrorWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: A connection error has happened for this user. Generally this means, you should deauthenticate them.
-          items:
-            $ref: '#/components/schemas/TerraUser'
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'connection_error'
-        status:
-          type: string
-          enum:
-            - success
-            - error
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
     DataProcessingWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user for which data is processing for
-          items:
-            $ref: '#/components/schemas/TerraUser'
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'processing'
-        status:
-          type: string
-          enum:
-            - success
-            - error
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
+      $ref: '#/components/schemas/ProcessingEvent'
+    UserAuthWebhook:
+      $ref: '#/components/schemas/AuthSuccessEvent'
+    UserAuthWebhookError:
+      $ref: '#/components/schemas/AuthErrorEvent'
+    PermissionChangeWebhook:
+      $ref: '#/components/schemas/PermissionChangeEvent'
+    UserReauthWebhook:
+      $ref: '#/components/schemas/UserReauthEvent'
+    UserDeauthWebhook:
+      $ref: '#/components/schemas/DeauthEvent'
+    AccessRevokedWebhook:
+      $ref: '#/components/schemas/AccessRevokedEvent'
+    GoogleNoDataSourceWebhook:
+      $ref: '#/components/schemas/GoogleNoDatasourceEvent'
+    ConnectionErrorWebhook:
+      $ref: '#/components/schemas/ConnectionErrorEvent'
     LargeRequestSendingWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user for which large request is sending for
-          items:
-            $ref: '#/components/schemas/TerraUser'
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        expected_payloads:
-          type: number
-          description: The number of payloads you should be expecting from the large request
-        reference:
-          type: string
-          description: The reference for which all payloads will have in their 'terra-reference' headers
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'large_request_sending'
-        status:
-          type: string
-          enum:
-            - success
-            - error
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
+      $ref: '#/components/schemas/LargeRequestSendingEvent'
     LargeRequestProcessingResponse:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user for which large request is sending for
-          items:
-            $ref: '#/components/schemas/TerraUser'
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        reference:
-          type: string
-          description: The reference for which all payloads will have in their 'terra-reference' headers
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'large_request_prcessing'
-        status:
-          type: string
-          enum:
-            - success
-            - error
-          description: Status of the webhook. This will be 'processing'
-        version:
-          type: string
-          nullable: false
+      $ref: '#/components/schemas/LargeRequestProcessingEvent'
     AuthenticationFailedWebhook:
-      type: object
-      properties:
-        reference_id:
-          type: string
-          nullable: true
-        type:
-          type: string
-          nullable: false
-        user:
-          description: Terra User object
-          type: object
-          allOf:
-            - $ref: '#/components/schemas/TerraUser'
-        reason:
-          type: string
-          nullable: false
-        status:
-          type: string
-          enum:
-            - success
-            - error
-          nullable: false
-        message:
-          type: string
-          nullable: false
-        widget_session_id:
-          type: string
-          nullable: true
-        version:
-          type: string
-          nullable: false
-    ConnectionDegradedWebhook:
-      type: object
-      properties:
-        status:
-          type: string
-          enum:
-            - success
-            - error
-          nullable: false
-        message:
-          type: string
-          nullable: false
-        type:
-          type: string
-          nullable: false
-        user:
-          description: Terra User object
-          type: object
-          allOf:
-            - $ref: '#/components/schemas/TerraUser'
-        version:
-          type: string
-          nullable: false
+      $ref: '#/components/schemas/AuthErrorEvent'
+    HealthCheckWebhook:
+      $ref: '#/components/schemas/HealthcheckEvent'
     IntegrationsResponse:
       type: object
       properties:
@@ -4421,30 +4137,7 @@ components:
               type: boolean
               example: false
     WebhookEvents:
-      type: object
-      properties: {}
-      oneOf:
-        - $ref: '#/components/schemas/UserAuthWebhook'
-        - $ref: '#/components/schemas/UserReauthWebhook'
-        - $ref: '#/components/schemas/UserDeauthWebhook'
-        - $ref: '#/components/schemas/AccessRevokedWebhook'
-        - $ref: '#/components/schemas/GoogleNoDataSourceWebhook'
-        - $ref: '#/components/schemas/ConnectionErrorWebhook'
-        - $ref: '#/components/schemas/DataProcessingWebhook'
-        - $ref: '#/components/schemas/LargeRequestSendingWebhook'
-        - $ref: '#/components/schemas/AuthenticationFailedWebhook'
-        - $ref: '#/components/schemas/ConnectionDegradedWebhook'
-      discriminator:
-        propertyName: type
-        mapping:
-          UserAuthWebhook: '#/components/schemas/UserAuthWebhook'
-          UserReauthWebhook: '#/components/schemas/UserReauthWebhook'
-          UserDeauthWebhook: '#/components/schemas/UserDeauthWebhook'
-          AccessRevokedWebhook: '#/components/schemas/AccessRevokedWebhook'
-          GoogleNoDataSourceWebhook: '#/components/schemas/GoogleNoDataSourceWebhook'
-          ConnectionErrorWebhook: '#/components/schemas/ConnectionErrorWebhook'
-          DataProcessingWebhook: '#/components/schemas/DataProcessingWebhook'
-          LargeRequestSendingWebhook: '#/components/schemas/LargeRequestSendingWebhook'
+      $ref: '#/components/schemas/WebhookEventType'
     TerraUser:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
@@ -5973,6 +5666,50 @@ components:
       properties:
         work_kilojoules:
           type: number
+    WebhookEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          description: The type of event
+        status:
+          type: string
+          description: Status of the event
+      required:
+        - type
+      description: Base webhook event structure that all events extend from
+    LargeRequestProcessingEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LargeRequestProcessingEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: large_request_processing
+        status:
+          type: string
+          const: processing
+          description: Status of the processing
+        message:
+          type: string
+          description: Information about the processing
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being processed
+        reference:
+          type: string
+          description: Reference ID for tracking this request
+      required:
+        - type
+        - status
+        - message
+        - user
+        - reference
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Large request processing event
     BloodPressureSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BloodPressureSample.yaml
@@ -7362,3 +7099,616 @@ components:
       properties:
         delta:
           type: integer
+    ProcessingEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ProcessingEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: processing
+        status:
+          type: string
+          const: success
+          description: Status of the processing
+        message:
+          type: string
+          description: Information about the processing
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being processed
+        retry_after_seconds:
+          type: integer
+          description: Seconds to wait before retrying
+      required:
+        - type
+        - status
+        - message
+        - user
+        - retry_after_seconds
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Processing event returned when data is being fetched asynchronously
+    AuthEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: auth
+        status:
+          type: string
+          description: Status of the event
+      required:
+        - type
+        - status
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Authentication event
+    AuthSuccessEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthSuccessEvent.yaml
+      type: object
+      properties:
+        status:
+          type: string
+          const: success
+          description: Status of authentication
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User who authenticated
+        reference_id:
+          type: string
+          description: Client-provided reference ID
+        widget_session_id:
+          type: string
+          description: Widget session identifier
+      required:
+        - status
+        - user
+        - reference_id
+        - widget_session_id
+      allOf:
+        - $ref: '#/components/schemas/AuthEvent'
+      description: Authentication success event
+    AuthErrorEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthErrorEvent.yaml
+      type: object
+      properties:
+        status:
+          type: string
+          const: error
+          description: Status of authentication
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User who attempted to authenticate
+        provider:
+          type: string
+          description: Provider information
+        message:
+          type: string
+          description: Error message
+        reason:
+          type: string
+          description: Reason for the error
+        reference_id:
+          type: string
+          description: Client-provided reference ID
+        widget_session_id:
+          type: string
+          description: Widget session identifier
+      required:
+        - status
+        - user
+        - provider
+        - message
+        - reason
+        - reference_id
+        - widget_session_id
+      allOf:
+        - $ref: '#/components/schemas/AuthEvent'
+      description: Authentication error event
+    PermissionChangeEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PermissionChangeEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: permission_change
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User who changed permissions
+        status:
+          type: string
+          const: warning
+          description: Status of the event
+        message:
+          type: string
+          description: Information about the permission change
+        version:
+          type: string
+          description: API version
+        scopes_added:
+          type: string
+          description: Newly added scopes
+        scopes_removed:
+          type: string
+          description: Removed scopes
+      required:
+        - type
+        - user
+        - status
+        - message
+        - version
+        - scopes_added
+        - scopes_removed
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Permission change event
+    UserReauthEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/UserReauthEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: user_reauth
+        new_user:
+          $ref: '#/components/schemas/TerraUser'
+          description: The new user record
+        old_user:
+          $ref: '#/components/schemas/TerraUser'
+          description: The old user record that will be deleted
+        status:
+          type: string
+          const: warning
+          description: Status of the re-authentication
+        message:
+          type: string
+          description: Information about the re-authentication
+      required:
+        - type
+        - new_user
+        - old_user
+        - status
+        - message
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: User re-authentication event
+    DeauthEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeauthEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: deauth
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User who deauthenticated
+        status:
+          type: string
+          const: success
+          description: Status of deauthentication
+        message:
+          type: string
+          description: Confirmation message
+      required:
+        - type
+        - user
+        - status
+        - message
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: User deauthentication event
+    AccessRevokedEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AccessRevokedEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: access_revoked
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User who revoked access
+        status:
+          type: string
+          const: warning
+          description: Status of the event
+        message:
+          type: string
+          description: Information about the access revocation
+      required:
+        - type
+        - user
+        - status
+        - message
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Access revoked event when a user revokes access through the provider
+    GoogleNoDatasourceEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GoogleNoDatasourceEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: google_no_datasource
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: Affected user
+        status:
+          type: string
+          const: warning
+          description: Status of the event
+        message:
+          type: string
+          description: Information about the issue
+      required:
+        - type
+        - user
+        - status
+        - message
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Google no datasource event
+    ConnectionErrorEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ConnectionErrorEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: connection_error
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User with connection issues
+        status:
+          type: string
+          const: warning
+          description: Status of the event
+        message:
+          type: string
+          description: Information about the connection issue
+      required:
+        - type
+        - user
+        - status
+        - message
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Connection error event
+    LargeRequestSendingEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LargeRequestSendingEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: large_request_sending
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being sent
+        reference:
+          type: string
+          description: Reference ID for tracking this request
+        message:
+          type: string
+          description: Information about the request
+        expected_payloads:
+          type: integer
+          description: Number of expected payload events
+      required:
+        - type
+        - user
+        - reference
+        - message
+        - expected_payloads
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Large request sending event
+    HealthcheckEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HealthcheckEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: healthcheck
+        status:
+          type: string
+          description: Status of the healthcheck
+        creation_timestamp:
+          type: string
+          description: Timestamp when the event was created
+        trend_percentage:
+          type: integer
+          description: Percentage change in trends
+        sent_webhooks_last_hour:
+          type: integer
+          description: Number of webhooks sent in the last hour
+      required:
+        - type
+        - status
+        - creation_timestamp
+        - trend_percentage
+        - sent_webhooks_last_hour
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Healthcheck event sent periodically to verify your webhook endpoint is functional
+    RateLimitHitEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RateLimitHitEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: rate_limit_hit
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose request hit rate limits
+        start_date:
+          type: string
+          description: Start date of the requested data range
+        end_date:
+          type: string
+          description: End date of the requested data range
+        retrying_at:
+          type: string
+          description: When the request will be retried
+        message:
+          type: string
+          description: Information about the rate limit
+      required:
+        - type
+        - user
+        - start_date
+        - end_date
+        - retrying_at
+        - message
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Rate limit hit event
+    ActivityEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: activity
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Activity'
+          description: Array of activity data
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being provided
+        version:
+          type: string
+          description: API version
+      required:
+        - type
+        - data
+        - user
+        - version
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Activity data event
+    AthleteEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AthleteEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: athlete
+        athlete:
+          $ref: '#/components/schemas/Athlete'
+          description: Athlete data
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being provided
+        version:
+          type: string
+          description: API version
+      required:
+        - type
+        - athlete
+        - user
+        - version
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Athlete data event
+    BodyEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BodyEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: body
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Body'
+          description: Array of body data
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being provided
+        version:
+          type: string
+          description: API version
+      required:
+        - type
+        - data
+        - user
+        - version
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Body data event
+    DailyEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: daily
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Daily'
+          description: Array of daily data
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being provided
+        version:
+          type: string
+          description: API version
+      required:
+        - type
+        - data
+        - user
+        - version
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Daily data event
+    MenstruationEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: menstruation
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Menstruation'
+          description: Array of menstruation data
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being provided
+        version:
+          type: string
+          description: API version
+      required:
+        - type
+        - data
+        - user
+        - version
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Menstruation data event
+    NutritionEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: nutrition
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Nutrition'
+          description: Array of nutrition data
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being provided
+        version:
+          type: string
+          description: API version
+      required:
+        - type
+        - data
+        - user
+        - version
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Nutrition data event
+    SleepEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: sleep
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sleep'
+          description: Array of sleep data
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being provided
+        version:
+          type: string
+          description: API version
+      required:
+        - type
+        - data
+        - user
+        - version
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Sleep data event
+    S3PayloadEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/S3PayloadEvent.yaml
+      type: object
+      properties:
+        type:
+          type: string
+          const: s3_payload
+        status:
+          type: string
+          const: success
+          description: Status of the upload
+        url:
+          type: string
+          description: URL to download the data
+        expires_in:
+          type: integer
+          description: Time in seconds until URL expiration
+      required:
+        - type
+        - status
+        - url
+        - expires_in
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: S3 Upload event with data download URL
+    WebhookEventType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEventType.yaml
+      anyOf:
+        - $ref: '#/components/schemas/HealthcheckEvent'
+        - $ref: '#/components/schemas/AuthSuccessEvent'
+        - $ref: '#/components/schemas/AuthErrorEvent'
+        - $ref: '#/components/schemas/DeauthEvent'
+        - $ref: '#/components/schemas/UserReauthEvent'
+        - $ref: '#/components/schemas/AccessRevokedEvent'
+        - $ref: '#/components/schemas/ConnectionErrorEvent'
+        - $ref: '#/components/schemas/GoogleNoDatasourceEvent'
+        - $ref: '#/components/schemas/PermissionChangeEvent'
+        - $ref: '#/components/schemas/ProcessingEvent'
+        - $ref: '#/components/schemas/LargeRequestProcessingEvent'
+        - $ref: '#/components/schemas/LargeRequestSendingEvent'
+        - $ref: '#/components/schemas/RateLimitHitEvent'
+        - $ref: '#/components/schemas/ActivityEvent'
+        - $ref: '#/components/schemas/AthleteEvent'
+        - $ref: '#/components/schemas/BodyEvent'
+        - $ref: '#/components/schemas/DailyEvent'
+        - $ref: '#/components/schemas/MenstruationEvent'
+        - $ref: '#/components/schemas/NutritionEvent'
+        - $ref: '#/components/schemas/SleepEvent'
+        - $ref: '#/components/schemas/S3PayloadEvent'
+      description: Union of all possible webhook event types

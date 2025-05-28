@@ -4148,295 +4148,32 @@ components:
           type: object
           allOf:
             - $ref: "#/components/schemas/PlannedWorkoutMetadata"
-    UserAuthWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user for which this authentication webhook is for
-          items:
-            $ref: "#/components/schemas/User"
-        widget_session_id:
-          description: The widget session from which the user authenticated from
-          type: string
-          nullable: true
-        reference_id:
-          type: string
-          description:
-            Connection identifier on the developer's end, used to tie connection
-            back to a user on the developer's platform
-          nullable: true
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'auth'
-        status:
-          type: string
-          enum: [success, error]
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
-    PermissionChangeWebhook:
-      type: object
-      properties:
-        type:
-          type: string
-          description: The type of webhook event received. For this webhook, this would be 'permission_change'.
-        user:
-          type: object
-          description: The user for which this permission change webhook is for
-          items:
-            $ref: "#/components/schemas/User"
-        status:
-          type: string
-          enum: [success]
-          description: Status of the webhook event.
-        message:
-          type: string
-          description: A message describing the webhook event.
-        version:
-          type: string
-          description: The version of the webhook.
-          nullable: false
-        scopes_added:
-          type: string
-          description: A comma-separated list of scopes that were added during the permission change.
-        scopes_removed:
-          type: string
-          description: A comma-separated list of scopes that were removed during the permission change.
-    UserReauthWebhook:
-      type: object
-      properties:
-        old_user:
-          type: object
-          description: The old user that was authenticated
-          items:
-            $ref: "#/components/schemas/User"
-        new_user:
-          type: object
-          description: The new user that was authenticated
-          items:
-            $ref: "#/components/schemas/User"
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'user_reauth'
-        status:
-          type: string
-          enum: [success, error]
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
-    UserDeauthWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user that was deauthenticated
-          items:
-            $ref: "#/components/schemas/User"
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'deauth'
-        status:
-          type: string
-          enum: [success, error]
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
-    AccessRevokedWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user for which has revoked access to Terra or your application
-          items:
-            $ref: "#/components/schemas/User"
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'access_revoked'
-        status:
-          type: string
-          enum: [success, error]
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
-    GoogleNoDataSourceWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user for which no google data sources can be found for.
-          items:
-            $ref: "#/components/schemas/User"
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'google_no_datasource'
-        status:
-          type: string
-          enum: [success, error]
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
-    ConnectionErrorWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: A connection error has happened for this user. Generally this means, you should deauthenticate them.
-          items:
-            $ref: "#/components/schemas/User"
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'connection_error'
-        status:
-          type: string
-          enum: [success, error]
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
     DataProcessingWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user for which data is processing for
-          items:
-            $ref: "#/components/schemas/User"
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'processing'
-        status:
-          type: string
-          enum: [success, error]
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ProcessingEvent.yaml"
+    UserAuthWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthSuccessEvent.yaml"
+    UserAuthWebhookError:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthErrorEvent.yaml"
+    PermissionChangeWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PermissionChangeEvent.yaml"
+    UserReauthWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/UserReauthEvent.yaml"
+    UserDeauthWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeauthEvent.yaml"
+    AccessRevokedWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AccessRevokedEvent.yaml"
+    GoogleNoDataSourceWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GoogleNoDatasourceEvent.yaml"
+    ConnectionErrorWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ConnectionErrorEvent.yaml"
     LargeRequestSendingWebhook:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user for which large request is sending for
-          items:
-            $ref: "#/components/schemas/User"
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        expected_payloads:
-          type: number
-          description: The number of payloads you should be expecting from the large request
-        reference:
-          type: string
-          description: The reference for which all payloads will have in their 'terra-reference' headers
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'large_request_sending'
-        status:
-          type: string
-          enum: [success, error]
-          description: Status of the webhook. This is either 'success' or 'error'
-        version:
-          type: string
-          nullable: false
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LargeRequestSendingEvent.yaml"
     LargeRequestProcessingResponse:
-      type: object
-      properties:
-        user:
-          type: object
-          description: The user for which large request is sending for
-          items:
-            $ref: "#/components/schemas/User"
-        message:
-          type: string
-          description: A message giving a small context on what the payload is about
-        reference:
-          type: string
-          description: The reference for which all payloads will have in their 'terra-reference' headers
-        type:
-          type: string
-          description: The type of webhook event received. For this, webhook, this would be 'large_request_prcessing'
-        status:
-          type: string
-          enum: [success, error]
-          description: Status of the webhook. This will be 'processing'
-        version:
-          type: string
-          nullable: false
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LargeRequestProcessingEvent.yaml"
     AuthenticationFailedWebhook:
-      type: object
-      properties:
-        reference_id:
-          type: string
-          nullable: true
-        type:
-          type: string
-          nullable: false
-        user:
-          description: Terra User object
-          type: object
-          allOf:
-            - $ref: "#/components/schemas/User"
-        reason:
-          type: string
-          nullable: false
-        status:
-          type: string
-          enum: [success, error]
-          nullable: false
-        message:
-          type: string
-          nullable: false
-        widget_session_id:
-          type: string
-          nullable: true
-        version:
-          type: string
-          nullable: false
-    ConnectionDegradedWebhook:
-      type: object
-      properties:
-        status:
-          type: string
-          enum: [success, error]
-          nullable: false
-        message:
-          type: string
-          nullable: false
-        type:
-          type: string
-          nullable: false
-        user:
-          description: Terra User object
-          type: object
-          allOf:
-            - $ref: "#/components/schemas/User"
-        version:
-          type: string
-          nullable: false
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthErrorEvent.yaml"
+    HealthCheckWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HealthcheckEvent.yaml"
     IntegrationsResponse:
       type: object
       properties:
@@ -4495,28 +4232,4 @@ components:
               type: boolean
               example: false
     WebhookEvents:
-      type: object
-      properties: {}
-      oneOf:
-        - $ref: "#/components/schemas/UserAuthWebhook"
-        - $ref: "#/components/schemas/UserReauthWebhook"
-        - $ref: "#/components/schemas/UserDeauthWebhook"
-        - $ref: "#/components/schemas/AccessRevokedWebhook"
-        - $ref: "#/components/schemas/GoogleNoDataSourceWebhook"
-        - $ref: "#/components/schemas/ConnectionErrorWebhook"
-        - $ref: "#/components/schemas/DataProcessingWebhook"
-        - $ref: "#/components/schemas/LargeRequestSendingWebhook"
-        - $ref: "#/components/schemas/AuthenticationFailedWebhook"
-        - $ref: "#/components/schemas/ConnectionDegradedWebhook"
-
-      discriminator:
-        propertyName: type
-        mapping:
-          UserAuthWebhook: "#/components/schemas/UserAuthWebhook"
-          UserReauthWebhook: "#/components/schemas/UserReauthWebhook"
-          UserDeauthWebhook: "#/components/schemas/UserDeauthWebhook"
-          AccessRevokedWebhook: "#/components/schemas/AccessRevokedWebhook"
-          GoogleNoDataSourceWebhook: "#/components/schemas/GoogleNoDataSourceWebhook"
-          ConnectionErrorWebhook: "#/components/schemas/ConnectionErrorWebhook"
-          DataProcessingWebhook: "#/components/schemas/DataProcessingWebhook"
-          LargeRequestSendingWebhook: "#/components/schemas/LargeRequestSendingWebhook"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEventType.yaml"
