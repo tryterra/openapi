@@ -1,7 +1,7 @@
 import "./Samples.tsp";
 import "./DataDevice.tsp";
 import "./common.tsp";
-namespace Schemas;
+namespace Terra.Models;
 
 // Activity Model
 model Activity {

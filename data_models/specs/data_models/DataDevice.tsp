@@ -1,5 +1,5 @@
 import "./enums.tsp";
-namespace Schemas;
+namespace Terra.Models;
 
 // Device Data Model
 model DeviceData {

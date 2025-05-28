@@ -1,5 +1,5 @@
 import "./enums.tsp";
-namespace Schemas;
+namespace Terra.Models;
 
 // Sample data models
 model MenstruationFlowSample {

@@ -1,4 +1,4 @@
-namespace Schemas;
+namespace Terra.Models;
 
 // Terrauser Model
 model TerraUser {

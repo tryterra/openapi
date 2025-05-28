@@ -2,7 +2,7 @@ import "./DataDevice.tsp";
 import "./enums.tsp";
 import "./Samples.tsp";
 import "./common.tsp";
-namespace Schemas;
+namespace Terra.Models;
 
 model Sleep {
     data_enrichment?: SleepDataEnrichment;

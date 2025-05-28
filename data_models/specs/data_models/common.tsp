@@ -1,5 +1,5 @@
 import "./Samples.tsp";
-namespace Schemas;
+namespace Terra.Models;
 
 model DataContributor {
     contributor_name: string;

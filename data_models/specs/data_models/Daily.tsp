@@ -1,7 +1,7 @@
 import "./Samples.tsp";
 import "./common.tsp";
 import "./DataDevice.tsp";
-namespace Schemas;
+namespace Terra.Models;
 
 // Daily Model
 model Daily {

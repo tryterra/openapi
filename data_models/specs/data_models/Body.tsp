@@ -1,7 +1,7 @@
 import "./DataDevice.tsp";
 import "./Samples.tsp";
 import "./common.tsp";
-namespace Schemas;
+namespace Terra.Models;
 
 // Body Model
 model Body {

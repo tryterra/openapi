@@ -1,5 +1,5 @@
 import "./DataDevice.tsp";
-namespace Schemas;
+namespace Terra.Models;
 
 // Athlete Model
 model Athlete {

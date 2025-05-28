@@ -1,7 +1,7 @@
 import "@typespec/json-schema";
 using JsonSchema;
 
-namespace Schemas;
+namespace Terra.Models;
 
 @doc("The type of activity performed for the associated workout.")
 @example(ActivityType.RUNNING)
@@ -1089,4 +1089,26 @@ union KetoneSampleType {
     @summary("Breath")
     @doc("Ketone sample taken from breath.")
     BREATH: 3,
+}
+
+enum EventType {
+    auth,
+    deauth,
+    user_reauth,
+    access_revoked,
+    connection_error,
+    google_no_datasource,
+    processing,
+    large_request_sending,
+    rate_limit_hit,
+    large_request_processing,
+    activity,
+    athlete,
+    body,
+    daily,
+    menstruation,
+    nutrition,
+    sleep,
+    healthcheck,
+    s3_upload,
 }
