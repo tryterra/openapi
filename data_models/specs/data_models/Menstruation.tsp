@@ -14,7 +14,7 @@ model MenstruationMetadata {
 
 model MenstruationData {
     period_length_days?: float;
-    current_phase?: MenstrualPhase;
+    current_phase?: Terra.Enums.MenstrualPhase;
     length_of_current_phase_days?: float;
     days_until_next_phase?: float;
     period_start_date?: string;

@@ -61,8 +61,8 @@ model ActivityMetadata {
     state?: string;
     summary_id: string;
     timestamp_localization?: integer; // what is this?
-    type: ActivityType;
-    upload_type: UploadType;
+    type: Terra.Enums.ActivityType;
+    upload_type: Terra.Enums.UploadType;
 }
 
 model MovementData {

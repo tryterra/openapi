@@ -22,7 +22,7 @@ model SleepMetadata {
     is_nap?: boolean;
     summary_id?: string;
     timestamp_localization?: integer;
-    upload_type: SleepUploadType;
+    upload_type: Terra.Enums.SleepUploadType;
 }
 
 model SleepDataEnrichment {
@@ -32,7 +32,7 @@ model SleepDataEnrichment {
 
 model ReadinessData {
     readiness?: integer;
-    recovery_level?: RecoveryLevel;
+    recovery_level?: Terra.Enums.RecoveryLevel;
 }
 
 model RespirationData {

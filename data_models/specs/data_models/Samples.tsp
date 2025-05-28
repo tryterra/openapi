@@ -4,7 +4,7 @@ namespace Terra.Models;
 // Sample data models
 model MenstruationFlowSample {
     timestamp: string;
-    flow: MenstruationFlow;
+    flow: Terra.Enums.MenstruationFlow;
 }
 
 model DailyPatternSample {
@@ -26,7 +26,7 @@ model DrinkSample {
 model KetoneSample {
     timestamp: string;
     ketone_mg_per_dL: float;
-    sample_type: KetoneSampleType;
+    sample_type: Terra.Enums.KetoneSampleType;
 }
 
 model TorqueSample {
@@ -43,7 +43,7 @@ model RawECGSample {
 model ECGReading {
     start_timestamp: string;
     avg_hr_bpm: float;
-    afib_classification: AFibFlag;
+    afib_classification: Terra.Enums.AFibFlag;
     raw_signal: RawECGSample[];
 }
 
@@ -58,7 +58,7 @@ model HeartRateDataSample {
     timestamp: string;
     bpm: float;
     timer_duration_seconds: float;
-    context: HeartRateContext;
+    context: Terra.Enums.HeartRateContext;
 }
 
 model LapSample {
@@ -67,7 +67,7 @@ model LapSample {
     distance_meters: float;
     calories: float;
     total_strokes: integer;
-    stroke_type: StrokeType;
+    stroke_type: Terra.Enums.StrokeType;
     avg_speed_meters_per_second: float;
 }
 
@@ -82,7 +82,7 @@ model HeartRateVariabilityDataSampleSDNN {
 }
 
 model HeartRateZoneData {
-    zone: HeartRateZone;
+    zone: Terra.Enums.HeartRateZone;
     start_percentage: float;
     end_percentage: float;
     name: string;
@@ -145,7 +145,7 @@ model CadenceSample {
 
 model ActivityLevelSample {
     timestamp: string;
-    level: ActivityLevel;
+    level: Terra.Enums.ActivityLevel;
 }
 
 model METSample {
@@ -164,7 +164,7 @@ model TSSSample {
 
 model SleepHypnogramSample {
     timestamp: string;
-    level: SleepLevel;
+    level: Terra.Enums.SleepLevel;
 }
 
 model OxygenSaturationSample {
@@ -245,11 +245,11 @@ model PulseVelocitySample {
 
 model AFibClassificationSample {
     timestamp: string;
-    afib_classification: AFibFlag;
+    afib_classification: Terra.Enums.AFibFlag;
 }
 
 model NutritionQuantity {
-    unit: NutritionUnits;
+    unit: Terra.Enums.NutritionUnits;
     amount: float;
 }
 

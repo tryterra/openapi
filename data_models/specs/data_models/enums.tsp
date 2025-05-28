@@ -1,7 +1,7 @@
 import "@typespec/json-schema";
 using JsonSchema;
 
-namespace Terra.Models;
+namespace Terra.Enums;
 
 @doc("The type of activity performed for the associated workout.")
 @example(ActivityType.RUNNING)

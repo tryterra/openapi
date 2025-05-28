@@ -2,6 +2,7 @@ import "./Samples.tsp";
 import "./common.tsp";
 import "./DataDevice.tsp";
 namespace Terra.Models;
+using Terra.Models;
 
 // Daily Model
 model Daily {
@@ -24,7 +25,7 @@ model DailyMetadata {
     end_time: string;
     start_time: string;
     timestamp_localization?: integer;
-    upload_type: UploadType;
+    upload_type: Terra.Enums.UploadType;
 }
 
 model DailyDistanceData {

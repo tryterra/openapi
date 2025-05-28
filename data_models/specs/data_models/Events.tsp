@@ -9,7 +9,7 @@ import "./Athlete.tsp";
 import "./Body.tsp";
 import "./Sleep.tsp";
 
-namespace Terra.Webhooks;
+namespace Terra.Events;
 
 using Terra.Models;
 

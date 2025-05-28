@@ -4,7 +4,7 @@ namespace Terra.Models;
 // Device Data Model
 model DeviceData {
     activation_timestamp?: string;
-    data_provided?: DeviceDataType[];
+    data_provided?: Terra.Enums.DeviceDataType[];
     hardware_version?: string;
     last_upload_date?: string;
     manufacturer?: string;
@@ -17,7 +17,7 @@ model DeviceData {
 
 model OtherDeviceData {
     activation_timestamp?: string;
-    data_provided?: DeviceDataType[];
+    data_provided?: Terra.Enums.DeviceDataType[];
     hardware_version?: string;
     last_upload_date?: string;
     manufacturer?: string;
