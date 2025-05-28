@@ -1,5 +1,6 @@
 import "./Samples.tsp";
 namespace Terra.Models;
+using Terra.Models;
 
 model DataContributor {
     contributor_name: string;

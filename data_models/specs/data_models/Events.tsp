@@ -1,5 +1,5 @@
 import "@typespec/http";
-import "./Common.tsp";
+import "./common.tsp";
 import "./TerraUser.tsp";
 import "./Activity.tsp";
 import "./Menstruation.tsp";
