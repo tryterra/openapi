@@ -1,4 +1,4 @@
-import "@typespec/http";
+import "@typespec/json-schema";
 import "./common.tsp";
 import "./TerraUser.tsp";
 import "./Activity.tsp";
@@ -371,6 +371,7 @@ model S3PayloadEvent extends WebhookEvent {
 }
 
 @doc("Union of all possible webhook event types")
+@TypeSpec.JsonSchema.oneOf
 union WebhookEventType {
     HealthcheckEvent,
     AuthSuccessEvent,
