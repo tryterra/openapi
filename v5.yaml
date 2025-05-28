@@ -5,7 +5,8 @@ info:
   version: 2022.03.16
 servers:
   - url: https://api.tryterra.co/v2
-
+security:
+  - ApiKeyAuth: []
 paths:
   /auth/authenticateUser:
     post:
@@ -2399,6 +2400,7 @@ paths:
       tags:
         - Integrations
       operationId: GetIntegrations
+      security: [] # No authentication required
       responses:
         "200":
           description: Returns list of all available integrations on the API
@@ -2451,6 +2453,12 @@ paths:
                 $ref: "#/components/schemas/IntegrationsResponse"
       security: []
 components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Your API key for authentication
   schemas:
     WidgetSessionParams:
       type: object
@@ -4233,3 +4241,255 @@ components:
               example: false
     WebhookEvents:
       $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEventType.yaml"
+
+webhooks:
+  healthcheck:
+    post:
+      description: Healthcheck event sent periodically to verify your event is functional
+      summary: Healthcheck webhook
+      operationId: healthcheckWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HealthCheckWebhook"
+      responses:
+        "200":
+          description: Successful healthcheck response
+  auth:
+    post:
+      description: Occurs when a user attempts to authenticate
+      summary: User authentication webhook
+      operationId: userAuthWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/UserAuthWebhook"
+                - $ref: "#/components/schemas/UserAuthWebhookError"
+
+      responses:
+        "200":
+          description: Successful authentication response
+  deauth:
+    post:
+      description: Occurs when a user deauthenticates through the Terra
+      summary: User deauthentication webhook
+      operationId: userDeauthWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserDeauthWebhook"
+      responses:
+        "200":
+          description: Successful deauthentication response
+  user_reauth:
+    post:
+      description: Occurs when a user successfully authenticates for a second time, with the same account. You will receive a successful auth and a user_reauth payload
+      summary: User reauthentication webhook
+      operationId: userReauthWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserReauthWebhook"
+      responses:
+        "200":
+          description: Successful reauthentication response
+  access_revoked:
+    post:
+      description: Occurs when a user revokes Terra's access from the provider's end
+      summary: Access revoked webhook
+      operationId: accessRevokedWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccessRevokedWebhook"
+      responses:
+        "200":
+          description: Successful access revocation response
+  connection_error:
+    post:
+      description: Occurs when a request to a provider returns an HTTP response of 401, 403 or 412
+      summary: Connection error webhook
+      operationId: connectionErrorWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectionErrorWebhook"
+      responses:
+        "200":
+          description: Successful connection error response
+  google_no_datasource:
+    post:
+      description: Occurs when a Google Fit user doesn't have a data source linked to their account. All data requests for the user will be empty unless they link a data source
+      summary: Google no data source webhook
+      operationId: googleNoDataSourceWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleNoDataSourceWebhook"
+      responses:
+        "200":
+          description: Successful no data source response
+  processing:
+    post:
+      description: Occurs when data is being fetched asynchronously from the provider. The data will be sent through automatically via your Destination, and you can also safely request for it after the time in the retry_after_seconds field.
+      summary: Data processing webhook
+      operationId: dataProcessingWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataProcessingWebhook"
+      responses:
+        "200":
+          description: Successful processing response
+  large_request_sending:
+    post:
+      description: Occurs when more than one month of data has been requested and all data has been successfully submitted
+      summary: Large request sending webhook
+      operationId: largeRequestSendingWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LargeRequestSendingWebhook"
+      responses:
+        "200":
+          description: Successful large request sending response
+  large_request_processing:
+    post:
+      description: Occurs when more a request for over one month of data has been submitted to Terra. Data will be sent in chunks with the same reference field after this request. Each chunk will be at most 10 objects in the data field or 10 MB in size, whichever limit gets hit first
+      summary: Large request processing webhook
+      operationId: largeRequestProcessingWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LargeRequestProcessingResponse"
+      responses:
+        "200":
+          description: Successful large request processing response
+  rate_limit_hit:
+    post:
+      description: Occurs when an asynchronous request has failed due to rate limiting and is going to be retried.
+      summary: Rate limit hit webhook
+      operationId: rateLimitHitWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RateLimitHitWebhook"
+      responses:
+        "200":
+          description: Successful rate limit hit response
+  s3_upload:
+    post:
+      description: Data event sent as a download link.
+      summary: S3 upload webhook
+      operationId: s3UploadWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/S3UploadWebhook"
+      responses:
+        "200":
+          description: Successful S3 upload response
+  activity:
+    post:
+      description: "activity data event: activity updates when new activity is completed"
+      summary: Activity webhook
+      operationId: activityWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityWebhook"
+      responses:
+        "200":
+          description: Successful activity response
+  athelete:
+    post:
+      description: "athelete data event: Occurs throughout the day as users use their wearables."
+      summary: Athlete webhook
+      operationId: athleteWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AthleteWebhook"
+      responses:
+        "200":
+          description: Successful athlete response
+  nutrition:
+    post:
+      description: "nutrition data event: occurs throughout the day as users use their wearables."
+      summary: Nutrition webhook
+      operationId: nutritionWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NutritionWebhook"
+      responses:
+        "200":
+          description: Successful nutrition response
+  daily:
+    post:
+      description: "daily data event: occurs throughout the day as users use their wearables."
+      summary: Daily webhook
+      operationId: dailyWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DailyWebhook"
+      responses:
+        "200":
+          description: Successful daily response
+  sleep:
+    post:
+      description: "sleep data event: occurs throughout the day as users use their wearables."
+      summary: Sleep webhook
+      operationId: sleepWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SleepWebhook"
+      responses:
+        "200":
+          description: Successful sleep response
+  menstruation:
+    post:
+      description: "menstruation data event: occurs throughout the day as users use their wearables."
+      summary: Menstruation webhook
+      operationId: menstruationWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenstruationWebhook"
+      responses:
+        "200":
+          description: Successful menstruation response
+  body:
+    post:
+      description: "body data event: occurs throughout the day as users use their wearables."
+      summary: Body webhook
+      operationId: bodyWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BodyWebhook"
+      responses:
+        "200":
+          description: Successful body response
