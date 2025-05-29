@@ -7,6 +7,7 @@ servers:
   - url: https://api.tryterra.co/v2
 security:
   - ApiKeyAuth: []
+  - DevID: []
 paths:
   /auth/authenticateUser:
     post:
@@ -29,13 +30,6 @@ paths:
           schema:
             type: string
           example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -114,21 +108,6 @@ paths:
       tags:
         - Authentication
       operationId: GenerateWidgetSession
-      parameters:
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -192,20 +171,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: dev-id
-          in: header
-          description: Your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: Your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         required: false
         content:
@@ -263,20 +228,6 @@ paths:
           schema:
             type: string
           required: true
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         "200":
           description: Returned when authentication link could be successfully generated
@@ -311,21 +262,6 @@ paths:
       summary: Generates an authentication token for the Terra mobile SDKs
       description: Creates a token to be used with initConnection() functions in the Terra mobile SDKs in order to create a user record for Apple Health or Samsung Health (or equivalent)
       operationId: generate-authentication-token
-      parameters:
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         "200":
           description: "200"
@@ -423,20 +359,6 @@ paths:
           schema:
             type: boolean
           required: false
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         "200":
           description: Returned upon successful data request
@@ -508,21 +430,6 @@ paths:
         - Data writing
       operationId: PostActivity
       description: Used to post activity data to a provider. Available for Wahoo
-      parameters:
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -613,20 +520,6 @@ paths:
           schema:
             type: boolean
           required: false
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         "200":
           description: Returned upon successful data request
@@ -731,20 +624,6 @@ paths:
           schema:
             type: boolean
           required: false
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         "200":
           description: Returned upon successful data request
@@ -817,21 +696,6 @@ paths:
         - Data writing
       operationId: PostBody
       description: Used to post body data to a provider. Available for Google Fit
-      parameters:
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -912,21 +776,6 @@ paths:
           schema:
             type: string
           required: true
-
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -1088,20 +937,6 @@ paths:
           schema:
             type: boolean
           required: false
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         "200":
           description: Returned upon successful data request
@@ -1221,20 +1056,6 @@ paths:
           schema:
             type: boolean
           required: false
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         "200":
           description: Returned upon successful data request
@@ -1354,20 +1175,6 @@ paths:
           schema:
             type: boolean
           required: false
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         "200":
           description: Returned upon successful data request
@@ -1440,21 +1247,6 @@ paths:
         - Data writing
       operationId: PostNutrition
       description: Used to post nutrition logs to a provider. Available for Fitbit
-      parameters:
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -1537,20 +1329,6 @@ paths:
           schema:
             type: string
           required: true
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -1712,20 +1490,6 @@ paths:
           schema:
             type: boolean
           required: false
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         "200":
           description: Returned upon successful data request
@@ -1801,21 +1565,6 @@ paths:
       description:
         Used to post workout plans users can follow on their wearable. This can be stregnth workouts (sets, reps, weight lifted)
         or cardio workouts (warmup, intervals of different intensities, cooldown etc)
-      parameters:
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -1928,20 +1677,6 @@ paths:
           schema:
             type: boolean
           required: false
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         "200":
           description: Returned upon successful data request
@@ -2021,20 +1756,6 @@ paths:
           schema:
             type: string
           required: true
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -2168,20 +1889,6 @@ paths:
           schema:
             type: string
           required: false
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       responses:
         "200":
           description: Returned when the provided resources are found
@@ -2250,20 +1957,6 @@ paths:
         pagination via `page` and `per_page`. If `page` is not provided, it returns all users
         in one go (backwards compatibility).
       parameters:
-        - name: dev-id
-          in: header
-          required: true
-          schema:
-            type: string
-          description: Your developer ID
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          required: true
-          schema:
-            type: string
-          description: Your API key
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
         - name: page
           in: query
           required: false
@@ -2328,20 +2021,6 @@ paths:
       operationId: GetBulkInfo
       description: Used to query for information for multiple Terra User IDs
       parameters:
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-          example: testingTerra
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
-          example: OtHJok60oQmT8zhnUWc4SWBJI7ztPTs88C0gOsJJ
       requestBody:
         content:
           application/json:
@@ -2437,12 +2116,6 @@ paths:
           schema:
             type: boolean
           description: If `true`, allows SDK integrations to be included in the response.
-        - in: header
-          name: dev-id
-          required: false
-          schema:
-            type: string
-          description: Developer ID to filter the integrations list based on the developer's enabled integrations.
       responses:
         "200":
           description: Successful response containing a list of integrations.
@@ -2458,6 +2131,11 @@ components:
       in: header
       name: x-api-key
       description: Your API key for authentication
+    DevID:
+      type: apiKey
+      in: header
+      name: dev-id
+      description: Your developer ID for authentication and tracking
   schemas:
     WidgetSessionParams:
       type: object
