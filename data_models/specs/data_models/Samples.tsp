@@ -203,23 +203,76 @@ model BloodPressureSample {
 }
 
 model MeasurementDataSample {
-    measurement_time: string;
-    BMI: float;
-    BMR: float;
-    RMR: float;
-    estimated_fitness_age: float;
-    skin_fold_mm: float;
-    bodyfat_percentage: float;
-    weight_kg: float;
-    height_cm: float;
-    bone_mass_g: float;
-    muscle_mass_g: float;
-    lean_mass_g: float;
-    water_percentage: float;
-    insulin_units: float;
-    insulin_type: string;
-    urine_color: string;
-    user_notes: string;
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
+    measurement_time?: string;
+
+    @doc("User's Body Mass Index (BMI).")
+    @example(22.4)
+    BMI?: float;
+
+    @doc("User's Basal Metabolic Rate - minimum amount of calories that a person's body needs to perform necessary functions.")
+    @example(1800.0)
+    BMR?: float;
+
+    @doc("User's Resting Metabolic Rate - amount of energy that a person's body needs to function while at rest. RMR accounts for additional low-effort daily activities on top of basic body functions.")
+    @example(2000.0)
+    RMR?: float;
+
+    @doc("Estimate of how fit the user is compared to their actual age, as measured by the device.")
+    @example("25")
+    estimated_fitness_age?: string;
+
+    @doc("User's skin fold measurement.")
+    @example(12.5)
+    skin_fold_mm?: float;
+
+    @doc("User's body fat percentage.")
+    @example(18.5)
+    @minValue(0)
+    @maxValue(100)
+    bodyfat_percentage?: float;
+
+    @doc("User's body weight.")
+    @example(75.5)
+    weight_kg?: float;
+
+    @doc("User's height.")
+    @example(178.0)
+    height_cm?: float;
+
+    @doc("User's total bone mass.")
+    @example(3200.0)
+    bone_mass_g?: float;
+
+    @doc("User's total muscle mass (i.e. skeletal muscle mass).")
+    @example(35000.0)
+    muscle_mass_g?: float;
+
+    @doc("Total lean mass of the user - calculated as the difference between total body weight and body fat weight.")
+    @example(61500.0)
+    lean_mass_g?: float;
+
+    @doc("Total amount of fluid in the user's body.")
+    @example(60.5)
+    @minValue(0.0)
+    @maxValue(100.0)
+    water_percentage?: float;
+
+    @doc("Quantity of insulin administered to the user.")
+    @example(10.5)
+    insulin_units?: float;
+
+    @doc("Type of insulin administered to the user.")
+    @example("rapid-acting")
+    insulin_type?: string;
+
+    @doc("Color of the user's urine.")
+    @example("pale yellow")
+    urine_color?: string;
+
+    @doc("User notes associated with the measurement.")
+    user_notes?: string;
 }
 
 model TemperatureSample {
