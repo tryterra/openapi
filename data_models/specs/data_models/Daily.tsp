@@ -124,7 +124,7 @@ model StressData {
     medium_stress_duration_seconds?: float;
 
     @doc("Array of stress level data points sampled throughout the day.")
-    samples?: StepSample[];
+    samples?: StressSample[];
 
     @doc("Total number of seconds spent in a stressed state while at rest during the day.")
     @example(1800.0)
@@ -141,7 +141,10 @@ model StressData {
     @minValue(0.0)
     stress_duration_seconds?: float;
 
-    stress_rating?: float;
+    @doc("Stress rating for the day.")
+    stress_rating?: string;
+
+    @doc("Array of Body Battery data points sampled throughout the day.")
     body_battery_samples?: BodyBatterySample[];
 }
 
