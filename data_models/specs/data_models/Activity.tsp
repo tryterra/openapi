@@ -208,9 +208,19 @@ model PolylineMapData {
 }
 
 model PositionData {
+    @doc("Position of the user at the midway point of the workout, represented by a 2-value array of latitude, longitude, wherein each of the two numbers can be nullable.")
+    @example(#[-18.4911, 130.9123])
     center_pos_lat_lng_deg?: float[];
+
+    @doc("Position of the user at the end of the workout, represented by a 2-value array of latitude, longitude, wherein each of the two numbers can be nullable.")
+    @example(#[-84.4911, -150.9123])
     end_pos_lat_lng_deg?: float[];
+
+    @doc("Array of datapoints of the position of the user, sampled throughout the workout.")
     position_samples?: PositionSample[];
+
+    @doc("Position of the user at the start of the workout, represented by a 2-value array of latitude, longitude, wherein each of the two numbers can be nullable.")
+    @example(#[80.2394, 102.931])
     start_pos_lat_lng_deg?: float[];
 }
 
