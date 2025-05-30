@@ -2192,26 +2192,6 @@ components:
           type: object
           allOf:
             - $ref: "#/components/schemas/User"
-    TerraDataModel:
-      type: object
-      properties: {}
-    DataReturned:
-      type: object
-      properties:
-        data:
-          type: array
-          description: List of objects returned by the API, after normalization
-          items:
-            $ref: "#/components/schemas/TerraDataModel"
-        type:
-          type: string
-          nullable: true
-          example: "activity"
-        user:
-          description: Terra User object
-          type: object
-          allOf:
-            - $ref: "#/components/schemas/User"
     RequestProcessing:
       type: object
       properties:
