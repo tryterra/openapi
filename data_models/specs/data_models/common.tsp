@@ -8,25 +8,59 @@ model DataContributor {
 }
 
 model HeartRateData {
+    @doc("Object containing detailed heart rate information for the associated workout.")
     detailed?: HeartRateDataDetailed;
+
+    @doc("Object containing summary heart rate information for the associated workout.")
     summary?: HeartRateDataSummary;
 }
 
 model HeartRateDataDetailed {
+    @doc("Array of HeartRate data samples recorded for the user during the workout.")
     hr_samples?: HeartRateDataSample[];
+
+    @doc("Array of HeartRate Variability data samples recorded for the user during the workout, computed using RMSSD.")
     hrv_samples_rmssd?: HeartRateVariabilityDataSampleRMSSD[];
+
+    @doc("Array of HeartRate Variability data samples recorded for the user during the workout, computed using SDNN.")
     hrv_samples_sdnn?: HeartRateVariabilityDataSampleSDNN[];
 }
 
 model HeartRateDataSummary {
-    avg_hr_bpm?: integer;
-    avg_hrv_rmssd?: integer;
-    avg_hrv_sdnn?: integer;
+    @doc("Average HeartRate of the user during the workout.")
+    @example(145.0)
+    @minValue(0.0)
+    avg_hr_bpm?: float;
+
+    @doc("Average HeartRate Variability of the user during the workout, computed using RMSSD.")
+    @example(35.2)
+    avg_hrv_rmssd?: float;
+
+    @doc("Average HeartRate Variability of the user during the workout, computed using SDNN.")
+    @example(45.5)
+    avg_hrv_sdnn?: float;
+
+    @doc("Array of time spent in various HR zones throughout the workout.")
     hr_zone_data?: HeartRateZoneData[];
-    max_hr_bpm?: integer;
-    min_hr_bpm?: integer;
-    resting_hr_bpm?: integer;
-    user_max_hr_bpm?: integer;
+
+    @doc("Maximum HeartRate of the user during the workout.")
+    @example(180.0)
+    @minValue(0.0)
+    max_hr_bpm?: float;
+
+    @doc("Minimum HeartRate of the user during the workout.")
+    @example(85.0)
+    @minValue(0.0)
+    min_hr_bpm?: float;
+
+    @doc("Resting HeartRate of the user, as determined by the fitness data provider.")
+    @example(65.0)
+    @minValue(0.0)
+    resting_hr_bpm?: float;
+
+    @doc("User's maximum HeartRate based on their age, and other factors as determined by the fitness data provider.")
+    @example(190.0)
+    user_max_hr_bpm?: float;
 }
 
 model ScoresData {
