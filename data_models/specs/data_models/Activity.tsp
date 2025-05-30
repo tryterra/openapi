@@ -138,9 +138,7 @@ model ActivityMetadata {
     @example("123e4567-e89b-12d3-a456-426614174000")
     summary_id: string;
 
-    @doc("Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC. 0 = UTC timestamps with +00:00 offset (avoids 'Z' notation for compatibility); 1 = LOCAL timestamps that may include or exclude the timezone, following ISO8601.")
-    @example(0)
-    timestamp_localization?: integer;
+    timestamp_localization?: Terra.Enums.TimestampLocalization;
 
     @doc("The type of activity performed for the associated workout.")
     @example(Terra.Enums.ActivityType.RUNNING)

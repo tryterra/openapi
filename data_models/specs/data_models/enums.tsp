@@ -1112,3 +1112,13 @@ enum EventType {
     healthcheck,
     s3_upload,
 }
+
+@doc("Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC.")
+@example(Terra.Enums.TimestampLocalization.UTC)
+enum TimestampLocalization {
+    @doc("UTC timestamps with +00:00 offset. This avoids \"Z\" notation to ensure compatibility across parsers.")
+    UTC: 0,
+
+    @doc("LOCAL timestamps that may include or exclude the timezone, following ISO8601.")
+    LOCAL: 1,
+}
