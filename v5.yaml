@@ -24,7 +24,7 @@ paths:
       description: Creates a login link that allows end users to connect their fitness tracking account
       tags:
         - Authentication
-      operationId: AuthenticateUser
+      operationId: Authentication_AuthenticateUser
       parameters:
         - name: resource
           in: query
@@ -116,7 +116,7 @@ paths:
       description: Generates a link to redirect an end user to for them to select an integration and log in with their fitness data provider
       tags:
         - Authentication
-      operationId: GenerateWidgetSession
+      operationId: Authentication_GenerateWidgetSession
       requestBody:
         content:
           application/json:
@@ -229,7 +229,7 @@ paths:
       description: Deletes all records of the user on Terra's end, revoking Terra's access to their data
       tags:
         - Authentication
-      operationId: DeauthenticateUser
+      operationId: Authentication_DeauthenticateUser
       parameters:
         - name: user_id
           in: query
@@ -270,7 +270,7 @@ paths:
         - Authentication
       summary: Generates an authentication token for the Terra mobile SDKs
       description: Creates a token to be used with initConnection() functions in the Terra mobile SDKs in order to create a user record for Apple Health or Samsung Health (or equivalent)
-      operationId: generate-authentication-token
+      operationId: Authentication_GenerateAuthToken
       responses:
         "200":
           description: "200"
