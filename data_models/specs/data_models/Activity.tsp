@@ -225,8 +225,15 @@ model PositionData {
 }
 
 model PowerData {
+    @doc("Average power output of the user during the workout.")
+    @example(185.0)
     avg_watts?: float;
+
+    @doc("Maximum power output of the user during the workout.")
+    @example(350.0)
     max_watts?: float;
+
+    @doc("Array containing datapoints of the power output of the user sampled throughout the workout.")
     power_samples?: PowerSample[];
 }
 
