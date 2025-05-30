@@ -52,8 +52,6 @@ model SleepMetadata {
     @doc("A unique identifier for the sleep session.")
     summary_id?: string;
 
-    @doc("Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC. 0 = UTC timestamps with +00:00 offset (avoids 'Z' notation for compatibility); 1 = LOCAL timestamps that may include or exclude the timezone, following ISO8601.")
-    @example(0)
     timestamp_localization?: Terra.Enums.TimestampLocalization;
 
     @doc("The upload type for the associated sleep session, providing information on whether this was an automatic sleep or user-entered.")
