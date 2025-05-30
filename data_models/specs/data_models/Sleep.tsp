@@ -55,7 +55,6 @@ model SleepMetadata {
     timestamp_localization?: Terra.Enums.TimestampLocalization;
 
     @doc("The upload type for the associated sleep session, providing information on whether this was an automatic sleep or user-entered.")
-    @example(1)
     upload_type: Terra.Enums.SleepUploadType;
 }
 

@@ -24,8 +24,6 @@ properties:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TimestampLocalization.yaml
   upload_type:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepUploadType.yaml
-    examples:
-      - 1
     description: The upload type for the associated sleep session, providing information on whether this was an automatic sleep or user-entered.
 required:
   - end_time
