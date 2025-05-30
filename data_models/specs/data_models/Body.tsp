@@ -31,8 +31,22 @@ model Body {
 
     @doc("Object containing temperature information (core, skin, ambient) during the day.")
     temperature_data?: TemperatureData;
+
+    @doc("Object containing information on user's blood glucose for the day.")
+    glucose_data?: GlucoseData;
 }
 
+model GlucoseData {
+    @doc("List of blood glucose readings sampled throughout the day.")
+    blood_glucose_samples?: GlucoseDataSample[];
+
+    @doc("List of blood glucose readings sampled throughout the day - this represents additional data points, potentially at higher frequency from the ones in blood_glucose_samples, which may come at a cost of reduced accuracy.")
+    detailed_blood_glucose_samples?: GlucoseDataSample[];
+
+    @doc("User's average glucose level throughout the day.")
+    @example(92.5)
+    day_avg_blood_glucose_mg_per_dL?: float;
+}
 model BloodPressureData {
     @doc("List of Blood Pressure measurements sampled throughout the day.")
     blood_pressure_samples?: BloodPressureSample[];
