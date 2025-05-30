@@ -105,12 +105,32 @@ model DistanceDataDetailed {
 }
 
 model ElevationData {
-    avg_meters?: integer;
-    gain_actual_meters?: integer;
-    gain_planned_meters?: integer;
-    loss_actual_meters?: integer;
-    max_meters?: integer;
-    min_meters?: integer;
+    @doc("Average elevation of the user throughout the workout.")
+    @example(950.0)
+    avg_meters?: float;
+
+    @doc("Planned elevation gain for the workout.")
+    @example(550.0)
+    @minValue(0.0)
+    gain_actual_meters?: float;
+
+    @doc("Elevation gain of the user throughout the workout - this includes all elevation gain, and does _not_ represent net gain.")
+    @example(500.0)
+    @minValue(0.0)
+    gain_planned_meters?: float;
+
+    @doc("Elevation loss of the user throughout the workout.")
+    @example(450.0)
+    @minValue(0.0)
+    loss_actual_meters?: float;
+
+    @doc("Maximum elevation of the user during the workout.")
+    @example(1200.0)
+    max_meters?: float;
+
+    @doc("Minimum elevation of the user during the workout.")
+    @example(800.0)
+    min_meters?: float;
 }
 
 model SwimmingData {
