@@ -3,6 +3,12 @@ $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/sch
 type: object
 properties:
   energy_kilojoules:
-    type: integer
+    type: number
+    examples:
+      - 1200
+    description: Total number of kiloJoules planned to be expended during the workout - represents the user's predefined goal for the workout
   energy_planned_kilojoules:
-    type: integer
+    type: number
+    examples:
+      - 1150
+    description: Total number of kiloJoules expended during the workout

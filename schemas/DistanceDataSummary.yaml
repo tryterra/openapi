@@ -4,11 +4,16 @@ type: object
 properties:
   distance_meters:
     type: integer
+    description: Total distance covered by the user throughout the workout.
   elevation:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ElevationData.yaml
+    description: Average elevation of the user throughout the workout.
   floors_climbed:
     type: integer
+    description: Total number of elevation gain in floors climbed equivalent throughout the workout, as determined by the fitness data provider.
   steps:
     type: integer
+    description: Total number of steps performed during the workout.
   swimming:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SwimmingData.yaml
+    description: Summary information of the user's swimming statistics for the workout, if applicable.

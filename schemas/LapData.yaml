@@ -6,3 +6,4 @@ properties:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LapSample.yaml
+    description: Array of datapoints for each lap performed by the user during the workout.

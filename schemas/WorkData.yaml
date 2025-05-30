@@ -4,3 +4,6 @@ type: object
 properties:
   work_kilojoules:
     type: number
+    examples:
+      - 450.5
+    description: Total work output of the user for the workout, in kilojoules.

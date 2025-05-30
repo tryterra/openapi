@@ -4,9 +4,16 @@ type: object
 properties:
   avg_watts:
     type: number
+    examples:
+      - 185
+    description: Average power output of the user during the workout.
   max_watts:
     type: number
+    examples:
+      - 350
+    description: Maximum power output of the user during the workout.
   power_samples:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PowerSample.yaml
+    description: Array containing datapoints of the power output of the user sampled throughout the workout.

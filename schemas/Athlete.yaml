@@ -4,30 +4,64 @@ type: object
 properties:
   age:
     type: integer
-    minimum: -2147483648
-    maximum: 2147483647
+    examples:
+      - 28
+    description: User's age.
   country:
     type: string
+    examples:
+      - United States
+    description: User's country of residence.
   bio:
     type: string
+    examples:
+      - Passionate runner and cyclist
+    description: User's bio - a short description they display on their profile.
   state:
     type: string
+    examples:
+      - California
+    description: User's state of residence.
   last_name:
     type: string
+    examples:
+      - Smith
+    description: User's last name.
   sex:
     type: string
+    examples:
+      - male
+    description: User's sex.
   city:
     type: string
+    examples:
+      - San Francisco
+    description: User's city of residence.
   email:
     type: string
+    examples:
+      - user@example.com
+    description: User's email.
   date_of_birth:
     type: string
+    examples:
+      - 1999-11-23
+    description: User's date of birth, in ISO8601 format.
   first_name:
     type: string
+    examples:
+      - John
+    description: User's first name.
   gender:
     type: string
+    examples:
+      - male
+    description: User's gender.
   joined_provider:
     type: string
+    examples:
+      - 2023-01-15
+    description: User's account creation date.
   devices:
     type: array
     items:

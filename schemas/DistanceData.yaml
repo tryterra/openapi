@@ -4,5 +4,7 @@ type: object
 properties:
   detailed:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceDataDetailed.yaml
+    description: Object containing detailed distance information - this may included second-by-second samples.
   summary:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceDataSummary.yaml
+    description: Object containing summary information related to distance covered throughout the workout.

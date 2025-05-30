@@ -6,3 +6,4 @@ properties:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TSSSample.yaml
+    description: Array of TSS information sampled throughout the workout
