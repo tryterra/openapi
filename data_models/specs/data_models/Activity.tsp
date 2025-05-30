@@ -204,6 +204,8 @@ model MovementData {
 }
 
 model PolylineMapData {
+    @doc("The polyline representation of the user's trajectory throughout the workout")
+    @example("}_p~iF~ps|U_ulLnnqC_mqNvxq`@")
     summary_polyline?: string;
 }
 
