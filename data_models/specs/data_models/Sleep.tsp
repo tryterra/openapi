@@ -11,7 +11,7 @@ model Sleep {
     metadata: SleepMetadata;
     readiness_data?: ReadinessData;
     respiration_data?: RespirationData;
-    scores?: ScoreData;
+    scores?: Scores;
     sleep_durations_data?: SleepDurationsData;
     temperature_data?: SleepTemperatureData;
 }
