@@ -12,9 +12,10 @@ model Activity {
     calories_data?: CaloriesData;
 
     @doc("Cheat detection flag.")
-    cheat_detection?: float;
+    @example(0)
+    cheat_detection?: integer;
 
-    @doc("Additional enrichment data for the activity.")
+    @doc("Object containing Terra Scores.")
     data_enrichment?: DataEnrichment;
 
     @doc("Object containing information on the device which recorded the specific workout.")
@@ -64,19 +65,32 @@ model Activity {
 }
 
 model DataEnrichment {
+    @doc("User's stress score.")
     stress_score?: integer;
 }
 
 model DistanceData {
+    @doc("Object containing detailed distance information - this may included second-by-second samples.")
     detailed?: DistanceDataDetailed;
+
+    @doc("Object containing summary information related to distance covered throughout the workout.")
     summary?: DistanceDataSummary;
 }
 
 model DistanceDataSummary {
+    @doc("Total distance covered by the user throughout the workout.")
     distance_meters?: integer;
+
+    @doc("Average elevation of the user throughout the workout.")
     elevation?: ElevationData;
+
+    @doc("Total number of elevation gain in floors climbed equivalent throughout the workout, as determined by the fitness data provider.")
     floors_climbed?: integer;
+
+    @doc("Total number of steps performed during the workout.")
     steps?: integer;
+
+    @doc("Summary information of the user's swimming statistics for the workout, if applicable.")
     swimming?: SwimmingData;
 }
 
@@ -90,15 +104,43 @@ model LapData {
 }
 
 model ActivityMetadata {
+    @doc("The City in which the workout was performed.")
+    @example("San Francisco")
     city?: string;
+
+    @doc("The Country in which the workout was performed.")
+    @example("United States")
     country?: string;
+
+    @doc("The end time of the associated workout, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-10-28T10:00:00.000000+01:00")
     end_time: string;
+
+    @doc("The name - either user-entered or given by the fitness data provider - of the associated workout.")
+    @example("Morning Run")
     name?: string;
+
+    @doc("The start time of the associated workout, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("1999-11-23T09:00:00.000000+02:00")
     start_time: string;
+
+    @doc("The State in which the workout was performed.")
+    @example("California")
     state?: string;
+
+    @doc("A unique identifier for the workout - note that this is unique for the given user, and may not be globally unique.")
+    @example("123e4567-e89b-12d3-a456-426614174000")
     summary_id: string;
-    timestamp_localization?: integer; // what is this?
+
+    @doc("Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC. 0 = UTC timestamps with +00:00 offset (avoids 'Z' notation for compatibility); 1 = LOCAL timestamps that may include or exclude the timezone, following ISO8601.")
+    @example(0)
+    timestamp_localization?: integer;
+
+    @doc("The type of activity performed for the associated workout.")
+    @example(Terra.Enums.ActivityType.RUNNING)
     type: Terra.Enums.ActivityType;
+
+    @doc("The upload type for the associated workout, providing information on whether this was an automatic workout or user-entered.")
     upload_type: Terra.Enums.UploadType;
 }
 

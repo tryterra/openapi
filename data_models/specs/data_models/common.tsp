@@ -77,9 +77,16 @@ model StrainData {
 }
 
 model DistanceDataDetailed {
+    @doc("Array of detailed samples of distance covered throughout the workout.")
     distance_samples?: DistanceSample[];
+
+    @doc("Array of detailed samples of elevation throughout the workout.")
     elevation_samples?: ElevationSample[];
+
+    @doc("Array of detailed samples of floors climbed throughout the workout, as determined by the fitness data provider.")
     floors_climbed_samples?: FloorsClimbedSample[];
+
+    @doc("Array of detailed samples of steps performed throughout the workout.")
     step_samples?: StepSample[];
 }
 
