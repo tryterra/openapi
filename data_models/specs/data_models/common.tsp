@@ -29,7 +29,7 @@ model HeartRateDataSummary {
     user_max_hr_bpm?: integer;
 }
 
-model Scores {
+model ScoresData {
     @doc("Activity score for the given day.")
     @example(92.0)
     @minValue(0.0)

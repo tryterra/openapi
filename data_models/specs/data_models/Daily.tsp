@@ -15,7 +15,7 @@ model Daily {
     MET_data?: METData;
     metadata: DailyMetadata;
     oxygen_data?: OxygenData;
-    scores?: Scores;
+    scores?: ScoresData;
     strain_data?: StrainData;
     stress_data?: StressData;
     tag_data?: TagData;
