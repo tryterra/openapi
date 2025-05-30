@@ -50,23 +50,62 @@ model ScoresData {
 }
 
 model OxygenData {
+    @doc("Average Oxygen Saturation percentage of the user during the day (SpO2 or SmO2).")
+    @example(98)
     avg_saturation_percentage?: float;
+
+    @doc("Array of Oxygen Saturation percentage datapoints sampled throughout the day.")
     saturation_samples?: OxygenSaturationSample[];
+
+    @doc("Array of VO2 datapoints sampled throughout the day.")
     vo2_samples?: Vo2MaxSample[];
+
+    @doc("VO2Max for the given user.")
+    @example(45.5)
     vo2max_ml_per_min_per_kg?: float;
 }
 
 model ActiveDurationsData {
+    @doc("Array of detailed samples of the intensity the user was in at various points during the workout.")
     activity_levels_samples?: ActivityLevelSample[];
-    activity_seconds?: integer;
-    inactivity_seconds?: integer;
-    low_intensity_seconds?: integer;
-    moderate_intensity_seconds?: integer;
+
+    @doc("Total number of seconds spent in an active state during the workout.")
+    @example(1800.0)
+    @minValue(0.0)
+    activity_seconds?: float;
+
+    @doc("Total number of seconds spent in an inactive state during the workout.")
+    @example(600.0)
+    @minValue(0.0)
+    inactivity_seconds?: float;
+
+    @doc("Total number of seconds spent in a low intensity state during the workout.")
+    @example(900.0)
+    @minValue(0.0)
+    low_intensity_seconds?: float;
+
+    @doc("Total number of seconds spent in a moderate intensity state during the workout.")
+    @example(600.0)
+    @minValue(0.0)
+    moderate_intensity_seconds?: float;
+
+    @doc("Maximum number of continuous periods spent in an inactive state during the workout.")
+    @example(3)
+    @minValue(0)
     num_continuous_inactive_periods?: integer;
-    rest_seconds?: integer;
-    standing_hours_count?: integer;
-    standing_seconds?: integer;
-    vigorous_intensity_seconds?: integer;
+
+    @doc("Total number of seconds spent resting during the workout.")
+    @example(120.0)
+    @minValue(0.0)
+    rest_seconds?: float;
+
+    @doc("Total number of seconds spent in a state of vigorous intensity during the workout.")
+    @example(300.0)
+    @minValue(0.0)
+    vigorous_intensity_seconds?: float;
+
+    standing_hours_count?: float;
+    standing_seconds?: float;
 }
 
 model CaloriesData {
@@ -87,6 +126,8 @@ model METData {
 }
 
 model StrainData {
+    @doc("Level of cardiovascular strain imposed on the user during the day.")
+    @example(14.5)
     strain_level?: float;
 }
 
@@ -134,7 +175,18 @@ model ElevationData {
 }
 
 model SwimmingData {
+    @doc("Total number of swimming laps performed during the day.")
+    @example(20)
+    @minValue(0)
     num_laps?: integer;
+
+    @doc("Total number of swimming strokes performed during the day.")
+    @example(500)
+    @minValue(0)
     num_strokes?: integer;
+
+    @doc("Pool length for associated with the day.")
+    @example(25)
+    @minValue(0)
     pool_length_meters?: integer;
 }
