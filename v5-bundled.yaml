@@ -281,12 +281,10 @@ paths:
             application/json:
               examples:
                 Result:
-                  value: |-
-                    {
-                        "status": "success",
-                        "token": "250c68b9c21b78e40e7a3285a2d538d3bc24aabd3b4c76a782fb0a571ca4501d",
-                        "expires_in": 180
-                    }
+                  value:
+                    status: success
+                    token: 250c68b9c21b78e40e7a3285a2d538d3bc24aabd3b4c76a782fb0a571ca4501d
+                    expires_in: 180
               schema:
                 type: object
                 properties:
@@ -306,11 +304,9 @@ paths:
             application/json:
               examples:
                 Result:
-                  value: |-
-                    {
-                        "status": "error",
-                        "message": "Invalid dev-id was provided"
-                    }
+                  value:
+                    status: error
+                    message: Invalid dev-id was provided
               schema:
                 type: object
                 properties:
@@ -2526,22 +2522,34 @@ components:
       properties:
         blood_pressure_data:
           $ref: '#/components/schemas/BloodPressureData'
+          description: Object containing information on user's Blood Pressure.
         device_data:
           $ref: '#/components/schemas/DeviceData'
+          description: Object containing information on the device which recorded data for the payload.
         heart_data:
           $ref: '#/components/schemas/HeartData'
+          description: Object containing information on user's heart metrics.
         hydration_data:
           $ref: '#/components/schemas/HydrationData'
+          description: Object containing information on user's hydration (both internal & consumption of water) for the day.
         ketone_data:
           $ref: '#/components/schemas/KetoneData'
+          description: Object containing information on user's ketone data for the day.
         measurements_data:
           $ref: '#/components/schemas/MeasurementsData'
+          description: Object containing information on body measurements for the day.
         metadata:
           $ref: '#/components/schemas/BodyMetadata'
+          description: Object containing daily summary metadata.
         oxygen_data:
           $ref: '#/components/schemas/OxygenData'
+          description: Object containing information on user's oxygen-related data.
         temperature_data:
           $ref: '#/components/schemas/TemperatureData'
+          description: Object containing temperature information (core, skin, ambient) during the day.
+        glucose_data:
+          $ref: '#/components/schemas/GlucoseData'
+          description: Object containing information on user's blood glucose for the day.
       required:
         - metadata
     Daily:
@@ -2551,30 +2559,43 @@ components:
       properties:
         active_durations_data:
           $ref: '#/components/schemas/ActiveDurationsData'
+          description: Object containing information related to the time spent in different activity intensities during over the day.
         calories_data:
           $ref: '#/components/schemas/CaloriesData'
+          description: Object containing calorie-related information for the user during the specific day.
         data_enrichment:
           $ref: '#/components/schemas/DailyDataEnrichment'
+          description: Object containing additional enrichment data for the day.
         device_data:
           $ref: '#/components/schemas/DeviceData'
+          description: Object containing information on the device which recorded data for the day.
         distance_data:
           $ref: '#/components/schemas/DailyDistanceData'
+          description: Object containing information related to distance covered during the associated day.
         heart_rate_data:
           $ref: '#/components/schemas/HeartRateData'
+          description: Object containing heartrate-related information for the day.
         MET_data:
           $ref: '#/components/schemas/METData'
+          description: Object containing information on the Metabolic Equivalent of Task for the day.
         metadata:
           $ref: '#/components/schemas/DailyMetadata'
+          description: Object containing daily summary metadata.
         oxygen_data:
           $ref: '#/components/schemas/OxygenData'
+          description: Object containing information on oxygen-related metrics for the day.
         scores:
-          $ref: '#/components/schemas/ScoreData'
+          $ref: '#/components/schemas/ScoresData'
+          description: Scores for the user's performance on different metrics for the given day, as calculated by the fitness data provider.
         strain_data:
           $ref: '#/components/schemas/StrainData'
+          description: Object containing information on the strain put on the user's body over a day.
         stress_data:
           $ref: '#/components/schemas/StressData'
+          description: Object containing information on the stress put on the user over a day.
         tag_data:
           $ref: '#/components/schemas/TagData'
+          description: Object containing all user-entered or automatically tagged events in the day.
       required:
         - metadata
     Menstruation:
@@ -2584,8 +2605,10 @@ components:
       properties:
         metadata:
           $ref: '#/components/schemas/MenstruationMetadata'
+          description: Object containing daily summary metadata.
         menstruation_data:
           $ref: '#/components/schemas/MenstruationData'
+          description: Object containing information on user's menstruation for a given day.
       required:
         - metadata
     Nutrition:
@@ -2597,14 +2620,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DrinkSample'
+          description: Information on drinks the user consumed throughout the day.
         meals:
           type: array
           items:
             $ref: '#/components/schemas/Meal'
+          description: Information on individual foods consumed throughout a given day.
         metadata:
           $ref: '#/components/schemas/NutritionMetadata'
+          description: Object containing daily summary metadata.
         summary:
           $ref: '#/components/schemas/NutritionSummary'
+          description: Summative nutritional information for a given day.
       required:
         - metadata
     Sleep:
@@ -2614,22 +2641,35 @@ components:
       properties:
         data_enrichment:
           $ref: '#/components/schemas/SleepDataEnrichment'
+          description: Object containing additional enrichment data for the sleep session.
         device_data:
           $ref: '#/components/schemas/DeviceData'
+          description: Object containing information on the device which recorded data for the payload.
         heart_rate_data:
           $ref: '#/components/schemas/HeartRateData'
+          description: Object containing information on the user's heart rate during the sleep session.
         metadata:
           $ref: '#/components/schemas/SleepMetadata'
+          description: Object containing daily summary metadata.
         readiness_data:
           $ref: '#/components/schemas/ReadinessData'
+          description: Object containing information on the user's readiness for the day, based off the quality and duration of their sleep.
         respiration_data:
           $ref: '#/components/schemas/RespirationData'
+          description: Object containing information on the user's respiration throughout the sleep session.
         scores:
-          $ref: '#/components/schemas/ScoreData'
+          type: object
+          properties:
+            sleep_score:
+              type: number
+              description: User's sleep score.
+          description: User's sleep score
         sleep_durations_data:
           $ref: '#/components/schemas/SleepDurationsData'
+          description: Object containing information on the user's duration spent in various sleep stages.
         temperature_data:
           $ref: '#/components/schemas/SleepTemperatureData'
+          description: Object containing body temperature information of the user during the sleep recording session.
       required:
         - metadata
     PlannedWorkoutStepTarget:
@@ -4258,24 +4298,53 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ActivityLevelSample'
+          description: Array of detailed samples of the intensity the user was in at various points during the workout.
         activity_seconds:
-          type: integer
+          type: number
+          examples:
+            - 1800
+          minimum: 0
+          description: Total number of seconds spent in an active state during the workout.
         inactivity_seconds:
-          type: integer
+          type: number
+          examples:
+            - 600
+          minimum: 0
+          description: Total number of seconds spent in an inactive state during the workout.
         low_intensity_seconds:
-          type: integer
+          type: number
+          examples:
+            - 900
+          minimum: 0
+          description: Total number of seconds spent in a low intensity state during the workout.
         moderate_intensity_seconds:
-          type: integer
+          type: number
+          examples:
+            - 600
+          minimum: 0
+          description: Total number of seconds spent in a moderate intensity state during the workout.
         num_continuous_inactive_periods:
           type: integer
+          examples:
+            - 3
+          minimum: 0
+          description: Maximum number of continuous periods spent in an inactive state during the workout.
         rest_seconds:
-          type: integer
-        standing_hours_count:
-          type: integer
-        standing_seconds:
-          type: integer
+          type: number
+          examples:
+            - 120
+          minimum: 0
+          description: Total number of seconds spent resting during the workout.
         vigorous_intensity_seconds:
-          type: integer
+          type: number
+          examples:
+            - 300
+          minimum: 0
+          description: Total number of seconds spent in a state of vigorous intensity during the workout.
+        standing_hours_count:
+          type: number
+        standing_seconds:
+          type: number
     CalorieSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/CalorieSample.yaml
@@ -4368,23 +4437,38 @@ components:
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OtherDeviceData.yaml
       type: object
       properties:
+        manufacturer:
+          type: string
+          examples:
+            - Garmin
+          description: Device manufacturer name.
+        hardware_version:
+          type: string
+          examples:
+            - v2.1
+          description: Hardware version of the device.
+        serial_number:
+          type: string
+          examples:
+            - GR123456789
+          description: Device Serial Number.
+        name:
+          type: string
+          examples:
+            - Forerunner 945
+          description: Device name - note that this can also be the name of the application/package which the data comes from, if coming from a data aggregator such as Google Fit.
+        software_version:
+          type: string
+          examples:
+            - 5.2.1
+          description: Device Software Version.
         activation_timestamp:
           type: string
         data_provided:
           type: array
           items:
             $ref: '#/components/schemas/DeviceDataType'
-        hardware_version:
-          type: string
         last_upload_date:
-          type: string
-        manufacturer:
-          type: string
-        name:
-          type: string
-        serial_number:
-          type: string
-        software_version:
           type: string
     DeviceData:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -4393,28 +4477,50 @@ components:
       properties:
         activation_timestamp:
           type: string
+          examples:
+            - '2022-12-25T00:00:00.000000+05:00'
+          description: Activation timestamp of the device, if applicable.
         data_provided:
           type: array
           items:
             $ref: '#/components/schemas/DeviceDataType'
+          description: Data provided by the device, as enumerated types.
         hardware_version:
           type: string
+          examples:
+            - v2.1
+          description: Hardware version of the device.
         last_upload_date:
           type: string
+          description: Last upload date from the device.
         manufacturer:
           type: string
+          examples:
+            - Garmin
+          description: Device manufacturer name.
         name:
           type: string
+          examples:
+            - Forerunner 945
+          description: Device name - note that this can also be the name of the application/package which the data comes from, if coming from a data aggregator such as Google Fit.
         other_devices:
           type: array
           items:
             $ref: '#/components/schemas/OtherDeviceData'
+          description: Data pertaining to other devices which may have contributed data for this workout.
         sensor_state:
           type: string
+          description: Sensor state of the device.
         serial_number:
           type: string
+          examples:
+            - GR123456789
+          description: Device Serial Number.
         software_version:
           type: string
+          examples:
+            - 5.2.1
+          description: Device Software Version.
     DistanceSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceSample.yaml
@@ -4506,17 +4612,38 @@ components:
       type: object
       properties:
         avg_meters:
-          type: integer
+          type: number
+          examples:
+            - 950
+          description: Average elevation of the user throughout the workout.
         gain_actual_meters:
-          type: integer
+          type: number
+          examples:
+            - 550
+          minimum: 0
+          description: Planned elevation gain for the workout.
         gain_planned_meters:
-          type: integer
+          type: number
+          examples:
+            - 500
+          minimum: 0
+          description: Elevation gain of the user throughout the workout - this includes all elevation gain, and does _not_ represent net gain.
         loss_actual_meters:
-          type: integer
+          type: number
+          examples:
+            - 450
+          minimum: 0
+          description: Elevation loss of the user throughout the workout.
         max_meters:
-          type: integer
+          type: number
+          examples:
+            - 1200
+          description: Maximum elevation of the user during the workout.
         min_meters:
-          type: integer
+          type: number
+          examples:
+            - 800
+          description: Minimum elevation of the user during the workout.
     SwimmingData:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SwimmingData.yaml
@@ -4524,10 +4651,22 @@ components:
       properties:
         num_laps:
           type: integer
+          examples:
+            - 20
+          minimum: 0
+          description: Total number of swimming laps performed during the day.
         num_strokes:
           type: integer
+          examples:
+            - 500
+          minimum: 0
+          description: Total number of swimming strokes performed during the day.
         pool_length_meters:
           type: integer
+          examples:
+            - 25
+          minimum: 0
+          description: Pool length for associated with the day.
     DistanceDataSummary:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceDataSummary.yaml
@@ -4644,14 +4783,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/HeartRateDataSample'
+          description: Array of HeartRate data samples recorded for the user during the workout.
         hrv_samples_rmssd:
           type: array
           items:
             $ref: '#/components/schemas/HeartRateVariabilityDataSampleRMSSD'
+          description: Array of HeartRate Variability data samples recorded for the user during the workout, computed using RMSSD.
         hrv_samples_sdnn:
           type: array
           items:
             $ref: '#/components/schemas/HeartRateVariabilityDataSampleSDNN'
+          description: Array of HeartRate Variability data samples recorded for the user during the workout, computed using SDNN.
     HeartRateZone:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateZone.yaml
@@ -4714,23 +4856,49 @@ components:
       type: object
       properties:
         avg_hr_bpm:
-          type: integer
+          type: number
+          examples:
+            - 145
+          minimum: 0
+          description: Average HeartRate of the user during the workout.
         avg_hrv_rmssd:
-          type: integer
+          type: number
+          examples:
+            - 35.2
+          description: Average HeartRate Variability of the user during the workout, computed using RMSSD.
         avg_hrv_sdnn:
-          type: integer
+          type: number
+          examples:
+            - 45.5
+          description: Average HeartRate Variability of the user during the workout, computed using SDNN.
         hr_zone_data:
           type: array
           items:
             $ref: '#/components/schemas/HeartRateZoneData'
+          description: Array of time spent in various HR zones throughout the workout.
         max_hr_bpm:
-          type: integer
+          type: number
+          examples:
+            - 180
+          minimum: 0
+          description: Maximum HeartRate of the user during the workout.
         min_hr_bpm:
-          type: integer
+          type: number
+          examples:
+            - 85
+          minimum: 0
+          description: Minimum HeartRate of the user during the workout.
         resting_hr_bpm:
-          type: integer
+          type: number
+          examples:
+            - 65
+          minimum: 0
+          description: Resting HeartRate of the user, as determined by the fitness data provider.
         user_max_hr_bpm:
-          type: integer
+          type: number
+          examples:
+            - 190
+          description: User's maximum HeartRate based on their age, and other factors as determined by the fitness data provider.
     HeartRateData:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateData.yaml
@@ -4738,8 +4906,10 @@ components:
       properties:
         detailed:
           $ref: '#/components/schemas/HeartRateDataDetailed'
+          description: Object containing detailed heart rate information for the associated workout.
         summary:
           $ref: '#/components/schemas/HeartRateDataSummary'
+          description: Object containing summary heart rate information for the associated workout.
     StrokeType:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StrokeType.yaml
@@ -4825,16 +4995,46 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/METSample'
+          description: An array of Metabolic Equivalent Time samples, as calculated by the user's wearable.
         avg_level:
-          type: integer
+          type: number
+          examples:
+            - 3.8
+          description: The average MET level of the activity.
         num_high_intensity_minutes:
-          type: integer
+          type: number
+          examples:
+            - 10
+          minimum: 0
+          description: Number of minutes spent in High Intensity during the workout - based off MET scale.
         num_inactive_minutes:
-          type: integer
+          type: number
+          examples:
+            - 5
+          minimum: 0
+          description: Number of minutes spent in state of Inactivity during the workout - based off MET scale.
         num_low_intensity_minutes:
-          type: integer
+          type: number
+          examples:
+            - 15
+          minimum: 0
+          description: Number of minutes spent in Low Intensity during the workout - based off MET scale.
         num_moderate_intensity_minutes:
-          type: integer
+          type: number
+          examples:
+            - 25
+          minimum: 0
+          description: Number of minutes spent in Moderate Intensity during the workout - based off MET scale.
+    TimestampLocalization:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TimestampLocalization.yaml
+      type: number
+      enum:
+        - 0
+        - 1
+      examples:
+        - 0
+      description: Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC.
     ActivityType:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityType.yaml
@@ -5476,10 +5676,7 @@ components:
             - 123e4567-e89b-12d3-a456-426614174000
           description: A unique identifier for the workout - note that this is unique for the given user, and may not be globally unique.
         timestamp_localization:
-          type: integer
-          examples:
-            - 0
-          description: Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC. 0 = UTC timestamps with +00:00 offset (avoids 'Z' notation for compatibility); 1 = LOCAL timestamps that may include or exclude the timezone, following ISO8601.
+          $ref: '#/components/schemas/TimestampLocalization'
         type:
           $ref: '#/components/schemas/ActivityType'
           examples:
@@ -5650,16 +5847,24 @@ components:
       properties:
         avg_saturation_percentage:
           type: number
+          examples:
+            - 98
+          description: Average Oxygen Saturation percentage of the user during the day (SpO2 or SmO2).
         saturation_samples:
           type: array
           items:
             $ref: '#/components/schemas/OxygenSaturationSample'
+          description: Array of Oxygen Saturation percentage datapoints sampled throughout the day.
         vo2_samples:
           type: array
           items:
             $ref: '#/components/schemas/Vo2MaxSample'
+          description: Array of VO2 datapoints sampled throughout the day.
         vo2max_ml_per_min_per_kg:
           type: number
+          examples:
+            - 45.5
+          description: VO2Max for the given user.
     PolylineMapData:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PolylineMapData.yaml
@@ -5763,6 +5968,9 @@ components:
       properties:
         strain_level:
           type: number
+          examples:
+            - 14.5
+          description: Level of cardiovascular strain imposed on the user during the day.
     TSSSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TSSSample.yaml
@@ -5875,6 +6083,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BloodPressureSample'
+          description: List of Blood Pressure measurements sampled throughout the day.
     AFibFlag:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AFibFlag.yaml
@@ -5950,21 +6159,26 @@ components:
       required:
         - timestamp
         - pulse_wave_velocity_meters_per_second
-    RRInterval:
+    RRIntervalSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RRInterval.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RRIntervalSample.yaml
       type: object
       properties:
-        timestamp:
-          type: string
         rr_interval_ms:
           type: number
+          examples:
+            - 850
+          description: User's RR Interval for a specific heart beat in milliseconds.
+        timestamp:
+          type: string
+          examples:
+            - '2022-11-23T09:00:00.000000+02:00'
+          description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         hr_bpm:
           type: number
-      required:
-        - timestamp
-        - rr_interval_ms
-        - hr_bpm
+          examples:
+            - 72
+          description: The heart beat value at that specific instance.
     HeartData:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartData.yaml
@@ -5974,32 +6188,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AFibClassificationSample'
+          description: List of Atrial Fibrillation classification measurements sampled through the day.
         ecg_signal:
           type: array
           items:
             $ref: '#/components/schemas/ECGReading'
+          description: List of ECGReadings sampled through the day.
         heart_rate_data:
           $ref: '#/components/schemas/HeartRateData'
+          description: Object containing heart rate data.
         pulse_wave_velocity_samples:
           type: array
           items:
             $ref: '#/components/schemas/PulseVelocitySample'
+          description: List of Pulse Wave Velocity measurements sampled throughout the day. This represents a measurement of arterial stiffness that is an independent predictor of cardiovascular risk.
         rr_interval_samples:
           type: array
           items:
-            $ref: '#/components/schemas/RRInterval'
-    HydrationLevelSample:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HydrationLevelSample.yaml
-      type: object
-      properties:
-        timestamp:
-          type: string
-        hydration_level:
-          type: number
-      required:
-        - timestamp
-        - hydration_level
+            $ref: '#/components/schemas/RRIntervalSample'
+          description: List of RR Interval samples throughout the day.
     HydrationMeasurementSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HydrationMeasurementSample.yaml
@@ -6018,15 +6225,15 @@ components:
       type: object
       properties:
         day_total_water_consumption_ml:
-          type: integer
+          type: number
+          examples:
+            - 2500
+          description: User's total water consumption throughout the day.
         hydration_amount_samples:
           type: array
           items:
-            $ref: '#/components/schemas/HydrationLevelSample'
-        hydration_level_samples:
-          type: array
-          items:
             $ref: '#/components/schemas/HydrationMeasurementSample'
+          description: User's hydration level samples throughout the day.
     KetoneSampleType:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/KetoneSampleType.yaml
@@ -6074,6 +6281,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/KetoneSample'
+          description: List of ketone data sampled through the day.
     MeasurementDataSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MeasurementDataSample.yaml
@@ -6081,56 +6289,91 @@ components:
       properties:
         measurement_time:
           type: string
+          examples:
+            - '2022-11-23T09:00:00.000000+02:00'
+          description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         BMI:
           type: number
+          examples:
+            - 22.4
+          description: User's Body Mass Index (BMI).
         BMR:
           type: number
+          examples:
+            - 1800
+          description: User's Basal Metabolic Rate - minimum amount of calories that a person's body needs to perform necessary functions.
         RMR:
           type: number
+          examples:
+            - 2000
+          description: User's Resting Metabolic Rate - amount of energy that a person's body needs to function while at rest. RMR accounts for additional low-effort daily activities on top of basic body functions.
         estimated_fitness_age:
-          type: number
+          type: string
+          examples:
+            - '25'
+          description: Estimate of how fit the user is compared to their actual age, as measured by the device.
         skin_fold_mm:
           type: number
+          examples:
+            - 12.5
+          description: User's skin fold measurement.
         bodyfat_percentage:
           type: number
+          examples:
+            - 18.5
+          minimum: 0
+          maximum: 100
+          description: User's body fat percentage.
         weight_kg:
           type: number
+          examples:
+            - 75.5
+          description: User's body weight.
         height_cm:
           type: number
+          examples:
+            - 178
+          description: User's height.
         bone_mass_g:
           type: number
+          examples:
+            - 3200
+          description: User's total bone mass.
         muscle_mass_g:
           type: number
+          examples:
+            - 35000
+          description: User's total muscle mass (i.e. skeletal muscle mass).
         lean_mass_g:
           type: number
+          examples:
+            - 61500
+          description: Total lean mass of the user - calculated as the difference between total body weight and body fat weight.
         water_percentage:
           type: number
+          examples:
+            - 60.5
+          minimum: 0
+          maximum: 100
+          description: Total amount of fluid in the user's body.
         insulin_units:
           type: number
+          examples:
+            - 10.5
+          description: Quantity of insulin administered to the user.
         insulin_type:
           type: string
+          examples:
+            - rapid-acting
+          description: Type of insulin administered to the user.
         urine_color:
           type: string
+          examples:
+            - pale yellow
+          description: Color of the user's urine.
         user_notes:
           type: string
-      required:
-        - measurement_time
-        - BMI
-        - BMR
-        - RMR
-        - estimated_fitness_age
-        - skin_fold_mm
-        - bodyfat_percentage
-        - weight_kg
-        - height_cm
-        - bone_mass_g
-        - muscle_mass_g
-        - lean_mass_g
-        - water_percentage
-        - insulin_units
-        - insulin_type
-        - urine_color
-        - user_notes
+          description: User notes associated with the measurement.
     MeasurementsData:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MeasurementsData.yaml
@@ -6140,6 +6383,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MeasurementDataSample'
+          description: List of body metrics & measurements taken throughout the associated day.
     BodyMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BodyMetadata.yaml
@@ -6147,8 +6391,16 @@ components:
       properties:
         end_time:
           type: string
+          examples:
+            - '2022-10-28T10:00:00.000000+01:00'
+          description: The end time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h after start_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         start_time:
           type: string
+          examples:
+            - '1999-11-23T09:00:00.000000+02:00'
+          description: The start time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+        timestamp_localization:
+          $ref: '#/components/schemas/TimestampLocalization'
       required:
         - end_time
         - start_time
@@ -6164,6 +6416,44 @@ components:
       required:
         - timestamp
         - temperature_celsius
+    TemperatureData:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TemperatureData.yaml
+      type: object
+      properties:
+        ambient_temperature_samples:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemperatureSample'
+          description: List of ambient temperature measurements sampled throughout the day.
+        body_temperature_samples:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemperatureSample'
+          description: List of body temperature measurements sampled throughout the day.
+        skin_temperature_samples:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemperatureSample'
+          description: List of skin temperature measurements sampled throughout the day.
+    GlucoseDataSample:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseDataSample.yaml
+      type: object
+      properties:
+        timestamp:
+          type: string
+        blood_glucose_mg_per_dL:
+          type: number
+        glucose_level_flag:
+          type: integer
+        trend_arrow:
+          type: integer
+      required:
+        - timestamp
+        - blood_glucose_mg_per_dL
+        - glucose_level_flag
+        - trend_arrow
     DailyPatternSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyPatternSample.yaml
@@ -6188,57 +6478,40 @@ components:
         - percentile_50
         - percentile_75
         - percentile_95
-    GlucoseDataSample:
+    GlucoseData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseDataSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseData.yaml
       type: object
       properties:
-        timestamp:
-          type: string
-        blood_glucose_mg_per_dL:
-          type: number
-        glucose_level_flag:
-          type: integer
-        trend_arrow:
-          type: integer
-      required:
-        - timestamp
-        - blood_glucose_mg_per_dL
-        - glucose_level_flag
-        - trend_arrow
-    TemperatureData:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TemperatureData.yaml
-      type: object
-      properties:
-        ambient_temperature_samples:
+        blood_glucose_samples:
           type: array
           items:
-            $ref: '#/components/schemas/TemperatureSample'
-        body_temperature_samples:
-          type: array
-          items:
-            $ref: '#/components/schemas/TemperatureSample'
-        skin_temperature_samples:
-          type: array
-          items:
-            $ref: '#/components/schemas/TemperatureSample'
-        day_avg_blood_glucose_mg_per_dL:
-          type: integer
-        daily_patterns:
-          type: array
-          items:
-            $ref: '#/components/schemas/DailyPatternSample'
+            $ref: '#/components/schemas/GlucoseDataSample'
+          description: List of blood glucose readings sampled throughout the day.
         detailed_blood_glucose_samples:
           type: array
           items:
             $ref: '#/components/schemas/GlucoseDataSample'
+          description: List of blood glucose readings sampled throughout the day - this represents additional data points, potentially at higher frequency from the ones in blood_glucose_samples, which may come at a cost of reduced accuracy.
+        day_avg_blood_glucose_mg_per_dL:
+          type: number
+          examples:
+            - 92.5
+          description: User's average glucose level throughout the day.
         gmi:
           type: number
+          description: GMI (Glucose Management Indicator) is a metric derived from continuous glucose monitoring (CGM) data that estimates average glucose levels to help guide diabetes management, without implying a precise match to laboratory A1C.
+        time_in_range:
+          type: number
+          description: Time that the user's glucose is within acceptable range (not hyper or hypoglycemic).
         sensor_usage:
           type: integer
-        time_in_range:
-          type: integer
+          description: Number of data points recorded by the sensor throughout the day.
+        daily_patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyPatternSample'
+          description: List of glucose percentile samples throughout the day.
     DataContributor:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.yaml
@@ -6295,16 +6568,29 @@ components:
       properties:
         detailed:
           $ref: '#/components/schemas/DistanceDataDetailed'
+          description: Object containing detailed distance information - this may include second-by-second samples.
         distance_meters:
           type: integer
+          examples:
+            - 8500
+          description: Total distance covered by the user throughout the day.
         elevation:
           $ref: '#/components/schemas/ElevationData'
+          description: Average elevation of the user throughout the day.
         floors_climbed:
           type: integer
+          examples:
+            - 15
+          minimum: 0
+          description: Total number of elevation gain in floors climbed equivalent throughout the day, as determined by the fitness data provider.
         steps:
           type: integer
+          examples:
+            - 12000
+          description: Total number of steps performed during the day.
         swimming:
           $ref: '#/components/schemas/SwimmingData'
+          description: Summary information of the user's swimming statistics for the day, if applicable.
     DailyMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyMetadata.yaml
@@ -6312,30 +6598,52 @@ components:
       properties:
         end_time:
           type: string
+          examples:
+            - '2022-10-28T10:00:00.000000+01:00'
+          description: The end time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h after start_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         start_time:
           type: string
+          examples:
+            - '1999-11-23T09:00:00.000000+02:00'
+          description: The start time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         timestamp_localization:
-          type: integer
+          $ref: '#/components/schemas/TimestampLocalization'
         upload_type:
           $ref: '#/components/schemas/UploadType'
+          description: The upload type for data in the associated day, providing information on whether data was automatically uploaded or user-entered. If any data point in a day is altered, the day should be classed as manual.
       required:
         - end_time
         - start_time
         - upload_type
-    ScoreData:
+    ScoresData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ScoreData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ScoresData.yaml
       type: object
       properties:
         activity:
           type: number
+          examples:
+            - 92
+          minimum: 0
+          maximum: 100
+          description: Activity score for the given day.
         recovery:
           type: number
+          examples:
+            - 78
+          minimum: 0
+          maximum: 100
+          description: Recovery score for the given day.
         sleep:
           type: number
-    BodyBatterySample:
+          examples:
+            - 85
+          minimum: 0
+          maximum: 100
+          description: Sleep score for the given day, pertaining to the previous night's sleep.
+    StressSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BodyBatterySample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StressSample.yaml
       type: object
       properties:
         timestamp:
@@ -6345,9 +6653,36 @@ components:
       required:
         - timestamp
         - level
-    StressSample:
+    StressLevel:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StressSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StressLevel.yaml
+      oneOf:
+        - type: number
+          const: 0
+          description: Stress level is unknown or could not be determined.
+          title: Unknown
+        - type: number
+          const: 1
+          description: Very low stress level (range 1-25).
+          title: Rest
+        - type: number
+          const: 2
+          description: Low stress level (range 26-50).
+          title: Low
+        - type: number
+          const: 3
+          description: Moderate stress level (range 51-75).
+          title: Medium
+        - type: number
+          const: 4
+          description: High stress level (range 76-100).
+          title: High
+      examples:
+        - 3
+      description: Represents stress level ranges.
+    BodyBatterySample:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BodyBatterySample.yaml
       type: object
       properties:
         timestamp:
@@ -6362,32 +6697,65 @@ components:
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StressData.yaml
       type: object
       properties:
-        activity_stress_duration_seconds:
-          type: number
         avg_stress_level:
           type: number
-        body_battery_samples:
-          type: array
-          items:
-            $ref: '#/components/schemas/BodyBatterySample'
-        high_stress_duration_seconds:
+          examples:
+            - 45.5
+          description: Average stress level for the day.
+        activity_stress_duration_seconds:
           type: number
+          examples:
+            - 3600
+          minimum: 0
+          description: Total number of seconds spent in a stressed state while active during the day.
         low_stress_duration_seconds:
           type: number
+          examples:
+            - 28800
+          minimum: 0
+          description: Total number of seconds spent in a state of low stress during the day.
         max_stress_level:
           type: number
+          examples:
+            - 85
+          description: Maximum stress level recorded during the day.
         medium_stress_duration_seconds:
           type: number
-        rest_stress_duration_seconds:
-          type: number
+          examples:
+            - 7200
+          minimum: 0
+          description: Total number of seconds spent in a state of medium stress during the day.
         samples:
           type: array
           items:
             $ref: '#/components/schemas/StressSample'
+          description: Array of stress level data points sampled throughout the day.
+        rest_stress_duration_seconds:
+          type: number
+          examples:
+            - 1800
+          minimum: 0
+          description: Total number of seconds spent in a stressed state while at rest during the day.
+        high_stress_duration_seconds:
+          type: number
+          examples:
+            - 900
+          minimum: 0
+          description: Total number of seconds spent in a state of high stress during the day.
         stress_duration_seconds:
           type: number
+          examples:
+            - 5400
+          minimum: 0
+          description: Total number of seconds spent in a stressed state while at rest during the day.
         stress_rating:
-          type: number
+          $ref: '#/components/schemas/StressLevel'
+          description: Stress rating for the day.
+        body_battery_samples:
+          type: array
+          items:
+            $ref: '#/components/schemas/BodyBatterySample'
+          description: Array of Body Battery data points sampled throughout the day.
     TagEntry:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TagEntry.yaml
@@ -6395,10 +6763,19 @@ components:
       properties:
         timestamp:
           type: string
+          examples:
+            - '1999-11-23T09:00:00.000000+02:00'
+          description: Time with which the tag is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         tag_name:
           type: string
+          examples:
+            - hot_shower
+          description: Tag name, representing a certain event associated with the user's day.
         notes:
           type: string
+          examples:
+            - Felt refreshed after
+          description: User-input notes associated with the given tag.
       required:
         - timestamp
         - tag_name
@@ -6412,6 +6789,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TagEntry'
+          description: Array of user-entered tags for the day.
     MenstruationMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationMetadata.yaml
@@ -6419,8 +6797,16 @@ components:
       properties:
         end_time:
           type: string
+          examples:
+            - '2022-10-28T10:00:00.000000+01:00'
+          description: The end time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h after start_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         start_time:
           type: string
+          examples:
+            - '1999-11-23T09:00:00.000000+02:00'
+          description: The start time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+        timestamp_localization:
+          $ref: '#/components/schemas/TimestampLocalization'
       required:
         - end_time
         - start_time
@@ -6509,8 +6895,12 @@ components:
       properties:
         timestamp:
           type: string
+          examples:
+            - '2022-11-23T09:00:00.000000+02:00'
+          description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         flow:
           $ref: '#/components/schemas/MenstruationFlow'
+          description: Flag indicating the strength of the user's menstrual flow.
       required:
         - timestamp
         - flow
@@ -6520,29 +6910,58 @@ components:
       type: object
       properties:
         period_length_days:
-          type: number
+          type: integer
+          examples:
+            - 5
+          description: Total length of period (i.e. menstrual bleeding).
         current_phase:
           $ref: '#/components/schemas/MenstrualPhase'
+          description: Phase in associated cycle, (i.e. menstruation, fertile etc).
         length_of_current_phase_days:
-          type: number
+          type: integer
+          examples:
+            - 5
+          description: Length of current phase.
         days_until_next_phase:
-          type: number
+          type: integer
+          examples:
+            - 23
+          description: Number of days to reach the next phase (predicted).
         period_start_date:
           type: string
+          examples:
+            - '2022-11-28'
+          description: Start date of menstrual cycle, in ISO8601 format.
         predicted_cycle_length_days:
-          type: number
+          type: integer
+          examples:
+            - 28
+          description: Prediction of the cycle's total length.
         day_in_cycle:
-          type: number
+          type: integer
+          examples:
+            - 24
+          description: Number of day in cycle this object is associated with.
         last_updated_time:
           type: string
+          examples:
+            - '2022-12-12T14:03:05.000000-05:00'
+          description: Last time when the user recorded information regarding their cycle, in ISO8601 format, with microseconds precision.
         cycle_length_days:
-          type: number
+          type: string
+          examples:
+            - '28'
+          description: Total cycle length.
         is_predicted_cycle:
           type: string
+          examples:
+            - 'true'
+          description: Flag indicating whether associated object is a prediction or user-logged information.
         menstruation_flow:
           type: array
           items:
             $ref: '#/components/schemas/MenstruationFlowSample'
+          description: List of user logs of information related to the strength of user's menstrual flow.
     DrinkSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DrinkSample.yaml
@@ -6561,6 +6980,276 @@ components:
         - drink_volume
         - drink_unit
         - drink_name
+    NutritionMicros:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMicros.yaml
+      type: object
+      properties:
+        biotin_mg:
+          type: number
+          examples:
+            - 0.03
+          description: Biotin content of the associated food(s).
+        caffeine_mg:
+          type: number
+          examples:
+            - 95
+          description: Caffeine content of the associated food(s).
+        calcium_mg:
+          type: number
+          examples:
+            - 1000
+          description: Calcium content of the associated food(s).
+        chloride_mg:
+          type: number
+          examples:
+            - 2300
+          description: Chloride content of the associated food(s).
+        chromium_mg:
+          type: number
+          examples:
+            - 0.035
+          description: Chromium content of the associated food(s).
+        copper_mg:
+          type: number
+          examples:
+            - 0.9
+          description: Copper content of the associated food(s).
+        folate_mg:
+          type: number
+          examples:
+            - 0.4
+          description: Folate content of the associated food(s).
+        folic_acid_mg:
+          type: number
+          examples:
+            - 0.4
+          description: Folic Acid content of the associated food(s).
+        iodine_mg:
+          type: number
+          examples:
+            - 0.15
+          description: Iodine content of the associated food(s).
+        iron_mg:
+          type: number
+          examples:
+            - 8.5
+          description: Iron content of the associated food(s).
+        magnesium_mg:
+          type: number
+          examples:
+            - 320
+          description: Magnesium content of the associated food(s).
+        manganese_mg:
+          type: number
+          examples:
+            - 2.3
+          description: Manganese content of the associated food(s).
+        molybdenum_mg:
+          type: number
+          examples:
+            - 0.045
+          description: Molybdenum content of the associated food(s).
+        niacin_mg:
+          type: number
+          examples:
+            - 16
+          description: Niacin content of the associated food(s).
+        pantothenic_acid_mg:
+          type: number
+          examples:
+            - 5
+          description: Pantothenic content of the associated food(s).
+        phosphorus_mg:
+          type: number
+          examples:
+            - 1000
+          description: Phosphorus content of the associated food(s).
+        potassium_mg:
+          type: number
+          examples:
+            - 3500
+          description: Potassium content of the associated food(s).
+        riboflavin_mg:
+          type: number
+          examples:
+            - 1.3
+          description: Riboflavin content of the associated food(s).
+        selenium_mg:
+          type: number
+          examples:
+            - 0.055
+          description: Selenium content of the associated food(s).
+        thiamin_mg:
+          type: number
+          examples:
+            - 1.2
+          description: Thiamin content of the associated food(s).
+        vitamin_A_mg:
+          type: number
+          examples:
+            - 0.9
+          description: Vitamin A content of the associated food(s).
+        vitamin_B12_mg:
+          type: number
+          examples:
+            - 0.0024
+          description: Vitamin B12 content of the associated food(s).
+        vitamin_B6_mg:
+          type: number
+          examples:
+            - 1.7
+          description: Vitamin B6 content of the associated food(s).
+        vitamin_C_mg:
+          type: number
+          examples:
+            - 90
+          description: Vitamin C content of the associated food(s).
+        vitamin_D_mg:
+          type: number
+          examples:
+            - 0.02
+          description: Vitamin D content of the associated food(s).
+        vitamin_D2_mg:
+          type: number
+          examples:
+            - 0.01
+          description: Vitamin D2 content of the associated food(s).
+        vitamin_D3_mg:
+          type: number
+          examples:
+            - 0.015
+          description: Vitamin D3 content of the associated food(s).
+        vitamin_E_mg:
+          type: number
+          examples:
+            - 15
+          description: Vitamin E content of the associated food(s).
+        vitamin_K_mg:
+          type: number
+          examples:
+            - 0.12
+          description: Vitamin K content of the associated food(s).
+        zinc_mg:
+          type: number
+          examples:
+            - 11
+          description: Zinc content of the associated food(s).
+        cystine_g:
+          type: number
+          examples:
+            - 0.3
+          description: Cystine content of the associated food(s).
+        histidine_g:
+          type: number
+          examples:
+            - 0.6
+          description: Histidine content of the associated food(s).
+        isoleucine_g:
+          type: number
+          examples:
+            - 0.8
+          description: Isoleucine content of the associated food(s).
+        leucine_g:
+          type: number
+          examples:
+            - 1.2
+          description: Leucine content of the associated food(s).
+        lysine_g:
+          type: number
+          examples:
+            - 0.9
+          description: Lysine content of the associated food(s).
+        methionine_g:
+          type: number
+          examples:
+            - 0.6
+          description: Methionine content of the associated food(s).
+        phenylalanine_g:
+          type: number
+          examples:
+            - 0.9
+          description: Phenylalanine content of the associated food(s).
+        threonine_g:
+          type: number
+          examples:
+            - 0.5
+          description: Threonine content of the associated food(s).
+        tryptophan_g:
+          type: number
+          examples:
+            - 0.3
+          description: Tryptophan content of the associated food(s).
+        tyrosine_g:
+          type: number
+          examples:
+            - 0.7
+          description: Tyrosine content of the associated food(s).
+        valine_g:
+          type: number
+          examples:
+            - 0.8
+          description: Valine content of the associated food(s).
+        monounsaturated_fat_g:
+          type: number
+          examples:
+            - 15
+          description: Monounsaturated fat content of the associated food(s).
+        polyunsaturated_fat_g:
+          type: number
+          examples:
+            - 13
+          description: Polyunsaturated fat content of the associated food(s).
+        omega3_g:
+          type: number
+          examples:
+            - 1.6
+          description: Omega3 content of the associated food(s).
+        omega6_g:
+          type: number
+          examples:
+            - 17
+          description: Omega6 content of the associated food(s).
+        starch_g:
+          type: number
+          examples:
+            - 25
+          description: Starch content of the associated food(s).
+    MealType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MealType.yaml
+      oneOf:
+        - type: number
+          const: 0
+          description: Meal type is unknown or could not be determined.
+          title: Unknown
+        - type: number
+          const: 1
+          description: Meal consumed in the morning, typically the first meal of the day.
+          title: Breakfast
+        - type: number
+          const: 2
+          description: Light meal or snack consumed in the morning, between breakfast and lunch.
+          title: Morning Snack
+        - type: number
+          const: 3
+          description: Meal consumed around midday, typically the second meal of the day.
+          title: Lunch
+        - type: number
+          const: 4
+          description: Light meal or snack consumed in the afternoon, between lunch and dinner.
+          title: Afternoon Snack
+        - type: number
+          const: 5
+          description: Meal consumed in the evening, typically the last main meal of the day.
+          title: Dinner
+        - type: number
+          const: 6
+          description: Any light meal or snack consumed at any time, not fitting into main meal categories.
+          title: Snack
+      examples:
+        - 1
+      description: Enum representing the category the consumed food/meal falls under (i.e. Breakfast/Lunch/Dinner etc)
     NutritionUnits:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionUnits.yaml
@@ -6637,151 +7326,106 @@ components:
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMacros.yaml
       type: object
       properties:
-        calories:
-          type: number
-        protein_g:
-          type: number
-        carbohydrates_g:
-          type: number
-        fat_g:
-          type: number
-        sugar_g:
-          type: number
-        cholesterol_mg:
-          type: number
-        fiber_g:
-          type: number
-        sodium_mg:
-          type: number
         alcohol_g:
           type: number
-      required:
-        - calories
-        - protein_g
-        - carbohydrates_g
-        - fat_g
-        - sugar_g
-        - cholesterol_mg
-        - fiber_g
-        - sodium_mg
-        - alcohol_g
-    NutritionMicros:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMicros.yaml
-      type: object
-      properties:
-        selenium_mg:
+          examples:
+            - 14
+          description: Alcohol content of the associated food(s).
+        calories:
           type: number
-        niacin_mg:
+          examples:
+            - 2000
+          description: Calorie content of the associated food(s).
+        carbohydrates_g:
           type: number
-        magnesium_mg:
+          examples:
+            - 300
+          description: Carbohydrates content of the associated food(s).
+        cholesterol_mg:
           type: number
-        copper_mg:
+          examples:
+            - 300
+          description: Cholesterol content of the associated food(s).
+        fat_g:
           type: number
-        vitamin_B12_mg:
+          examples:
+            - 65
+          description: Fat content of the associated food(s).
+        fiber_g:
           type: number
-        vitamin_B6_mg:
+          examples:
+            - 25
+          description: Fiber content of the associated food(s).
+        net_carbohydrates_g:
           type: number
-        vitamin_C_mg:
+          examples:
+            - 275
+          description: Net carbs content of the associated food(s).
+        protein_g:
           type: number
-        zinc_mg:
+          examples:
+            - 50
+          description: Protein content of the associated food(s).
+        saturated_fat_g:
           type: number
-        vitamin_E_mg:
+          examples:
+            - 20
+          description: Saturated fat content of the associated food(s).
+        sodium_mg:
           type: number
-        manganese_mg:
+          examples:
+            - 2300
+          description: Sodium content of the associated food(s).
+        sugar_g:
           type: number
-        vitamin_D_mg:
+          examples:
+            - 25
+          description: Sugar content of the associated food(s).
+        trans_fat_g:
           type: number
-        iodine_mg:
-          type: number
-        chloride_mg:
-          type: number
-        folate_mg:
-          type: number
-        calcium_mg:
-          type: number
-        molybdenum_mg:
-          type: number
-        vitamin_A_mg:
-          type: number
-        riboflavin_mg:
-          type: number
-        folic_acid_mg:
-          type: number
-        iron_mg:
-          type: number
-        thiamin_mg:
-          type: number
-        pantothenic_acid_mg:
-          type: number
-        caffeine_mg:
-          type: number
-        vitamin_K_mg:
-          type: number
-        chromium_mg:
-          type: number
-        potassium_mg:
-          type: number
-        biotin_mg:
-          type: number
-        phosphorus_mg:
-          type: number
-      required:
-        - selenium_mg
-        - niacin_mg
-        - magnesium_mg
-        - copper_mg
-        - vitamin_B12_mg
-        - vitamin_B6_mg
-        - vitamin_C_mg
-        - zinc_mg
-        - vitamin_E_mg
-        - manganese_mg
-        - vitamin_D_mg
-        - iodine_mg
-        - chloride_mg
-        - folate_mg
-        - calcium_mg
-        - molybdenum_mg
-        - vitamin_A_mg
-        - riboflavin_mg
-        - folic_acid_mg
-        - iron_mg
-        - thiamin_mg
-        - pantothenic_acid_mg
-        - caffeine_mg
-        - vitamin_K_mg
-        - chromium_mg
-        - potassium_mg
-        - biotin_mg
-        - phosphorus_mg
+          examples:
+            - 2
+          description: Trans fat content of the associated food(s).
     Meal:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Meal.yaml
       type: object
       properties:
-        name:
-          type: string
-        id:
-          type: string
-        timestamp:
-          type: string
-        type:
-          type: integer
-        quantity:
-          $ref: '#/components/schemas/NutritionQuantity'
-        macros:
-          $ref: '#/components/schemas/NutritionMacros'
         micros:
           $ref: '#/components/schemas/NutritionMicros'
+          description: Micronutrient information for associated food.
+        type:
+          $ref: '#/components/schemas/MealType'
+          description: Enum representing the category the consumed food/meal falls under (i.e. Breakfast/Lunch/Dinner etc).
+        id:
+          type: string
+          examples:
+            - food_123
+          description: Identifier for food logged by the user.
+        timestamp:
+          type: string
+          examples:
+            - '2022-12-12T08:53:00.000000+02:00'
+          description: Timestamp the food is associated with, in ISO8601 format, with microsecond precision.
+        quantity:
+          $ref: '#/components/schemas/NutritionQuantity'
+          description: Quantity of the food that was consumed, containing information on amount & units in which this was recorded.
+        name:
+          type: string
+          examples:
+            - Oatmeal
+          description: Name of food logged by the user.
+        macros:
+          $ref: '#/components/schemas/NutritionMacros'
+          description: Macronutrient information for associated food.
       required:
-        - name
+        - micros
+        - type
         - id
         - timestamp
-        - type
         - quantity
+        - name
         - macros
-        - micros
     NutritionMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMetadata.yaml
@@ -6789,152 +7433,40 @@ components:
       properties:
         end_time:
           type: string
+          examples:
+            - '2022-10-28T10:00:00.000000+01:00'
+          description: The end time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h after start_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         start_time:
           type: string
+          examples:
+            - '1999-11-23T09:00:00.000000+02:00'
+          description: The start time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         timestamp_localization:
-          type: integer
+          $ref: '#/components/schemas/TimestampLocalization'
       required:
         - end_time
         - start_time
-    NutritionSummaryMacros:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionSummaryMacros.yaml
-      type: object
-      properties:
-        alcohol_g:
-          type: integer
-        calories:
-          type: integer
-        carbohydrates_g:
-          type: integer
-        cholesterol_mg:
-          type: integer
-        fat_g:
-          type: integer
-        fiber_g:
-          type: integer
-        net_carbohydrates_g:
-          type: integer
-        protein_g:
-          type: integer
-        saturated_fat_g:
-          type: integer
-        sodium_mg:
-          type: integer
-        sugar_g:
-          type: integer
-        trans_fat_g:
-          type: integer
-    NutritionSummaryMicros:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionSummaryMicros.yaml
-      type: object
-      properties:
-        biotin_mg:
-          type: integer
-        caffeine_mg:
-          type: integer
-        calcium_mg:
-          type: integer
-        chloride_mg:
-          type: integer
-        chromium_mg:
-          type: integer
-        copper_mg:
-          type: integer
-        folate_mg:
-          type: integer
-        folic_acid_mg:
-          type: integer
-        iodine_mg:
-          type: integer
-        iron_mg:
-          type: integer
-        magnesium_mg:
-          type: integer
-        manganese_mg:
-          type: integer
-        molybdenum_mg:
-          type: integer
-        niacin_mg:
-          type: integer
-        pantothenic_acid_mg:
-          type: integer
-        phosphorus_mg:
-          type: integer
-        potassium_mg:
-          type: integer
-        riboflavin_mg:
-          type: integer
-        selenium_mg:
-          type: integer
-        thiamin_mg:
-          type: integer
-        vitamin_A_mg:
-          type: integer
-        vitamin_B12_mg:
-          type: integer
-        vitamin_B6_mg:
-          type: integer
-        vitamin_C_mg:
-          type: integer
-        vitamin_D_mg:
-          type: integer
-        vitamin_D2_mg:
-          type: integer
-        vitamin_D3_mg:
-          type: integer
-        vitamin_E_mg:
-          type: integer
-        vitamin_K_mg:
-          type: integer
-        zinc_mg:
-          type: integer
-        cystine_g:
-          type: integer
-        histidine_g:
-          type: integer
-        isoleucine_g:
-          type: integer
-        leucine_g:
-          type: integer
-        lysine_g:
-          type: integer
-        methionine_g:
-          type: integer
-        phenylalanine_g:
-          type: integer
-        threonine_g:
-          type: integer
-        tryptophan_g:
-          type: integer
-        tyrosine_g:
-          type: integer
-        valine_g:
-          type: integer
-        monounsaturated_fat_g:
-          type: integer
-        polyunsaturated_fat_g:
-          type: integer
-        omega3_g:
-          type: integer
-        omega6_g:
-          type: integer
-        starch_g:
-          type: integer
     NutritionSummary:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionSummary.yaml
       type: object
       properties:
         macros:
-          $ref: '#/components/schemas/NutritionSummaryMacros'
+          $ref: '#/components/schemas/NutritionMacros'
+          description: Summary of macronutrient information for a given day.
         micros:
-          $ref: '#/components/schemas/NutritionSummaryMicros'
+          $ref: '#/components/schemas/NutritionMicros'
+          description: Summary of micronutrient information for a given day.
         water_ml:
-          type: integer
+          type: number
+          examples:
+            - 2000
+          description: Water consumption of the user for a given day.
         drink_ml:
-          type: integer
+          type: number
+          examples:
+            - 500
+          description: Non-water drink consumption of the user for a given day.
     SleepDataEnrichment:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepDataEnrichment.yaml
@@ -6945,7 +7477,7 @@ components:
           items:
             $ref: '#/components/schemas/DataContributor'
         sleep_score:
-          type: integer
+          type: number
     SleepUploadType:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepUploadType.yaml
@@ -6980,16 +7512,29 @@ components:
       properties:
         end_time:
           type: string
-        start_time:
-          type: string
+          examples:
+            - '2022-11-24T08:00:00.000000+01:00'
+          description: The end time of the associated sleep session, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         is_nap:
           type: boolean
+          examples:
+            - false
+          description: Flag indicating whether the sleep session was a nap, or the user's main sleep session for the day.
+        start_time:
+          type: string
+          examples:
+            - '1999-11-23T22:00:00.000000+02:00'
+          description: The start time of the associated sleep session, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         summary_id:
           type: string
+          description: A unique identifier for the sleep session.
         timestamp_localization:
-          type: integer
+          $ref: '#/components/schemas/TimestampLocalization'
         upload_type:
           $ref: '#/components/schemas/SleepUploadType'
+          examples:
+            - 1
+          description: The upload type for the associated sleep session, providing information on whether this was an automatic sleep or user-entered.
       required:
         - end_time
         - start_time
@@ -7036,8 +7581,14 @@ components:
       properties:
         readiness:
           type: integer
+          examples:
+            - 85
+          minimum: 0
+          maximum: 100
+          description: User's readiness score for a given day, resulting from the sleep session.
         recovery_level:
           $ref: '#/components/schemas/RecoveryLevel'
+          description: User's recovery score for a given day, resulting from the sleep session - takes Enum value.
     BreathSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BreathSample.yaml
@@ -7056,36 +7607,65 @@ components:
       type: object
       properties:
         avg_breaths_per_min:
-          type: integer
-        end_time:
-          type: string
+          type: number
+          examples:
+            - 14
+          description: Average breathing rate of the user during the sleep session.
         max_breaths_per_min:
-          type: integer
+          type: number
+          examples:
+            - 18
+          description: Maximum breathing rate of the user during the sleep session.
         min_breaths_per_min:
-          type: integer
+          type: number
+          examples:
+            - 10
+          description: Minimum breathing rate of the user during the sleep session.
         on_demand_reading:
           type: boolean
+          examples:
+            - false
+          description: Flag indicating if the reading was performed on demand, or if it was automatically captured by the device.
         samples:
           type: array
           items:
             $ref: '#/components/schemas/BreathSample'
+          description: List of breathing rate information sampled throughout the sleep session.
         start_time:
           type: string
+          examples:
+            - '1999-11-23T22:00:00.000000+02:00'
+          description: The start time of the recording of breathing rate data, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+        end_time:
+          type: string
+          examples:
+            - '2022-11-24T08:00:00.000000+01:00'
+          description: The end time of the recording of breathing rate data, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
     OxygenSaturationData:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationData.yaml
       type: object
       properties:
         avg_saturation_percentage:
-          type: integer
+          type: number
+          examples:
+            - 97
+          description: Average Oxygen Saturation percentage of the user during the sleep session.
         end_time:
           type: string
+          examples:
+            - '2022-11-24T08:00:00.000000+01:00'
+          description: The end time of the recording of oxygen saturation, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         samples:
           type: array
           items:
             $ref: '#/components/schemas/OxygenSaturationSample'
+          description: Array of Oxygen Saturation percentage datapoints sampled throughout the sleep session.
         start_time:
           type: string
+          examples:
+            - '1999-11-23T22:00:00.000000+02:00'
+          description: The start time of the recording of oxygen saturation, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
     SnoringSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SnoringSample.yaml
@@ -7103,18 +7683,31 @@ components:
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SnoringData.yaml
       type: object
       properties:
+        start_time:
+          type: string
+          examples:
+            - '1999-11-23T22:00:00.000000+02:00'
+          description: The start time of the recording of snoring data, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         end_time:
           type: string
+          examples:
+            - '2022-11-24T08:00:00.000000+01:00'
+          description: The end time of the recording of snoring data, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         num_snoring_events:
           type: integer
+          examples:
+            - 12
+          description: Number of times over the sleep period when the user started snoring, as determined by the device.
         samples:
           type: array
           items:
             $ref: '#/components/schemas/SnoringSample'
-        start_time:
-          type: string
+          description: List of snoring information data points sampled throughout the sleep session.
         total_snoring_duration_seconds:
-          type: integer
+          type: number
+          examples:
+            - 3600
+          description: Total duration for which the user was snoring.
     RespirationData:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RespirationData.yaml
@@ -7122,44 +7715,83 @@ components:
       properties:
         breaths_data:
           $ref: '#/components/schemas/BreathsData'
+          description: Object containing information on breathing rate for the sleep session.
         oxygen_saturation_data:
           $ref: '#/components/schemas/OxygenSaturationData'
+          description: Object containing information on saturation metrics for the sleep session.
         snoring_data:
           $ref: '#/components/schemas/SnoringData'
+          description: Object containing information on snoring metrics for the sleep session.
     AsleepDurations:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AsleepDurations.yaml
       type: object
       properties:
         duration_asleep_state_seconds:
-          type: integer
+          type: number
+          examples:
+            - 25200
+          description: Total duration for which the user was asleep, in any state.
         duration_deep_sleep_state_seconds:
-          type: integer
+          type: number
+          examples:
+            - 5400
+          description: Total duration for which the user was in a state of deep sleep.
         duration_light_sleep_state_seconds:
-          type: integer
+          type: number
+          examples:
+            - 14400
+          description: Total duration for which the user was in a state of light sleep.
         duration_REM_sleep_state_seconds:
-          type: integer
+          type: number
+          examples:
+            - 5400
+          description: Total duration for which the user was in a state of REM sleep.
         num_REM_events:
           type: integer
+          examples:
+            - 4
+          description: Number of periods of REM sleep captured during the sleep session.
     AwakeDurations:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AwakeDurations.yaml
       type: object
       properties:
         duration_awake_state_seconds:
-          type: integer
+          type: number
+          examples:
+            - 1200
+          description: Total duration for which the user was awake during the sleep session.
         duration_long_interruption_seconds:
-          type: integer
+          type: number
+          examples:
+            - 600
+          description: Total duration for which the user was awake during the sleep session, when the interruption of their sleep was greater than 90 seconds.
         duration_short_interruption_seconds:
-          type: integer
+          type: number
+          examples:
+            - 180
+          description: Total duration for which the user was awake during the sleep session, when the interruption of their sleep was less than 90 seconds.
         num_out_of_bed_events:
           type: integer
+          examples:
+            - 1
+          description: Number of times the user got out of bed during the sleep session.
         num_wakeup_events:
           type: integer
+          examples:
+            - 3
+          description: Number of times the user woke up during the sleep session.
         sleep_latency_seconds:
-          type: integer
+          type: number
+          examples:
+            - 900
+          description: Sleep latency, defined as time between the moment the user lays in bed with the intention to sleep and the moment they actually fall asleep.
         wake_up_latency_seconds:
-          type: integer
+          type: number
+          examples:
+            - 300
+          description: Wake up latency, defined as time between the moment the user wakes up and the moment they get out of bed.
     SleepLevel:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepLevel.yaml
@@ -7213,9 +7845,15 @@ components:
       type: object
       properties:
         duration_in_bed_seconds:
-          type: integer
+          type: number
+          examples:
+            - 28800
+          description: Total duration of time spent in bed.
         duration_unmeasurable_sleep_seconds:
-          type: integer
+          type: number
+          examples:
+            - 300
+          description: Total duration during which the user's state (awake, asleep, REM, etc) was unmeasurable during the sleep session.
     SleepDurationsData:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepDurationsData.yaml
@@ -7223,23 +7861,35 @@ components:
       properties:
         asleep:
           $ref: '#/components/schemas/AsleepDurations'
+          description: Object containing information on the duration the user spent asleep during the sleep recording session.
         awake:
           $ref: '#/components/schemas/AwakeDurations'
+          description: Object containing information on the duration the user spent awake during the sleep recording session.
         hypnogram_samples:
           type: array
           items:
             $ref: '#/components/schemas/SleepHypnogramSample'
+          description: List of sleep stage (Hypnogram) samples recorded during the user's sleep session.
         other:
           $ref: '#/components/schemas/OtherSleepDurations'
+          description: Object containing information on the miscellaneous duration data for the sleep recording session.
         sleep_efficiency:
-          type: integer
+          type: number
+          examples:
+            - 87.5
+          minimum: 0
+          maximum: 100
+          description: Sleep efficiency of the user given as a percentage, measured as time spent asleep divided by time spent in bed.
     SleepTemperatureData:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepTemperatureData.yaml
       type: object
       properties:
         delta:
-          type: integer
+          type: number
+          examples:
+            - 0.5
+          description: Variation in user's skin temperature from their baseline.
     HealthcheckEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HealthcheckEvent.yaml

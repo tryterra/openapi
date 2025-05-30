@@ -141,7 +141,6 @@ model ActivityMetadata {
     timestamp_localization?: Terra.Enums.TimestampLocalization;
 
     @doc("The type of activity performed for the associated workout.")
-    @example(Terra.Enums.ActivityType.RUNNING)
     type: Terra.Enums.ActivityType;
 
     @doc("The upload type for the associated workout, providing information on whether this was an automatic workout or user-entered.")

@@ -278,12 +278,10 @@ paths:
             application/json:
               examples:
                 Result:
-                  value: |-
-                    {
-                        "status": "success",
-                        "token": "250c68b9c21b78e40e7a3285a2d538d3bc24aabd3b4c76a782fb0a571ca4501d",
-                        "expires_in": 180
-                    }
+                  value:
+                    status: success
+                    token: 250c68b9c21b78e40e7a3285a2d538d3bc24aabd3b4c76a782fb0a571ca4501d
+                    expires_in: 180
               schema:
                 type: object
                 properties:
@@ -303,11 +301,9 @@ paths:
             application/json:
               examples:
                 Result:
-                  value: |-
-                    {
-                        "status": "error",
-                        "message": "Invalid dev-id was provided"
-                    }
+                  value:
+                    status: "error"
+                    message: "Invalid dev-id was provided"
               schema:
                 type: object
                 properties:
