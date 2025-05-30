@@ -21,7 +21,7 @@ model SleepMetadata {
     start_time: string;
     is_nap?: boolean;
     summary_id?: string;
-    timestamp_localization?: integer;
+    timestamp_localization?: Terra.Enums.TimestampLocalization;
     upload_type: Terra.Enums.SleepUploadType;
 }
 

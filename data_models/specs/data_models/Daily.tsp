@@ -24,7 +24,7 @@ model Daily {
 model DailyMetadata {
     end_time: string;
     start_time: string;
-    timestamp_localization?: integer;
+    timestamp_localization?: Terra.Enums.TimestampLocalization;
     upload_type: Terra.Enums.UploadType;
 }
 
