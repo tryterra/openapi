@@ -117,12 +117,32 @@ model CaloriesData {
 }
 
 model METData {
+    @doc("An array of Metabolic Equivalent Time samples, as calculated by the user's wearable.")
     MET_samples?: METSample[];
-    avg_level?: integer;
-    num_high_intensity_minutes?: integer;
-    num_inactive_minutes?: integer;
-    num_low_intensity_minutes?: integer;
-    num_moderate_intensity_minutes?: integer;
+
+    @doc("The average MET level of the activity.")
+    @example(3.8)
+    avg_level?: float;
+
+    @doc("Number of minutes spent in High Intensity during the workout - based off MET scale.")
+    @example(10.0)
+    @minValue(0.0)
+    num_high_intensity_minutes?: float;
+
+    @doc("Number of minutes spent in state of Inactivity during the workout - based off MET scale.")
+    @example(5.0)
+    @minValue(0.0)
+    num_inactive_minutes?: float;
+
+    @doc("Number of minutes spent in Low Intensity during the workout - based off MET scale.")
+    @example(15.0)
+    @minValue(0.0)
+    num_low_intensity_minutes?: float;
+
+    @doc("Number of minutes spent in Moderate Intensity during the workout - based off MET scale.")
+    @example(25.0)
+    @minValue(0.0)
+    num_moderate_intensity_minutes?: float;
 }
 
 model StrainData {
