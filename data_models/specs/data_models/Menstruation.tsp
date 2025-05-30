@@ -29,7 +29,6 @@ model MenstruationData {
     period_length_days?: integer;
 
     @doc("Phase in associated cycle, (i.e. menstruation, fertile etc).")
-    @example(1)
     current_phase?: Terra.Enums.MenstrualPhase;
 
     @doc("Length of current phase.")
