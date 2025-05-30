@@ -46,6 +46,18 @@ model GlucoseData {
     @doc("User's average glucose level throughout the day.")
     @example(92.5)
     day_avg_blood_glucose_mg_per_dL?: float;
+
+    @doc("GMI (Glucose Management Indicator) is a metric derived from continuous glucose monitoring (CGM) data that estimates average glucose levels to help guide diabetes management, without implying a precise match to laboratory A1C.")
+    gmi?: float;
+
+    @doc("Time that the user's glucose is within acceptable range (not hyper or hypoglycemic).")
+    time_in_range?: float;
+
+    @doc("Number of data points recorded by the sensor throughout the day.")
+    sensor_usage?: integer;
+
+    @doc("List of glucose percentile samples throughout the day.")
+    daily_patterns?: DailyPatternSample[];
 }
 model BloodPressureData {
     @doc("List of Blood Pressure measurements sampled throughout the day.")

@@ -142,7 +142,7 @@ model StressData {
     stress_duration_seconds?: float;
 
     @doc("Stress rating for the day.")
-    stress_rating?: string;
+    stress_rating?: Terra.Enums.StressLevel;
 
     @doc("Array of Body Battery data points sampled throughout the day.")
     body_battery_samples?: BodyBatterySample[];
