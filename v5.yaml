@@ -384,8 +384,7 @@ paths:
                         items:
                           $ref: "#/components/schemas/Activity"
                       type:
-                        type: string
-                        nullable: true
+                        type: [string, "null"]
                   - $ref: "#/components/schemas/NoDataReturned"
                   - $ref: "#/components/schemas/DataSentToWebhook"
                   - $ref: "#/components/schemas/RequestProcessing"
@@ -649,8 +648,7 @@ paths:
                         items:
                           $ref: "#/components/schemas/Body"
                       type:
-                        type: string
-                        nullable: true
+                        type: [string, "null"]
                   - $ref: "#/components/schemas/NoDataReturned"
                   - $ref: "#/components/schemas/DataSentToWebhook"
                   - $ref: "#/components/schemas/RequestProcessing"
@@ -962,8 +960,7 @@ paths:
                         items:
                           $ref: "#/components/schemas/Daily"
                       type:
-                        type: string
-                        nullable: true
+                        type: [string, "null"]
                   - $ref: "#/components/schemas/NoDataReturned"
                   - $ref: "#/components/schemas/DataSentToWebhook"
                   - $ref: "#/components/schemas/RequestProcessing"
@@ -1081,8 +1078,7 @@ paths:
                         items:
                           $ref: "#/components/schemas/Menstruation"
                       type:
-                        type: string
-                        nullable: true
+                        type: [string, "null"]
                   - $ref: "#/components/schemas/NoDataReturned"
                   - $ref: "#/components/schemas/DataSentToWebhook"
                   - $ref: "#/components/schemas/RequestProcessing"
@@ -1200,8 +1196,7 @@ paths:
                         items:
                           $ref: "#/components/schemas/Nutrition"
                       type:
-                        type: string
-                        nullable: true
+                        type: [string, "null"]
                   - $ref: "#/components/schemas/NoDataReturned"
                   - $ref: "#/components/schemas/DataSentToWebhook"
                   - $ref: "#/components/schemas/RequestProcessing"
@@ -1515,8 +1510,7 @@ paths:
                         items:
                           $ref: "#/components/schemas/Sleep"
                       type:
-                        type: string
-                        nullable: true
+                        type: [string, "null"]
                   - $ref: "#/components/schemas/NoDataReturned"
                   - $ref: "#/components/schemas/DataSentToWebhook"
                   - $ref: "#/components/schemas/RequestProcessing"
@@ -1702,8 +1696,7 @@ paths:
                         items:
                           $ref: "#/components/schemas/PlannedWorkout"
                       type:
-                        type: string
-                        nullable: true
+                        type: [string, "null"]
                   - $ref: "#/components/schemas/NoDataReturned"
                   - $ref: "#/components/schemas/DataSentToWebhook"
         "400":
@@ -1916,7 +1909,6 @@ paths:
                         default: success
                       is_authenticated:
                         type: boolean
-                        nullable: false
                   - description:
                       List of multiple User objects the reference_id is associated
                       to
@@ -1999,8 +1991,7 @@ paths:
                         type: object
                         properties:
                           next:
-                            type: integer
-                            nullable: true
+                            type: [integer, "null"]
                             description: The next page number, or null if there is no next page
                           max_page:
                             type: integer
@@ -2177,15 +2168,12 @@ components:
         status:
           type: string
           enum: [success, error]
-          nullable: false
           example: "error"
         message:
           type: string
-          nullable: false
           example: "No data available for specified time range"
         type:
-          type: string
-          nullable: true
+          type: [string, "null"]
           example: "no_data"
         user:
           description: Terra User object
@@ -3598,34 +3586,28 @@ components:
       type: object
       properties:
         estimated_energy_kj:
-          type: number
+          type: [number, "null"]
           description: Estimated energy expenditure for the workout
-          nullable: true
         estimated_speed_meters_per_second:
-          type: number
+          type: [number, "null"]
           description: Estimated speed for the workout
-          nullable: true
         estimated_elevation_gain_meters:
-          type: number
+          type: [number, "null"]
           description: Estimated elevation gain for the workout
-          nullable: true
         estimated_tss:
-          type: number
+          type: [number, "null"]
           description: Estimated Training Stress Score for the workout
-          nullable: true
         estimated_calories:
-          type: integer
+          type: [integer, "null"]
           description: Estimated calorie burn for the workout
-          nullable: true
         created_date:
-          type: string
+          type: [string, "null"]
           description:
             The creation datetime of the associated workout, in ISO8601
             format with microsecond precision. TimeZone info will be provided whenever
             possible. If absent, the time corresponds to the user's local time
           example: "2022-11-23T09:00:00.000000+02:00"
           format: date-time
-          nullable: true
         planned_date:
           type: string
           description:
@@ -3768,47 +3750,37 @@ components:
             - WATER_SKIING
             - INDOOR_RUNNING
         id:
-          type: string
+          type: [string, "null"]
           default: null
-          nullable: true
         estimated_duration_seconds:
-          type: integer
+          type: [integer, "null"]
           description: Estimated workout duration
-          nullable: true
         estimated_pace_minutes_per_kilometer:
-          type: number
+          type: [number, "null"]
           description: Estimated pace for the workout
-          nullable: true
         provider:
           type: string
           description: Name of the original source of the workout plan
-          nullable: false
         estimated_tscore:
-          type: number
+          type: [number, "null"]
           description: ""
-          nullable: true
         description:
-          type: string
+          type: [string, "null"]
           description: Description of the workout
-          nullable: true
         name:
-          type: string
+          type: [string, "null"]
           description: Name of the workout plan
-          nullable: true
         estimated_distance_meters:
-          type: integer
+          type: [integer, "null"]
           description: Estimated distance for the workout
-          nullable: true
         estimated_if:
-          type: number
+          type: [number, "null"]
           description: Estimated Intensity Factor for the workout
-          nullable: true
         pool_length_meters:
-          type: integer
+          type: [integer, "null"]
           description:
             Pool length of the pool used for the workout - only relevant
             for swimming activity types
-          nullable: true
     PlannedWorkout:
       type: object
       properties:
