@@ -4,25 +4,47 @@ type: object
 properties:
   activation_timestamp:
     type: string
+    examples:
+      - 2022-12-25T00:00:00.000000+05:00
+    description: Activation timestamp of the device, if applicable.
   data_provided:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeviceDataType.yaml
+    description: Data provided by the device, as enumerated types.
   hardware_version:
     type: string
+    examples:
+      - v2.1
+    description: Hardware version of the device.
   last_upload_date:
     type: string
+    description: Last upload date from the device.
   manufacturer:
     type: string
+    examples:
+      - Garmin
+    description: Device manufacturer name.
   name:
     type: string
+    examples:
+      - Forerunner 945
+    description: Device name - note that this can also be the name of the application/package which the data comes from, if coming from a data aggregator such as Google Fit.
   other_devices:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OtherDeviceData.yaml
+    description: Data pertaining to other devices which may have contributed data for this workout.
   sensor_state:
     type: string
+    description: Sensor state of the device.
   serial_number:
     type: string
+    examples:
+      - GR123456789
+    description: Device Serial Number.
   software_version:
     type: string
+    examples:
+      - 5.2.1
+    description: Device Software Version.

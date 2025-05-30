@@ -38,10 +38,7 @@ properties:
       - 123e4567-e89b-12d3-a456-426614174000
     description: A unique identifier for the workout - note that this is unique for the given user, and may not be globally unique.
   timestamp_localization:
-    type: integer
-    examples:
-      - 0
-    description: Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC. 0 = UTC timestamps with +00:00 offset (avoids 'Z' notation for compatibility); 1 = LOCAL timestamps that may include or exclude the timezone, following ISO8601.
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TimestampLocalization.yaml
   type:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityType.yaml
     examples:

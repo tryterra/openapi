@@ -3,6 +3,12 @@ $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/sch
 type: object
 properties:
   duration_in_bed_seconds:
-    type: integer
+    type: number
+    examples:
+      - 28800
+    description: Total duration of time spent in bed.
   duration_unmeasurable_sleep_seconds:
-    type: integer
+    type: number
+    examples:
+      - 300
+    description: Total duration during which the user's state (awake, asleep, REM, etc) was unmeasurable during the sleep session.

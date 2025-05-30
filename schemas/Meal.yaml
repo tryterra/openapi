@@ -2,25 +2,38 @@ $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Meal.yaml
 type: object
 properties:
-  name:
-    type: string
-  id:
-    type: string
-  timestamp:
-    type: string
-  type:
-    type: integer
-  quantity:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionQuantity.yaml
-  macros:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMacros.yaml
   micros:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMicros.yaml
+    description: Micronutrient information for associated food.
+  type:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MealType.yaml
+    description: Enum representing the category the consumed food/meal falls under (i.e. Breakfast/Lunch/Dinner etc).
+  id:
+    type: string
+    examples:
+      - food_123
+    description: Identifier for food logged by the user.
+  timestamp:
+    type: string
+    examples:
+      - 2022-12-12T08:53:00.000000+02:00
+    description: Timestamp the food is associated with, in ISO8601 format, with microsecond precision.
+  quantity:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionQuantity.yaml
+    description: Quantity of the food that was consumed, containing information on amount & units in which this was recorded.
+  name:
+    type: string
+    examples:
+      - Oatmeal
+    description: Name of food logged by the user.
+  macros:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMacros.yaml
+    description: Macronutrient information for associated food.
 required:
-  - name
+  - micros
+  - type
   - id
   - timestamp
-  - type
   - quantity
+  - name
   - macros
-  - micros

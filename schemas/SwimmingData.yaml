@@ -4,7 +4,19 @@ type: object
 properties:
   num_laps:
     type: integer
+    examples:
+      - 20
+    minimum: 0
+    description: Total number of swimming laps performed during the day.
   num_strokes:
     type: integer
+    examples:
+      - 500
+    minimum: 0
+    description: Total number of swimming strokes performed during the day.
   pool_length_meters:
     type: integer
+    examples:
+      - 25
+    minimum: 0
+    description: Pool length for associated with the day.

@@ -3,4 +3,7 @@ $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/sch
 type: object
 properties:
   delta:
-    type: integer
+    type: number
+    examples:
+      - 0.5
+    description: Variation in user's skin temperature from their baseline.

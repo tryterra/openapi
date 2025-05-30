@@ -1,15 +1,19 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationFlowSample.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RRIntervalSample.yaml
 type: object
 properties:
+  rr_interval_ms:
+    type: number
+    examples:
+      - 850
+    description: User's RR Interval for a specific heart beat in milliseconds.
   timestamp:
     type: string
     examples:
       - 2022-11-23T09:00:00.000000+02:00
     description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
-  flow:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationFlow.yaml
-    description: Flag indicating the strength of the user's menstrual flow.
-required:
-  - timestamp
-  - flow
+  hr_bpm:
+    type: number
+    examples:
+      - 72
+    description: The heart beat value at that specific instance.

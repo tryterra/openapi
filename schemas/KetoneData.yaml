@@ -6,3 +6,4 @@ properties:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/KetoneSample.yaml
+    description: List of ketone data sampled through the day.

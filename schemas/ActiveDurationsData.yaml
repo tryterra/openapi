@@ -6,21 +6,50 @@ properties:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityLevelSample.yaml
+    description: Array of detailed samples of the intensity the user was in at various points during the workout.
   activity_seconds:
-    type: integer
+    type: number
+    examples:
+      - 1800
+    minimum: 0
+    description: Total number of seconds spent in an active state during the workout.
   inactivity_seconds:
-    type: integer
+    type: number
+    examples:
+      - 600
+    minimum: 0
+    description: Total number of seconds spent in an inactive state during the workout.
   low_intensity_seconds:
-    type: integer
+    type: number
+    examples:
+      - 900
+    minimum: 0
+    description: Total number of seconds spent in a low intensity state during the workout.
   moderate_intensity_seconds:
-    type: integer
+    type: number
+    examples:
+      - 600
+    minimum: 0
+    description: Total number of seconds spent in a moderate intensity state during the workout.
   num_continuous_inactive_periods:
     type: integer
+    examples:
+      - 3
+    minimum: 0
+    description: Maximum number of continuous periods spent in an inactive state during the workout.
   rest_seconds:
-    type: integer
-  standing_hours_count:
-    type: integer
-  standing_seconds:
-    type: integer
+    type: number
+    examples:
+      - 120
+    minimum: 0
+    description: Total number of seconds spent resting during the workout.
   vigorous_intensity_seconds:
-    type: integer
+    type: number
+    examples:
+      - 300
+    minimum: 0
+    description: Total number of seconds spent in a state of vigorous intensity during the workout.
+  standing_hours_count:
+    type: number
+  standing_seconds:
+    type: number

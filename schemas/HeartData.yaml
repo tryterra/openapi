@@ -6,17 +6,22 @@ properties:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AFibClassificationSample.yaml
+    description: List of Atrial Fibrillation classification measurements sampled through the day.
   ecg_signal:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ECGReading.yaml
+    description: List of ECGReadings sampled through the day.
   heart_rate_data:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateData.yaml
+    description: Object containing heart rate data.
   pulse_wave_velocity_samples:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PulseVelocitySample.yaml
+    description: List of Pulse Wave Velocity measurements sampled throughout the day. This represents a measurement of arterial stiffness that is an independent predictor of cardiovascular risk.
   rr_interval_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RRInterval.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RRIntervalSample.yaml
+    description: List of RR Interval samples throughout the day.

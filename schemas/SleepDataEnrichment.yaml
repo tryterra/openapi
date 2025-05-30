@@ -7,4 +7,4 @@ properties:
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.yaml
   sleep_score:
-    type: integer
+    type: number

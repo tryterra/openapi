@@ -3,26 +3,55 @@ $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/sch
 type: object
 properties:
   period_length_days:
-    type: number
+    type: integer
+    examples:
+      - 5
+    description: Total length of period (i.e. menstrual bleeding).
   current_phase:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstrualPhase.yaml
+    description: Phase in associated cycle, (i.e. menstruation, fertile etc).
   length_of_current_phase_days:
-    type: number
+    type: integer
+    examples:
+      - 5
+    description: Length of current phase.
   days_until_next_phase:
-    type: number
+    type: integer
+    examples:
+      - 23
+    description: Number of days to reach the next phase (predicted).
   period_start_date:
     type: string
+    examples:
+      - 2022-11-28
+    description: Start date of menstrual cycle, in ISO8601 format.
   predicted_cycle_length_days:
-    type: number
+    type: integer
+    examples:
+      - 28
+    description: Prediction of the cycle's total length.
   day_in_cycle:
-    type: number
+    type: integer
+    examples:
+      - 24
+    description: Number of day in cycle this object is associated with.
   last_updated_time:
     type: string
+    examples:
+      - 2022-12-12T14:03:05.000000-05:00
+    description: Last time when the user recorded information regarding their cycle, in ISO8601 format, with microseconds precision.
   cycle_length_days:
-    type: number
+    type: string
+    examples:
+      - "28"
+    description: Total cycle length.
   is_predicted_cycle:
     type: string
+    examples:
+      - "true"
+    description: Flag indicating whether associated object is a prediction or user-logged information.
   menstruation_flow:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationFlowSample.yaml
+    description: List of user logs of information related to the strength of user's menstrual flow.

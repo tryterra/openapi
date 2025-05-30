@@ -2,31 +2,63 @@ $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMacros.yaml
 type: object
 properties:
-  calories:
-    type: number
-  protein_g:
-    type: number
-  carbohydrates_g:
-    type: number
-  fat_g:
-    type: number
-  sugar_g:
-    type: number
-  cholesterol_mg:
-    type: number
-  fiber_g:
-    type: number
-  sodium_mg:
-    type: number
   alcohol_g:
     type: number
-required:
-  - calories
-  - protein_g
-  - carbohydrates_g
-  - fat_g
-  - sugar_g
-  - cholesterol_mg
-  - fiber_g
-  - sodium_mg
-  - alcohol_g
+    examples:
+      - 14
+    description: Alcohol content of the associated food(s).
+  calories:
+    type: number
+    examples:
+      - 2000
+    description: Calorie content of the associated food(s).
+  carbohydrates_g:
+    type: number
+    examples:
+      - 300
+    description: Carbohydrates content of the associated food(s).
+  cholesterol_mg:
+    type: number
+    examples:
+      - 300
+    description: Cholesterol content of the associated food(s).
+  fat_g:
+    type: number
+    examples:
+      - 65
+    description: Fat content of the associated food(s).
+  fiber_g:
+    type: number
+    examples:
+      - 25
+    description: Fiber content of the associated food(s).
+  net_carbohydrates_g:
+    type: number
+    examples:
+      - 275
+    description: Net carbs content of the associated food(s).
+  protein_g:
+    type: number
+    examples:
+      - 50
+    description: Protein content of the associated food(s).
+  saturated_fat_g:
+    type: number
+    examples:
+      - 20
+    description: Saturated fat content of the associated food(s).
+  sodium_mg:
+    type: number
+    examples:
+      - 2300
+    description: Sodium content of the associated food(s).
+  sugar_g:
+    type: number
+    examples:
+      - 25
+    description: Sugar content of the associated food(s).
+  trans_fat_g:
+    type: number
+    examples:
+      - 2
+    description: Trans fat content of the associated food(s).

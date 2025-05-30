@@ -3,14 +3,35 @@ $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/sch
 type: object
 properties:
   avg_meters:
-    type: integer
+    type: number
+    examples:
+      - 950
+    description: Average elevation of the user throughout the workout.
   gain_actual_meters:
-    type: integer
+    type: number
+    examples:
+      - 550
+    minimum: 0
+    description: Planned elevation gain for the workout.
   gain_planned_meters:
-    type: integer
+    type: number
+    examples:
+      - 500
+    minimum: 0
+    description: Elevation gain of the user throughout the workout - this includes all elevation gain, and does _not_ represent net gain.
   loss_actual_meters:
-    type: integer
+    type: number
+    examples:
+      - 450
+    minimum: 0
+    description: Elevation loss of the user throughout the workout.
   max_meters:
-    type: integer
+    type: number
+    examples:
+      - 1200
+    description: Maximum elevation of the user during the workout.
   min_meters:
-    type: integer
+    type: number
+    examples:
+      - 800
+    description: Minimum elevation of the user during the workout.

@@ -4,5 +4,7 @@ type: object
 properties:
   detailed:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateDataDetailed.yaml
+    description: Object containing detailed heart rate information for the associated workout.
   summary:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateDataSummary.yaml
+    description: Object containing summary heart rate information for the associated workout.

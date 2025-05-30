@@ -6,13 +6,33 @@ properties:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/METSample.yaml
+    description: An array of Metabolic Equivalent Time samples, as calculated by the user's wearable.
   avg_level:
-    type: integer
+    type: number
+    examples:
+      - 3.8
+    description: The average MET level of the activity.
   num_high_intensity_minutes:
-    type: integer
+    type: number
+    examples:
+      - 10
+    minimum: 0
+    description: Number of minutes spent in High Intensity during the workout - based off MET scale.
   num_inactive_minutes:
-    type: integer
+    type: number
+    examples:
+      - 5
+    minimum: 0
+    description: Number of minutes spent in state of Inactivity during the workout - based off MET scale.
   num_low_intensity_minutes:
-    type: integer
+    type: number
+    examples:
+      - 15
+    minimum: 0
+    description: Number of minutes spent in Low Intensity during the workout - based off MET scale.
   num_moderate_intensity_minutes:
-    type: integer
+    type: number
+    examples:
+      - 25
+    minimum: 0
+    description: Number of minutes spent in Moderate Intensity during the workout - based off MET scale.

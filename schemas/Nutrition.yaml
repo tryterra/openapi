@@ -6,13 +6,17 @@ properties:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DrinkSample.yaml
+    description: Information on drinks the user consumed throughout the day.
   meals:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Meal.yaml
+    description: Information on individual foods consumed throughout a given day.
   metadata:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMetadata.yaml
+    description: Object containing daily summary metadata.
   summary:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionSummary.yaml
+    description: Summative nutritional information for a given day.
 required:
   - metadata

@@ -4,21 +4,33 @@ type: object
 properties:
   blood_pressure_data:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BloodPressureData.yaml
+    description: Object containing information on user's Blood Pressure.
   device_data:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeviceData.yaml
+    description: Object containing information on the device which recorded data for the payload.
   heart_data:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartData.yaml
+    description: Object containing information on user's heart metrics.
   hydration_data:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HydrationData.yaml
+    description: Object containing information on user's hydration (both internal & consumption of water) for the day.
   ketone_data:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/KetoneData.yaml
+    description: Object containing information on user's ketone data for the day.
   measurements_data:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MeasurementsData.yaml
+    description: Object containing information on body measurements for the day.
   metadata:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BodyMetadata.yaml
+    description: Object containing daily summary metadata.
   oxygen_data:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenData.yaml
+    description: Object containing information on user's oxygen-related data.
   temperature_data:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TemperatureData.yaml
+    description: Object containing temperature information (core, skin, ambient) during the day.
+  glucose_data:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseData.yaml
+    description: Object containing information on user's blood glucose for the day.
 required:
   - metadata

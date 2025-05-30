@@ -4,13 +4,26 @@ type: object
 properties:
   detailed:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceDataDetailed.yaml
+    description: Object containing detailed distance information - this may include second-by-second samples.
   distance_meters:
     type: integer
+    examples:
+      - 8500
+    description: Total distance covered by the user throughout the day.
   elevation:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ElevationData.yaml
+    description: Average elevation of the user throughout the day.
   floors_climbed:
     type: integer
+    examples:
+      - 15
+    minimum: 0
+    description: Total number of elevation gain in floors climbed equivalent throughout the day, as determined by the fitness data provider.
   steps:
     type: integer
+    examples:
+      - 12000
+    description: Total number of steps performed during the day.
   swimming:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SwimmingData.yaml
+    description: Summary information of the user's swimming statistics for the day, if applicable.

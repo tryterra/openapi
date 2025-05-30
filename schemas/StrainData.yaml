@@ -4,3 +4,6 @@ type: object
 properties:
   strain_level:
     type: number
+    examples:
+      - 14.5
+    description: Level of cardiovascular strain imposed on the user during the day.

@@ -3,20 +3,46 @@ $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/sch
 type: object
 properties:
   avg_hr_bpm:
-    type: integer
+    type: number
+    examples:
+      - 145
+    minimum: 0
+    description: Average HeartRate of the user during the workout.
   avg_hrv_rmssd:
-    type: integer
+    type: number
+    examples:
+      - 35.2
+    description: Average HeartRate Variability of the user during the workout, computed using RMSSD.
   avg_hrv_sdnn:
-    type: integer
+    type: number
+    examples:
+      - 45.5
+    description: Average HeartRate Variability of the user during the workout, computed using SDNN.
   hr_zone_data:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateZoneData.yaml
+    description: Array of time spent in various HR zones throughout the workout.
   max_hr_bpm:
-    type: integer
+    type: number
+    examples:
+      - 180
+    minimum: 0
+    description: Maximum HeartRate of the user during the workout.
   min_hr_bpm:
-    type: integer
+    type: number
+    examples:
+      - 85
+    minimum: 0
+    description: Minimum HeartRate of the user during the workout.
   resting_hr_bpm:
-    type: integer
+    type: number
+    examples:
+      - 65
+    minimum: 0
+    description: Resting HeartRate of the user, as determined by the fitness data provider.
   user_max_hr_bpm:
-    type: integer
+    type: number
+    examples:
+      - 190
+    description: User's maximum HeartRate based on their age, and other factors as determined by the fitness data provider.

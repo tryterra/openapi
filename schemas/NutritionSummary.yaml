@@ -3,10 +3,18 @@ $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/sch
 type: object
 properties:
   macros:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionSummaryMacros.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMacros.yaml
+    description: Summary of macronutrient information for a given day.
   micros:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionSummaryMicros.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMicros.yaml
+    description: Summary of micronutrient information for a given day.
   water_ml:
-    type: integer
+    type: number
+    examples:
+      - 2000
+    description: Water consumption of the user for a given day.
   drink_ml:
-    type: integer
+    type: number
+    examples:
+      - 500
+    description: Non-water drink consumption of the user for a given day.

@@ -3,16 +3,37 @@ $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/sch
 type: object
 properties:
   duration_awake_state_seconds:
-    type: integer
+    type: number
+    examples:
+      - 1200
+    description: Total duration for which the user was awake during the sleep session.
   duration_long_interruption_seconds:
-    type: integer
+    type: number
+    examples:
+      - 600
+    description: Total duration for which the user was awake during the sleep session, when the interruption of their sleep was greater than 90 seconds.
   duration_short_interruption_seconds:
-    type: integer
+    type: number
+    examples:
+      - 180
+    description: Total duration for which the user was awake during the sleep session, when the interruption of their sleep was less than 90 seconds.
   num_out_of_bed_events:
     type: integer
+    examples:
+      - 1
+    description: Number of times the user got out of bed during the sleep session.
   num_wakeup_events:
     type: integer
+    examples:
+      - 3
+    description: Number of times the user woke up during the sleep session.
   sleep_latency_seconds:
-    type: integer
+    type: number
+    examples:
+      - 900
+    description: Sleep latency, defined as time between the moment the user lays in bed with the intention to sleep and the moment they actually fall asleep.
   wake_up_latency_seconds:
-    type: integer
+    type: number
+    examples:
+      - 300
+    description: Wake up latency, defined as time between the moment the user wakes up and the moment they get out of bed.

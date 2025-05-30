@@ -3,12 +3,12 @@ $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/sch
 type: object
 properties:
   day_total_water_consumption_ml:
-    type: integer
+    type: number
+    examples:
+      - 2500
+    description: User's total water consumption throughout the day.
   hydration_amount_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HydrationLevelSample.yaml
-  hydration_level_samples:
-    type: array
-    items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HydrationMeasurementSample.yaml
+    description: User's hydration level samples throughout the day.

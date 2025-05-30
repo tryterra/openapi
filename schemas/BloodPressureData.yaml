@@ -6,3 +6,4 @@ properties:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BloodPressureSample.yaml
+    description: List of Blood Pressure measurements sampled throughout the day.

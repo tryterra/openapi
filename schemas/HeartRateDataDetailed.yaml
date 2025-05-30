@@ -6,11 +6,14 @@ properties:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateDataSample.yaml
+    description: Array of HeartRate data samples recorded for the user during the workout.
   hrv_samples_rmssd:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateVariabilityDataSampleRMSSD.yaml
+    description: Array of HeartRate Variability data samples recorded for the user during the workout, computed using RMSSD.
   hrv_samples_sdnn:
     type: array
     items:
       $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateVariabilityDataSampleSDNN.yaml
+    description: Array of HeartRate Variability data samples recorded for the user during the workout, computed using SDNN.
