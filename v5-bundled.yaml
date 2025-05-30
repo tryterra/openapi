@@ -5679,8 +5679,6 @@ components:
           $ref: '#/components/schemas/TimestampLocalization'
         type:
           $ref: '#/components/schemas/ActivityType'
-          examples:
-            - 8
           description: The type of activity performed for the associated workout.
         upload_type:
           $ref: '#/components/schemas/UploadType'
