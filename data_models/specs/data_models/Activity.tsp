@@ -95,11 +95,17 @@ model DistanceDataSummary {
 }
 
 model EnergyData {
-    energy_kilojoules?: integer;
-    energy_planned_kilojoules?: integer;
+    @doc("Total number of kiloJoules planned to be expended during the workout - represents the user's predefined goal for the workout")
+    @example(1200.0)
+    energy_kilojoules?: float;
+
+    @doc("Total number of kiloJoules expended during the workout")
+    @example(1150.0)
+    energy_planned_kilojoules?: float;
 }
 
 model LapData {
+    @doc("Array of datapoints for each lap performed by the user during the workout.")
     laps?: LapSample[];
 }
 
@@ -240,10 +246,13 @@ model PowerData {
 }
 
 model TSSData {
+    @doc("Array of TSS information sampled throughout the workout")
     TSS_samples?: TSSSample[];
 }
 
 model WorkData {
+    @doc("Total work output of the user for the workout, in kilojoules.")
+    @example(450.5)
     work_kilojoules?: float;
 }
 // End of Activity Model
