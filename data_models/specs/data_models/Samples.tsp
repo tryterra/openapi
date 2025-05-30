@@ -307,8 +307,16 @@ model Meal {
 }
 
 model TagEntry {
+    @doc("Time with which the tag is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("1999-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
+    @doc("Tag name, representing a certain event associated with the user's day.")
+    @example("hot_shower")
     tag_name: string;
+
+    @doc("User-input notes associated with the given tag.")
+    @example("Felt refreshed after")
     notes: string;
 }
 
