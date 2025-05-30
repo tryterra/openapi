@@ -30,8 +30,22 @@ model HeartRateDataSummary {
 }
 
 model ScoreData {
+    @doc("Activity score for the given day.")
+    @example(92.0)
+    @minValue(0.0)
+    @maxValue(100.0)
     activity?: float;
+
+    @doc("Recovery score for the given day.")
+    @example(78.0)
+    @minValue(0.0)
+    @maxValue(100.0)
     recovery?: float;
+
+    @doc("Sleep score for the given day, pertaining to the previous night's sleep.")
+    @example(85.0)
+    @minValue(0.0)
+    @maxValue(100.0)
     sleep?: float;
 }
 
