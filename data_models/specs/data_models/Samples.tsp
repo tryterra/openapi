@@ -301,13 +301,29 @@ model NutritionMicros {
 }
 
 model Meal {
-    name: string;
-    id: string;
-    timestamp: string;
-    type: integer;
-    quantity: NutritionQuantity;
-    macros: NutritionMacros;
+    @doc("Micronutrient information for associated food.")
     micros: NutritionMicros;
+
+    @doc("Enum representing the category the consumed food/meal falls under (i.e. Breakfast/Lunch/Dinner etc).")
+    type: Terra.Enums.MealType;
+
+    @doc("Identifier for food logged by the user.")
+    @example("food_123")
+    id: string;
+
+    @doc("Timestamp the food is associated with, in ISO8601 format, with microsecond precision.")
+    @example("2022-12-12T08:53:00.000000+02:00")
+    timestamp: string;
+
+    @doc("Quantity of the food that was consumed, containing information on amount & units in which this was recorded.")
+    quantity: NutritionQuantity;
+
+    @doc("Name of food logged by the user.")
+    @example("Oatmeal")
+    name: string;
+
+    @doc("Macronutrient information for associated food.")
+    macros: NutritionMacros;
 }
 
 model TagEntry {
@@ -324,9 +340,17 @@ model TagEntry {
     notes: string;
 }
 
-model RRInterval {
-    timestamp: string;
-    rr_interval_ms: float;
-    hr_bpm: float;
+model RRIntervalSample {
+    @doc("User's RR Interval for a specific heart beat in milliseconds.")
+    @example(850.0)
+    rr_interval_ms?: float;
+
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
+    timestamp?: string;
+
+    @doc("The heart beat value at that specific instance.")
+    @example(72.0)
+    hr_bpm?: float;
 }
 // End of sample data models

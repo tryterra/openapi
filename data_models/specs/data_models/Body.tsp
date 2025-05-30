@@ -78,7 +78,7 @@ model HeartData {
     pulse_wave_velocity_samples?: PulseVelocitySample[];
 
     @doc("List of RR Interval samples throughout the day.")
-    rr_interval_samples?: RRInterval[];
+    rr_interval_samples?: RRIntervalSample[];
 }
 
 model HydrationData {
