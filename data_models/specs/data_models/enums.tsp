@@ -973,13 +973,35 @@ union MenstruationFlow {
 }
 
 @doc("Enum representing the category the consumed food/meal falls under (i.e. Breakfast/Lunch/Dinner etc)")
-enum MealType {
+@example(MealType.BREAKFAST)
+@oneOf
+union MealType {
+    @summary("Unknown")
+    @doc("Meal type is unknown or could not be determined.")
     UNKNOWN: 0,
+
+    @summary("Breakfast")
+    @doc("Meal consumed in the morning, typically the first meal of the day.")
     BREAKFAST: 1,
+
+    @summary("Morning Snack")
+    @doc("Light meal or snack consumed in the morning, between breakfast and lunch.")
     MORNING_SNACK: 2,
+
+    @summary("Lunch")
+    @doc("Meal consumed around midday, typically the second meal of the day.")
     LUNCH: 3,
+
+    @summary("Afternoon Snack")
+    @doc("Light meal or snack consumed in the afternoon, between lunch and dinner.")
     AFTERNOON_SNACK: 4,
+
+    @summary("Dinner")
+    @doc("Meal consumed in the evening, typically the last main meal of the day.")
     DINNER: 5,
+
+    @summary("Snack")
+    @doc("Any light meal or snack consumed at any time, not fitting into main meal categories.")
     SNACK: 6,
 }
 
