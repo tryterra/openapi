@@ -54,7 +54,7 @@ paths:
                   type: string
         required: false
       responses:
-        '200':
+        "200":
           description: Returned when authentication link could be successfully generated
           content:
             application/json:
@@ -76,7 +76,7 @@ paths:
                     type: string
                     description: authentication URL the user must be redirected to in order to link their account
                     example: https://www.fitbit.com/oauth2/authorize?response_type=code&client_id=23BBG9&scope=settings+nutrition+sleep+heartrate+electrocardiogram+weight+respiratory_rate+oxygen_saturation+profile+temperature+cardio_fitness+activity+location&state=bLqqjPie9ptwoWm6VBxHCu6JkkoWJp
-        '400':
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -91,7 +91,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. resource)
           content:
             application/json:
@@ -118,10 +118,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WidgetSessionParams'
+              $ref: "#/components/schemas/WidgetSessionParams"
         required: true
       responses:
-        '200':
+        "200":
           description: Returned when authentication link could be successfully generated
           content:
             application/json:
@@ -147,7 +147,7 @@ paths:
                     type: number
                     description: a number in seconds depicting how long the url is valid for
                     example: 900
-        '400':
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -191,7 +191,7 @@ paths:
                   type: boolean
                   description: Whether the user should remain active
       responses:
-        '200':
+        "200":
           description: Returned upon successful user modification
           content:
             application/json:
@@ -199,7 +199,7 @@ paths:
                 type: object
                 properties:
                   user:
-                    $ref: '#/components/schemas/TerraUser'
+                    $ref: "#/components/schemas/TerraUser"
                   status:
                     type: string
                     enum:
@@ -207,7 +207,7 @@ paths:
                       - error
                     description: Indicates that the request was successful
                     example: success
-        '400':
+        "400":
           description: Returned if the parameters are malformed or no user is found
           content:
             application/json:
@@ -238,7 +238,7 @@ paths:
             type: string
           required: true
       responses:
-        '200':
+        "200":
           description: Returned when authentication link could be successfully generated
           content:
             application/json:
@@ -251,7 +251,7 @@ paths:
                       - error
                     description: indicates that an error happened (value is success)
                     type: string
-        '404':
+        "404":
           description: Returned when the user_id is not existent
           content:
             application/json:
@@ -275,8 +275,8 @@ paths:
       description: Creates a token to be used with initConnection() functions in the Terra mobile SDKs in order to create a user record for Apple Health or Samsung Health (or equivalent)
       operationId: Authentication_GenerateAuthToken
       responses:
-        '200':
-          description: '200'
+        "200":
+          description: "200"
           content:
             application/json:
               examples:
@@ -298,8 +298,8 @@ paths:
                     type: integer
                     example: 180
                     default: 0
-        '404':
-          description: '404'
+        "404":
+          description: "404"
           content:
             application/json:
               examples:
@@ -362,7 +362,7 @@ paths:
             type: boolean
           required: false
       responses:
-        '200':
+        "200":
           description: Returned upon successful data request
           content:
             application/json:
@@ -371,21 +371,21 @@ paths:
                   - type: object
                     properties:
                       user:
-                        $ref: '#/components/schemas/TerraUser'
+                        $ref: "#/components/schemas/TerraUser"
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Activity'
+                          $ref: "#/components/schemas/Activity"
                       type:
                         type:
                           - string
-                          - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
-                  - $ref: '#/components/schemas/DataSentToWebhook'
-                  - $ref: '#/components/schemas/RequestProcessing'
-                  - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
-        '400':
+                          - "null"
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+                  - $ref: "#/components/schemas/RequestProcessing"
+                  - $ref: "#/components/schemas/RateLimitRequestProcessing"
+                  - $ref: "#/components/schemas/LargeRequestProcessingEvent"
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -400,7 +400,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '401':
+        "401":
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -411,7 +411,7 @@ paths:
                     description: An error message
                     type: string
                     example: unauthorized
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -442,12 +442,12 @@ paths:
                   description: List of user-tracked workouts to post to data provider
                   type: array
                   items:
-                    $ref: '#/components/schemas/Activity'
+                    $ref: "#/components/schemas/Activity"
               required:
                 - data
         required: true
       responses:
-        '201':
+        "201":
           description: Returned when activity was successfully created on the provider
           content:
             application/json:
@@ -455,7 +455,7 @@ paths:
                 type: object
                 properties:
                   user:
-                    $ref: '#/components/schemas/TerraUser'
+                    $ref: "#/components/schemas/TerraUser"
                   log_ids:
                     description: List of identifiers for the objects created, returned in the same order they were posted. I.e. Posting [ObjectA, ObjectB] will return [IdentifierA, IdentifierB]
                     type: array
@@ -464,7 +464,7 @@ paths:
                   message:
                     type: string
                     default: Activity successfully logged
-        '400':
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -479,7 +479,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -515,16 +515,16 @@ paths:
             type: boolean
           required: false
       responses:
-        '200':
+        "200":
           description: Returned upon successful data request
           content:
             application/json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/AthleteCollection'
-                  - $ref: '#/components/schemas/NoDataReturned'
-                  - $ref: '#/components/schemas/DataSentToWebhook'
-        '400':
+                  - $ref: "#/components/schemas/AthleteCollection"
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -539,7 +539,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '401':
+        "401":
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -550,7 +550,7 @@ paths:
                     description: An error message
                     type: string
                     example: unauthorized
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -610,7 +610,7 @@ paths:
             type: boolean
           required: false
       responses:
-        '200':
+        "200":
           description: Returned upon successful data request
           content:
             application/json:
@@ -619,21 +619,21 @@ paths:
                   - type: object
                     properties:
                       user:
-                        $ref: '#/components/schemas/TerraUser'
+                        $ref: "#/components/schemas/TerraUser"
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Body'
+                          $ref: "#/components/schemas/Body"
                       type:
                         type:
                           - string
-                          - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
-                  - $ref: '#/components/schemas/DataSentToWebhook'
-                  - $ref: '#/components/schemas/RequestProcessing'
-                  - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
-        '400':
+                          - "null"
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+                  - $ref: "#/components/schemas/RequestProcessing"
+                  - $ref: "#/components/schemas/RateLimitRequestProcessing"
+                  - $ref: "#/components/schemas/LargeRequestProcessingEvent"
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -648,7 +648,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '401':
+        "401":
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -659,7 +659,7 @@ paths:
                     description: An error message
                     type: string
                     example: unauthorized
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -690,12 +690,12 @@ paths:
                   description: Body measurement metrics to post to data provider
                   type: array
                   items:
-                    $ref: '#/components/schemas/Body'
+                    $ref: "#/components/schemas/Body"
               required:
                 - data
         required: true
       responses:
-        '201':
+        "201":
           description: Returned when activity was successfully created on the provider
           content:
             application/json:
@@ -703,7 +703,7 @@ paths:
                 type: object
                 properties:
                   user:
-                    $ref: '#/components/schemas/TerraUser'
+                    $ref: "#/components/schemas/TerraUser"
                   log_ids:
                     description: List of identifiers for the objects created, returned in the same order they were posted. I.e. Posting [ObjectA, ObjectB] will return [IdentifierA, IdentifierB]
                     type: array
@@ -712,7 +712,7 @@ paths:
                   message:
                     type: string
                     default: Body data successfully logged
-        '400':
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -727,7 +727,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -770,7 +770,7 @@ paths:
                     - data
         required: true
       responses:
-        '200':
+        "200":
           description: Returned when all records were deleted successfully
           content:
             application/json:
@@ -778,7 +778,7 @@ paths:
                 type: object
                 properties:
                   user:
-                    $ref: '#/components/schemas/TerraUser'
+                    $ref: "#/components/schemas/TerraUser"
                   processed_data:
                     type: array
                     items:
@@ -790,7 +790,7 @@ paths:
                         response_code:
                           type: integer
                           description: Response code from the provider when attempting to delete the body metric entries
-        '207':
+        "207":
           description: Returned when multiple status codes were obtained from attempting to delete the requested records
           content:
             application/json:
@@ -798,7 +798,7 @@ paths:
                 type: object
                 properties:
                   user:
-                    $ref: '#/components/schemas/TerraUser'
+                    $ref: "#/components/schemas/TerraUser"
                   processed_data:
                     type: array
                     items:
@@ -810,7 +810,7 @@ paths:
                         response_code:
                           type: integer
                           description: Response code from the provider when attempting to delete the body metric entry
-        '400':
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -825,7 +825,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '401':
+        "401":
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -836,7 +836,7 @@ paths:
                     description: An error message
                     type: string
                     example: unauthorized
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -896,7 +896,7 @@ paths:
             type: boolean
           required: false
       responses:
-        '200':
+        "200":
           description: Returned upon successful data request
           content:
             application/json:
@@ -905,21 +905,21 @@ paths:
                   - type: object
                     properties:
                       user:
-                        $ref: '#/components/schemas/TerraUser'
+                        $ref: "#/components/schemas/TerraUser"
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Daily'
+                          $ref: "#/components/schemas/Daily"
                       type:
                         type:
                           - string
-                          - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
-                  - $ref: '#/components/schemas/DataSentToWebhook'
-                  - $ref: '#/components/schemas/RequestProcessing'
-                  - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
-        '400':
+                          - "null"
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+                  - $ref: "#/components/schemas/RequestProcessing"
+                  - $ref: "#/components/schemas/RateLimitRequestProcessing"
+                  - $ref: "#/components/schemas/LargeRequestProcessingEvent"
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -934,7 +934,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '401':
+        "401":
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -945,7 +945,7 @@ paths:
                     description: An error message
                     type: string
                     example: unauthorized
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -1005,7 +1005,7 @@ paths:
             type: boolean
           required: false
       responses:
-        '200':
+        "200":
           description: Returned upon successful data request
           content:
             application/json:
@@ -1014,21 +1014,21 @@ paths:
                   - type: object
                     properties:
                       user:
-                        $ref: '#/components/schemas/TerraUser'
+                        $ref: "#/components/schemas/TerraUser"
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Menstruation'
+                          $ref: "#/components/schemas/Menstruation"
                       type:
                         type:
                           - string
-                          - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
-                  - $ref: '#/components/schemas/DataSentToWebhook'
-                  - $ref: '#/components/schemas/RequestProcessing'
-                  - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
-        '400':
+                          - "null"
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+                  - $ref: "#/components/schemas/RequestProcessing"
+                  - $ref: "#/components/schemas/RateLimitRequestProcessing"
+                  - $ref: "#/components/schemas/LargeRequestProcessingEvent"
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -1043,7 +1043,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '401':
+        "401":
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -1054,7 +1054,7 @@ paths:
                     description: An error message
                     type: string
                     example: unauthorized
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -1114,7 +1114,7 @@ paths:
             type: boolean
           required: false
       responses:
-        '200':
+        "200":
           description: Returned upon successful data request
           content:
             application/json:
@@ -1123,21 +1123,21 @@ paths:
                   - type: object
                     properties:
                       user:
-                        $ref: '#/components/schemas/TerraUser'
+                        $ref: "#/components/schemas/TerraUser"
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Nutrition'
+                          $ref: "#/components/schemas/Nutrition"
                       type:
                         type:
                           - string
-                          - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
-                  - $ref: '#/components/schemas/DataSentToWebhook'
-                  - $ref: '#/components/schemas/RequestProcessing'
-                  - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
-        '400':
+                          - "null"
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+                  - $ref: "#/components/schemas/RequestProcessing"
+                  - $ref: "#/components/schemas/RateLimitRequestProcessing"
+                  - $ref: "#/components/schemas/LargeRequestProcessingEvent"
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -1152,7 +1152,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '401':
+        "401":
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -1163,7 +1163,7 @@ paths:
                     description: An error message
                     type: string
                     example: unauthorized
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -1194,12 +1194,12 @@ paths:
                   description: Nutrition entry to post to data provider
                   type: array
                   items:
-                    $ref: '#/components/schemas/Nutrition'
+                    $ref: "#/components/schemas/Nutrition"
               required:
                 - data
         required: true
       responses:
-        '201':
+        "201":
           description: Returned when activity was successfully created on the provider
           content:
             application/json:
@@ -1207,7 +1207,7 @@ paths:
                 type: object
                 properties:
                   user:
-                    $ref: '#/components/schemas/TerraUser'
+                    $ref: "#/components/schemas/TerraUser"
                   log_ids:
                     description: List of identifiers for the objects created, returned in the same order they were posted. I.e. Posting [ObjectA, ObjectB] will return [IdentifierA, IdentifierB]
                     type: array
@@ -1216,7 +1216,7 @@ paths:
                   message:
                     type: string
                     default: Nutrition successfully logged
-        '400':
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -1231,7 +1231,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -1274,7 +1274,7 @@ paths:
                     - data
         required: true
       responses:
-        '200':
+        "200":
           description: Returned when all records were deleted successfully
           content:
             application/json:
@@ -1282,7 +1282,7 @@ paths:
                 type: object
                 properties:
                   user:
-                    $ref: '#/components/schemas/TerraUser'
+                    $ref: "#/components/schemas/TerraUser"
                   processed_data:
                     type: array
                     items:
@@ -1294,7 +1294,7 @@ paths:
                         response_code:
                           type: integer
                           description: Response code from the provider when attempting to delete the nutrition log
-        '207':
+        "207":
           description: Returned when multiple status codes were obtained from attempting to delete the requested records
           content:
             application/json:
@@ -1302,7 +1302,7 @@ paths:
                 type: object
                 properties:
                   user:
-                    $ref: '#/components/schemas/TerraUser'
+                    $ref: "#/components/schemas/TerraUser"
                   processed_data:
                     type: array
                     items:
@@ -1314,7 +1314,7 @@ paths:
                         response_code:
                           type: integer
                           description: Response code from the provider when attempting to delete the nutrition log
-        '400':
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -1329,7 +1329,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '401':
+        "401":
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -1340,7 +1340,7 @@ paths:
                     description: An error message
                     type: string
                     example: unauthorized
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -1401,7 +1401,7 @@ paths:
             type: boolean
           required: false
       responses:
-        '200':
+        "200":
           description: Returned upon successful data request
           content:
             application/json:
@@ -1410,21 +1410,21 @@ paths:
                   - type: object
                     properties:
                       user:
-                        $ref: '#/components/schemas/TerraUser'
+                        $ref: "#/components/schemas/TerraUser"
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Sleep'
+                          $ref: "#/components/schemas/Sleep"
                       type:
                         type:
                           - string
-                          - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
-                  - $ref: '#/components/schemas/DataSentToWebhook'
-                  - $ref: '#/components/schemas/RequestProcessing'
-                  - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
-        '400':
+                          - "null"
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+                  - $ref: "#/components/schemas/RequestProcessing"
+                  - $ref: "#/components/schemas/RateLimitRequestProcessing"
+                  - $ref: "#/components/schemas/LargeRequestProcessingEvent"
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -1439,7 +1439,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '401':
+        "401":
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -1450,7 +1450,7 @@ paths:
                     description: An error message
                     type: string
                     example: unauthorized
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -1482,12 +1482,12 @@ paths:
                   description: PlannedWorkout entry to post to data provider
                   type: array
                   items:
-                    $ref: '#/components/schemas/PlannedWorkout'
+                    $ref: "#/components/schemas/PlannedWorkout"
               required:
                 - data
         required: true
       responses:
-        '201':
+        "201":
           description: Returned when activity was successfully created on the provider
           content:
             application/json:
@@ -1495,7 +1495,7 @@ paths:
                 type: object
                 properties:
                   user:
-                    $ref: '#/components/schemas/TerraUser'
+                    $ref: "#/components/schemas/TerraUser"
                   log_ids:
                     description: List of identifiers for the objects created, returned in the same order they were posted. I.e. Posting [ObjectA, ObjectB] will return [IdentifierA, IdentifierB]
                     type: array
@@ -1504,7 +1504,7 @@ paths:
                   message:
                     type: string
                     default: Nutrition successfully logged
-        '400':
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -1519,7 +1519,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -1572,7 +1572,7 @@ paths:
             type: boolean
           required: false
       responses:
-        '200':
+        "200":
           description: Returned upon successful data request
           content:
             application/json:
@@ -1581,18 +1581,18 @@ paths:
                   - type: object
                     properties:
                       user:
-                        $ref: '#/components/schemas/TerraUser'
+                        $ref: "#/components/schemas/TerraUser"
                       data:
                         type: array
                         items:
-                          $ref: '#/components/schemas/PlannedWorkout'
+                          $ref: "#/components/schemas/PlannedWorkout"
                       type:
                         type:
                           - string
-                          - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
-                  - $ref: '#/components/schemas/DataSentToWebhook'
-        '400':
+                          - "null"
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -1607,7 +1607,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '401':
+        "401":
           description: Returned when credentials (dev ID and API key) are invalid
           content:
             application/json:
@@ -1618,7 +1618,7 @@ paths:
                     description: An error message
                     type: string
                     example: unauthorized
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -1661,7 +1661,7 @@ paths:
                     - data
         required: true
       responses:
-        '200':
+        "200":
           description: Returned when all records were deleted successfully
           content:
             application/json:
@@ -1669,7 +1669,7 @@ paths:
                 type: object
                 properties:
                   user:
-                    $ref: '#/components/schemas/TerraUser'
+                    $ref: "#/components/schemas/TerraUser"
                   processed_data:
                     type: array
                     items:
@@ -1681,7 +1681,7 @@ paths:
                         response_code:
                           type: integer
                           description: Response code from the provider when attempting to delete the planned workout
-        '207':
+        "207":
           description: Returned when multiple status codes were obtained from attempting to delete the requested records
           content:
             application/json:
@@ -1689,7 +1689,7 @@ paths:
                 type: object
                 properties:
                   user:
-                    $ref: '#/components/schemas/TerraUser'
+                    $ref: "#/components/schemas/TerraUser"
                   processed_data:
                     type: object
                     properties:
@@ -1699,7 +1699,7 @@ paths:
                       response_code:
                         type: integer
                         description: Response code from the provider when attempting to delete the planned workout
-        '400':
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -1714,7 +1714,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '401':
+        "401":
           description: Returned when authorization with a data provider has failed
           content:
             application/json:
@@ -1730,7 +1730,7 @@ paths:
                       - error
                     type: string
                     description: indicates that an error happened (value is error)
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -1766,7 +1766,7 @@ paths:
             type: string
           required: false
       responses:
-        '200':
+        "200":
           description: Returned when the provided resources are found
           content:
             application/json:
@@ -1776,7 +1776,7 @@ paths:
                     type: object
                     properties:
                       user:
-                        $ref: '#/components/schemas/TerraUser'
+                        $ref: "#/components/schemas/TerraUser"
                       status:
                         type: string
                         enum:
@@ -1788,8 +1788,8 @@ paths:
                   - description: List of multiple User objects the reference_id is associated to
                     type: array
                     items:
-                      $ref: '#/components/schemas/TerraUser'
-        '400':
+                      $ref: "#/components/schemas/TerraUser"
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -1804,7 +1804,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -1842,7 +1842,7 @@ paths:
           description: Number of results per page (default is 500).
           example: 500
       responses:
-        '200':
+        "200":
           description: Returned upon a successful request
           content:
             application/json:
@@ -1853,7 +1853,7 @@ paths:
                       users:
                         type: array
                         items:
-                          $ref: '#/components/schemas/TerraUser'
+                          $ref: "#/components/schemas/TerraUser"
                   - type: object
                     properties:
                       data:
@@ -1862,7 +1862,7 @@ paths:
                           next:
                             type:
                               - integer
-                              - 'null'
+                              - "null"
                             description: The next page number, or null if there is no next page
                           max_page:
                             type: integer
@@ -1870,8 +1870,8 @@ paths:
                           results:
                             type: array
                             items:
-                              $ref: '#/components/schemas/TerraUser'
-        '400':
+                              $ref: "#/components/schemas/TerraUser"
+        "400":
           description: Returned when one or more parameters are malformed
           content:
             application/json:
@@ -1903,7 +1903,7 @@ paths:
                 type: string
         required: true
       responses:
-        '200':
+        "200":
           description: Returned upon successful request
           content:
             application/json:
@@ -1911,8 +1911,8 @@ paths:
                 description: List of User objects
                 type: array
                 items:
-                  $ref: '#/components/schemas/TerraUser'
-        '400':
+                  $ref: "#/components/schemas/TerraUser"
+        "400":
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
             application/json:
@@ -1927,7 +1927,7 @@ paths:
                     enum:
                       - error
                     description: indicates that an error happened (value is error)
-        '404':
+        "404":
           description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
           content:
             application/json:
@@ -1951,7 +1951,7 @@ paths:
       description: Retrieve a list of all available provider integrations on the API.
       security: []
       responses:
-        '200':
+        "200":
           description: Returns list of all available integrations on the API
           content:
             application/json:
@@ -1989,12 +1989,12 @@ paths:
             type: boolean
           description: If `true`, allows SDK integrations to be included in the response.
       responses:
-        '200':
+        "200":
           description: Successful response containing a list of integrations.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IntegrationsResponse'
+                $ref: "#/components/schemas/IntegrationsResponse"
       security: []
 webhooks:
   healthcheck:
@@ -2006,9 +2006,9 @@ webhooks:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/HealthcheckEvent'
+              $ref: "#/components/schemas/HealthcheckEvent"
       responses:
-        '200':
+        "200":
           description: Successful healthcheck response
   auth:
     post:
@@ -2020,10 +2020,10 @@ webhooks:
           application/json:
             schema:
               oneOf:
-                - $ref: '#/components/schemas/AuthSuccessEvent'
-                - $ref: '#/components/schemas/AuthErrorEvent'
+                - $ref: "#/components/schemas/AuthSuccessEvent"
+                - $ref: "#/components/schemas/AuthErrorEvent"
       responses:
-        '200':
+        "200":
           description: Successful authentication response
   deauth:
     post:
@@ -2034,9 +2034,9 @@ webhooks:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DeauthEvent'
+              $ref: "#/components/schemas/DeauthEvent"
       responses:
-        '200':
+        "200":
           description: Successful deauthentication response
   user_reauth:
     post:
@@ -2047,9 +2047,9 @@ webhooks:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserReauthEvent'
+              $ref: "#/components/schemas/UserReauthEvent"
       responses:
-        '200':
+        "200":
           description: Successful reauthentication response
   access_revoked:
     post:
@@ -2060,9 +2060,9 @@ webhooks:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AccessRevokedEvent'
+              $ref: "#/components/schemas/AccessRevokedEvent"
       responses:
-        '200':
+        "200":
           description: Successful access revocation response
   connection_error:
     post:
@@ -2073,9 +2073,9 @@ webhooks:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConnectionErrorEvent'
+              $ref: "#/components/schemas/ConnectionErrorEvent"
       responses:
-        '200':
+        "200":
           description: Successful connection error response
   google_no_datasource:
     post:
@@ -2086,9 +2086,9 @@ webhooks:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/GoogleNoDatasourceEvent'
+              $ref: "#/components/schemas/GoogleNoDatasourceEvent"
       responses:
-        '200':
+        "200":
           description: Successful no data source response
   processing:
     post:
@@ -2099,9 +2099,9 @@ webhooks:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProcessingEvent'
+              $ref: "#/components/schemas/ProcessingEvent"
       responses:
-        '200':
+        "200":
           description: Successful processing response
   large_request_sending:
     post:
@@ -2112,9 +2112,9 @@ webhooks:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LargeRequestSendingEvent'
+              $ref: "#/components/schemas/LargeRequestSendingEvent"
       responses:
-        '200':
+        "200":
           description: Successful large request sending response
   large_request_processing:
     post:
@@ -2125,9 +2125,9 @@ webhooks:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LargeRequestProcessingEvent'
+              $ref: "#/components/schemas/LargeRequestProcessingEvent"
       responses:
-        '200':
+        "200":
           description: Successful large request processing response
   rate_limit_hit:
     post:
@@ -2138,9 +2138,9 @@ webhooks:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RateLimitHitEvent'
+              $ref: "#/components/schemas/RateLimitHitEvent"
       responses:
-        '200':
+        "200":
           description: Successful rate limit hit response
   s3_upload:
     post:
@@ -2151,100 +2151,100 @@ webhooks:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/S3PayloadEvent'
+              $ref: "#/components/schemas/S3PayloadEvent"
       responses:
-        '200':
+        "200":
           description: Successful S3 upload response
   activity:
     post:
-      description: 'activity data event: activity updates when new activity is completed'
+      description: "activity data event: activity updates when new activity is completed"
       summary: Activity webhook
       operationId: activityWebhook
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ActivityEvent'
+              $ref: "#/components/schemas/ActivityEvent"
       responses:
-        '200':
+        "200":
           description: Successful activity response
   athelete:
     post:
-      description: 'athelete data event: Occurs throughout the day as users use their wearables.'
+      description: "athelete data event: Occurs throughout the day as users use their wearables."
       summary: Athlete webhook
       operationId: athleteWebhook
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AthleteEvent'
+              $ref: "#/components/schemas/AthleteEvent"
       responses:
-        '200':
+        "200":
           description: Successful athlete response
   nutrition:
     post:
-      description: 'nutrition data event: occurs throughout the day as users use their wearables.'
+      description: "nutrition data event: occurs throughout the day as users use their wearables."
       summary: Nutrition webhook
       operationId: nutritionWebhook
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NutritionEvent'
+              $ref: "#/components/schemas/NutritionEvent"
       responses:
-        '200':
+        "200":
           description: Successful nutrition response
   daily:
     post:
-      description: 'daily data event: occurs throughout the day as users use their wearables.'
+      description: "daily data event: occurs throughout the day as users use their wearables."
       summary: Daily webhook
       operationId: dailyWebhook
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DailyEvent'
+              $ref: "#/components/schemas/DailyEvent"
       responses:
-        '200':
+        "200":
           description: Successful daily response
   sleep:
     post:
-      description: 'sleep data event: occurs throughout the day as users use their wearables.'
+      description: "sleep data event: occurs throughout the day as users use their wearables."
       summary: Sleep webhook
       operationId: sleepWebhook
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SleepEvent'
+              $ref: "#/components/schemas/SleepEvent"
       responses:
-        '200':
+        "200":
           description: Successful sleep response
   menstruation:
     post:
-      description: 'menstruation data event: occurs throughout the day as users use their wearables.'
+      description: "menstruation data event: occurs throughout the day as users use their wearables."
       summary: Menstruation webhook
       operationId: menstruationWebhook
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MenstruationEvent'
+              $ref: "#/components/schemas/MenstruationEvent"
       responses:
-        '200':
+        "200":
           description: Successful menstruation response
   body:
     post:
-      description: 'body data event: occurs throughout the day as users use their wearables.'
+      description: "body data event: occurs throughout the day as users use their wearables."
       summary: Body webhook
       operationId: bodyWebhook
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BodyEvent'
+              $ref: "#/components/schemas/BodyEvent"
       responses:
-        '200':
+        "200":
           description: Successful body response
 components:
   securitySchemes:
@@ -2283,7 +2283,7 @@ components:
           description: URL the user is redirected to upon unsuccessful authentication
           example: https://myapp.com/failure
     User:
-      $ref: '#/components/schemas/TerraUser'
+      $ref: "#/components/schemas/TerraUser"
     NoDataReturned:
       type: object
       properties:
@@ -2299,13 +2299,13 @@ components:
         type:
           type:
             - string
-            - 'null'
+            - "null"
           example: no_data
         user:
           description: Terra User object
           type: object
           allOf:
-            - $ref: '#/components/schemas/TerraUser'
+            - $ref: "#/components/schemas/TerraUser"
     RequestProcessing:
       type: object
       properties:
@@ -2326,7 +2326,7 @@ components:
           description: Terra User object
           type: object
           allOf:
-            - $ref: '#/components/schemas/TerraUser'
+            - $ref: "#/components/schemas/TerraUser"
     RateLimitRequestProcessing:
       type: object
       properties:
@@ -2339,7 +2339,7 @@ components:
           nullable: false
           example: rate_limit
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
       required:
         - user
     DataSentToWebhook:
@@ -2362,17 +2362,17 @@ components:
           description: Terra User object
           type: object
           allOf:
-            - $ref: '#/components/schemas/TerraUser'
+            - $ref: "#/components/schemas/TerraUser"
     Activity:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Activity.yaml
       type: object
       properties:
         active_durations_data:
-          $ref: '#/components/schemas/ActiveDurationsData'
+          $ref: "#/components/schemas/ActiveDurationsData"
           description: Number of minutes spent at various intensities during the workout, as reported by the Fitness Data provider.
         calories_data:
-          $ref: '#/components/schemas/CaloriesData'
+          $ref: "#/components/schemas/CaloriesData"
           description: Object containing calorie-related information for the user during the specific workout.
         cheat_detection:
           type: integer
@@ -2380,52 +2380,52 @@ components:
             - 0
           description: Cheat detection flag.
         data_enrichment:
-          $ref: '#/components/schemas/DataEnrichment'
+          $ref: "#/components/schemas/DataEnrichment"
           description: Object containing Terra Scores.
         device_data:
-          $ref: '#/components/schemas/DeviceData'
+          $ref: "#/components/schemas/DeviceData"
           description: Object containing information on the device which recorded the specific workout.
         distance_data:
-          $ref: '#/components/schemas/DistanceData'
+          $ref: "#/components/schemas/DistanceData"
           description: Object containing information related to distance covered during the associated workout.
         energy_data:
-          $ref: '#/components/schemas/EnergyData'
+          $ref: "#/components/schemas/EnergyData"
           description: Object containing information on the energy expended by the user during the workout.
         heart_rate_data:
-          $ref: '#/components/schemas/HeartRateData'
+          $ref: "#/components/schemas/HeartRateData"
           description: Object containing heartrate-related information for the workout.
         lap_data:
-          $ref: '#/components/schemas/LapData'
+          $ref: "#/components/schemas/LapData"
           description: Object containing information on data for each lap performed by the user - mostly relates to track & field running activities, and swimming activities.
         MET_data:
-          $ref: '#/components/schemas/METData'
+          $ref: "#/components/schemas/METData"
           description: Object containing information on the Metabolic Equivalent of Task for the workout.
         metadata:
-          $ref: '#/components/schemas/ActivityMetadata'
+          $ref: "#/components/schemas/ActivityMetadata"
           description: Object containing workout metadata.
         movement_data:
-          $ref: '#/components/schemas/MovementData'
+          $ref: "#/components/schemas/MovementData"
           description: Object containing information on the user's movement throughout the workout.
         oxygen_data:
-          $ref: '#/components/schemas/OxygenData'
+          $ref: "#/components/schemas/OxygenData"
           description: Object containing information on oxygen-related metrics for the workout.
         polyline_map_data:
-          $ref: '#/components/schemas/PolylineMapData'
+          $ref: "#/components/schemas/PolylineMapData"
           description: Object containing polyline-representation map data, plotting the user's trajectory throughout the workout.
         position_data:
-          $ref: '#/components/schemas/PositionData'
+          $ref: "#/components/schemas/PositionData"
           description: Object containing information on the user's position throughout the workout.
         power_data:
-          $ref: '#/components/schemas/PowerData'
+          $ref: "#/components/schemas/PowerData"
           description: Object containing information on the power generated by the user during the workout.
         strain_data:
-          $ref: '#/components/schemas/StrainData'
+          $ref: "#/components/schemas/StrainData"
           description: Object containing information on the cardiovascular strain imposed on the user during the workout.
         TSS_data:
-          $ref: '#/components/schemas/TSSData'
+          $ref: "#/components/schemas/TSSData"
           description: Object containing information on the stress put on the user's body from a workout.
         work_data:
-          $ref: '#/components/schemas/WorkData'
+          $ref: "#/components/schemas/WorkData"
           description: Object containing information on the work output of the user during the workout.
       required:
         - metadata
@@ -2477,7 +2477,7 @@ components:
         date_of_birth:
           type: string
           examples:
-            - '1999-11-23'
+            - "1999-11-23"
           description: User's date of birth, in ISO8601 format.
         first_name:
           type: string
@@ -2492,12 +2492,12 @@ components:
         joined_provider:
           type: string
           examples:
-            - '2023-01-15'
+            - "2023-01-15"
           description: User's account creation date.
         devices:
           type: array
           items:
-            $ref: '#/components/schemas/DeviceData'
+            $ref: "#/components/schemas/DeviceData"
     AthleteCollection:
       type: object
       properties:
@@ -2505,7 +2505,7 @@ components:
           description: Object containing the user's information
           type: object
           allOf:
-            - $ref: '#/components/schemas/Athlete'
+            - $ref: "#/components/schemas/Athlete"
         type:
           type: string
           nullable: true
@@ -2514,41 +2514,41 @@ components:
           description: Terra User object
           type: object
           allOf:
-            - $ref: '#/components/schemas/TerraUser'
+            - $ref: "#/components/schemas/TerraUser"
     Body:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Body.yaml
       type: object
       properties:
         blood_pressure_data:
-          $ref: '#/components/schemas/BloodPressureData'
+          $ref: "#/components/schemas/BloodPressureData"
           description: Object containing information on user's Blood Pressure.
         device_data:
-          $ref: '#/components/schemas/DeviceData'
+          $ref: "#/components/schemas/DeviceData"
           description: Object containing information on the device which recorded data for the payload.
         heart_data:
-          $ref: '#/components/schemas/HeartData'
+          $ref: "#/components/schemas/HeartData"
           description: Object containing information on user's heart metrics.
         hydration_data:
-          $ref: '#/components/schemas/HydrationData'
+          $ref: "#/components/schemas/HydrationData"
           description: Object containing information on user's hydration (both internal & consumption of water) for the day.
         ketone_data:
-          $ref: '#/components/schemas/KetoneData'
+          $ref: "#/components/schemas/KetoneData"
           description: Object containing information on user's ketone data for the day.
         measurements_data:
-          $ref: '#/components/schemas/MeasurementsData'
+          $ref: "#/components/schemas/MeasurementsData"
           description: Object containing information on body measurements for the day.
         metadata:
-          $ref: '#/components/schemas/BodyMetadata'
+          $ref: "#/components/schemas/BodyMetadata"
           description: Object containing daily summary metadata.
         oxygen_data:
-          $ref: '#/components/schemas/OxygenData'
+          $ref: "#/components/schemas/OxygenData"
           description: Object containing information on user's oxygen-related data.
         temperature_data:
-          $ref: '#/components/schemas/TemperatureData'
+          $ref: "#/components/schemas/TemperatureData"
           description: Object containing temperature information (core, skin, ambient) during the day.
         glucose_data:
-          $ref: '#/components/schemas/GlucoseData'
+          $ref: "#/components/schemas/GlucoseData"
           description: Object containing information on user's blood glucose for the day.
       required:
         - metadata
@@ -2558,43 +2558,43 @@ components:
       type: object
       properties:
         active_durations_data:
-          $ref: '#/components/schemas/ActiveDurationsData'
+          $ref: "#/components/schemas/ActiveDurationsData"
           description: Object containing information related to the time spent in different activity intensities during over the day.
         calories_data:
-          $ref: '#/components/schemas/CaloriesData'
+          $ref: "#/components/schemas/CaloriesData"
           description: Object containing calorie-related information for the user during the specific day.
         data_enrichment:
-          $ref: '#/components/schemas/DailyDataEnrichment'
+          $ref: "#/components/schemas/DailyDataEnrichment"
           description: Object containing additional enrichment data for the day.
         device_data:
-          $ref: '#/components/schemas/DeviceData'
+          $ref: "#/components/schemas/DeviceData"
           description: Object containing information on the device which recorded data for the day.
         distance_data:
-          $ref: '#/components/schemas/DailyDistanceData'
+          $ref: "#/components/schemas/DailyDistanceData"
           description: Object containing information related to distance covered during the associated day.
         heart_rate_data:
-          $ref: '#/components/schemas/HeartRateData'
+          $ref: "#/components/schemas/HeartRateData"
           description: Object containing heartrate-related information for the day.
         MET_data:
-          $ref: '#/components/schemas/METData'
+          $ref: "#/components/schemas/METData"
           description: Object containing information on the Metabolic Equivalent of Task for the day.
         metadata:
-          $ref: '#/components/schemas/DailyMetadata'
+          $ref: "#/components/schemas/DailyMetadata"
           description: Object containing daily summary metadata.
         oxygen_data:
-          $ref: '#/components/schemas/OxygenData'
+          $ref: "#/components/schemas/OxygenData"
           description: Object containing information on oxygen-related metrics for the day.
         scores:
-          $ref: '#/components/schemas/ScoresData'
+          $ref: "#/components/schemas/ScoresData"
           description: Scores for the user's performance on different metrics for the given day, as calculated by the fitness data provider.
         strain_data:
-          $ref: '#/components/schemas/StrainData'
+          $ref: "#/components/schemas/StrainData"
           description: Object containing information on the strain put on the user's body over a day.
         stress_data:
-          $ref: '#/components/schemas/StressData'
+          $ref: "#/components/schemas/StressData"
           description: Object containing information on the stress put on the user over a day.
         tag_data:
-          $ref: '#/components/schemas/TagData'
+          $ref: "#/components/schemas/TagData"
           description: Object containing all user-entered or automatically tagged events in the day.
       required:
         - metadata
@@ -2604,10 +2604,10 @@ components:
       type: object
       properties:
         metadata:
-          $ref: '#/components/schemas/MenstruationMetadata'
+          $ref: "#/components/schemas/MenstruationMetadata"
           description: Object containing daily summary metadata.
         menstruation_data:
-          $ref: '#/components/schemas/MenstruationData'
+          $ref: "#/components/schemas/MenstruationData"
           description: Object containing information on user's menstruation for a given day.
       required:
         - metadata
@@ -2619,18 +2619,18 @@ components:
         drink_samples:
           type: array
           items:
-            $ref: '#/components/schemas/DrinkSample'
+            $ref: "#/components/schemas/DrinkSample"
           description: Information on drinks the user consumed throughout the day.
         meals:
           type: array
           items:
-            $ref: '#/components/schemas/Meal'
+            $ref: "#/components/schemas/Meal"
           description: Information on individual foods consumed throughout a given day.
         metadata:
-          $ref: '#/components/schemas/NutritionMetadata'
+          $ref: "#/components/schemas/NutritionMetadata"
           description: Object containing daily summary metadata.
         summary:
-          $ref: '#/components/schemas/NutritionSummary'
+          $ref: "#/components/schemas/NutritionSummary"
           description: Summative nutritional information for a given day.
       required:
         - metadata
@@ -2640,22 +2640,22 @@ components:
       type: object
       properties:
         data_enrichment:
-          $ref: '#/components/schemas/SleepDataEnrichment'
+          $ref: "#/components/schemas/SleepDataEnrichment"
           description: Object containing additional enrichment data for the sleep session.
         device_data:
-          $ref: '#/components/schemas/DeviceData'
+          $ref: "#/components/schemas/DeviceData"
           description: Object containing information on the device which recorded data for the payload.
         heart_rate_data:
-          $ref: '#/components/schemas/HeartRateData'
+          $ref: "#/components/schemas/HeartRateData"
           description: Object containing information on the user's heart rate during the sleep session.
         metadata:
-          $ref: '#/components/schemas/SleepMetadata'
+          $ref: "#/components/schemas/SleepMetadata"
           description: Object containing daily summary metadata.
         readiness_data:
-          $ref: '#/components/schemas/ReadinessData'
+          $ref: "#/components/schemas/ReadinessData"
           description: Object containing information on the user's readiness for the day, based off the quality and duration of their sleep.
         respiration_data:
-          $ref: '#/components/schemas/RespirationData'
+          $ref: "#/components/schemas/RespirationData"
           description: Object containing information on the user's respiration throughout the sleep session.
         scores:
           type: object
@@ -2665,10 +2665,10 @@ components:
               description: User's sleep score.
           description: User's sleep score
         sleep_durations_data:
-          $ref: '#/components/schemas/SleepDurationsData'
+          $ref: "#/components/schemas/SleepDurationsData"
           description: Object containing information on the user's duration spent in various sleep stages.
         temperature_data:
-          $ref: '#/components/schemas/SleepTemperatureData'
+          $ref: "#/components/schemas/SleepTemperatureData"
           description: Object containing body temperature information of the user during the sleep recording session.
       required:
         - metadata
@@ -3076,29 +3076,29 @@ components:
       type: object
       properties: {}
       oneOf:
-        - $ref: '#/components/schemas/PlannedWorkoutStepTarget'
-        - $ref: '#/components/schemas/CadencePlannedWorkoutStepTarget'
-        - $ref: '#/components/schemas/HRPlannedWorkoutStepTarget'
-        - $ref: '#/components/schemas/PowerPlannedWorkoutStepTarget'
-        - $ref: '#/components/schemas/SpeedPlannedWorkoutStepTarget'
-        - $ref: '#/components/schemas/PacePlannedWorkoutStepTarget'
-        - $ref: '#/components/schemas/TSSPlannedWorkoutStepTarget'
-        - $ref: '#/components/schemas/IFPlannedWorkoutStepTarget'
-        - $ref: '#/components/schemas/RepetitionPlannedWorkoutStepTarget'
-        - $ref: '#/components/schemas/SwimStrokePlannedWorkoutStepTarget'
+        - $ref: "#/components/schemas/PlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/CadencePlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/HRPlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/PowerPlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/SpeedPlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/PacePlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/TSSPlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/IFPlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/RepetitionPlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/SwimStrokePlannedWorkoutStepTarget"
       discriminator:
         propertyName: type
         mapping:
-          PlannedWorkoutStepTarget: '#/components/schemas/PlannedWorkoutStepTarget'
-          CadencePlannedWorkoutStepTarget: '#/components/schemas/CadencePlannedWorkoutStepTarget'
-          HRPlannedWorkoutStepTarget: '#/components/schemas/HRPlannedWorkoutStepTarget'
-          PowerPlannedWorkoutStepTarget: '#/components/schemas/PowerPlannedWorkoutStepTarget'
-          SpeedPlannedWorkoutStepTarget: '#/components/schemas/SpeedPlannedWorkoutStepTarget'
-          PacePlannedWorkoutStepTarget: '#/components/schemas/PacePlannedWorkoutStepTarget'
-          TSSPlannedWorkoutStepTarget: '#/components/schemas/TSSPlannedWorkoutStepTarget'
-          IFPlannedWorkoutStepTarget: '#/components/schemas/IFPlannedWorkoutStepTarget'
-          RepetitionPlannedWorkoutStepTarget: '#/components/schemas/RepetitionPlannedWorkoutStepTarget'
-          SwimStrokePlannedWorkoutStepTarget: '#/components/schemas/SwimStrokePlannedWorkoutStepTarget'
+          PlannedWorkoutStepTarget: "#/components/schemas/PlannedWorkoutStepTarget"
+          CadencePlannedWorkoutStepTarget: "#/components/schemas/CadencePlannedWorkoutStepTarget"
+          HRPlannedWorkoutStepTarget: "#/components/schemas/HRPlannedWorkoutStepTarget"
+          PowerPlannedWorkoutStepTarget: "#/components/schemas/PowerPlannedWorkoutStepTarget"
+          SpeedPlannedWorkoutStepTarget: "#/components/schemas/SpeedPlannedWorkoutStepTarget"
+          PacePlannedWorkoutStepTarget: "#/components/schemas/PacePlannedWorkoutStepTarget"
+          TSSPlannedWorkoutStepTarget: "#/components/schemas/TSSPlannedWorkoutStepTarget"
+          IFPlannedWorkoutStepTarget: "#/components/schemas/IFPlannedWorkoutStepTarget"
+          RepetitionPlannedWorkoutStepTarget: "#/components/schemas/RepetitionPlannedWorkoutStepTarget"
+          SwimStrokePlannedWorkoutStepTarget: "#/components/schemas/SwimStrokePlannedWorkoutStepTarget"
     PlannedWorkoutStepDuration:
       type: object
       properties:
@@ -3374,31 +3374,31 @@ components:
       type: object
       properties: {}
       oneOf:
-        - $ref: '#/components/schemas/PlannedWorkoutStepDuration'
-        - $ref: '#/components/schemas/TimePlannedWorkoutStepDuration'
-        - $ref: '#/components/schemas/PowerAbovePlannedWorkoutStepDuration'
-        - $ref: '#/components/schemas/PowerBelowPlannedWorkoutStepDuration'
-        - $ref: '#/components/schemas/FixedRestPlannedWorkoutStepDuration'
-        - $ref: '#/components/schemas/CaloriesPlannedWorkoutStepDuration'
-        - $ref: '#/components/schemas/HRAbovePlannedWorkoutStepDuration'
-        - $ref: '#/components/schemas/HRBelowPlannedWorkoutStepDuration'
-        - $ref: '#/components/schemas/RepsPlannedWorkoutStepDuration'
-        - $ref: '#/components/schemas/DistancePlannedWorkoutStepDuration'
-        - $ref: '#/components/schemas/StepsPlannedWorkoutStepDuration'
+        - $ref: "#/components/schemas/PlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/TimePlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/PowerAbovePlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/PowerBelowPlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/FixedRestPlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/CaloriesPlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/HRAbovePlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/HRBelowPlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/RepsPlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/DistancePlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/StepsPlannedWorkoutStepDuration"
       discriminator:
         propertyName: type
         mapping:
-          PlannedWorkoutStepDuration: '#/components/schemas/PlannedWorkoutStepDuration'
-          TimePlannedWorkoutStepDuration: '#/components/schemas/TimePlannedWorkoutStepDuration'
-          PowerAbovePlannedWorkoutStepDuration: '#/components/schemas/PowerAbovePlannedWorkoutStepDuration'
-          PowerBelowPlannedWorkoutStepDuration: '#/components/schemas/PowerBelowPlannedWorkoutStepDuration'
-          FixedRestPlannedWorkoutStepDuration: '#/components/schemas/FixedRestPlannedWorkoutStepDuration'
-          CaloriesPlannedWorkoutStepDuration: '#/components/schemas/CaloriesPlannedWorkoutStepDuration'
-          HRAbovePlannedWorkoutStepDuration: '#/components/schemas/HRAbovePlannedWorkoutStepDuration'
-          HRBelowPlannedWorkoutStepDuration: '#/components/schemas/HRBelowPlannedWorkoutStepDuration'
-          RepsPlannedWorkoutStepDuration: '#/components/schemas/RepsPlannedWorkoutStepDuration'
-          DistancePlannedWorkoutStepDuration: '#/components/schemas/DistancePlannedWorkoutStepDuration'
-          StepsPlannedWorkoutStepDuration: '#/components/schemas/StepsPlannedWorkoutStepDuration'
+          PlannedWorkoutStepDuration: "#/components/schemas/PlannedWorkoutStepDuration"
+          TimePlannedWorkoutStepDuration: "#/components/schemas/TimePlannedWorkoutStepDuration"
+          PowerAbovePlannedWorkoutStepDuration: "#/components/schemas/PowerAbovePlannedWorkoutStepDuration"
+          PowerBelowPlannedWorkoutStepDuration: "#/components/schemas/PowerBelowPlannedWorkoutStepDuration"
+          FixedRestPlannedWorkoutStepDuration: "#/components/schemas/FixedRestPlannedWorkoutStepDuration"
+          CaloriesPlannedWorkoutStepDuration: "#/components/schemas/CaloriesPlannedWorkoutStepDuration"
+          HRAbovePlannedWorkoutStepDuration: "#/components/schemas/HRAbovePlannedWorkoutStepDuration"
+          HRBelowPlannedWorkoutStepDuration: "#/components/schemas/HRBelowPlannedWorkoutStepDuration"
+          RepsPlannedWorkoutStepDuration: "#/components/schemas/RepsPlannedWorkoutStepDuration"
+          DistancePlannedWorkoutStepDuration: "#/components/schemas/DistancePlannedWorkoutStepDuration"
+          StepsPlannedWorkoutStepDuration: "#/components/schemas/StepsPlannedWorkoutStepDuration"
     PlannedWorkoutStep:
       type: object
       properties:
@@ -3406,7 +3406,7 @@ components:
           type: array
           description: List of targets for the workout
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepTargets'
+            $ref: "#/components/schemas/PlannedWorkoutStepTargets"
         type:
           description: Type of workout step - either repeat or one-off
           type: string
@@ -3433,7 +3433,7 @@ components:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepDurations'
+            $ref: "#/components/schemas/PlannedWorkoutStepDurations"
         name:
           type: string
           description: Name of workout step
@@ -3444,7 +3444,7 @@ components:
           type: array
           description: List of targets for the workout
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepTarget'
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
         type:
           description: Type of workout step - either repeat or one-off
           nullable: false
@@ -3456,7 +3456,7 @@ components:
           type: array
           description: List of steps to be repeated for this workout step - e.g. if a user wants to schedule 5 repetitions of 100m sprints plus 20s rest in between
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStep'
+            $ref: "#/components/schemas/PlannedWorkoutStep"
         intensity:
           type: integer
           description: Planned intensity for the workout step
@@ -3473,7 +3473,7 @@ components:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepDuration'
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
         name:
           type: string
           description: Name of workout step
@@ -3485,7 +3485,7 @@ components:
           type: array
           description: List of targets for the workout
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepTarget'
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
         type:
           description: Type of workout step - either repeat or one-off
           nullable: false
@@ -3520,7 +3520,7 @@ components:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepDuration'
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
         name:
           type: string
           description: Name of workout step
@@ -3543,7 +3543,7 @@ components:
           type: array
           description: List of targets for the workout
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepTarget'
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
         type:
           description: Type of workout step - either repeat or one-off
           nullable: false
@@ -3571,7 +3571,7 @@ components:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepDuration'
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
         exercice_category:
           description: Type of exercise to be performed for the workout step
           nullable: false
@@ -3628,7 +3628,7 @@ components:
           type: array
           description: List of targets for the workout
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepTarget'
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
         type:
           description: Type of workout step - either repeat or one-off
           nullable: false
@@ -3656,7 +3656,7 @@ components:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepDuration'
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
         exercice_category:
           description: Type of strength exercise to be performed for the workout step
           nullable: false
@@ -3709,7 +3709,7 @@ components:
           type: array
           description: List of targets for the workout
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepTarget'
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
         type:
           description: Type of workout step - either repeat or one-off
           nullable: false
@@ -3733,7 +3733,7 @@ components:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepDuration'
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
         name:
           type: string
           description: Name of workout step
@@ -3745,7 +3745,7 @@ components:
           type: array
           description: List of targets for the workout
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepTarget'
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
         type:
           description: Type of workout step - either repeat or one-off
           nullable: false
@@ -3769,7 +3769,7 @@ components:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepDuration'
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
         name:
           type: string
           description: Name of workout step
@@ -3781,7 +3781,7 @@ components:
           type: array
           description: List of targets for the workout
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepTarget'
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
         type:
           description: Type of workout step - either repeat or one-off
           nullable: false
@@ -3805,7 +3805,7 @@ components:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepDuration'
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
         name:
           type: string
           description: Name of workout step
@@ -3817,7 +3817,7 @@ components:
           type: array
           description: List of targets for the workout
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepTarget'
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
         type:
           description: Type of workout step - either repeat or one-off
           nullable: false
@@ -3841,7 +3841,7 @@ components:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
-            $ref: '#/components/schemas/PlannedWorkoutStepDuration'
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
         name:
           type: string
           description: Name of workout step
@@ -3850,66 +3850,66 @@ components:
       type: object
       properties: {}
       oneOf:
-        - $ref: '#/components/schemas/PlannedWorkoutStep'
-        - $ref: '#/components/schemas/PlannedWorkoutRepeatStep'
-        - $ref: '#/components/schemas/SwimmingPlannedWorkoutStep'
-        - $ref: '#/components/schemas/CardioPlannedWorkoutStep'
-        - $ref: '#/components/schemas/StrengthPlannedWorkoutStep'
-        - $ref: '#/components/schemas/YogaPlannedWorkoutStep'
-        - $ref: '#/components/schemas/PilatesPlannedWorkoutStep'
-        - $ref: '#/components/schemas/RunningPlannedWorkoutStep'
-        - $ref: '#/components/schemas/CyclingPlannedWorkoutStep'
+        - $ref: "#/components/schemas/PlannedWorkoutStep"
+        - $ref: "#/components/schemas/PlannedWorkoutRepeatStep"
+        - $ref: "#/components/schemas/SwimmingPlannedWorkoutStep"
+        - $ref: "#/components/schemas/CardioPlannedWorkoutStep"
+        - $ref: "#/components/schemas/StrengthPlannedWorkoutStep"
+        - $ref: "#/components/schemas/YogaPlannedWorkoutStep"
+        - $ref: "#/components/schemas/PilatesPlannedWorkoutStep"
+        - $ref: "#/components/schemas/RunningPlannedWorkoutStep"
+        - $ref: "#/components/schemas/CyclingPlannedWorkoutStep"
       discriminator:
         propertyName: type
         mapping:
-          PlannedWorkoutStep: '#/components/schemas/PlannedWorkoutStep'
-          PlannedWorkoutRepeatStep: '#/components/schemas/PlannedWorkoutRepeatStep'
-          SwimmingPlannedWorkoutStep: '#/components/schemas/SwimmingPlannedWorkoutStep'
-          CardioPlannedWorkoutStep: '#/components/schemas/CardioPlannedWorkoutStep'
-          StrengthPlannedWorkoutStep: '#/components/schemas/StrengthPlannedWorkoutStep'
-          YogaPlannedWorkoutStep: '#/components/schemas/YogaPlannedWorkoutStep'
-          PilatesPlannedWorkoutStep: '#/components/schemas/PilatesPlannedWorkoutStep'
-          RunningPlannedWorkoutStep: '#/components/schemas/RunningPlannedWorkoutStep'
-          CyclingPlannedWorkoutStep: '#/components/schemas/CyclingPlannedWorkoutStep'
+          PlannedWorkoutStep: "#/components/schemas/PlannedWorkoutStep"
+          PlannedWorkoutRepeatStep: "#/components/schemas/PlannedWorkoutRepeatStep"
+          SwimmingPlannedWorkoutStep: "#/components/schemas/SwimmingPlannedWorkoutStep"
+          CardioPlannedWorkoutStep: "#/components/schemas/CardioPlannedWorkoutStep"
+          StrengthPlannedWorkoutStep: "#/components/schemas/StrengthPlannedWorkoutStep"
+          YogaPlannedWorkoutStep: "#/components/schemas/YogaPlannedWorkoutStep"
+          PilatesPlannedWorkoutStep: "#/components/schemas/PilatesPlannedWorkoutStep"
+          RunningPlannedWorkoutStep: "#/components/schemas/RunningPlannedWorkoutStep"
+          CyclingPlannedWorkoutStep: "#/components/schemas/CyclingPlannedWorkoutStep"
     PlannedWorkoutMetadata:
       type: object
       properties:
         estimated_energy_kj:
           type:
             - number
-            - 'null'
+            - "null"
           description: Estimated energy expenditure for the workout
         estimated_speed_meters_per_second:
           type:
             - number
-            - 'null'
+            - "null"
           description: Estimated speed for the workout
         estimated_elevation_gain_meters:
           type:
             - number
-            - 'null'
+            - "null"
           description: Estimated elevation gain for the workout
         estimated_tss:
           type:
             - number
-            - 'null'
+            - "null"
           description: Estimated Training Stress Score for the workout
         estimated_calories:
           type:
             - integer
-            - 'null'
+            - "null"
           description: Estimated calorie burn for the workout
         created_date:
           type:
             - string
-            - 'null'
+            - "null"
           description: The creation datetime of the associated workout, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time
-          example: '2022-11-23T09:00:00.000000+02:00'
+          example: "2022-11-23T09:00:00.000000+02:00"
           format: date-time
         planned_date:
           type: string
           description: The planned start datetime, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time
-          example: '2022-11-24T09:00:00.000000+02:00'
+          example: "2022-11-24T09:00:00.000000+02:00"
           format: date-time
           nullable: true
         type:
@@ -4045,17 +4045,17 @@ components:
         id:
           type:
             - string
-            - 'null'
+            - "null"
           default: null
         estimated_duration_seconds:
           type:
             - integer
-            - 'null'
+            - "null"
           description: Estimated workout duration
         estimated_pace_minutes_per_kilometer:
           type:
             - number
-            - 'null'
+            - "null"
           description: Estimated pace for the workout
         provider:
           type: string
@@ -4063,32 +4063,32 @@ components:
         estimated_tscore:
           type:
             - number
-            - 'null'
-          description: ''
+            - "null"
+          description: ""
         description:
           type:
             - string
-            - 'null'
+            - "null"
           description: Description of the workout
         name:
           type:
             - string
-            - 'null'
+            - "null"
           description: Name of the workout plan
         estimated_distance_meters:
           type:
             - integer
-            - 'null'
+            - "null"
           description: Estimated distance for the workout
         estimated_if:
           type:
             - number
-            - 'null'
+            - "null"
           description: Estimated Intensity Factor for the workout
         pool_length_meters:
           type:
             - integer
-            - 'null'
+            - "null"
           description: Pool length of the pool used for the workout - only relevant for swimming activity types
     PlannedWorkout:
       type: object
@@ -4097,56 +4097,56 @@ components:
           type: array
           description: List of exercises/steps/intervals for the workout plan
           items:
-            $ref: '#/components/schemas/PlannedWorkoutSteps'
+            $ref: "#/components/schemas/PlannedWorkoutSteps"
         metadata:
           description: Metadata for the workout plan
           type: object
           allOf:
-            - $ref: '#/components/schemas/PlannedWorkoutMetadata'
+            - $ref: "#/components/schemas/PlannedWorkoutMetadata"
     DataProcessingWebhook:
-      $ref: '#/components/schemas/ProcessingEvent'
+      $ref: "#/components/schemas/ProcessingEvent"
     UserAuthWebhook:
-      $ref: '#/components/schemas/AuthSuccessEvent'
+      $ref: "#/components/schemas/AuthSuccessEvent"
     UserAuthWebhookError:
-      $ref: '#/components/schemas/AuthErrorEvent'
+      $ref: "#/components/schemas/AuthErrorEvent"
     PermissionChangeWebhook:
-      $ref: '#/components/schemas/PermissionChangeEvent'
+      $ref: "#/components/schemas/PermissionChangeEvent"
     UserReauthWebhook:
-      $ref: '#/components/schemas/UserReauthEvent'
+      $ref: "#/components/schemas/UserReauthEvent"
     UserDeauthWebhook:
-      $ref: '#/components/schemas/DeauthEvent'
+      $ref: "#/components/schemas/DeauthEvent"
     AccessRevokedWebhook:
-      $ref: '#/components/schemas/AccessRevokedEvent'
+      $ref: "#/components/schemas/AccessRevokedEvent"
     GoogleNoDataSourceWebhook:
-      $ref: '#/components/schemas/GoogleNoDatasourceEvent'
+      $ref: "#/components/schemas/GoogleNoDatasourceEvent"
     ConnectionErrorWebhook:
-      $ref: '#/components/schemas/ConnectionErrorEvent'
+      $ref: "#/components/schemas/ConnectionErrorEvent"
     LargeRequestSendingWebhook:
-      $ref: '#/components/schemas/LargeRequestSendingEvent'
+      $ref: "#/components/schemas/LargeRequestSendingEvent"
     LargeRequestProcessingResponse:
-      $ref: '#/components/schemas/LargeRequestProcessingEvent'
+      $ref: "#/components/schemas/LargeRequestProcessingEvent"
     AuthenticationFailedWebhook:
-      $ref: '#/components/schemas/AuthErrorEvent'
+      $ref: "#/components/schemas/AuthErrorEvent"
     HealthCheckWebhook:
-      $ref: '#/components/schemas/HealthcheckEvent'
+      $ref: "#/components/schemas/HealthcheckEvent"
     RateLimitHitWebhook:
-      $ref: '#/components/schemas/RateLimitHitEvent'
+      $ref: "#/components/schemas/RateLimitHitEvent"
     S3UploadWebhook:
-      $ref: '#/components/schemas/S3PayloadEvent'
+      $ref: "#/components/schemas/S3PayloadEvent"
     ActivityWebhook:
-      $ref: '#/components/schemas/ActivityEvent'
+      $ref: "#/components/schemas/ActivityEvent"
     DailyWebhook:
-      $ref: '#/components/schemas/DailyEvent'
+      $ref: "#/components/schemas/DailyEvent"
     NutritionWebhook:
-      $ref: '#/components/schemas/NutritionEvent'
+      $ref: "#/components/schemas/NutritionEvent"
     AthleteWebhook:
-      $ref: '#/components/schemas/AthleteEvent'
+      $ref: "#/components/schemas/AthleteEvent"
     SleepWebhook:
-      $ref: '#/components/schemas/SleepEvent'
+      $ref: "#/components/schemas/SleepEvent"
     MenstruationWebhook:
-      $ref: '#/components/schemas/MenstruationEvent'
+      $ref: "#/components/schemas/MenstruationEvent"
     BodyWebhook:
-      $ref: '#/components/schemas/BodyEvent'
+      $ref: "#/components/schemas/BodyEvent"
     IntegrationsResponse:
       type: object
       properties:
@@ -4158,7 +4158,7 @@ components:
           type: array
           description: List of integration providers with their details
           items:
-            $ref: '#/components/schemas/IntegrationProvider'
+            $ref: "#/components/schemas/IntegrationProvider"
     IntegrationProvider:
       type: object
       properties:
@@ -4205,7 +4205,7 @@ components:
               type: boolean
               example: false
     WebhookEvents:
-      $ref: '#/components/schemas/WebhookEventType'
+      $ref: "#/components/schemas/WebhookEventType"
     TerraUser:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
@@ -4226,7 +4226,7 @@ components:
         last_webhook_update:
           type: string
           examples:
-            - '2022-12-12T10:00:00.000000+00:00'
+            - "2022-12-12T10:00:00.000000+00:00"
           description: Last time at which a webhook update was sent for the connection
         scopes:
           type: string
@@ -4242,7 +4242,7 @@ components:
           type: boolean
           examples:
             - true
-          description: 'whether the user is active or not (inactive users will not receive any data updates and are in considered '
+          description: "whether the user is active or not (inactive users will not receive any data updates and are in considered "
       required:
         - user_id
         - provider
@@ -4285,7 +4285,7 @@ components:
         timestamp:
           type: string
         level:
-          $ref: '#/components/schemas/ActivityLevel'
+          $ref: "#/components/schemas/ActivityLevel"
       required:
         - timestamp
         - level
@@ -4297,7 +4297,7 @@ components:
         activity_levels_samples:
           type: array
           items:
-            $ref: '#/components/schemas/ActivityLevelSample'
+            $ref: "#/components/schemas/ActivityLevelSample"
           description: Array of detailed samples of the intensity the user was in at various points during the workout.
         activity_seconds:
           type: number
@@ -4370,7 +4370,7 @@ components:
         calorie_samples:
           type: array
           items:
-            $ref: '#/components/schemas/CalorieSample'
+            $ref: "#/components/schemas/CalorieSample"
         net_activity_calories:
           type: integer
         net_intake_calories:
@@ -4467,7 +4467,7 @@ components:
         data_provided:
           type: array
           items:
-            $ref: '#/components/schemas/DeviceDataType'
+            $ref: "#/components/schemas/DeviceDataType"
         last_upload_date:
           type: string
     DeviceData:
@@ -4478,12 +4478,12 @@ components:
         activation_timestamp:
           type: string
           examples:
-            - '2022-12-25T00:00:00.000000+05:00'
+            - "2022-12-25T00:00:00.000000+05:00"
           description: Activation timestamp of the device, if applicable.
         data_provided:
           type: array
           items:
-            $ref: '#/components/schemas/DeviceDataType'
+            $ref: "#/components/schemas/DeviceDataType"
           description: Data provided by the device, as enumerated types.
         hardware_version:
           type: string
@@ -4506,7 +4506,7 @@ components:
         other_devices:
           type: array
           items:
-            $ref: '#/components/schemas/OtherDeviceData'
+            $ref: "#/components/schemas/OtherDeviceData"
           description: Data pertaining to other devices which may have contributed data for this workout.
         sensor_state:
           type: string
@@ -4589,22 +4589,22 @@ components:
         distance_samples:
           type: array
           items:
-            $ref: '#/components/schemas/DistanceSample'
+            $ref: "#/components/schemas/DistanceSample"
           description: Array of detailed samples of distance covered throughout the workout.
         elevation_samples:
           type: array
           items:
-            $ref: '#/components/schemas/ElevationSample'
+            $ref: "#/components/schemas/ElevationSample"
           description: Array of detailed samples of elevation throughout the workout.
         floors_climbed_samples:
           type: array
           items:
-            $ref: '#/components/schemas/FloorsClimbedSample'
+            $ref: "#/components/schemas/FloorsClimbedSample"
           description: Array of detailed samples of floors climbed throughout the workout, as determined by the fitness data provider.
         step_samples:
           type: array
           items:
-            $ref: '#/components/schemas/StepSample'
+            $ref: "#/components/schemas/StepSample"
           description: Array of detailed samples of steps performed throughout the workout.
     ElevationData:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -4676,7 +4676,7 @@ components:
           type: integer
           description: Total distance covered by the user throughout the workout.
         elevation:
-          $ref: '#/components/schemas/ElevationData'
+          $ref: "#/components/schemas/ElevationData"
           description: Average elevation of the user throughout the workout.
         floors_climbed:
           type: integer
@@ -4685,7 +4685,7 @@ components:
           type: integer
           description: Total number of steps performed during the workout.
         swimming:
-          $ref: '#/components/schemas/SwimmingData'
+          $ref: "#/components/schemas/SwimmingData"
           description: Summary information of the user's swimming statistics for the workout, if applicable.
     DistanceData:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -4693,10 +4693,10 @@ components:
       type: object
       properties:
         detailed:
-          $ref: '#/components/schemas/DistanceDataDetailed'
+          $ref: "#/components/schemas/DistanceDataDetailed"
           description: Object containing detailed distance information - this may included second-by-second samples.
         summary:
-          $ref: '#/components/schemas/DistanceDataSummary'
+          $ref: "#/components/schemas/DistanceDataSummary"
           description: Object containing summary information related to distance covered throughout the workout.
     EnergyData:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -4744,7 +4744,7 @@ components:
         timer_duration_seconds:
           type: number
         context:
-          $ref: '#/components/schemas/HeartRateContext'
+          $ref: "#/components/schemas/HeartRateContext"
       required:
         - timestamp
         - bpm
@@ -4782,17 +4782,17 @@ components:
         hr_samples:
           type: array
           items:
-            $ref: '#/components/schemas/HeartRateDataSample'
+            $ref: "#/components/schemas/HeartRateDataSample"
           description: Array of HeartRate data samples recorded for the user during the workout.
         hrv_samples_rmssd:
           type: array
           items:
-            $ref: '#/components/schemas/HeartRateVariabilityDataSampleRMSSD'
+            $ref: "#/components/schemas/HeartRateVariabilityDataSampleRMSSD"
           description: Array of HeartRate Variability data samples recorded for the user during the workout, computed using RMSSD.
         hrv_samples_sdnn:
           type: array
           items:
-            $ref: '#/components/schemas/HeartRateVariabilityDataSampleSDNN'
+            $ref: "#/components/schemas/HeartRateVariabilityDataSampleSDNN"
           description: Array of HeartRate Variability data samples recorded for the user during the workout, computed using SDNN.
     HeartRateZone:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -4835,7 +4835,7 @@ components:
       type: object
       properties:
         zone:
-          $ref: '#/components/schemas/HeartRateZone'
+          $ref: "#/components/schemas/HeartRateZone"
         start_percentage:
           type: number
         end_percentage:
@@ -4874,7 +4874,7 @@ components:
         hr_zone_data:
           type: array
           items:
-            $ref: '#/components/schemas/HeartRateZoneData'
+            $ref: "#/components/schemas/HeartRateZoneData"
           description: Array of time spent in various HR zones throughout the workout.
         max_hr_bpm:
           type: number
@@ -4905,10 +4905,10 @@ components:
       type: object
       properties:
         detailed:
-          $ref: '#/components/schemas/HeartRateDataDetailed'
+          $ref: "#/components/schemas/HeartRateDataDetailed"
           description: Object containing detailed heart rate information for the associated workout.
         summary:
-          $ref: '#/components/schemas/HeartRateDataSummary'
+          $ref: "#/components/schemas/HeartRateDataSummary"
           description: Object containing summary heart rate information for the associated workout.
     StrokeType:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -4953,7 +4953,7 @@ components:
         total_strokes:
           type: integer
         stroke_type:
-          $ref: '#/components/schemas/StrokeType'
+          $ref: "#/components/schemas/StrokeType"
         avg_speed_meters_per_second:
           type: number
       required:
@@ -4972,7 +4972,7 @@ components:
         laps:
           type: array
           items:
-            $ref: '#/components/schemas/LapSample'
+            $ref: "#/components/schemas/LapSample"
           description: Array of datapoints for each lap performed by the user during the workout.
     METSample:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -4994,7 +4994,7 @@ components:
         MET_samples:
           type: array
           items:
-            $ref: '#/components/schemas/METSample'
+            $ref: "#/components/schemas/METSample"
           description: An array of Metabolic Equivalent Time samples, as calculated by the user's wearable.
         avg_level:
           type: number
@@ -5653,7 +5653,7 @@ components:
         end_time:
           type: string
           examples:
-            - '2022-10-28T10:00:00.000000+01:00'
+            - "2022-10-28T10:00:00.000000+01:00"
           description: The end time of the associated workout, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         name:
           type: string
@@ -5663,7 +5663,7 @@ components:
         start_time:
           type: string
           examples:
-            - '1999-11-23T09:00:00.000000+02:00'
+            - "1999-11-23T09:00:00.000000+02:00"
           description: The start time of the associated workout, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         state:
           type: string
@@ -5676,12 +5676,12 @@ components:
             - 123e4567-e89b-12d3-a456-426614174000
           description: A unique identifier for the workout - note that this is unique for the given user, and may not be globally unique.
         timestamp_localization:
-          $ref: '#/components/schemas/TimestampLocalization'
+          $ref: "#/components/schemas/TimestampLocalization"
         type:
-          $ref: '#/components/schemas/ActivityType'
+          $ref: "#/components/schemas/ActivityType"
           description: The type of activity performed for the associated workout.
         upload_type:
-          $ref: '#/components/schemas/UploadType'
+          $ref: "#/components/schemas/UploadType"
           description: The upload type for the associated workout, providing information on whether this was an automatic workout or user-entered.
       required:
         - end_time
@@ -5772,7 +5772,7 @@ components:
         cadence_samples:
           type: array
           items:
-            $ref: '#/components/schemas/CadenceSample'
+            $ref: "#/components/schemas/CadenceSample"
           description: Array of cadence values recorded throughout the workout, sampled at intervals determined by the fitness data provider.
         max_cadence_rpm:
           type: number
@@ -5807,12 +5807,12 @@ components:
         speed_samples:
           type: array
           items:
-            $ref: '#/components/schemas/SpeedSample'
+            $ref: "#/components/schemas/SpeedSample"
           description: Array of the datapoints for the user's speed sampled throughout the workout.
         torque_samples:
           type: array
           items:
-            $ref: '#/components/schemas/TorqueSample'
+            $ref: "#/components/schemas/TorqueSample"
           description: Array of the datapoints for the user's torque sampled throughout the workout.
     OxygenSaturationSample:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -5851,12 +5851,12 @@ components:
         saturation_samples:
           type: array
           items:
-            $ref: '#/components/schemas/OxygenSaturationSample'
+            $ref: "#/components/schemas/OxygenSaturationSample"
           description: Array of Oxygen Saturation percentage datapoints sampled throughout the day.
         vo2_samples:
           type: array
           items:
-            $ref: '#/components/schemas/Vo2MaxSample'
+            $ref: "#/components/schemas/Vo2MaxSample"
           description: Array of VO2 datapoints sampled throughout the day.
         vo2max_ml_per_min_per_kg:
           type: number
@@ -5871,7 +5871,7 @@ components:
         summary_polyline:
           type: string
           examples:
-            - '}_p~iF~ps|U_ulLnnqC_mqNvxq`@'
+            - "}_p~iF~ps|U_ulLnnqC_mqNvxq`@"
           description: The polyline representation of the user's trajectory throughout the workout
     PositionSample:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -5914,7 +5914,7 @@ components:
         position_samples:
           type: array
           items:
-            $ref: '#/components/schemas/PositionSample'
+            $ref: "#/components/schemas/PositionSample"
           description: Array of datapoints of the position of the user, sampled throughout the workout.
         start_pos_lat_lng_deg:
           type: array
@@ -5957,7 +5957,7 @@ components:
         power_samples:
           type: array
           items:
-            $ref: '#/components/schemas/PowerSample'
+            $ref: "#/components/schemas/PowerSample"
           description: Array containing datapoints of the power output of the user sampled throughout the workout.
     StrainData:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6001,7 +6001,7 @@ components:
         TSS_samples:
           type: array
           items:
-            $ref: '#/components/schemas/TSSSample'
+            $ref: "#/components/schemas/TSSSample"
           description: Array of TSS information sampled throughout the workout
     WorkData:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6043,7 +6043,7 @@ components:
           type: string
           description: Information about the processing
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User whose data is being processed
         reference:
           type: string
@@ -6055,7 +6055,7 @@ components:
         - user
         - reference
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Large request processing event
     BloodPressureSample:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6080,7 +6080,7 @@ components:
         blood_pressure_samples:
           type: array
           items:
-            $ref: '#/components/schemas/BloodPressureSample'
+            $ref: "#/components/schemas/BloodPressureSample"
           description: List of Blood Pressure measurements sampled throughout the day.
     AFibFlag:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6109,7 +6109,7 @@ components:
         timestamp:
           type: string
         afib_classification:
-          $ref: '#/components/schemas/AFibFlag'
+          $ref: "#/components/schemas/AFibFlag"
       required:
         - timestamp
         - afib_classification
@@ -6135,11 +6135,11 @@ components:
         avg_hr_bpm:
           type: number
         afib_classification:
-          $ref: '#/components/schemas/AFibFlag'
+          $ref: "#/components/schemas/AFibFlag"
         raw_signal:
           type: array
           items:
-            $ref: '#/components/schemas/RawECGSample'
+            $ref: "#/components/schemas/RawECGSample"
       required:
         - start_timestamp
         - avg_hr_bpm
@@ -6170,7 +6170,7 @@ components:
         timestamp:
           type: string
           examples:
-            - '2022-11-23T09:00:00.000000+02:00'
+            - "2022-11-23T09:00:00.000000+02:00"
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         hr_bpm:
           type: number
@@ -6185,25 +6185,25 @@ components:
         afib_classification_samples:
           type: array
           items:
-            $ref: '#/components/schemas/AFibClassificationSample'
+            $ref: "#/components/schemas/AFibClassificationSample"
           description: List of Atrial Fibrillation classification measurements sampled through the day.
         ecg_signal:
           type: array
           items:
-            $ref: '#/components/schemas/ECGReading'
+            $ref: "#/components/schemas/ECGReading"
           description: List of ECGReadings sampled through the day.
         heart_rate_data:
-          $ref: '#/components/schemas/HeartRateData'
+          $ref: "#/components/schemas/HeartRateData"
           description: Object containing heart rate data.
         pulse_wave_velocity_samples:
           type: array
           items:
-            $ref: '#/components/schemas/PulseVelocitySample'
+            $ref: "#/components/schemas/PulseVelocitySample"
           description: List of Pulse Wave Velocity measurements sampled throughout the day. This represents a measurement of arterial stiffness that is an independent predictor of cardiovascular risk.
         rr_interval_samples:
           type: array
           items:
-            $ref: '#/components/schemas/RRIntervalSample'
+            $ref: "#/components/schemas/RRIntervalSample"
           description: List of RR Interval samples throughout the day.
     HydrationMeasurementSample:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6230,7 +6230,7 @@ components:
         hydration_amount_samples:
           type: array
           items:
-            $ref: '#/components/schemas/HydrationMeasurementSample'
+            $ref: "#/components/schemas/HydrationMeasurementSample"
           description: User's hydration level samples throughout the day.
     KetoneSampleType:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6265,7 +6265,7 @@ components:
         ketone_mg_per_dL:
           type: number
         sample_type:
-          $ref: '#/components/schemas/KetoneSampleType'
+          $ref: "#/components/schemas/KetoneSampleType"
       required:
         - timestamp
         - ketone_mg_per_dL
@@ -6278,7 +6278,7 @@ components:
         ketone_samples:
           type: array
           items:
-            $ref: '#/components/schemas/KetoneSample'
+            $ref: "#/components/schemas/KetoneSample"
           description: List of ketone data sampled through the day.
     MeasurementDataSample:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6288,7 +6288,7 @@ components:
         measurement_time:
           type: string
           examples:
-            - '2022-11-23T09:00:00.000000+02:00'
+            - "2022-11-23T09:00:00.000000+02:00"
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         BMI:
           type: number
@@ -6308,7 +6308,7 @@ components:
         estimated_fitness_age:
           type: string
           examples:
-            - '25'
+            - "25"
           description: Estimate of how fit the user is compared to their actual age, as measured by the device.
         skin_fold_mm:
           type: number
@@ -6380,7 +6380,7 @@ components:
         measurements:
           type: array
           items:
-            $ref: '#/components/schemas/MeasurementDataSample'
+            $ref: "#/components/schemas/MeasurementDataSample"
           description: List of body metrics & measurements taken throughout the associated day.
     BodyMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6390,15 +6390,15 @@ components:
         end_time:
           type: string
           examples:
-            - '2022-10-28T10:00:00.000000+01:00'
+            - "2022-10-28T10:00:00.000000+01:00"
           description: The end time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h after start_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         start_time:
           type: string
           examples:
-            - '1999-11-23T09:00:00.000000+02:00'
+            - "1999-11-23T09:00:00.000000+02:00"
           description: The start time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         timestamp_localization:
-          $ref: '#/components/schemas/TimestampLocalization'
+          $ref: "#/components/schemas/TimestampLocalization"
       required:
         - end_time
         - start_time
@@ -6422,17 +6422,17 @@ components:
         ambient_temperature_samples:
           type: array
           items:
-            $ref: '#/components/schemas/TemperatureSample'
+            $ref: "#/components/schemas/TemperatureSample"
           description: List of ambient temperature measurements sampled throughout the day.
         body_temperature_samples:
           type: array
           items:
-            $ref: '#/components/schemas/TemperatureSample'
+            $ref: "#/components/schemas/TemperatureSample"
           description: List of body temperature measurements sampled throughout the day.
         skin_temperature_samples:
           type: array
           items:
-            $ref: '#/components/schemas/TemperatureSample'
+            $ref: "#/components/schemas/TemperatureSample"
           description: List of skin temperature measurements sampled throughout the day.
     GlucoseDataSample:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6484,12 +6484,12 @@ components:
         blood_glucose_samples:
           type: array
           items:
-            $ref: '#/components/schemas/GlucoseDataSample'
+            $ref: "#/components/schemas/GlucoseDataSample"
           description: List of blood glucose readings sampled throughout the day.
         detailed_blood_glucose_samples:
           type: array
           items:
-            $ref: '#/components/schemas/GlucoseDataSample'
+            $ref: "#/components/schemas/GlucoseDataSample"
           description: List of blood glucose readings sampled throughout the day - this represents additional data points, potentially at higher frequency from the ones in blood_glucose_samples, which may come at a cost of reduced accuracy.
         day_avg_blood_glucose_mg_per_dL:
           type: number
@@ -6508,7 +6508,7 @@ components:
         daily_patterns:
           type: array
           items:
-            $ref: '#/components/schemas/DailyPatternSample'
+            $ref: "#/components/schemas/DailyPatternSample"
           description: List of glucose percentile samples throughout the day.
     DataContributor:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6530,25 +6530,25 @@ components:
         cardiovascular_contributors:
           type: array
           items:
-            $ref: '#/components/schemas/DataContributor'
+            $ref: "#/components/schemas/DataContributor"
         cardiovascular_score:
           type: number
         immune_contributors:
           type: array
           items:
-            $ref: '#/components/schemas/DataContributor'
+            $ref: "#/components/schemas/DataContributor"
         immune_index:
           type: number
         readiness_contributors:
           type: array
           items:
-            $ref: '#/components/schemas/DataContributor'
+            $ref: "#/components/schemas/DataContributor"
         readiness_score:
           type: number
         respiratory_contributors:
           type: array
           items:
-            $ref: '#/components/schemas/DataContributor'
+            $ref: "#/components/schemas/DataContributor"
         respiratory_score:
           type: number
         start_time:
@@ -6556,7 +6556,7 @@ components:
         stress_contributors:
           type: array
           items:
-            $ref: '#/components/schemas/DataContributor'
+            $ref: "#/components/schemas/DataContributor"
         total_stress_score:
           type: number
     DailyDistanceData:
@@ -6565,7 +6565,7 @@ components:
       type: object
       properties:
         detailed:
-          $ref: '#/components/schemas/DistanceDataDetailed'
+          $ref: "#/components/schemas/DistanceDataDetailed"
           description: Object containing detailed distance information - this may include second-by-second samples.
         distance_meters:
           type: integer
@@ -6573,7 +6573,7 @@ components:
             - 8500
           description: Total distance covered by the user throughout the day.
         elevation:
-          $ref: '#/components/schemas/ElevationData'
+          $ref: "#/components/schemas/ElevationData"
           description: Average elevation of the user throughout the day.
         floors_climbed:
           type: integer
@@ -6587,7 +6587,7 @@ components:
             - 12000
           description: Total number of steps performed during the day.
         swimming:
-          $ref: '#/components/schemas/SwimmingData'
+          $ref: "#/components/schemas/SwimmingData"
           description: Summary information of the user's swimming statistics for the day, if applicable.
     DailyMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6597,17 +6597,17 @@ components:
         end_time:
           type: string
           examples:
-            - '2022-10-28T10:00:00.000000+01:00'
+            - "2022-10-28T10:00:00.000000+01:00"
           description: The end time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h after start_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         start_time:
           type: string
           examples:
-            - '1999-11-23T09:00:00.000000+02:00'
+            - "1999-11-23T09:00:00.000000+02:00"
           description: The start time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         timestamp_localization:
-          $ref: '#/components/schemas/TimestampLocalization'
+          $ref: "#/components/schemas/TimestampLocalization"
         upload_type:
-          $ref: '#/components/schemas/UploadType'
+          $ref: "#/components/schemas/UploadType"
           description: The upload type for data in the associated day, providing information on whether data was automatically uploaded or user-entered. If any data point in a day is altered, the day should be classed as manual.
       required:
         - end_time
@@ -6726,7 +6726,7 @@ components:
         samples:
           type: array
           items:
-            $ref: '#/components/schemas/StressSample'
+            $ref: "#/components/schemas/StressSample"
           description: Array of stress level data points sampled throughout the day.
         rest_stress_duration_seconds:
           type: number
@@ -6747,12 +6747,12 @@ components:
           minimum: 0
           description: Total number of seconds spent in a stressed state while at rest during the day.
         stress_rating:
-          $ref: '#/components/schemas/StressLevel'
+          $ref: "#/components/schemas/StressLevel"
           description: Stress rating for the day.
         body_battery_samples:
           type: array
           items:
-            $ref: '#/components/schemas/BodyBatterySample'
+            $ref: "#/components/schemas/BodyBatterySample"
           description: Array of Body Battery data points sampled throughout the day.
     TagEntry:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6762,7 +6762,7 @@ components:
         timestamp:
           type: string
           examples:
-            - '1999-11-23T09:00:00.000000+02:00'
+            - "1999-11-23T09:00:00.000000+02:00"
           description: Time with which the tag is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         tag_name:
           type: string
@@ -6786,7 +6786,7 @@ components:
         tags:
           type: array
           items:
-            $ref: '#/components/schemas/TagEntry'
+            $ref: "#/components/schemas/TagEntry"
           description: Array of user-entered tags for the day.
     MenstruationMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -6796,15 +6796,15 @@ components:
         end_time:
           type: string
           examples:
-            - '2022-10-28T10:00:00.000000+01:00'
+            - "2022-10-28T10:00:00.000000+01:00"
           description: The end time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h after start_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         start_time:
           type: string
           examples:
-            - '1999-11-23T09:00:00.000000+02:00'
+            - "1999-11-23T09:00:00.000000+02:00"
           description: The start time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         timestamp_localization:
-          $ref: '#/components/schemas/TimestampLocalization'
+          $ref: "#/components/schemas/TimestampLocalization"
       required:
         - end_time
         - start_time
@@ -6894,10 +6894,10 @@ components:
         timestamp:
           type: string
           examples:
-            - '2022-11-23T09:00:00.000000+02:00'
+            - "2022-11-23T09:00:00.000000+02:00"
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         flow:
-          $ref: '#/components/schemas/MenstruationFlow'
+          $ref: "#/components/schemas/MenstruationFlow"
           description: Flag indicating the strength of the user's menstrual flow.
       required:
         - timestamp
@@ -6913,7 +6913,7 @@ components:
             - 5
           description: Total length of period (i.e. menstrual bleeding).
         current_phase:
-          $ref: '#/components/schemas/MenstrualPhase'
+          $ref: "#/components/schemas/MenstrualPhase"
           description: Phase in associated cycle, (i.e. menstruation, fertile etc).
         length_of_current_phase_days:
           type: integer
@@ -6928,7 +6928,7 @@ components:
         period_start_date:
           type: string
           examples:
-            - '2022-11-28'
+            - "2022-11-28"
           description: Start date of menstrual cycle, in ISO8601 format.
         predicted_cycle_length_days:
           type: integer
@@ -6943,22 +6943,22 @@ components:
         last_updated_time:
           type: string
           examples:
-            - '2022-12-12T14:03:05.000000-05:00'
+            - "2022-12-12T14:03:05.000000-05:00"
           description: Last time when the user recorded information regarding their cycle, in ISO8601 format, with microseconds precision.
         cycle_length_days:
           type: string
           examples:
-            - '28'
+            - "28"
           description: Total cycle length.
         is_predicted_cycle:
           type: string
           examples:
-            - 'true'
+            - "true"
           description: Flag indicating whether associated object is a prediction or user-logged information.
         menstruation_flow:
           type: array
           items:
-            $ref: '#/components/schemas/MenstruationFlowSample'
+            $ref: "#/components/schemas/MenstruationFlowSample"
           description: List of user logs of information related to the strength of user's menstrual flow.
     DrinkSample:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -7313,7 +7313,7 @@ components:
       type: object
       properties:
         unit:
-          $ref: '#/components/schemas/NutritionUnits'
+          $ref: "#/components/schemas/NutritionUnits"
         amount:
           type: number
       required:
@@ -7390,10 +7390,10 @@ components:
       type: object
       properties:
         micros:
-          $ref: '#/components/schemas/NutritionMicros'
+          $ref: "#/components/schemas/NutritionMicros"
           description: Micronutrient information for associated food.
         type:
-          $ref: '#/components/schemas/MealType'
+          $ref: "#/components/schemas/MealType"
           description: Enum representing the category the consumed food/meal falls under (i.e. Breakfast/Lunch/Dinner etc).
         id:
           type: string
@@ -7403,10 +7403,10 @@ components:
         timestamp:
           type: string
           examples:
-            - '2022-12-12T08:53:00.000000+02:00'
+            - "2022-12-12T08:53:00.000000+02:00"
           description: Timestamp the food is associated with, in ISO8601 format, with microsecond precision.
         quantity:
-          $ref: '#/components/schemas/NutritionQuantity'
+          $ref: "#/components/schemas/NutritionQuantity"
           description: Quantity of the food that was consumed, containing information on amount & units in which this was recorded.
         name:
           type: string
@@ -7414,7 +7414,7 @@ components:
             - Oatmeal
           description: Name of food logged by the user.
         macros:
-          $ref: '#/components/schemas/NutritionMacros'
+          $ref: "#/components/schemas/NutritionMacros"
           description: Macronutrient information for associated food.
       required:
         - micros
@@ -7432,15 +7432,15 @@ components:
         end_time:
           type: string
           examples:
-            - '2022-10-28T10:00:00.000000+01:00'
+            - "2022-10-28T10:00:00.000000+01:00"
           description: The end time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h after start_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         start_time:
           type: string
           examples:
-            - '1999-11-23T09:00:00.000000+02:00'
+            - "1999-11-23T09:00:00.000000+02:00"
           description: The start time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         timestamp_localization:
-          $ref: '#/components/schemas/TimestampLocalization'
+          $ref: "#/components/schemas/TimestampLocalization"
       required:
         - end_time
         - start_time
@@ -7450,10 +7450,10 @@ components:
       type: object
       properties:
         macros:
-          $ref: '#/components/schemas/NutritionMacros'
+          $ref: "#/components/schemas/NutritionMacros"
           description: Summary of macronutrient information for a given day.
         micros:
-          $ref: '#/components/schemas/NutritionMicros'
+          $ref: "#/components/schemas/NutritionMicros"
           description: Summary of micronutrient information for a given day.
         water_ml:
           type: number
@@ -7473,7 +7473,7 @@ components:
         sleep_contributors:
           type: array
           items:
-            $ref: '#/components/schemas/DataContributor'
+            $ref: "#/components/schemas/DataContributor"
         sleep_score:
           type: number
     SleepUploadType:
@@ -7511,7 +7511,7 @@ components:
         end_time:
           type: string
           examples:
-            - '2022-11-24T08:00:00.000000+01:00'
+            - "2022-11-24T08:00:00.000000+01:00"
           description: The end time of the associated sleep session, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         is_nap:
           type: boolean
@@ -7521,17 +7521,15 @@ components:
         start_time:
           type: string
           examples:
-            - '1999-11-23T22:00:00.000000+02:00'
+            - "1999-11-23T22:00:00.000000+02:00"
           description: The start time of the associated sleep session, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         summary_id:
           type: string
           description: A unique identifier for the sleep session.
         timestamp_localization:
-          $ref: '#/components/schemas/TimestampLocalization'
+          $ref: "#/components/schemas/TimestampLocalization"
         upload_type:
-          $ref: '#/components/schemas/SleepUploadType'
-          examples:
-            - 1
+          $ref: "#/components/schemas/SleepUploadType"
           description: The upload type for the associated sleep session, providing information on whether this was an automatic sleep or user-entered.
       required:
         - end_time
@@ -7585,7 +7583,7 @@ components:
           maximum: 100
           description: User's readiness score for a given day, resulting from the sleep session.
         recovery_level:
-          $ref: '#/components/schemas/RecoveryLevel'
+          $ref: "#/components/schemas/RecoveryLevel"
           description: User's recovery score for a given day, resulting from the sleep session - takes Enum value.
     BreathSample:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -7627,17 +7625,17 @@ components:
         samples:
           type: array
           items:
-            $ref: '#/components/schemas/BreathSample'
+            $ref: "#/components/schemas/BreathSample"
           description: List of breathing rate information sampled throughout the sleep session.
         start_time:
           type: string
           examples:
-            - '1999-11-23T22:00:00.000000+02:00'
+            - "1999-11-23T22:00:00.000000+02:00"
           description: The start time of the recording of breathing rate data, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         end_time:
           type: string
           examples:
-            - '2022-11-24T08:00:00.000000+01:00'
+            - "2022-11-24T08:00:00.000000+01:00"
           description: The end time of the recording of breathing rate data, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
     OxygenSaturationData:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -7652,17 +7650,17 @@ components:
         end_time:
           type: string
           examples:
-            - '2022-11-24T08:00:00.000000+01:00'
+            - "2022-11-24T08:00:00.000000+01:00"
           description: The end time of the recording of oxygen saturation, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         samples:
           type: array
           items:
-            $ref: '#/components/schemas/OxygenSaturationSample'
+            $ref: "#/components/schemas/OxygenSaturationSample"
           description: Array of Oxygen Saturation percentage datapoints sampled throughout the sleep session.
         start_time:
           type: string
           examples:
-            - '1999-11-23T22:00:00.000000+02:00'
+            - "1999-11-23T22:00:00.000000+02:00"
           description: The start time of the recording of oxygen saturation, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
     SnoringSample:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -7684,12 +7682,12 @@ components:
         start_time:
           type: string
           examples:
-            - '1999-11-23T22:00:00.000000+02:00'
+            - "1999-11-23T22:00:00.000000+02:00"
           description: The start time of the recording of snoring data, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         end_time:
           type: string
           examples:
-            - '2022-11-24T08:00:00.000000+01:00'
+            - "2022-11-24T08:00:00.000000+01:00"
           description: The end time of the recording of snoring data, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         num_snoring_events:
           type: integer
@@ -7699,7 +7697,7 @@ components:
         samples:
           type: array
           items:
-            $ref: '#/components/schemas/SnoringSample'
+            $ref: "#/components/schemas/SnoringSample"
           description: List of snoring information data points sampled throughout the sleep session.
         total_snoring_duration_seconds:
           type: number
@@ -7712,13 +7710,13 @@ components:
       type: object
       properties:
         breaths_data:
-          $ref: '#/components/schemas/BreathsData'
+          $ref: "#/components/schemas/BreathsData"
           description: Object containing information on breathing rate for the sleep session.
         oxygen_saturation_data:
-          $ref: '#/components/schemas/OxygenSaturationData'
+          $ref: "#/components/schemas/OxygenSaturationData"
           description: Object containing information on saturation metrics for the sleep session.
         snoring_data:
-          $ref: '#/components/schemas/SnoringData'
+          $ref: "#/components/schemas/SnoringData"
           description: Object containing information on snoring metrics for the sleep session.
     AsleepDurations:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -7833,7 +7831,7 @@ components:
         timestamp:
           type: string
         level:
-          $ref: '#/components/schemas/SleepLevel'
+          $ref: "#/components/schemas/SleepLevel"
       required:
         - timestamp
         - level
@@ -7858,18 +7856,18 @@ components:
       type: object
       properties:
         asleep:
-          $ref: '#/components/schemas/AsleepDurations'
+          $ref: "#/components/schemas/AsleepDurations"
           description: Object containing information on the duration the user spent asleep during the sleep recording session.
         awake:
-          $ref: '#/components/schemas/AwakeDurations'
+          $ref: "#/components/schemas/AwakeDurations"
           description: Object containing information on the duration the user spent awake during the sleep recording session.
         hypnogram_samples:
           type: array
           items:
-            $ref: '#/components/schemas/SleepHypnogramSample'
+            $ref: "#/components/schemas/SleepHypnogramSample"
           description: List of sleep stage (Hypnogram) samples recorded during the user's sleep session.
         other:
-          $ref: '#/components/schemas/OtherSleepDurations'
+          $ref: "#/components/schemas/OtherSleepDurations"
           description: Object containing information on the miscellaneous duration data for the sleep recording session.
         sleep_efficiency:
           type: number
@@ -7915,7 +7913,7 @@ components:
         - trend_percentage
         - sent_webhooks_last_hour
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Healthcheck event sent periodically to verify your webhook endpoint is functional
     AuthEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -7932,7 +7930,7 @@ components:
         - type
         - status
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Authentication event
     AuthSuccessEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -7944,7 +7942,7 @@ components:
           const: success
           description: Status of authentication
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User who authenticated
         reference_id:
           type: string
@@ -7958,7 +7956,7 @@ components:
         - reference_id
         - widget_session_id
       allOf:
-        - $ref: '#/components/schemas/AuthEvent'
+        - $ref: "#/components/schemas/AuthEvent"
       description: Authentication success event
     AuthErrorEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -7970,7 +7968,7 @@ components:
           const: error
           description: Status of authentication
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User who attempted to authenticate
         provider:
           type: string
@@ -7996,7 +7994,7 @@ components:
         - reference_id
         - widget_session_id
       allOf:
-        - $ref: '#/components/schemas/AuthEvent'
+        - $ref: "#/components/schemas/AuthEvent"
       description: Authentication error event
     DeauthEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8007,7 +8005,7 @@ components:
           type: string
           const: deauth
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User who deauthenticated
         status:
           type: string
@@ -8022,7 +8020,7 @@ components:
         - status
         - message
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: User deauthentication event
     UserReauthEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8033,10 +8031,10 @@ components:
           type: string
           const: user_reauth
         new_user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: The new user record
         old_user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: The old user record that will be deleted
         status:
           type: string
@@ -8052,7 +8050,7 @@ components:
         - status
         - message
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: User re-authentication event
     AccessRevokedEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8063,7 +8061,7 @@ components:
           type: string
           const: access_revoked
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User who revoked access
         status:
           type: string
@@ -8078,7 +8076,7 @@ components:
         - status
         - message
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Access revoked event when a user revokes access through the provider
     ConnectionErrorEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8089,7 +8087,7 @@ components:
           type: string
           const: connection_error
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User with connection issues
         status:
           type: string
@@ -8104,7 +8102,7 @@ components:
         - status
         - message
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Connection error event
     GoogleNoDatasourceEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8115,7 +8113,7 @@ components:
           type: string
           const: google_no_datasource
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: Affected user
         status:
           type: string
@@ -8130,7 +8128,7 @@ components:
         - status
         - message
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Google no datasource event
     ProcessingEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8148,7 +8146,7 @@ components:
           type: string
           description: Information about the processing
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User whose data is being processed
         retry_after_seconds:
           type: integer
@@ -8160,7 +8158,7 @@ components:
         - user
         - retry_after_seconds
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Processing event returned when data is being fetched asynchronously
     LargeRequestSendingEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8171,7 +8169,7 @@ components:
           type: string
           const: large_request_sending
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User whose data is being sent
         reference:
           type: string
@@ -8189,7 +8187,7 @@ components:
         - message
         - expected_payloads
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Large request sending event
     RateLimitHitEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8200,7 +8198,7 @@ components:
           type: string
           const: rate_limit_hit
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User whose request hit rate limits
         start_date:
           type: string
@@ -8222,7 +8220,7 @@ components:
         - retrying_at
         - message
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Rate limit hit event
     S3PayloadEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8248,7 +8246,7 @@ components:
         - url
         - expires_in
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: S3 Upload event with data download URL
     ActivityEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8261,10 +8259,10 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Activity'
+            $ref: "#/components/schemas/Activity"
           description: Array of activity data
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User whose data is being provided
         version:
           type: string
@@ -8275,7 +8273,7 @@ components:
         - user
         - version
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Activity data event
     AthleteEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8286,10 +8284,10 @@ components:
           type: string
           const: athlete
         athlete:
-          $ref: '#/components/schemas/Athlete'
+          $ref: "#/components/schemas/Athlete"
           description: Athlete data
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User whose data is being provided
         version:
           type: string
@@ -8300,7 +8298,7 @@ components:
         - user
         - version
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Athlete data event
     NutritionEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8313,10 +8311,10 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Nutrition'
+            $ref: "#/components/schemas/Nutrition"
           description: Array of nutrition data
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User whose data is being provided
         version:
           type: string
@@ -8327,7 +8325,7 @@ components:
         - user
         - version
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Nutrition data event
     DailyEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8340,10 +8338,10 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Daily'
+            $ref: "#/components/schemas/Daily"
           description: Array of daily data
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User whose data is being provided
         version:
           type: string
@@ -8354,7 +8352,7 @@ components:
         - user
         - version
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Daily data event
     SleepEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8367,10 +8365,10 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Sleep'
+            $ref: "#/components/schemas/Sleep"
           description: Array of sleep data
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User whose data is being provided
         version:
           type: string
@@ -8381,7 +8379,7 @@ components:
         - user
         - version
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Sleep data event
     MenstruationEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8394,10 +8392,10 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Menstruation'
+            $ref: "#/components/schemas/Menstruation"
           description: Array of menstruation data
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User whose data is being provided
         version:
           type: string
@@ -8408,7 +8406,7 @@ components:
         - user
         - version
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Menstruation data event
     BodyEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8421,10 +8419,10 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/Body'
+            $ref: "#/components/schemas/Body"
           description: Array of body data
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User whose data is being provided
         version:
           type: string
@@ -8435,7 +8433,7 @@ components:
         - user
         - version
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Body data event
     PermissionChangeEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -8446,7 +8444,7 @@ components:
           type: string
           const: permission_change
         user:
-          $ref: '#/components/schemas/TerraUser'
+          $ref: "#/components/schemas/TerraUser"
           description: User who changed permissions
         status:
           type: string
@@ -8473,31 +8471,31 @@ components:
         - scopes_added
         - scopes_removed
       allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
+        - $ref: "#/components/schemas/WebhookEvent"
       description: Permission change event
     WebhookEventType:
       $schema: https://json-schema.org/draft/2020-12/schema
       $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEventType.yaml
       oneOf:
-        - $ref: '#/components/schemas/HealthcheckEvent'
-        - $ref: '#/components/schemas/AuthSuccessEvent'
-        - $ref: '#/components/schemas/AuthErrorEvent'
-        - $ref: '#/components/schemas/DeauthEvent'
-        - $ref: '#/components/schemas/UserReauthEvent'
-        - $ref: '#/components/schemas/AccessRevokedEvent'
-        - $ref: '#/components/schemas/ConnectionErrorEvent'
-        - $ref: '#/components/schemas/GoogleNoDatasourceEvent'
-        - $ref: '#/components/schemas/PermissionChangeEvent'
-        - $ref: '#/components/schemas/ProcessingEvent'
-        - $ref: '#/components/schemas/LargeRequestProcessingEvent'
-        - $ref: '#/components/schemas/LargeRequestSendingEvent'
-        - $ref: '#/components/schemas/RateLimitHitEvent'
-        - $ref: '#/components/schemas/ActivityEvent'
-        - $ref: '#/components/schemas/AthleteEvent'
-        - $ref: '#/components/schemas/BodyEvent'
-        - $ref: '#/components/schemas/DailyEvent'
-        - $ref: '#/components/schemas/MenstruationEvent'
-        - $ref: '#/components/schemas/NutritionEvent'
-        - $ref: '#/components/schemas/SleepEvent'
-        - $ref: '#/components/schemas/S3PayloadEvent'
+        - $ref: "#/components/schemas/HealthcheckEvent"
+        - $ref: "#/components/schemas/AuthSuccessEvent"
+        - $ref: "#/components/schemas/AuthErrorEvent"
+        - $ref: "#/components/schemas/DeauthEvent"
+        - $ref: "#/components/schemas/UserReauthEvent"
+        - $ref: "#/components/schemas/AccessRevokedEvent"
+        - $ref: "#/components/schemas/ConnectionErrorEvent"
+        - $ref: "#/components/schemas/GoogleNoDatasourceEvent"
+        - $ref: "#/components/schemas/PermissionChangeEvent"
+        - $ref: "#/components/schemas/ProcessingEvent"
+        - $ref: "#/components/schemas/LargeRequestProcessingEvent"
+        - $ref: "#/components/schemas/LargeRequestSendingEvent"
+        - $ref: "#/components/schemas/RateLimitHitEvent"
+        - $ref: "#/components/schemas/ActivityEvent"
+        - $ref: "#/components/schemas/AthleteEvent"
+        - $ref: "#/components/schemas/BodyEvent"
+        - $ref: "#/components/schemas/DailyEvent"
+        - $ref: "#/components/schemas/MenstruationEvent"
+        - $ref: "#/components/schemas/NutritionEvent"
+        - $ref: "#/components/schemas/SleepEvent"
+        - $ref: "#/components/schemas/S3PayloadEvent"
       description: Union of all possible webhook event types
