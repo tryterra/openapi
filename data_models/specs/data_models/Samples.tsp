@@ -382,6 +382,8 @@ model SnoringSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("Duration of snoring episode, in seconds")
+    @example(120.0)
     duration_seconds?: float;
 }
 
@@ -402,8 +404,16 @@ model BodyBatterySample {
 }
 
 model BloodPressureSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
+
+    @doc("User's diastolic blood pressure, in mmHg")
+    @example(80.5)
     diastolic_bp?: float;
+
+    @doc("User's systolic blood pressure, in mmHg")
+    @example(120.5)
     systolic_bp?: float;
 }
 
