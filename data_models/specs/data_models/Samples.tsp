@@ -495,6 +495,8 @@ model TemperatureSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("Temperature value in degrees Celsius.")
+    @example(37.2)
     temperature_celsius?: float;
 }
 
@@ -513,6 +515,8 @@ model HydrationMeasurementSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("Total body water composition of the user, in kilograms.")
+    @example(40.0)
     hydration_kg?: float;
 }
 
