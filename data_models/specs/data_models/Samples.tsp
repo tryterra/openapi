@@ -280,7 +280,12 @@ model PositionSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
-    coords_lat_lng_deg?: float[];
+    @doc("Position of the user a given point in time, represented by a 2-value array of latitude, longitude, wherein each of the two numbers can be nullable")
+    @example(#[-18.4911, 130.9123])
+    coords_lat_lng_deg?: [float, float];
+
+    @doc("Time elapsed since the start of the workout, subtracting time during which the recording was paused")
+    @example(300.0)
     timer_duration_seconds?: float;
 }
 
