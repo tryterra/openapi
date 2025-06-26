@@ -39,8 +39,15 @@ model DrinkSample {
 }
 
 model KetoneSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
+    @doc("Ketone in mg per dL")
+    @example(1.5)
     ketone_mg_per_dL: float;
+
+    @doc("Flag indicating the ketone sample type (e.g. blood, breath, urine)")
     sample_type: Terra.Enums.KetoneSampleType;
 }
 
