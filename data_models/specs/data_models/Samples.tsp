@@ -108,9 +108,15 @@ model GlucoseDataSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
-    blood_glucose_mg_per_dL?: float;
-    glucose_level_flag?: integer;
-    trend_arrow?: integer;
+    @doc("User's blood glucose reading")
+    @example(95)
+    blood_glucose_mg_per_dL?: integer;
+
+    @doc("Flag indicating state of user's blood glucose level")
+    glucose_level_flag?: Terra.Enums.GlucoseFlag;
+
+    @doc("Flag indicating the current trend in the user's blood glucose level (e.g. rising, constant, falling)")
+    trend_arrow?: Terra.Enums.TrendArrow;
 }
 
 model HeartRateDataSample {
