@@ -341,7 +341,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: end date of data to query for - either ISO8601 date or unix timestamp
+          description: end date of data to query for - either ISO8601 date or unix timestamp in seconds (10-digit)
           schema:
             oneOf:
               - type: integer
@@ -606,7 +606,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: end date of data to query for - either ISO8601 date or unix timestamp
+          description: end date of data to query for - either ISO8601 date or unix timestamp in seconds (10-digit)
           schema:
             oneOf:
               - type: integer
@@ -920,7 +920,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: end date of data to query for - either ISO8601 date or unix timestamp
+          description: end date of data to query for - either ISO8601 date or unix timestamp in seconds (10-digit)
           schema:
             oneOf:
               - type: integer
@@ -1038,7 +1038,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: end date of data to query for - either ISO8601 date or unix timestamp
+          description: end date of data to query for - either ISO8601 date or unix timestamp in seconds (10-digit)
           schema:
             oneOf:
               - type: integer
@@ -1156,7 +1156,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: end date of data to query for - either ISO8601 date or unix timestamp
+          description: end date of data to query for - either ISO8601 date or unix timestamp in seconds (10-digit)
           schema:
             oneOf:
               - type: integer
@@ -1472,7 +1472,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: end date of data to query for - either ISO8601 date or unix timestamp
+          description: end date of data to query for - either ISO8601 date or unix timestamp in seconds (10-digit)
           schema:
             oneOf:
               - type: integer
@@ -1667,7 +1667,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: end date of data to query for - either ISO8601 date or unix timestamp
+          description: end date of data to query for - either ISO8601 date or unix timestamp in seconds (10-digit)
           schema:
             oneOf:
               - type: integer
