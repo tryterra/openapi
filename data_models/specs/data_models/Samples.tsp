@@ -162,6 +162,8 @@ model HeartRateVariabilityDataSampleRMSSD {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("User's Heart Rate Variability, computed using RMSSD")
+    @example(42.1)
     hrv_rmssd?: float;
 }
 
@@ -170,14 +172,33 @@ model HeartRateVariabilityDataSampleSDNN {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("User's Heart Rate Variability, computed using SDNN")
+    @example(48.3)
     hrv_sdnn?: float;
 }
 
 model HeartRateZoneData {
+    @doc("Heart rate zone designation")
     zone?: Terra.Enums.HeartRateZone;
+
+    @doc("Start percentage (based off user's max HR) of the HR zone")
+    @minValue(0.0)
+    @maxValue(100.0)
+    @example(60.0)
     start_percentage?: float;
+
+    @doc("End percentage (based off user's max HR) of the HR zone")
+    @minValue(0.0)
+    @maxValue(100.0)
+    @example(70.0)
     end_percentage?: float;
+
+    @doc("Name of the associated heart rate zone")
+    @example("Aerobic")
     name?: string;
+
+    @doc("Duration spent in the heart rate zone")
+    @example(300.0)
     duration_seconds?: float;
 }
 
