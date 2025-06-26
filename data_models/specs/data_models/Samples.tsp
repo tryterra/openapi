@@ -266,7 +266,12 @@ model ElevationSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("User's altitude at a given point in time, in meters above sea level.")
+    @example(925.0)
     elev_meters?: float;
+
+    @doc("Time elapsed since the start of the workout, subtracting time during which the recording was paused")
+    @example(1200.0)
     timer_duration_seconds?: float;
 }
 
