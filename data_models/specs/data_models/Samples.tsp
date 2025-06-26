@@ -52,13 +52,26 @@ model KetoneSample {
 }
 
 model TorqueSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
+    @doc("Time elapsed since the start of the workout, subtracting time during which the recording was paused")
+    @example(300.0)
     timer_duration_seconds: float;
+
+    @doc("Torque generated at a given instant in time, in Newton-meters")
+    @example(45.5)
     torque_newton_meters: float;
 }
 
 model RawECGSample {
+    @doc("Potential uV in the RawECG Sample")
+    @example(1250.5)
     potential_uV: float;
+
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
 }
 
