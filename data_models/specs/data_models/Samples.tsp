@@ -124,8 +124,15 @@ model HeartRateDataSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("User's heart rate in bpm")
+    @example(142.0)
     bpm?: float;
+
+    @doc("Time elapsed since the start of the workout, subtracting time during which the recording was paused")
+    @example(600.0)
     timer_duration_seconds?: float;
+
+    @doc("Represents the context in which heart rate was measured.")
     context?: Terra.Enums.HeartRateContext;
 }
 
