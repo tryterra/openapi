@@ -521,18 +521,32 @@ model HydrationMeasurementSample {
 }
 
 model Vo2MaxSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
+
+    @doc("User's VO2Max - maximum amount of oxygen the user's body can utilize during exercise")
+    @example(45.5)
     vo2max_ml_per_min_per_kg?: float;
 }
 
 model PulseVelocitySample {
-    timestamp: string;
-    pulse_wave_velocity_meters_per_second: float;
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
+    timestamp?: string;
+
+    @doc("User's Pulse Wave Velocity measurement - velocity at which the blood pressure pulse propagates through the circulatory system")
+    @example(7.2)
+    pulse_wave_velocity_meters_per_second?: float;
 }
 
 model AFibClassificationSample {
-    timestamp: string;
-    afib_classification: Terra.Enums.AFibFlag;
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
+    timestamp?: string;
+
+    @doc("Flag indicating the atrial fibrillation classification of the individual")
+    afib_classification?: Terra.Enums.AFibFlag;
 }
 
 model NutritionQuantity {
