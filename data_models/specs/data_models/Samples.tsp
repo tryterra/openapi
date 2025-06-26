@@ -76,9 +76,17 @@ model RawECGSample {
 }
 
 model ECGReading {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
     start_timestamp: string;
+
+    @doc("User's average heart rate throughout the day, in beats per minute (bpm).")
+    @example(72.5)
     avg_hr_bpm: float;
+
+    @doc("User's afib classification throught the day.")
     afib_classification: Terra.Enums.AFibFlag;
+
+    @doc("List of raw ECG readings sampled through the day.")
     raw_signal: RawECGSample[];
 }
 
