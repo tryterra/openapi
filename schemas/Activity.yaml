@@ -9,7 +9,7 @@ properties:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/CaloriesData.yaml
     description: Object containing calorie-related information for the user during the specific workout.
   cheat_detection:
-    type: integer
+    type: number
     examples:
       - 0
     description: Cheat detection flag.

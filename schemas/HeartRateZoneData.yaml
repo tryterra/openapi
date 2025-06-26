@@ -4,17 +4,28 @@ type: object
 properties:
   zone:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateZone.yaml
+    description: Heart rate zone designation
   start_percentage:
     type: number
+    examples:
+      - 60
+    minimum: 0
+    maximum: 100
+    description: Start percentage (based off user's max HR) of the HR zone
   end_percentage:
     type: number
+    examples:
+      - 70
+    minimum: 0
+    maximum: 100
+    description: End percentage (based off user's max HR) of the HR zone
   name:
     type: string
+    examples:
+      - Aerobic
+    description: Name of the associated heart rate zone
   duration_seconds:
     type: number
-required:
-  - zone
-  - start_percentage
-  - end_percentage
-  - name
-  - duration_seconds
+    examples:
+      - 300
+    description: Duration spent in the heart rate zone

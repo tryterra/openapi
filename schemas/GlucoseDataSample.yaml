@@ -4,14 +4,17 @@ type: object
 properties:
   timestamp:
     type: string
+    examples:
+      - 2022-11-23T09:00:00.000000+02:00
+    description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
   blood_glucose_mg_per_dL:
-    type: number
+    type: integer
+    examples:
+      - 95
+    description: User's blood glucose reading
   glucose_level_flag:
-    type: integer
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseFlag.yaml
+    description: Flag indicating state of user's blood glucose level
   trend_arrow:
-    type: integer
-required:
-  - timestamp
-  - blood_glucose_mg_per_dL
-  - glucose_level_flag
-  - trend_arrow
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TrendArrow.yaml
+    description: Flag indicating the current trend in the user's blood glucose level (e.g. rising, constant, falling)

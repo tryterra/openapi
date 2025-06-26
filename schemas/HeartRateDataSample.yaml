@@ -4,14 +4,19 @@ type: object
 properties:
   timestamp:
     type: string
+    examples:
+      - 2022-11-23T09:00:00.000000+02:00
+    description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
   bpm:
     type: number
+    examples:
+      - 142
+    description: User's heart rate in bpm
   timer_duration_seconds:
     type: number
+    examples:
+      - 600
+    description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
   context:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateContext.yaml
-required:
-  - timestamp
-  - bpm
-  - timer_duration_seconds
-  - context
+    description: Represents the context in which heart rate was measured.

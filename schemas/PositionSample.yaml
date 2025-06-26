@@ -4,13 +4,20 @@ type: object
 properties:
   timestamp:
     type: string
+    examples:
+      - 2022-11-23T09:00:00.000000+02:00
+    description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
   coords_lat_lng_deg:
     type: array
-    items:
-      type: number
+    prefixItems:
+      - type: number
+      - type: number
+    examples:
+      - - -18.4911
+        - 130.9123
+    description: Position of the user a given point in time, represented by a 2-value array of latitude, longitude, wherein each of the two numbers can be nullable
   timer_duration_seconds:
     type: number
-required:
-  - timestamp
-  - coords_lat_lng_deg
-  - timer_duration_seconds
+    examples:
+      - 300
+    description: Time elapsed since the start of the workout, subtracting time during which the recording was paused

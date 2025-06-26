@@ -10,6 +10,3 @@ properties:
   flow:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationFlow.yaml
     description: Flag indicating the strength of the user's menstrual flow.
-required:
-  - timestamp
-  - flow

@@ -4,8 +4,11 @@ type: object
 properties:
   timestamp:
     type: string
+    examples:
+      - 2022-11-23T09:00:00.000000+02:00
+    description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time
   breaths_per_min:
     type: number
-required:
-  - timestamp
-  - breaths_per_min
+    examples:
+      - 16
+    description: User's respiration rate

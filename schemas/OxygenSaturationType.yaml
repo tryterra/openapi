@@ -1,0 +1,14 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationType.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: Oxygen saturation measurement for blood.
+    title: Blood
+  - type: number
+    const: 1
+    description: Oxygen saturation measurement for muscle.
+    title: Muscle
+examples:
+  - 0
+description: Type of oxygen saturation measurement (i.e. blood vs muscle)

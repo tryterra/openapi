@@ -14,10 +14,3 @@ properties:
     type: number
   normalized_power_watts:
     type: number
-required:
-  - planned
-  - actual
-  - method
-  - intensity_factor_planned
-  - intensity_factor_actual
-  - normalized_power_watts

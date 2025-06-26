@@ -4,11 +4,16 @@ type: object
 properties:
   timestamp:
     type: string
+    examples:
+      - 2022-11-23T09:00:00.000000+02:00
+    description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
   distance_meters:
     type: number
+    examples:
+      - 2500
+    description: Cumulative distance covered up to associated timestamp, since the start of the payload
   timer_duration_seconds:
     type: number
-required:
-  - timestamp
-  - distance_meters
-  - timer_duration_seconds
+    examples:
+      - 900
+    description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
