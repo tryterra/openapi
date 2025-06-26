@@ -10,13 +10,26 @@ model MenstruationFlowSample {
     @doc("Flag indicating the strength of the user's menstrual flow.")
     flow: Terra.Enums.MenstruationFlow;
 }
-
 model DailyPatternSample {
+    @doc("Hour of the day, represented as an integer from 0 to 23, where 0 is midnight and 23 is the hour before the next midnight.")
+    @minValue(0)
+    @maxValue(23)
+    @example(9)
     time_from_midnight: integer;
+
+    @doc("Percentile 5 of the glucose level at the given time of day.")
     percentile_5: integer;
+
+    @doc("Percentile 25 of the glucose level at the given time of day.")
     percentile_25: integer;
+
+    @doc("Percentile 50 of the glucose level at the given time of day.")
     percentile_50: integer;
+
+    @doc("Percentile 75 of the glucose level at the given time of day.")
     percentile_75: integer;
+
+    @doc("Percentile 95 of the glucose level at the given time of day.")
     percentile_95: integer;
 }
 
@@ -149,7 +162,12 @@ model FloorsClimbedSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
 
+    @doc("Cumulative number of elevation gain measured in floors climbed up to associated timestamp, since the start of the payload")
+    @example(5)
     floors_climbed: integer;
+
+    @doc("Time elapsed since the start of the workout, subtracting time during which the recording was paused")
+    @example(600.0)
     timer_duration_seconds: float;
 }
 
@@ -390,6 +408,8 @@ model HydrationLevelSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
 
+    @doc("Total body water composition of the user, in kilograms.")
+    @example(40.0)
     hydration_level: float;
 }
 
