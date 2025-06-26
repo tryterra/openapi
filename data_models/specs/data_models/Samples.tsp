@@ -294,7 +294,12 @@ model PowerSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("Power generated at a given instant in time, in Watts")
+    @example(250.0)
     watts?: float;
+
+    @doc("Time elapsed since the start of the workout, subtracting time during which the recording was paused")
+    @example(1800.0)
     timer_duration_seconds?: float;
 }
 
@@ -354,7 +359,12 @@ model OxygenSaturationSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("User's oxygen saturation percentage - referring to either SpO2 or SmO2, based on the `type` field")
+    @example(98.0)
     percentage?: float;
+
+    @doc("Type of oxygen saturation measurement (i.e. blood vs muscle)")
+    type?: Terra.Enums.OxygenSaturationType;
 }
 
 model BreathSample {

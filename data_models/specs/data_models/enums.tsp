@@ -1144,3 +1144,16 @@ enum TimestampLocalization {
     @doc("LOCAL timestamps that may include or exclude the timezone, following ISO8601.")
     LOCAL: 1,
 }
+
+@doc("Type of oxygen saturation measurement (i.e. blood vs muscle)")
+@oneOf
+@example(OxygenSaturationType.BLOOD)
+union OxygenSaturationType {
+    @summary("Blood")
+    @doc("Oxygen saturation measurement for blood.")
+    BLOOD: 0,
+
+    @summary("Muscle")
+    @doc("Oxygen saturation measurement for muscle.")
+    MUSCLE: 1,
+}
