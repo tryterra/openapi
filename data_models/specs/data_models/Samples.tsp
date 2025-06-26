@@ -243,7 +243,12 @@ model DistanceSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("Cumulative distance covered up to associated timestamp, since the start of the payload")
+    @example(2500.0)
     distance_meters?: float;
+
+    @doc("Time elapsed since the start of the workout, subtracting time during which the recording was paused")
+    @example(900.0)
     timer_duration_seconds?: float;
 }
 
