@@ -91,14 +91,20 @@ model ECGReading {
 }
 
 model GlucoseDataSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     blood_glucose_mg_per_dL: float;
     glucose_level_flag: integer;
     trend_arrow: integer;
 }
 
 model HeartRateDataSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     bpm: float;
     timer_duration_seconds: float;
     context: Terra.Enums.HeartRateContext;
@@ -115,12 +121,18 @@ model LapSample {
 }
 
 model HeartRateVariabilityDataSampleRMSSD {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     hrv_rmssd: float;
 }
 
 model HeartRateVariabilityDataSampleSDNN {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     hrv_sdnn: float;
 }
 
@@ -133,66 +145,99 @@ model HeartRateZoneData {
 }
 
 model FloorsClimbedSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     floors_climbed: integer;
     timer_duration_seconds: float;
 }
 
 model CalorieSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     calories: float;
     timer_duration_seconds: float;
 }
 
 model DistanceSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     distance_meters: float;
     timer_duration_seconds: float;
 }
 
 model StepSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     steps: integer;
     timer_duration_seconds: float;
 }
 
 model ElevationSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     elev_meters: float;
     timer_duration_seconds: float;
 }
 
 model PositionSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     coords_lat_lng_deg: float[];
     timer_duration_seconds: float;
 }
 
 model PowerSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     watts: float;
     timer_duration_seconds: float;
 }
 
 model SpeedSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     speed_meters_per_second: float;
     timer_duration_seconds: float;
 }
 
 model CadenceSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     cadence_rpm: float;
     timer_duration_seconds: float;
 }
 
 model ActivityLevelSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     level: Terra.Enums.ActivityLevel;
 }
 
 model METSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     level: float;
 }
 
@@ -206,32 +251,50 @@ model TSSSample {
 }
 
 model SleepHypnogramSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     level: Terra.Enums.SleepLevel;
 }
 
 model OxygenSaturationSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     percentage: float;
 }
 
 model BreathSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     breaths_per_min: float;
 }
 
 model SnoringSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     duration_seconds: float;
 }
 
 model StressSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     level: float;
 }
 
 model BodyBatterySample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     level: float;
 }
 
@@ -315,17 +378,26 @@ model MeasurementDataSample {
 }
 
 model TemperatureSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     temperature_celsius: float;
 }
 
 model HydrationLevelSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     hydration_level: float;
 }
 
 model HydrationMeasurementSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
     hydration_kg: float;
 }
 
