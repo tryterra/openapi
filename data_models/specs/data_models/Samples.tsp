@@ -21,9 +21,20 @@ model DailyPatternSample {
 }
 
 model DrinkSample {
+    @doc("Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time")
+    @example("2022-11-23T09:00:00.000000+02:00")
     timestamp: string;
+
+    @doc("Volume of drink consumed")
+    @example(250.0)
     drink_volume: float;
+
+    @doc("Unit of measurement for the drink")
+    @example("ml")
     drink_unit: string;
+
+    @doc("Name of drink consumed.")
+    @example("Water")
     drink_name: string;
 }
 

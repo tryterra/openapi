@@ -12,8 +12,8 @@ model Activity {
     calories_data?: CaloriesData;
 
     @doc("Cheat detection flag.")
-    @example(0)
-    cheat_detection?: integer;
+    @example(0.0)
+    cheat_detection?: float;
 
     @doc("Object containing Terra Scores.")
     data_enrichment?: DataEnrichment;
