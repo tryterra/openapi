@@ -14,5 +14,5 @@ import "./specs/data_models/Events.tsp";
 
 using JsonSchema;
 
-@jsonSchema("https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/")
+@jsonSchema("https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/")
 namespace Terra;
