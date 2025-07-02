@@ -81,7 +81,7 @@ model DistanceDataSummary {
     @doc("Total distance covered by the user throughout the workout.")
     distance_meters?: integer;
 
-    @doc("Average elevation of the user throughout the workout.")
+    @doc("Object containing information on the elevation of the user throughout the workout.")
     elevation?: ElevationData;
 
     @doc("Total number of elevation gain in floors climbed equivalent throughout the workout, as determined by the fitness data provider.")
@@ -95,11 +95,11 @@ model DistanceDataSummary {
 }
 
 model EnergyData {
-    @doc("Total number of kiloJoules planned to be expended during the workout - represents the user's predefined goal for the workout")
+    @doc("Total number of kiloJoules expended during the workout")
     @example(1200.0)
     energy_kilojoules?: float;
 
-    @doc("Total number of kiloJoules expended during the workout")
+    @doc("Total number of kiloJoules planned to be expended during the workout - represents the user's predefined goal for the workout")
     @example(1150.0)
     energy_planned_kilojoules?: float;
 }

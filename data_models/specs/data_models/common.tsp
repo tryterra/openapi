@@ -3,7 +3,10 @@ namespace Terra.Models;
 using Terra.Models;
 
 model DataContributor {
+    @doc("Name of the factor contributing to the score.")
     contributor_name: string;
+    
+    @doc("Numerical score representing the contribution of this factor.")
     contributor_score: float;
 }
 
@@ -143,10 +146,19 @@ model ActiveDurationsData {
 }
 
 model CaloriesData {
+    @doc("Basal Metabolic Rate calories - calories burned at rest.")
     BMR_calories?: integer;
+    
+    @doc("Array of calorie data samples recorded throughout the time period.")
     calorie_samples?: CalorieSample[];
+    
+    @doc("Net calories burned through activity (excluding BMR).")
     net_activity_calories?: integer;
+    
+    @doc("Net calories consumed through food and drink intake.")
     net_intake_calories?: integer;
+    
+    @doc("Total calories burned including BMR and activity.")
     total_burned_calories?: integer;
 }
 
@@ -204,12 +216,12 @@ model ElevationData {
     @example(950.0)
     avg_meters?: float;
 
-    @doc("Planned elevation gain for the workout.")
+    @doc("Actual elevation gain of the user throughout the workout - this includes all elevation gain, and does _not_ represent net gain.")
     @example(550.0)
     @minValue(0.0)
     gain_actual_meters?: float;
 
-    @doc("Elevation gain of the user throughout the workout - this includes all elevation gain, and does _not_ represent net gain.")
+    @doc("Planned elevation gain for the workout.")
     @example(500.0)
     @minValue(0.0)
     gain_planned_meters?: float;

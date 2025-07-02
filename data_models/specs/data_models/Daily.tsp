@@ -69,7 +69,7 @@ model DailyDistanceData {
     @example(8500)
     distance_meters?: integer;
 
-    @doc("Average elevation of the user throughout the day.")
+    @doc("Object containing information on the elevation of the user throughout the day.")
     elevation?: ElevationData;
 
     @doc("Total number of elevation gain in floors climbed equivalent throughout the day, as determined by the fitness data provider.")
@@ -86,16 +86,37 @@ model DailyDistanceData {
 }
 
 model DailyDataEnrichment {
+    @doc("Array of factors contributing to cardiovascular score.")
     cardiovascular_contributors?: DataContributor[];
+    
+    @doc("Cardiovascular health score for the day.")
     cardiovascular_score?: float;
+    
+    @doc("Array of factors contributing to immune index.")
     immune_contributors?: DataContributor[];
+    
+    @doc("Immune system health index for the day.")
     immune_index?: float;
+    
+    @doc("Array of factors contributing to readiness score.")
     readiness_contributors?: DataContributor[];
+    
+    @doc("Readiness score for the day.")
     readiness_score?: float;
+    
+    @doc("Array of factors contributing to respiratory score.")
     respiratory_contributors?: DataContributor[];
+    
+    @doc("Respiratory health score for the day.")
     respiratory_score?: float;
+    
+    @doc("Start time for the data enrichment calculation period.")
     start_time?: string;
+    
+    @doc("Array of factors contributing to stress score.")
     stress_contributors?: DataContributor[];
+    
+    @doc("Total stress score for the day.")
     total_stress_score?: float;
 }
 
@@ -136,7 +157,7 @@ model StressData {
     @minValue(0.0)
     high_stress_duration_seconds?: float;
 
-    @doc("Total number of seconds spent in a stressed state while at rest during the day.")
+    @doc("Total number of seconds spent in any stressed state during the day.")
     @example(5400.0)
     @minValue(0.0)
     stress_duration_seconds?: float;

@@ -234,7 +234,10 @@ model CalorieSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("Number of calories burned at the given timestamp.")
     calories?: float;
+    
+    @doc("Time elapsed since the start of the workout, subtracting time during which the recording was paused")
     timer_duration_seconds?: float;
 }
 
@@ -257,7 +260,10 @@ model StepSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("Cumulative number of steps taken up to associated timestamp, since the start of the payload")
     steps?: integer;
+    
+    @doc("Time elapsed since the start of the workout, subtracting time during which the recording was paused")
     timer_duration_seconds?: float;
 }
 
@@ -308,7 +314,10 @@ model SpeedSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("Speed of the user at a given instant in time, in meters per second")
     speed_meters_per_second?: float;
+    
+    @doc("Time elapsed since the start of the workout, subtracting time during which the recording was paused")
     timer_duration_seconds?: float;
 }
 
@@ -317,7 +326,10 @@ model CadenceSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("User's cadence at a given instant in time, in revolutions per minute")
     cadence_rpm?: float;
+    
+    @doc("Time elapsed since the start of the workout, subtracting time during which the recording was paused")
     timer_duration_seconds?: float;
 }
 
@@ -334,15 +346,27 @@ model METSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("Metabolic Equivalent of Task (MET) level at the given timestamp")
     level?: float;
 }
 
 model TSSSample {
+    @doc("Planned Training Stress Score value")
     planned?: float;
+    
+    @doc("Actual Training Stress Score value achieved")
     actual?: float;
+    
+    @doc("Method used to calculate the TSS")
     method?: string;
+    
+    @doc("Planned intensity factor for the training session")
     intensity_factor_planned?: float;
+    
+    @doc("Actual intensity factor achieved during the training session")
     intensity_factor_actual?: float;
+    
+    @doc("Normalized power output in watts")
     normalized_power_watts?: float;
 }
 
@@ -392,6 +416,7 @@ model StressSample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("Stress level measurement at the given timestamp")
     level?: float;
 }
 
@@ -400,6 +425,7 @@ model BodyBatterySample {
     @example("2022-11-23T09:00:00.000000+02:00")
     timestamp?: string;
 
+    @doc("Body battery energy level at the given timestamp")
     level?: float;
 }
 

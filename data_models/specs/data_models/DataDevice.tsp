@@ -61,8 +61,13 @@ model OtherDeviceData {
     @example("5.2.1")
     software_version?: string;
 
+    @doc("Activation timestamp of the device, if applicable.")
     activation_timestamp?: string;
+    
+    @doc("Data provided by the device, as enumerated types.")
     data_provided?: Terra.Enums.DeviceDataType[];
+    
+    @doc("Last upload date from the device.")
     last_upload_date?: string;
 }
 // End of Device Data Model

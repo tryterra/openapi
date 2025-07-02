@@ -51,6 +51,7 @@ model Athlete {
     @example("2023-01-15")
     joined_provider?: string;
 
+    @doc("Array of devices associated with the user's account.")
     devices?: DeviceData[];
 }
 // End of Athlete Model

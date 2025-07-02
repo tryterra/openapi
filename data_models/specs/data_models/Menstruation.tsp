@@ -55,7 +55,7 @@ model MenstruationData {
     @example("2022-12-12T14:03:05.000000-05:00")
     last_updated_time?: string;
 
-    @doc("Total cycle length.")
+    @doc("Total cycle length in days.")
     @example("28")
     cycle_length_days?: string;
 
