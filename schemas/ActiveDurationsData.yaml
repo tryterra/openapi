@@ -1,11 +1,11 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActiveDurationsData.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActiveDurationsData.yaml
 type: object
 properties:
   activity_levels_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityLevelSample.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityLevelSample.yaml
     description: Array of detailed samples of the intensity the user was in at various points during the workout.
   activity_seconds:
     type: number

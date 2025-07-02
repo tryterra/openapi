@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationData.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenSaturationData.yaml
 type: object
 properties:
   avg_saturation_percentage:
@@ -15,7 +15,7 @@ properties:
   samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationSample.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenSaturationSample.yaml
     description: Array of Oxygen Saturation percentage datapoints sampled throughout the sleep session.
   start_time:
     type: string

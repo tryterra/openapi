@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PositionData.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PositionData.yaml
 type: object
 properties:
   center_pos_lat_lng_deg:
@@ -21,7 +21,7 @@ properties:
   position_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PositionSample.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PositionSample.yaml
     description: Array of datapoints of the position of the user, sampled throughout the workout.
   start_pos_lat_lng_deg:
     type: array

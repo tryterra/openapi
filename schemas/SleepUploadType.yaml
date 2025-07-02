@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepUploadType.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepUploadType.yaml
 oneOf:
   - type: number
     const: 0

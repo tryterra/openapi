@@ -1,11 +1,11 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/METData.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/METData.yaml
 type: object
 properties:
   MET_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/METSample.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/METSample.yaml
     description: An array of Metabolic Equivalent Time samples, as calculated by the user's wearable.
   avg_level:
     type: number

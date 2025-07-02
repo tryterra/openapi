@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BodyBatterySample.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BodyBatterySample.yaml
 type: object
 properties:
   timestamp:
@@ -9,3 +9,4 @@ properties:
     description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
   level:
     type: number
+    description: Body battery energy level at the given timestamp

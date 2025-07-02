@@ -1,12 +1,12 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionSummary.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionSummary.yaml
 type: object
 properties:
   macros:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMacros.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionMacros.yaml
     description: Summary of macronutrient information for a given day.
   micros:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMicros.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionMicros.yaml
     description: Summary of micronutrient information for a given day.
   water_ml:
     type: number

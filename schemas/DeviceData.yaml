@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeviceData.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeviceData.yaml
 type: object
 properties:
   activation_timestamp:
@@ -10,7 +10,7 @@ properties:
   data_provided:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeviceDataType.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeviceDataType.yaml
     description: Data provided by the device, as enumerated types.
   hardware_version:
     type: string
@@ -33,7 +33,7 @@ properties:
   other_devices:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OtherDeviceData.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OtherDeviceData.yaml
     description: Data pertaining to other devices which may have contributed data for this workout.
   sensor_state:
     type: string

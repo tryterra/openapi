@@ -1,36 +1,47 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyDataEnrichment.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyDataEnrichment.yaml
 type: object
 properties:
   cardiovascular_contributors:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
+    description: Array of factors contributing to cardiovascular score.
   cardiovascular_score:
     type: number
+    description: Cardiovascular health score for the day.
   immune_contributors:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
+    description: Array of factors contributing to immune index.
   immune_index:
     type: number
+    description: Immune system health index for the day.
   readiness_contributors:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
+    description: Array of factors contributing to readiness score.
   readiness_score:
     type: number
+    description: Readiness score for the day.
   respiratory_contributors:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
+    description: Array of factors contributing to respiratory score.
   respiratory_score:
     type: number
+    description: Respiratory health score for the day.
   start_time:
     type: string
+    description: Start time for the data enrichment calculation period.
   stress_contributors:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
+    description: Array of factors contributing to stress score.
   total_stress_score:
     type: number
+    description: Total stress score for the day.

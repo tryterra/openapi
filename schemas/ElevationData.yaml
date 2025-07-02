@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ElevationData.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ElevationData.yaml
 type: object
 properties:
   avg_meters:
@@ -12,13 +12,13 @@ properties:
     examples:
       - 550
     minimum: 0
-    description: Planned elevation gain for the workout.
+    description: Actual elevation gain of the user throughout the workout - this includes all elevation gain, and does _not_ represent net gain.
   gain_planned_meters:
     type: number
     examples:
       - 500
     minimum: 0
-    description: Elevation gain of the user throughout the workout - this includes all elevation gain, and does _not_ represent net gain.
+    description: Planned elevation gain for the workout.
   loss_actual_meters:
     type: number
     examples:

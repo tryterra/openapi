@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationData.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationData.yaml
 type: object
 properties:
   period_length_days:
@@ -8,7 +8,7 @@ properties:
       - 5
     description: Total length of period (i.e. menstrual bleeding).
   current_phase:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstrualPhase.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstrualPhase.yaml
     description: Phase in associated cycle, (i.e. menstruation, fertile etc).
   length_of_current_phase_days:
     type: integer
@@ -44,7 +44,7 @@ properties:
     type: string
     examples:
       - "28"
-    description: Total cycle length.
+    description: Total cycle length in days.
   is_predicted_cycle:
     type: string
     examples:
@@ -53,5 +53,5 @@ properties:
   menstruation_flow:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationFlowSample.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationFlowSample.yaml
     description: List of user logs of information related to the strength of user's menstrual flow.

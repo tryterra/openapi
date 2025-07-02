@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepMetadata.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepMetadata.yaml
 type: object
 properties:
   end_time:
@@ -21,9 +21,9 @@ properties:
     type: string
     description: A unique identifier for the sleep session.
   timestamp_localization:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TimestampLocalization.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TimestampLocalization.yaml
   upload_type:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepUploadType.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepUploadType.yaml
     description: The upload type for the associated sleep session, providing information on whether this was an automatic sleep or user-entered.
 required:
   - end_time

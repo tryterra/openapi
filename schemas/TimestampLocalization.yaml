@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TimestampLocalization.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TimestampLocalization.yaml
 type: number
 enum:
   - 0

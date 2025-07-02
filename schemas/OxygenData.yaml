@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenData.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenData.yaml
 type: object
 properties:
   avg_saturation_percentage:
@@ -10,12 +10,12 @@ properties:
   saturation_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationSample.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenSaturationSample.yaml
     description: Array of Oxygen Saturation percentage datapoints sampled throughout the day.
   vo2_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Vo2MaxSample.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Vo2MaxSample.yaml
     description: Array of VO2 datapoints sampled throughout the day.
   vo2max_ml_per_min_per_kg:
     type: number

@@ -1,24 +1,24 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Sleep.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Sleep.yaml
 type: object
 properties:
   data_enrichment:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepDataEnrichment.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepDataEnrichment.yaml
     description: Object containing additional enrichment data for the sleep session.
   device_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeviceData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeviceData.yaml
     description: Object containing information on the device which recorded data for the payload.
   heart_rate_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateData.yaml
     description: Object containing information on the user's heart rate during the sleep session.
   metadata:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepMetadata.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepMetadata.yaml
     description: Object containing daily summary metadata.
   readiness_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ReadinessData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ReadinessData.yaml
     description: Object containing information on the user's readiness for the day, based off the quality and duration of their sleep.
   respiration_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RespirationData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RespirationData.yaml
     description: Object containing information on the user's respiration throughout the sleep session.
   scores:
     type: object
@@ -28,10 +28,10 @@ properties:
         description: User's sleep score.
     description: User's sleep score
   sleep_durations_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepDurationsData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepDurationsData.yaml
     description: Object containing information on the user's duration spent in various sleep stages.
   temperature_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepTemperatureData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepTemperatureData.yaml
     description: Object containing body temperature information of the user during the sleep recording session.
 required:
   - metadata

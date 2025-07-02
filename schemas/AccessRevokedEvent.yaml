@@ -1,12 +1,12 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AccessRevokedEvent.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AccessRevokedEvent.yaml
 type: object
 properties:
   type:
     type: string
     const: access_revoked
   user:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TerraUser.yaml
     description: User who revoked access
   status:
     type: string
@@ -21,5 +21,5 @@ required:
   - status
   - message
 allOf:
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEvent.yaml
+  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WebhookEvent.yaml
 description: Access revoked event when a user revokes access through the provider

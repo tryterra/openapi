@@ -1,10 +1,10 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateData.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateData.yaml
 type: object
 properties:
   detailed:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateDataDetailed.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateDataDetailed.yaml
     description: Object containing detailed heart rate information for the associated workout.
   summary:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateDataSummary.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateDataSummary.yaml
     description: Object containing summary heart rate information for the associated workout.

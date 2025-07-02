@@ -1,12 +1,12 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Menstruation.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Menstruation.yaml
 type: object
 properties:
   metadata:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationMetadata.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationMetadata.yaml
     description: Object containing daily summary metadata.
   menstruation_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationData.yaml
     description: Object containing information on user's menstruation for a given day.
 required:
   - metadata

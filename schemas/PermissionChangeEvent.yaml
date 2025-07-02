@@ -1,12 +1,12 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PermissionChangeEvent.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PermissionChangeEvent.yaml
 type: object
 properties:
   type:
     type: string
     const: permission_change
   user:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TerraUser.yaml
     description: User who changed permissions
   status:
     type: string
@@ -33,5 +33,5 @@ required:
   - scopes_added
   - scopes_removed
 allOf:
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEvent.yaml
+  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WebhookEvent.yaml
 description: Permission change event

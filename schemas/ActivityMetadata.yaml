@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityMetadata.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityMetadata.yaml
 type: object
 properties:
   city:
@@ -38,12 +38,12 @@ properties:
       - 123e4567-e89b-12d3-a456-426614174000
     description: A unique identifier for the workout - note that this is unique for the given user, and may not be globally unique.
   timestamp_localization:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TimestampLocalization.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TimestampLocalization.yaml
   type:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityType.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityType.yaml
     description: The type of activity performed for the associated workout.
   upload_type:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/UploadType.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/UploadType.yaml
     description: The upload type for the associated workout, providing information on whether this was an automatic workout or user-entered.
 required:
   - end_time

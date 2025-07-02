@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ProcessingEvent.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ProcessingEvent.yaml
 type: object
 properties:
   type:
@@ -13,7 +13,7 @@ properties:
     type: string
     description: Information about the processing
   user:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TerraUser.yaml
     description: User whose data is being processed
   retry_after_seconds:
     type: integer
@@ -25,5 +25,5 @@ required:
   - user
   - retry_after_seconds
 allOf:
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEvent.yaml
+  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WebhookEvent.yaml
 description: Processing event returned when data is being fetched asynchronously

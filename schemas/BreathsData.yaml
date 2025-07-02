@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BreathsData.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BreathsData.yaml
 type: object
 properties:
   avg_breaths_per_min:
@@ -25,7 +25,7 @@ properties:
   samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BreathSample.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BreathSample.yaml
     description: List of breathing rate information sampled throughout the sleep session.
   start_time:
     type: string

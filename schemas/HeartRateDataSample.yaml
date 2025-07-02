@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateDataSample.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateDataSample.yaml
 type: object
 properties:
   timestamp:
@@ -18,5 +18,5 @@ properties:
       - 600
     description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
   context:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateContext.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateContext.yaml
     description: Represents the context in which heart rate was measured.

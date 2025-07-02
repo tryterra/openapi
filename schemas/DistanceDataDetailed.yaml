@@ -1,24 +1,24 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceDataDetailed.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceDataDetailed.yaml
 type: object
 properties:
   distance_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceSample.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceSample.yaml
     description: Array of detailed samples of distance covered throughout the workout.
   elevation_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ElevationSample.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ElevationSample.yaml
     description: Array of detailed samples of elevation throughout the workout.
   floors_climbed_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/FloorsClimbedSample.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/FloorsClimbedSample.yaml
     description: Array of detailed samples of floors climbed throughout the workout, as determined by the fitness data provider.
   step_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StepSample.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StepSample.yaml
     description: Array of detailed samples of steps performed throughout the workout.

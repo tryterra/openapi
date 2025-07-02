@@ -1,10 +1,10 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepDataEnrichment.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepDataEnrichment.yaml
 type: object
 properties:
   sleep_contributors:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
   sleep_score:
     type: number

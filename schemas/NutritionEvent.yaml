@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionEvent.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionEvent.yaml
 type: object
 properties:
   type:
@@ -8,10 +8,10 @@ properties:
   data:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Nutrition.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Nutrition.yaml
     description: Array of nutrition data
   user:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TerraUser.yaml
     description: User whose data is being provided
   version:
     type: string
@@ -22,5 +22,5 @@ required:
   - user
   - version
 allOf:
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEvent.yaml
+  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WebhookEvent.yaml
 description: Nutrition data event

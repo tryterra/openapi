@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationSample.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenSaturationSample.yaml
 type: object
 properties:
   timestamp:
@@ -13,5 +13,5 @@ properties:
       - 98
     description: User's oxygen saturation percentage - referring to either SpO2 or SmO2, based on the `type` field
   type:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationType.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenSaturationType.yaml
     description: Type of oxygen saturation measurement (i.e. blood vs muscle)

@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LapSample.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LapSample.yaml
 type: object
 properties:
   calories:
@@ -38,7 +38,7 @@ properties:
       - 2022-10-28T10:00:00.000000+01:00
     description: The end time of the associated lap, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time
   stroke_type:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StrokeType.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StrokeType.yaml
     examples:
       - freestyle
     description: Stroke type - only relevant for swimming activities

@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OtherDeviceData.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OtherDeviceData.yaml
 type: object
 properties:
   manufacturer:
@@ -29,9 +29,12 @@ properties:
     description: Device Software Version.
   activation_timestamp:
     type: string
+    description: Activation timestamp of the device, if applicable.
   data_provided:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeviceDataType.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeviceDataType.yaml
+    description: Data provided by the device, as enumerated types.
   last_upload_date:
     type: string
+    description: Last upload date from the device.

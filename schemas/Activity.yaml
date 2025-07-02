@@ -1,12 +1,12 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Activity.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Activity.yaml
 type: object
 properties:
   active_durations_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActiveDurationsData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActiveDurationsData.yaml
     description: Number of minutes spent at various intensities during the workout, as reported by the Fitness Data provider.
   calories_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/CaloriesData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/CaloriesData.yaml
     description: Object containing calorie-related information for the user during the specific workout.
   cheat_detection:
     type: number
@@ -14,52 +14,52 @@ properties:
       - 0
     description: Cheat detection flag.
   data_enrichment:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataEnrichment.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataEnrichment.yaml
     description: Object containing Terra Scores.
   device_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeviceData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeviceData.yaml
     description: Object containing information on the device which recorded the specific workout.
   distance_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceData.yaml
     description: Object containing information related to distance covered during the associated workout.
   energy_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/EnergyData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/EnergyData.yaml
     description: Object containing information on the energy expended by the user during the workout.
   heart_rate_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateData.yaml
     description: Object containing heartrate-related information for the workout.
   lap_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LapData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LapData.yaml
     description: Object containing information on data for each lap performed by the user - mostly relates to track & field running activities, and swimming activities.
   MET_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/METData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/METData.yaml
     description: Object containing information on the Metabolic Equivalent of Task for the workout.
   metadata:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityMetadata.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityMetadata.yaml
     description: Object containing workout metadata.
   movement_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MovementData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MovementData.yaml
     description: Object containing information on the user's movement throughout the workout.
   oxygen_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenData.yaml
     description: Object containing information on oxygen-related metrics for the workout.
   polyline_map_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PolylineMapData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PolylineMapData.yaml
     description: Object containing polyline-representation map data, plotting the user's trajectory throughout the workout.
   position_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PositionData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PositionData.yaml
     description: Object containing information on the user's position throughout the workout.
   power_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PowerData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PowerData.yaml
     description: Object containing information on the power generated by the user during the workout.
   strain_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StrainData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StrainData.yaml
     description: Object containing information on the cardiovascular strain imposed on the user during the workout.
   TSS_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TSSData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TSSData.yaml
     description: Object containing information on the stress put on the user's body from a workout.
   work_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WorkData.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WorkData.yaml
     description: Object containing information on the work output of the user during the workout.
 required:
   - metadata

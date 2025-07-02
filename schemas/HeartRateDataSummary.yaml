@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateDataSummary.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateDataSummary.yaml
 type: object
 properties:
   avg_hr_bpm:
@@ -21,7 +21,7 @@ properties:
   hr_zone_data:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateZoneData.yaml
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateZoneData.yaml
     description: Array of time spent in various HR zones throughout the workout.
   max_hr_bpm:
     type: number

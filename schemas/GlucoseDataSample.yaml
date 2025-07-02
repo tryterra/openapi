@@ -1,5 +1,5 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseDataSample.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GlucoseDataSample.yaml
 type: object
 properties:
   timestamp:
@@ -13,8 +13,8 @@ properties:
       - 95
     description: User's blood glucose reading
   glucose_level_flag:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseFlag.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GlucoseFlag.yaml
     description: Flag indicating state of user's blood glucose level
   trend_arrow:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TrendArrow.yaml
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TrendArrow.yaml
     description: Flag indicating the current trend in the user's blood glucose level (e.g. rising, constant, falling)

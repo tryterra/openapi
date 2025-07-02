@@ -1,16 +1,22 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TSSSample.yaml
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TSSSample.yaml
 type: object
 properties:
   planned:
     type: number
+    description: Planned Training Stress Score value
   actual:
     type: number
+    description: Actual Training Stress Score value achieved
   method:
     type: string
+    description: Method used to calculate the TSS
   intensity_factor_planned:
     type: number
+    description: Planned intensity factor for the training session
   intensity_factor_actual:
     type: number
+    description: Actual intensity factor achieved during the training session
   normalized_power_watts:
     type: number
+    description: Normalized power output in watts
