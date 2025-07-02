@@ -1,0 +1,78 @@
+name: Schema Generation and Validation
+
+on:
+  pull_request:
+    branches: [ master ]
+  push:
+    branches: [ master ]
+
+jobs:
+  generate-schemas:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: data_models/package-lock.json
+        
+    - name: Install dependencies
+      run: |
+        cd data_models
+        npm ci
+        
+    - name: Run linting
+      run: |
+        cd data_models
+        npm run lint
+        
+    - name: Run formatting check
+      run: |
+        cd data_models
+        npm run format:check
+        
+    - name: Run tests
+      run: |
+        cd data_models
+        npm test
+        
+    - name: Generate TypeSpec schemas
+      run: |
+        cd data_models
+        npx tsp compile . --emit=@typespec/json-schema
+        
+    - name: Promote schemas
+      run: |
+        cd data_models
+        chmod +x promote.sh
+        ./promote.sh
+        
+    - name: Verify schemas were generated
+      run: |
+        if [ ! -d "schemas" ] || [ -z "$(ls -A schemas)" ]; then
+          echo "Error: schemas directory is empty or doesn't exist"
+          exit 1
+        fi
+        echo "Generated $(ls schemas | wc -l) schema files"
+        
+    - name: Upload generated schemas
+      uses: actions/upload-artifact@v4
+      with:
+        name: generated-schemas
+        path: schemas/
+        retention-days: 30
+        
+    - name: Check for schema changes
+      if: github.event_name == 'pull_request'
+      run: |
+        git add schemas/
+        if ! git diff --cached --quiet; then
+          echo "Schema files have changed. Please commit the updated schemas."
+          git diff --cached --name-only
+          exit 1
+        fi

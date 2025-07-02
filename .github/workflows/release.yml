@@ -1,0 +1,108 @@
+name: Release and Bundle
+
+on:
+  push:
+    branches: [ master ]
+    tags: [ 'v*' ]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: data_models/package-lock.json
+        
+    - name: Install TypeSpec dependencies
+      run: |
+        cd data_models
+        npm ci
+        
+    - name: Install Redocly CLI
+      run: npm install -g @redocly/cli
+        
+    - name: Generate TypeSpec schemas
+      run: |
+        cd data_models
+        npx tsp compile . --emit=@typespec/json-schema
+        chmod +x promote.sh
+        ./promote.sh
+        
+    - name: Bundle OpenAPI v5 specification
+      run: |
+        redocly bundle v5.yaml -o v5-bundled.yaml
+        
+    - name: Bundle OpenAPI v6 specification
+      run: |
+        redocly bundle v6.yaml -o v6-bundled.yaml
+        
+    - name: Validate bundled specifications
+      run: |
+        redocly lint v5-bundled.yaml
+        redocly lint v6-bundled.yaml
+        
+    - name: Upload bundled specifications
+      uses: actions/upload-artifact@v4
+      with:
+        name: bundled-specs
+        path: |
+          v5-bundled.yaml
+          v6-bundled.yaml
+        retention-days: 90
+        
+    - name: Upload schemas
+      uses: actions/upload-artifact@v4
+      with:
+        name: schemas
+        path: schemas/
+        retention-days: 90
+        
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
+        body: |
+          ## Changes
+          
+          This release includes updated OpenAPI specifications and JSON schemas.
+          
+          ### Artifacts
+          - `v5-bundled.yaml` - Bundled OpenAPI v5 specification
+          - `v6-bundled.yaml` - Bundled OpenAPI v6 specification  
+          - `schemas.zip` - All generated JSON schemas
+          
+        draft: false
+        prerelease: false
+        
+    - name: Upload Release Asset - v5 Bundle
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./v5-bundled.yaml
+        asset_name: v5-bundled.yaml
+        asset_content_type: application/yaml
+        
+    - name: Upload Release Asset - v6 Bundle  
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./v6-bundled.yaml
+        asset_name: v6-bundled.yaml
+        asset_content_type: application/yaml
