@@ -1,0 +1,566 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityType.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: Activity type for when the user is in a vehicle, such as a car or bus.
+    title: In Vehicle
+  - type: number
+    const: 1
+    description: Activity type for general biking or cycling.
+    title: Biking
+  - type: number
+    const: 3
+    description: Activity type for when the user is still or not moving.
+    title: Still
+  - type: number
+    const: 4
+    description: Activity type is unknown or could not be determined.
+    title: Unknown
+  - type: number
+    const: 5
+    description: Activity type for when the device detects a tilting motion.
+    title: Tilting
+  - type: number
+    const: 7
+    description: Activity type for general walking.
+    title: Walking
+  - type: number
+    const: 8
+    description: Activity type for general running.
+    title: Running
+  - type: number
+    const: 9
+    description: Activity type for aerobic exercises and workouts.
+    title: Aerobics
+  - type: number
+    const: 10
+    description: Activity type for playing badminton.
+    title: Badminton
+  - type: number
+    const: 11
+    description: Activity type for playing baseball.
+    title: Baseball
+  - type: number
+    const: 12
+    description: Activity type for playing basketball.
+    title: Basketball
+  - type: number
+    const: 13
+    description: Activity type for biathlon, combining cross-country skiing and rifle shooting.
+    title: Biathlon
+  - type: number
+    const: 14
+    description: Activity type for hand biking, using a hand-powered bicycle.
+    title: Hand Biking
+  - type: number
+    const: 15
+    description: Activity type for off-road cycling on rough terrain.
+    title: Mountain Biking
+  - type: number
+    const: 16
+    description: Activity type for cycling on paved roads.
+    title: Road Biking
+  - type: number
+    const: 17
+    description: Activity type for indoor cycling classes or spinning.
+    title: Spinning
+  - type: number
+    const: 18
+    description: Activity type for exercising on a stationary bicycle.
+    title: Stationary Biking
+  - type: number
+    const: 19
+    description: Activity type for cycling for transportation or utility purposes.
+    title: Utility Biking
+  - type: number
+    const: 20
+    description: Activity type for boxing training or matches.
+    title: Boxing
+  - type: number
+    const: 21
+    description: Activity type for bodyweight exercises focusing on rhythm and flow.
+    title: Calisthenics
+  - type: number
+    const: 22
+    description: Activity type for workout consisting of a series of exercises performed in rotation.
+    title: Circuit Training
+  - type: number
+    const: 23
+    description: Activity type for playing cricket.
+    title: Cricket
+  - type: number
+    const: 24
+    description: Activity type for various forms of dance.
+    title: Dancing
+  - type: number
+    const: 25
+    description: Activity type for exercising on an elliptical trainer.
+    title: Elliptical
+  - type: number
+    const: 26
+    description: Activity type for fencing sport.
+    title: Fencing
+  - type: number
+    const: 27
+    description: Activity type for playing American football.
+    title: American Football
+  - type: number
+    const: 28
+    description: Activity type for playing Australian rules football.
+    title: Australian Football
+  - type: number
+    const: 29
+    description: Activity type for playing soccer/football.
+    title: English Football
+  - type: number
+    const: 30
+    description: Activity type for playing frisbee or disc sports.
+    title: Frisbee
+  - type: number
+    const: 31
+    description: Activity type for gardening and yard work.
+    title: Gardening
+  - type: number
+    const: 32
+    description: Activity type for playing golf.
+    title: Golf
+  - type: number
+    const: 33
+    description: Activity type for performing gymnastics.
+    title: Gymnastics
+  - type: number
+    const: 34
+    description: Activity type for playing handball.
+    title: Handball
+  - type: number
+    const: 35
+    description: Activity type for hiking or walking on trails.
+    title: Hiking
+  - type: number
+    const: 36
+    description: Activity type for playing hockey.
+    title: Hockey
+  - type: number
+    const: 37
+    description: Activity type for horseback riding.
+    title: Horseback Riding
+  - type: number
+    const: 38
+    description: Activity type for household chores and cleaning.
+    title: Housework
+  - type: number
+    const: 39
+    description: Activity type for skipping or jumping rope.
+    title: Jumping Rope
+  - type: number
+    const: 40
+    description: Activity type for kayaking on water.
+    title: Kayaking
+  - type: number
+    const: 41
+    description: Activity type for exercises using kettlebells.
+    title: Kettlebell Training
+  - type: number
+    const: 42
+    description: Activity type for kickboxing training or matches.
+    title: Kickboxing
+  - type: number
+    const: 43
+    description: Activity type for kitesurfing or kiteboarding.
+    title: Kitesurfing
+  - type: number
+    const: 44
+    description: Activity type for general martial arts training.
+    title: Martial Arts
+  - type: number
+    const: 45
+    description: Activity type for meditation practice.
+    title: Meditation
+  - type: number
+    const: 46
+    description: Activity type for MMA training or fighting.
+    title: Mixed Martial Arts
+  - type: number
+    const: 47
+    description: Activity type for P90X home fitness program.
+    title: P90X Exercises
+  - type: number
+    const: 48
+    description: Activity type for paragliding sport.
+    title: Paragliding
+  - type: number
+    const: 49
+    description: Activity type for pilates exercises.
+    title: Pilates
+  - type: number
+    const: 50
+    description: Activity type for playing polo.
+    title: Polo
+  - type: number
+    const: 51
+    description: Activity type for playing racquetball.
+    title: Racquetball
+  - type: number
+    const: 52
+    description: Activity type for rock climbing.
+    title: Rock Climbing
+  - type: number
+    const: 53
+    description: Activity type for rowing on water.
+    title: Rowing
+  - type: number
+    const: 54
+    description: Activity type for exercising on a rowing machine.
+    title: Rowing Machine
+  - type: number
+    const: 55
+    description: Activity type for playing rugby.
+    title: Rugby
+  - type: number
+    const: 56
+    description: Activity type for jogging at a leisurely pace.
+    title: Jogging
+  - type: number
+    const: 57
+    description: Activity type for running on beach or sandy surface.
+    title: Running on Sand
+  - type: number
+    const: 58
+    description: Activity type for running on a treadmill.
+    title: Treadmill Running
+  - type: number
+    const: 59
+    description: Activity type for sailing on water.
+    title: Sailing
+  - type: number
+    const: 60
+    description: Activity type for scuba diving underwater.
+    title: Scuba Diving
+  - type: number
+    const: 61
+    description: Activity type for skateboarding.
+    title: Skateboarding
+  - type: number
+    const: 62
+    description: Activity type for general skating.
+    title: Skating
+  - type: number
+    const: 63
+    description: Activity type for cross skating or nordic skating.
+    title: Cross Skating
+  - type: number
+    const: 64
+    description: Activity type for rollerblading indoors.
+    title: Indoor Rollerblading
+  - type: number
+    const: 65
+    description: Activity type for general skiing.
+    title: Skiing
+  - type: number
+    const: 66
+    description: Activity type for backcountry or off-piste skiing.
+    title: Back Country Skiing
+  - type: number
+    const: 67
+    description: Activity type for cross-country skiing.
+    title: Cross Country Skiing
+  - type: number
+    const: 68
+    description: Activity type for alpine or downhill skiing.
+    title: Downhill Skiing
+  - type: number
+    const: 69
+    description: Activity type for skiing with a kite for propulsion.
+    title: Kite Skiing
+  - type: number
+    const: 70
+    description: Activity type for roller skiing on wheels.
+    title: Roller Skiing
+  - type: number
+    const: 71
+    description: Activity type for sledding or tobogganing.
+    title: Sledding
+  - type: number
+    const: 73
+    description: Activity type for snowboarding.
+    title: Snowboarding
+  - type: number
+    const: 74
+    description: Activity type for riding a snowmobile.
+    title: Snowmobile
+  - type: number
+    const: 75
+    description: Activity type for walking with snowshoes.
+    title: Snowshoeing
+  - type: number
+    const: 76
+    description: Activity type for playing squash.
+    title: Squash
+  - type: number
+    const: 77
+    description: Activity type for climbing stairs.
+    title: Stair Climbing
+  - type: number
+    const: 78
+    description: Activity type for exercising on a stair climbing machine.
+    title: Stair Climbing Machine
+  - type: number
+    const: 79
+    description: Activity type for stand-up paddleboarding.
+    title: Stand Up Paddleboarding
+  - type: number
+    const: 80
+    description: Activity type for resistance training or weight lifting.
+    title: Strength Training
+  - type: number
+    const: 81
+    description: Activity type for surfing on waves.
+    title: Surfing
+  - type: number
+    const: 82
+    description: Activity type for general swimming.
+    title: Swimming
+  - type: number
+    const: 83
+    description: Activity type for swimming in a swimming pool.
+    title: Swimming in Pool
+  - type: number
+    const: 84
+    description: Activity type for swimming in open water like oceans, lakes or rivers.
+    title: Open Water Swimming
+  - type: number
+    const: 85
+    description: Activity type for playing table tennis or ping pong.
+    title: Table Tennis
+  - type: number
+    const: 86
+    description: Activity type for general team sports not otherwise classified.
+    title: Team Sports
+  - type: number
+    const: 87
+    description: Activity type for playing tennis.
+    title: Tennis
+  - type: number
+    const: 88
+    description: Activity type for exercising on a treadmill.
+    title: Treadmill
+  - type: number
+    const: 89
+    description: Activity type for general volleyball.
+    title: Volleyball
+  - type: number
+    const: 90
+    description: Activity type for playing volleyball on a beach.
+    title: Beach Volleyball
+  - type: number
+    const: 91
+    description: Activity type for playing volleyball indoors.
+    title: Indoor Volleyball
+  - type: number
+    const: 92
+    description: Activity type for wakeboarding on water.
+    title: Wakeboarding
+  - type: number
+    const: 93
+    description: Activity type for walking specifically for exercise.
+    title: Walking for Fitness
+  - type: number
+    const: 94
+    description: Activity type for walking with poles.
+    title: Nordic Walking
+  - type: number
+    const: 95
+    description: Activity type for walking on a treadmill.
+    title: Treadmill Walking
+  - type: number
+    const: 96
+    description: Activity type for playing water polo.
+    title: Water Polo
+  - type: number
+    const: 97
+    description: Activity type for weightlifting exercises.
+    title: Weightlifting
+  - type: number
+    const: 98
+    description: Activity type for wheelchair-based movement.
+    title: Wheelchair
+  - type: number
+    const: 99
+    description: Activity type for windsurfing on water.
+    title: Windsurfing
+  - type: number
+    const: 100
+    description: Activity type for practicing yoga.
+    title: Yoga
+  - type: number
+    const: 101
+    description: Activity type for Zumba dance fitness.
+    title: Zumba
+  - type: number
+    const: 102
+    description: Activity type for diving or jumping into water.
+    title: Diving
+  - type: number
+    const: 103
+    description: Activity type for exercising on an ergometer.
+    title: Ergometer
+  - type: number
+    const: 104
+    description: Activity type for skating on ice.
+    title: Ice Skating
+  - type: number
+    const: 105
+    description: Activity type for skating indoors.
+    title: Indoor Skating
+  - type: number
+    const: 106
+    description: Activity type for playing curling on ice.
+    title: Curling
+  - type: number
+    const: 108
+    description: Activity type for activities that don't fit into other categories.
+    title: Other
+  - type: number
+    const: 113
+    description: Activity type for CrossFit training.
+    title: CrossFit
+  - type: number
+    const: 114
+    description: Activity type for high-intensity interval training.
+    title: HIIT
+  - type: number
+    const: 115
+    description: Activity type for general interval training workouts.
+    title: Interval Training
+  - type: number
+    const: 116
+    description: Activity type for walking while pushing a stroller.
+    title: Walking with Stroller
+  - type: number
+    const: 117
+    description: Activity type for riding in an elevator.
+    title: Elevator
+  - type: number
+    const: 118
+    description: Activity type for riding on an escalator.
+    title: Escalator
+  - type: number
+    const: 119
+    description: Activity type for practicing archery.
+    title: Archery
+  - type: number
+    const: 120
+    description: Activity type for playing softball.
+    title: Softball
+  - type: number
+    const: 122
+    description: Activity type for practicing guided breathing exercises.
+    title: Guided Breathing
+  - type: number
+    const: 123
+    description: Activity type for general cardiovascular exercise.
+    title: Cardio Training
+  - type: number
+    const: 124
+    description: Activity type for playing lacrosse.
+    title: Lacrosse
+  - type: number
+    const: 125
+    description: Activity type for stretching exercises.
+    title: Stretching
+  - type: number
+    const: 126
+    description: Activity type for triathlon events combining swimming, cycling and running.
+    title: Triathlon
+  - type: number
+    const: 127
+    description: Activity type for inline skating or rollerblading.
+    title: Inline Skating
+  - type: number
+    const: 128
+    description: Activity type for sky diving or parachuting.
+    title: Sky Diving
+  - type: number
+    const: 129
+    description: Activity type for general paddling activities.
+    title: Paddling
+  - type: number
+    const: 130
+    description: Activity type for mountaineering or alpine climbing.
+    title: Mountaineering
+  - type: number
+    const: 131
+    description: Activity type for fishing activities.
+    title: Fishing
+  - type: number
+    const: 132
+    description: Activity type for water skiing.
+    title: Water Skiing
+  - type: number
+    const: 133
+    description: Activity type for running indoors.
+    title: Indoor Running
+  - type: number
+    const: 134
+    description: Activity type for playing padel tennis.
+    title: Padel Tennis
+  - type: number
+    const: 135
+    description: Activity type for driving a vehicle.
+    title: Driving
+  - type: number
+    const: 136
+    description: Activity type for driving off-road or on unpaved surfaces.
+    title: Off-Road Driving
+  - type: number
+    const: 137
+    description: Activity type for riding a motorcycle.
+    title: Motorbiking
+  - type: number
+    const: 138
+    description: Activity type for motorsport racing.
+    title: Motor Racing
+  - type: number
+    const: 139
+    description: Activity type for enduro motorcycle racing.
+    title: Enduro
+  - type: number
+    const: 140
+    description: Activity type for canoeing on water.
+    title: Canoeing
+  - type: number
+    const: 141
+    description: Activity type for orienteering navigation sport.
+    title: Orienteering
+  - type: number
+    const: 142
+    description: Activity type for hang gliding.
+    title: Hang Gliding
+  - type: number
+    const: 143
+    description: Activity type for piloting an aircraft.
+    title: Flying
+  - type: number
+    const: 144
+    description: Activity type for hot air balloon flying.
+    title: Hot Air Ballooning
+  - type: number
+    const: 145
+    description: Activity type for riding a jet ski on water.
+    title: Jet Skiing
+  - type: number
+    const: 146
+    description: Activity type for operating a motorized boat.
+    title: Power Boating
+  - type: number
+    const: 147
+    description: Activity type for playing Gaelic football.
+    title: Gaelic Football
+  - type: number
+    const: 148
+    description: Activity type for playing hurling.
+    title: Hurling
+examples:
+  - 8
+description: The type of activity performed for the associated workout.

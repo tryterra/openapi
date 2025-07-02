@@ -1,0 +1,4130 @@
+openapi: 3.1.0
+info:
+  description: The Terra API
+  title: TerraAPI
+  version: 2022.03.16
+  license:
+    name: "Apache-2.0"
+    url: https://github.com/tryterra/openapi/blob/master/LICENSE
+  termsOfService: https://tryterra.co/terms-of-service
+  contact:
+    name: Terra API
+    url: https://tryterra.co/
+    email: "dev@tryterra.co"
+
+servers:
+  - url: https://api.tryterra.co/v2
+security:
+  - ApiKeyAuth: []
+  - DevID: []
+paths:
+  /auth/authenticateUser:
+    post:
+      summary: Generate an authentication link
+      description: Creates a login link that allows end users to connect their fitness tracking account
+      tags:
+        - Authentication
+      operationId: Authentication_AuthenticateUser
+      parameters:
+        - name: resource
+          in: query
+          description: Provider resource identifier (e.g., 'FITBIT', 'GARMIN', 'OURA'). See "Get detailed list of integrations" for available providers
+          schema:
+            type: string
+          example: FITBIT
+          required: true
+        - name: dev-id
+          in: header
+          description: your developer ID
+          required: true
+          schema:
+            type: string
+          example: testingTerra
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                language:
+                  type: string
+                reference_id:
+                  type: string
+                auth_success_redirect_url:
+                  type: string
+                auth_failure_redirect_url:
+                  type: string
+        required: false
+      responses:
+        "200":
+          description: Returned when authentication link could be successfully generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [success, error]
+                    description: indicates that the request was successful
+                    example: success
+                  user_id:
+                    description: User ID for the user being created
+                    type: string
+                    example: 23dc2540-7139-44c6-8158-f81196e2cf2e
+                  auth_url:
+                    type: string
+                    description:
+                      authentication URL the user must be redirected to
+                      in order to link their account
+                    example: https://www.fitbit.com/oauth2/authorize?response_type=code&client_id=23BBG9&scope=settings+nutrition+sleep+heartrate+electrocardiogram+weight+respiratory_rate+oxygen_saturation+profile+temperature+cardio_fitness+activity+location&state=bLqqjPie9ptwoWm6VBxHCu6JkkoWJp
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            resource)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [success, error]
+                    description: indicates that an error happened (value is error)
+  /auth/generateWidgetSession:
+    post:
+      summary: Generate an authentication link, using the Terra Authentication Widget
+      description: Generates a link to redirect an end user to for them to select an integration and log in with their fitness data provider
+      tags:
+        - Authentication
+      operationId: Authentication_GenerateWidgetSession
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WidgetSessionParams"
+        required: true
+      responses:
+        "200":
+          description: Returned when authentication link could be successfully generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    description: Session ID for the widget authentication session
+                    type: string
+                    example: 23dc2540-7139-44c6-8158-f81196e2cf2e
+                  url:
+                    type: string
+                    description: the widget URL the user must be redirected to
+                      in order to link their account
+                    example: https://widget.tryterra.co/session/344d475f-296a-489a-a88c-54183671dafd
+                  status:
+                    type: string
+                    enum: [success, error]
+                    description: indicates that the request was successful (value is success)
+                    example: success
+                  expires_in:
+                    type: number
+                    description: a number in seconds depicting how long the url is valid for
+                    example: 900
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+
+  /users/{user_id}:
+    patch:
+      summary: Modify user
+      description: Update a Terra user's reference_id or active status
+      tags:
+        - User
+      operationId: User_ModifyUser
+      parameters:
+        - name: user_id
+          in: path
+          description: Terra user ID to update
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reference_id:
+                  type: string
+                  description: Identifier on your system to associate with this user
+                  example: "updatedUser123"
+                active:
+                  type: boolean
+                  description: Whether the user should remain active
+      responses:
+        "200":
+          description: Returned upon successful user modification
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  status:
+                    type: string
+                    enum: [success, error]
+                    description: Indicates that the request was successful
+                    example: success
+        "400":
+          description: Returned if the parameters are malformed or no user is found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: A detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [success, error]
+                    description: Indicates an error happened
+  /auth/deauthenticateUser:
+    delete:
+      summary: Deauthenticates a user and deletes any cached data for them
+      description: Deletes all records of the user on Terra's end, revoking Terra's access to their data
+      tags:
+        - Authentication
+      operationId: Authentication_DeauthenticateUser
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to deauthenticate and remove from Terra system
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Returned when user is successfully deauthenticated and data is deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    enum: [success, error]
+                    description: indicates that the deauthentication was successful (value is success)
+                    type: string
+
+        "404":
+          description: Returned when the user_id is not existent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [success, error]
+                    description: indicates that an error happened (value is error)
+  /auth/generateAuthToken:
+    post:
+      tags:
+        - Authentication
+      summary: Generates an authentication token for the Terra mobile SDKs
+      description: Creates a token to be used with initConnection() functions in the Terra mobile SDKs in order to create a user record for Apple Health or Samsung Health (or equivalent)
+      operationId: Authentication_GenerateAuthToken
+      responses:
+        "200":
+          description: "200"
+          content:
+            application/json:
+              examples:
+                Result:
+                  value:
+                    status: success
+                    token: 250c68b9c21b78e40e7a3285a2d538d3bc24aabd3b4c76a782fb0a571ca4501d
+                    expires_in: 180
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  token:
+                    type: string
+                    example: 250c68b9c21b78e40e7a3285a2d538d3bc24aabd3b4c76a782fb0a571ca4501d
+                  expires_in:
+                    type: integer
+                    example: 180
+                    default: 0
+        "404":
+          description: "404"
+          content:
+            application/json:
+              examples:
+                Result:
+                  value:
+                    status: "error"
+                    message: "Invalid dev-id was provided"
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Invalid dev-id was provided
+      deprecated: false
+  /activity:
+    get:
+      summary: Retrieve activity data for a given user ID
+      description: Fetches completed workout sessions, with a defined start and end time and activity type (e.g. running, cycling, etc.)
+      tags:
+        - Activity
+      operationId: Activity_Fetch
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to retrieve data for
+          schema:
+            type: string
+          required: true
+        - name: start_date
+          in: query
+          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: true
+        - name: end_date
+          in: query
+          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: false
+        - name: to_webhook
+          in: query
+          description: |
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+          schema:
+            type: boolean
+          required: false
+        - name: with_samples
+          in: query
+          description: |
+            Boolean flag specifying whether to include detailed samples in the returned payload (default: false)
+          schema:
+            type: boolean
+          required: false
+      responses:
+        "200":
+          description: Returned upon successful data request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Activity"
+                      type:
+                        type: [string, "null"]
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+                  - $ref: "#/components/schemas/RequestProcessing"
+                  - $ref: "#/components/schemas/RateLimitRequestProcessing"
+                  - $ref: "#/components/schemas/LargeRequestProcessingResponse"
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+        "401":
+          description: Returned when credentials (dev ID and API key) are invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: An error message
+                    type: string
+                    example: unauthorized
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+    post:
+      tags:
+        - Activity
+      operationId: Activity_Write
+      description: Used to post activity data to a provider. This endpoint only works for users connected via Wahoo. Returns error for other providers.
+      summary: Post activity data to a provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  description: List of user-tracked workouts to post to data provider
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Activity"
+              required:
+                - data
+        required: true
+      responses:
+        "201":
+          description: Returned when activity was successfully created on the provider
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  log_ids:
+                    description:
+                      List of identifiers for the objects created, returned
+                      in the same order they were posted. I.e. Posting [ObjectA, ObjectB]
+                      will return [IdentifierA, IdentifierB]
+                    type: array
+                    items:
+                      type: string
+                  message:
+                    type: string
+                    default: Activity successfully logged
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+  /athlete:
+    get:
+      summary: Retrieve user profile info for a given user ID
+      description: Fetches relevant profile info such as first & last name, birth date etc. for a given user ID
+      tags:
+        - Athlete
+      operationId: Athlete_Fetch
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to retrieve data for
+          schema:
+            type: string
+          required: true
+        - name: to_webhook
+          in: query
+          description: |
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+          schema:
+            type: boolean
+          required: false
+      responses:
+        "200":
+          description: Returned upon successful data request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/AthleteCollection"
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+        "401":
+          description: Returned when credentials (dev ID and API key) are invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: An error message
+                    type: string
+                    example: unauthorized
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+  /body:
+    get:
+      summary: Retrieve body metrics for a given user ID
+      description: Fetches body metrics such as weight, height, body fat percentage etc. for a given user ID
+      tags:
+        - Body
+      operationId: Body_Fetch
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to retrieve data for
+          schema:
+            type: string
+          required: true
+        - name: start_date
+          in: query
+          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: true
+        - name: end_date
+          in: query
+          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: false
+        - name: to_webhook
+          in: query
+          description: |
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+          schema:
+            type: boolean
+          required: false
+        - name: with_samples
+          in: query
+          description: |
+            Boolean flag specifying whether to include detailed samples in the returned payload (default: false)
+          schema:
+            type: boolean
+          required: false
+      responses:
+        "200":
+          description: Returned upon successful data request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Body"
+                      type:
+                        type: [string, "null"]
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+                  - $ref: "#/components/schemas/RequestProcessing"
+                  - $ref: "#/components/schemas/RateLimitRequestProcessing"
+                  - $ref: "#/components/schemas/LargeRequestProcessingResponse"
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+        "401":
+          description: Returned when credentials (dev ID and API key) are invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: An error message
+                    type: string
+                    example: unauthorized
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+    post:
+      tags:
+        - Body
+      operationId: Body_Write
+      description: Used to post body data to a provider. This endpoint only works for users connected via Google Fit. Returns error for other providers.
+      summary: Post body data to a provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  description: Body measurement metrics to post to data provider
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Body"
+              required:
+                - data
+        required: true
+      responses:
+        "201":
+          description: Returned when activity was successfully created on the provider
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  log_ids:
+                    description:
+                      List of identifiers for the objects created, returned
+                      in the same order they were posted. I.e. Posting [ObjectA, ObjectB]
+                      will return [IdentifierA, IdentifierB]
+                    type: array
+                    items:
+                      type: string
+                  message:
+                    type: string
+                    default: Body data successfully logged
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+    delete:
+      tags:
+        - Body
+      operationId: Body_Delete
+      description: Used to delete Body metrics the user has registered on their account
+      summary: Delete body metrics for a given user ID
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to retrieve data for
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                log_ids:
+                  type: array
+                  description:
+                    List of identifiers for body metrics entries to be
+                    deleted
+                  items:
+                    type: string
+                  required:
+                    - data
+        required: true
+      responses:
+        "200":
+          description: Returned when all records were deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  processed_data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description:
+                            Identifier of the body metric entries whose
+                            deletion was attempted
+                        response_code:
+                          type: integer
+                          description:
+                            Response code from the provider when attempting
+                            to delete the body metric entries
+        "207":
+          description:
+            Returned when multiple status codes were obtained from attempting
+            to delete the requested records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  processed_data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description:
+                            Identifier of the body metric entry whose deletion
+                            was attempted
+                        response_code:
+                          type: integer
+                          description:
+                            Response code from the provider when attempting
+                            to delete the body metric entry
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+        "401":
+          description: Returned when credentials (dev ID and API key) are invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: An error message
+                    type: string
+                    example: unauthorized
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+  /daily:
+    get:
+      summary: Retrieve daily activity summaries for a given user ID
+      description: Fetches daily summaries of activity metrics such as steps, distance, calories burned etc. for a given user ID
+      tags:
+        - Daily
+      operationId: Daily_Fetch
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to retrieve data for
+          schema:
+            type: string
+          required: true
+        - name: start_date
+          in: query
+          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: true
+        - name: end_date
+          in: query
+          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: false
+        - name: to_webhook
+          in: query
+          description: |
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+          schema:
+            type: boolean
+          required: false
+        - name: with_samples
+          in: query
+          description: |
+            Boolean flag specifying whether to include detailed samples in the returned payload (default: false)
+          schema:
+            type: boolean
+          required: false
+      responses:
+        "200":
+          description: Returned upon successful data request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Daily"
+                      type:
+                        type: [string, "null"]
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+                  - $ref: "#/components/schemas/RequestProcessing"
+                  - $ref: "#/components/schemas/RateLimitRequestProcessing"
+                  - $ref: "#/components/schemas/LargeRequestProcessingResponse"
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+        "401":
+          description: Returned when credentials (dev ID and API key) are invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: An error message
+                    type: string
+                    example: unauthorized
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+  /menstruation:
+    get:
+      summary: Retrieve menstruation data for a given user ID
+      description:
+        Fetches menstruation data such as cycle length, period length, ovulation
+        date etc. for a given user ID
+      tags:
+        - Menstruation
+      operationId: Menstruation_Fetch
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to retrieve data for
+          schema:
+            type: string
+          required: true
+        - name: start_date
+          in: query
+          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: true
+        - name: end_date
+          in: query
+          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: false
+        - name: to_webhook
+          in: query
+          description: |
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+          schema:
+            type: boolean
+          required: false
+        - name: with_samples
+          in: query
+          description: |
+            Boolean flag specifying whether to include detailed samples in the returned payload (default: false)
+          schema:
+            type: boolean
+          required: false
+      responses:
+        "200":
+          description: Returned upon successful data request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Menstruation"
+                      type:
+                        type: [string, "null"]
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+                  - $ref: "#/components/schemas/RequestProcessing"
+                  - $ref: "#/components/schemas/RateLimitRequestProcessing"
+                  - $ref: "#/components/schemas/LargeRequestProcessingResponse"
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+        "401":
+          description: Returned when credentials (dev ID and API key) are invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: An error message
+                    type: string
+                    example: unauthorized
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+  /nutrition:
+    get:
+      summary: Retrieve nutrition log data for a given user ID
+      description:
+        Fetches nutrition log data such as meal type, calories, macronutrients
+        etc. for a given user ID
+      tags:
+        - Nutrition
+      operationId: Nutrition_Fetch
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to retrieve data for
+          schema:
+            type: string
+          required: true
+        - name: start_date
+          in: query
+          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: true
+        - name: end_date
+          in: query
+          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: false
+        - name: to_webhook
+          in: query
+          description: |
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+          schema:
+            type: boolean
+          required: false
+        - name: with_samples
+          in: query
+          description: |
+            Boolean flag specifying whether to include detailed samples in the returned payload (default: false)
+          schema:
+            type: boolean
+          required: false
+      responses:
+        "200":
+          description: Returned upon successful data request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Nutrition"
+                      type:
+                        type: [string, "null"]
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+                  - $ref: "#/components/schemas/RequestProcessing"
+                  - $ref: "#/components/schemas/RateLimitRequestProcessing"
+                  - $ref: "#/components/schemas/LargeRequestProcessingResponse"
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+        "401":
+          description: Returned when credentials (dev ID and API key) are invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: An error message
+                    type: string
+                    example: unauthorized
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+    post:
+      tags:
+        - Nutrition
+      operationId: Nutrition_Write
+      description: Used to post nutrition logs to a provider. This endpoint only works for users connected via Fitbit. Returns error for other providers.
+      summary: Post nutrition logs to a provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  description: Nutrition entry to post to data provider
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Nutrition"
+              required:
+                - data
+        required: true
+      responses:
+        "201":
+          description: Returned when activity was successfully created on the provider
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  log_ids:
+                    description:
+                      List of identifiers for the objects created, returned
+                      in the same order they were posted. I.e. Posting [ObjectA, ObjectB]
+                      will return [IdentifierA, IdentifierB]
+                    type: array
+                    items:
+                      type: string
+                  message:
+                    type: string
+                    default: Nutrition successfully logged
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+    delete:
+      tags:
+        - Nutrition
+      operationId: Nutrition_Delete
+      description:
+        Used to delete nutrition logs the user has registered on their
+        account
+      summary: Delete nutrition logs for a given user ID
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to retrieve data for
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  description: List of identifiers for nutrition entries to be deleted
+                  items:
+                    type: string
+                  required:
+                    - data
+        required: true
+      responses:
+        "200":
+          description: Returned when all records were deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  processed_data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description:
+                            Identifier of the nutrition log whose deletion
+                            was attempted
+                        response_code:
+                          type: integer
+                          description:
+                            Response code from the provider when attempting
+                            to delete the nutrition log
+        "207":
+          description:
+            Returned when multiple status codes were obtained from attempting
+            to delete the requested records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  processed_data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description:
+                            Identifier of the nutrition log whose deletion
+                            was attempted
+                        response_code:
+                          type: integer
+                          description:
+                            Response code from the provider when attempting
+                            to delete the nutrition log
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+        "401":
+          description: Returned when credentials (dev ID and API key) are invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: An error message
+                    type: string
+                    example: unauthorized
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    enum: [success, error]
+                    type: string
+                    description: indicates that an error happened (value is error)
+  /sleep:
+    get:
+      summary: Retrieve sleep sessions for a given user ID
+      description:
+        Fetches sleep data such as sleep duration, sleep stages, sleep
+        quality etc. for a given user ID, for sleep sessions with a defined start and end time
+      tags:
+        - Sleep
+      operationId: Sleep_Fetch
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to retrieve data for
+          schema:
+            type: string
+          required: true
+        - name: start_date
+          in: query
+          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: true
+        - name: end_date
+          in: query
+          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: false
+        - name: to_webhook
+          in: query
+          description: |
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+          schema:
+            type: boolean
+          required: false
+        - name: with_samples
+          in: query
+          description: |
+            Boolean flag specifying whether to include detailed samples in the returned payload (default: false)
+          schema:
+            type: boolean
+          required: false
+      responses:
+        "200":
+          description: Returned upon successful data request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Sleep"
+                      type:
+                        type: [string, "null"]
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+                  - $ref: "#/components/schemas/RequestProcessing"
+                  - $ref: "#/components/schemas/RateLimitRequestProcessing"
+                  - $ref: "#/components/schemas/LargeRequestProcessingResponse"
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+        "401":
+          description: Returned when credentials (dev ID and API key) are invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: An error message
+                    type: string
+                    example: unauthorized
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+  /plannedWorkout:
+    post:
+      tags:
+        - PlannedWorkout
+      operationId: PlannedWorkout_Write
+      description:
+        Used to post workout plans users can follow on their wearable. This can be strength workouts (sets, reps, weight lifted)
+        or cardio workouts (warmup, intervals of different intensities, cooldown etc)
+      summary: Post workout plans to a provider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  description: PlannedWorkout entry to post to data provider
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/PlannedWorkout"
+              required:
+                - data
+        required: true
+      responses:
+        "201":
+          description: Returned when activity was successfully created on the provider
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  log_ids:
+                    description:
+                      List of identifiers for the objects created, returned
+                      in the same order they were posted. I.e. Posting [ObjectA, ObjectB]
+                      will return [IdentifierA, IdentifierB]
+                    type: array
+                    items:
+                      type: string
+                  message:
+                    type: string
+                    default: Planned workout successfully created
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+    get:
+      summary: Retrieve workout plans for a given user ID
+      description:
+        Used to get workout plans the user has registered on their account.
+        This can be strength workouts (sets, reps, weight lifted) or cardio workouts
+        (warmup, intervals of different intensities, cooldown etc)
+      tags:
+        - PlannedWorkout
+      operationId: PlannedWorkout_Fetch
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to retrieve data for
+          schema:
+            type: string
+          required: true
+        - name: start_date
+          in: query
+          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: true
+        - name: end_date
+          in: query
+          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date
+          required: false
+        - name: to_webhook
+          in: query
+          description: |
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+          schema:
+            type: boolean
+          required: false
+      responses:
+        "200":
+          description: Returned upon successful data request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/PlannedWorkout"
+                      type:
+                        type: [string, "null"]
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+        "401":
+          description: Returned when credentials (dev ID and API key) are invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: An error message
+                    type: string
+                    example: unauthorized
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+    delete:
+      tags:
+        - PlannedWorkout
+      operationId: PlannedWorkout_Delete
+      description:
+        Used to delete workout plans the user has registered on their account.
+        This can be strength workouts (sets, reps, weight lifted) or cardio workouts
+        (warmup, intervals of different intensities, cooldown etc)
+      summary: Delete workout plans for a given user ID
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to retrieve data for
+          schema:
+            type: string
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  description:
+                    List of identifiers for planned workout entries to
+                    be deleted
+                  items:
+                    type: string
+                  required:
+                    - data
+        required: true
+      responses:
+        "200":
+          description: Returned when all records were deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  processed_data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description:
+                            Identifier of the planned workout whose deletion
+                            was attempted
+                        response_code:
+                          type: integer
+                          description:
+                            Response code from the provider when attempting
+                            to delete the planned workout
+        "207":
+          description:
+            Returned when multiple status codes were obtained from attempting
+            to delete the requested records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  processed_data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description:
+                          Identifier of the planned workout whose deletion
+                          was attempted
+                      response_code:
+                        type: integer
+                        description:
+                          Response code from the provider when attempting
+                          to delete the planned workout
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+        "401":
+          description: Returned when authorization with a data provider has failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    enum: [success, error]
+                    type: string
+                    description: indicates that an error happened (value is error)
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+  /userInfo:
+    get:
+      tags:
+        - User
+      operationId: User_GetInfoForUserID
+      description:
+        Used to query for information on one Terra user ID, or to query
+        for all registered Terra User objects under one reference ID
+      summary: Get information for a single user ID or multiple users by reference ID
+      parameters:
+        - name: user_id
+          in: query
+          description: user ID to query for
+          schema:
+            type: string
+          required: false
+        - name: reference_id
+          in: query
+          description: reference ID to query for
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: Returned when the provided resources are found
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: User information for one connection (single User object)
+                    type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+                      status:
+                        type: string
+                        enum: [success, error]
+                        default: success
+                      is_authenticated:
+                        type: boolean
+                  - description:
+                      List of multiple User objects the reference_id is associated
+                      to
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+  /subscriptions:
+    get:
+      tags:
+        - User
+      operationId: User_GetAllUserIDs
+      description:
+        Used to query for information for all Terra User IDs. Supports optional
+        pagination via `page` and `per_page`. If `page` is not provided, it returns all users
+        in one go (backwards compatibility).
+      summary: Get all Terra User IDs
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Zero-based page number. If omitted, results are not paginated.
+          example: 0
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Number of results per page (default is 500).
+          example: 500
+      responses:
+        "200":
+          description: Returned upon a successful request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      users:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/User"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          next:
+                            type: [integer, "null"]
+                            description: The next page number, or null if there is no next page
+                          max_page:
+                            type: integer
+                            description: The maximum page index
+                          results:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/User"
+        "400":
+          description: Returned when one or more parameters are malformed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: A detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: Indicates that an error occurred (value is `error`)
+  /bulkUserInfo:
+    post:
+      tags:
+        - User
+      operationId: User_GetInfoForMultipleUserIDs
+      description: Used to query for information for multiple Terra User IDs
+      summary: Get information for multiple user IDs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              description: List of user IDs to get information for
+              items:
+                type: string
+        required: true
+      responses:
+        "200":
+          description: Returned upon successful request
+          content:
+            application/json:
+              schema:
+                description: List of User objects
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "400":
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+
+        "404":
+          description:
+            Returned when a parameter does not exist on Terra's end (e.g.
+            user_id)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+                    description: indicates that an error happened (value is error)
+  /integrations:
+    get:
+      summary: Get list of available integrations
+      tags:
+        - Integrations
+      operationId: Integrations_Fetch
+      description: Retrieve a list of all available provider integrations on the API.
+      security: [] # No authentication required
+      responses:
+        "200":
+          description: Returns list of all available integrations on the API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      type: string
+                      example: FITBIT
+                  sdk_resource:
+                    type: array
+                    items:
+                      type: string
+                      example: APPLE
+                  status:
+                    enum: [success, error]
+                    type: string
+                    default: success
+  /integrations/detailed:
+    get:
+      tags:
+        - Integrations
+      operationId: Integrations_DetailedFetch
+      summary: Get detailed list of integrations
+      description: Retrieve a detailed list of supported integrations, optionally filtered by the developer's enabled integrations and the requirement for SDK usage.
+      parameters:
+        - in: query
+          name: sdk
+          required: false
+          schema:
+            type: boolean
+          description: If `true`, allows SDK integrations to be included in the response.
+      responses:
+        "200":
+          description: Successful response containing a list of integrations.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationsResponse"
+      security: []
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Your API key for authentication
+    DevID:
+      type: apiKey
+      in: header
+      name: dev-id
+      description: Your developer ID for authentication and tracking
+  schemas:
+    WidgetSessionParams:
+      type: object
+      properties:
+        providers:
+          type: string
+          description: "Comma separated list of providers to display on the device selection page. This overrides your selected sources on your dashboard"
+          example: "GARMIN,FITBIT,OURA,WITHINGS,SUUNTO"
+        language:
+          type: string
+          description: "Display language of the widget"
+          example: "en"
+        reference_id:
+          type: string
+          description: "Identifier of the end user on your system, such as a user ID or email associated with them"
+          example: "user123@email.com"
+        auth_success_redirect_url:
+          type: string
+          description: "URL the user is redirected to upon successful authentication"
+          example: "https://myapp.com/success"
+        auth_failure_redirect_url:
+          type: string
+          description: "URL the user is redirected to upon unsuccessful authentication"
+          example: "https://myapp.com/failure"
+    User:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml"
+    NoDataReturned:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success, error]
+          example: "error"
+        message:
+          type: string
+          example: "No data available for specified time range"
+        type:
+          type: [string, "null"]
+          example: "no_data"
+        user:
+          description: Terra User object
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/User"
+    RequestProcessing:
+      type: object
+      properties:
+        retry_after_seconds:
+          type: number
+          description: Recommended time after which the request may be retried
+          nullable: true
+          example: 30
+        message:
+          type: string
+          nullable: false
+          example: "Request is being processed"
+        type:
+          type: string
+          nullable: false
+          example: "processing"
+        user:
+          description: Terra User object
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/User"
+    RateLimitRequestProcessing:
+      type: object
+      properties:
+        message:
+          type: string
+          nullable: false
+          example: "Rate limit exceeded"
+        type:
+          type: string
+          nullable: false
+          example: "rate_limit"
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - user
+    DataSentToWebhook:
+      type: object
+      properties:
+        reference:
+          type: string
+          description:
+            Payload reference, tying the request to the webhook payload
+            which will be received
+          nullable: true
+          example: "webhook_ref_123"
+        message:
+          type: string
+          nullable: false
+          example: "Data will be sent to webhook"
+        type:
+          type: string
+          nullable: false
+          example: "webhook"
+        user:
+          description: Terra User object
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/User"
+    Activity:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Activity.yaml"
+    Athlete:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Athlete.yaml"
+    AthleteCollection:
+      type: object
+      properties:
+        athlete:
+          description: Object containing the user's information
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/Athlete"
+        type:
+          type: string
+          nullable: true
+          example: "athlete"
+        user:
+          description: Terra User object
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/User"
+    Body:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Body.yaml"
+    Daily:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Daily.yaml"
+    Menstruation:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Menstruation.yaml"
+    Nutrition:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Nutrition.yaml"
+    Sleep:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Sleep.yaml"
+    PlannedWorkoutStepTarget:
+      type: object
+      properties:
+        target_type:
+          description:
+            Type of target for the workout - i.e. metric type for which
+            a criterion must be met for the workout to be completed
+          nullable: false
+          type: string
+          enum:
+            - SPEED
+            - HEART_RATE
+            - OPEN
+            - CADENCE
+            - POWER
+            - GRADE
+            - RESISTANCE
+            - POWER_LAP
+            - SWIM_STROKE
+            - SPEED_LAP
+            - HEART_RATE_LAP
+            - PACE
+            - HEART_RATE_THRESHOLD_PERCENTAGE
+            - HEART_RATE_MAX_PERCENTAGE
+            - SPEED_PERCENTAGE
+            - POWER_PERCENTAGE
+            - REPETITION
+            - TSS
+            - IF
+          example: "HEART_RATE"
+    CadencePlannedWorkoutStepTarget:
+      type: object
+      properties:
+        cadence:
+          type: integer
+          description: Ideal cadence value to be maintained for the workout step
+          nullable: true
+          example: 90
+        target_type:
+          description:
+            Type of target for the workout - i.e. metric type for which
+            a criterion must be met for the workout to be completed
+          nullable: false
+          type: string
+          enum:
+            - SPEED
+            - HEART_RATE
+            - OPEN
+            - CADENCE
+            - POWER
+            - GRADE
+            - RESISTANCE
+            - POWER_LAP
+            - SWIM_STROKE
+            - SPEED_LAP
+            - HEART_RATE_LAP
+            - PACE
+            - HEART_RATE_THRESHOLD_PERCENTAGE
+            - HEART_RATE_MAX_PERCENTAGE
+            - SPEED_PERCENTAGE
+            - POWER_PERCENTAGE
+            - REPETITION
+            - TSS
+            - IF
+          example: "CADENCE"
+        cadence_low:
+          type: integer
+          description:
+            Minimum cadence threshold for the workout step - i.e. the user
+            is to stay above this value during the workout
+          nullable: true
+          example: 85
+        cadence_high:
+          type: integer
+          description:
+            Maximum cadence threshold for the workout step - i.e. the user
+            is to stay under this value during the workout step
+          nullable: true
+          example: 95
+    HRPlannedWorkoutStepTarget:
+      type: object
+      properties:
+        hr_percentage_low:
+          type: number
+          description:
+            Maximum max heart rate percentage threshold for the workout
+            step - i.e. the user is to stay under this value during the workout step
+          nullable: true
+          example: 65.5
+        target_type:
+          description:
+            Type of target for the workout - i.e. metric type for which
+            a criterion must be met for the workout to be completed
+          nullable: false
+          type: string
+          enum:
+            - SPEED
+            - HEART_RATE
+            - OPEN
+            - CADENCE
+            - POWER
+            - GRADE
+            - RESISTANCE
+            - POWER_LAP
+            - SWIM_STROKE
+            - SPEED_LAP
+            - HEART_RATE_LAP
+            - PACE
+            - HEART_RATE_THRESHOLD_PERCENTAGE
+            - HEART_RATE_MAX_PERCENTAGE
+            - SPEED_PERCENTAGE
+            - POWER_PERCENTAGE
+            - REPETITION
+            - TSS
+            - IF
+          example: "HEART_RATE"
+        hr_percentage_high:
+          type: number
+          description:
+            Minimum heart rate percentage threshold for the workout step
+            - i.e. the user is to stay above this value during the workout
+          nullable: true
+          example: 85.5
+        hr_percentage:
+          type: number
+          description:
+            Ideal percentage of user's maximum HR to be maintained workout
+            step
+          nullable: true
+          example: 75.5
+        hr_bpm_high:
+          type: integer
+          description:
+            Maximum heart rate threshold for the workout step - i.e. the
+            user is to stay under this value during the workout step
+          nullable: true
+          example: 175
+        hr_bpm_low:
+          type: integer
+          description:
+            Minimum heart rate threshold for the workout step - i.e. the
+            user is to stay above this value during the workout
+          nullable: true
+          example: 130
+    PowerPlannedWorkoutStepTarget:
+      type: object
+      properties:
+        target_type:
+          description:
+            Type of target for the workout - i.e. metric type for which
+            a criterion must be met for the workout to be completed
+          nullable: false
+          type: string
+          enum:
+            - SPEED
+            - HEART_RATE
+            - OPEN
+            - CADENCE
+            - POWER
+            - GRADE
+            - RESISTANCE
+            - POWER_LAP
+            - SWIM_STROKE
+            - SPEED_LAP
+            - HEART_RATE_LAP
+            - PACE
+            - HEART_RATE_THRESHOLD_PERCENTAGE
+            - HEART_RATE_MAX_PERCENTAGE
+            - SPEED_PERCENTAGE
+            - POWER_PERCENTAGE
+            - REPETITION
+            - TSS
+            - IF
+          example: "POWER"
+        power_percentage_low:
+          type: number
+          description:
+            Maximum percentage of Functional Threshold Power for the workout
+            step - i.e. the user is to stay under this value during the workout step
+          nullable: true
+          example: 65.5
+        power_percentage_high:
+          type: number
+          description:
+            Minimum percentage of Functional Threshold Power for the workout
+            step - i.e. the user is to stay above this value during the workout
+          nullable: true
+          example: 85.5
+        power_watt_high:
+          type: integer
+          description:
+            Maximum power threshold for the workout step - i.e. the user
+            is to stay under this value during the workout step
+          nullable: true
+          example: 300
+        power_watt_low:
+          type: integer
+          description:
+            Minimum power threshold for the workout step - i.e. the user
+            is to stay above this value during the workout
+          nullable: true
+          example: 200
+        power_watt:
+          type: integer
+          default: null
+          nullable: true
+          example: 250
+        power_percentage:
+          type: number
+          description:
+            Ideal percentage of user's Functional Threshold Power to be
+            maintained workout step
+          nullable: true
+          example: 75.5
+    SpeedPlannedWorkoutStepTarget:
+      type: object
+      properties:
+        target_type:
+          description:
+            Type of target for the workout - i.e. metric type for which
+            a criterion must be met for the workout to be completed
+          nullable: false
+          type: string
+          enum:
+            - SPEED
+            - HEART_RATE
+            - OPEN
+            - CADENCE
+            - POWER
+            - GRADE
+            - RESISTANCE
+            - POWER_LAP
+            - SWIM_STROKE
+            - SPEED_LAP
+            - HEART_RATE_LAP
+            - PACE
+            - HEART_RATE_THRESHOLD_PERCENTAGE
+            - HEART_RATE_MAX_PERCENTAGE
+            - SPEED_PERCENTAGE
+            - POWER_PERCENTAGE
+            - REPETITION
+            - TSS
+            - IF
+          example: "SPEED"
+        speed_percentage_high:
+          type: number
+          description:
+            Maximum speed threshold for the workout step - i.e. the user
+            is to stay under this value during the workout step
+          nullable: true
+          example: 85.5
+        speed_percentage_low:
+          type: number
+          description:
+            Minimum speed threshold for the workout step - i.e. the user
+            is to stay above this value during the workout step
+          nullable: true
+          example: 65.5
+        speed_percentage:
+          type: number
+          description:
+            Ideal percentage of user's Threshold Speed, based off their
+            Threshold Pace, to be maintained workout step. Usually, the Threshold
+            Pace is defined as the pace one could race at for 50 to 60 minutes
+          nullable: true
+          example: 75.5
+        speed_meters_per_second:
+          type: number
+          description: Ideal speed value to be maintained for the workout step
+          nullable: true
+          example: 4.2
+    PacePlannedWorkoutStepTarget:
+      type: object
+      properties:
+        target_type:
+          description:
+            Type of target for the workout - i.e. metric type for which
+            a criterion must be met for the workout to be completed
+          nullable: false
+          type: string
+          enum:
+            - SPEED
+            - HEART_RATE
+            - OPEN
+            - CADENCE
+            - POWER
+            - GRADE
+            - RESISTANCE
+            - POWER_LAP
+            - SWIM_STROKE
+            - SPEED_LAP
+            - HEART_RATE_LAP
+            - PACE
+            - HEART_RATE_THRESHOLD_PERCENTAGE
+            - HEART_RATE_MAX_PERCENTAGE
+            - SPEED_PERCENTAGE
+            - POWER_PERCENTAGE
+            - REPETITION
+            - TSS
+            - IF
+          example: "PACE"
+        pace_minutes_per_kilometer:
+          type: number
+          description: Ideal pace value to be maintained for the workout step
+          nullable: true
+          example: 5.5
+    TSSPlannedWorkoutStepTarget:
+      type: object
+      properties:
+        target_type:
+          description:
+            Type of target for the workout - i.e. metric type for which
+            a criterion must be met for the workout to be completed
+          nullable: false
+          type: string
+          enum:
+            - SPEED
+            - HEART_RATE
+            - OPEN
+            - CADENCE
+            - POWER
+            - GRADE
+            - RESISTANCE
+            - POWER_LAP
+            - SWIM_STROKE
+            - SPEED_LAP
+            - HEART_RATE_LAP
+            - PACE
+            - HEART_RATE_THRESHOLD_PERCENTAGE
+            - HEART_RATE_MAX_PERCENTAGE
+            - SPEED_PERCENTAGE
+            - POWER_PERCENTAGE
+            - REPETITION
+            - TSS
+            - IF
+          example: "TSS"
+        tss:
+          type: number
+          description:
+            Planned Training Stress Score to be achieved for the workout
+            step
+          nullable: true
+          example: 100.5
+    IFPlannedWorkoutStepTarget:
+      type: object
+      properties:
+        if_high:
+          type: number
+          description: Maximum Intensity Factor to be achieved for the workout step
+          nullable: true
+          example: 1.2
+        target_type:
+          description:
+            Type of target for the workout - i.e. metric type for which
+            a criterion must be met for the workout to be completed
+          nullable: false
+          type: string
+          enum:
+            - SPEED
+            - HEART_RATE
+            - OPEN
+            - CADENCE
+            - POWER
+            - GRADE
+            - RESISTANCE
+            - POWER_LAP
+            - SWIM_STROKE
+            - SPEED_LAP
+            - HEART_RATE_LAP
+            - PACE
+            - HEART_RATE_THRESHOLD_PERCENTAGE
+            - HEART_RATE_MAX_PERCENTAGE
+            - SPEED_PERCENTAGE
+            - POWER_PERCENTAGE
+            - REPETITION
+            - TSS
+            - IF
+          example: "IF"
+        if_low:
+          type: number
+          description: Minimum Intensity Factor to be achieved for the workout step
+          nullable: true
+          example: 0.8
+    RepetitionPlannedWorkoutStepTarget:
+      type: object
+      properties:
+        target_type:
+          description:
+            Type of target for the workout - i.e. metric type for which
+            a criterion must be met for the workout to be completed
+          nullable: false
+          type: string
+          enum:
+            - SPEED
+            - HEART_RATE
+            - OPEN
+            - CADENCE
+            - POWER
+            - GRADE
+            - RESISTANCE
+            - POWER_LAP
+            - SWIM_STROKE
+            - SPEED_LAP
+            - HEART_RATE_LAP
+            - PACE
+            - HEART_RATE_THRESHOLD_PERCENTAGE
+            - HEART_RATE_MAX_PERCENTAGE
+            - SPEED_PERCENTAGE
+            - POWER_PERCENTAGE
+            - REPETITION
+            - TSS
+            - IF
+          example: "REPETITION"
+        repetitions:
+          type: number
+          description: Number of repetitions of the workout step to be performed
+          nullable: true
+          example: 10
+    SwimStrokePlannedWorkoutStepTarget:
+      type: object
+      properties:
+        target_type:
+          description:
+            Type of target for the workout - i.e. metric type for which
+            a criterion must be met for the workout to be completed
+          nullable: false
+          type: string
+          enum:
+            - SPEED
+            - HEART_RATE
+            - OPEN
+            - CADENCE
+            - POWER
+            - GRADE
+            - RESISTANCE
+            - POWER_LAP
+            - SWIM_STROKE
+            - SPEED_LAP
+            - HEART_RATE_LAP
+            - PACE
+            - HEART_RATE_THRESHOLD_PERCENTAGE
+            - HEART_RATE_MAX_PERCENTAGE
+            - SPEED_PERCENTAGE
+            - POWER_PERCENTAGE
+            - REPETITION
+            - TSS
+            - IF
+          example: "SWIM_STROKE"
+        swim_strokes:
+          type: integer
+          description: Number of swim strokes to be performed during the workout step
+          nullable: true
+          example: 50
+    PlannedWorkoutStepTargets:
+      type: object
+      properties: {}
+      oneOf:
+        - $ref: "#/components/schemas/PlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/CadencePlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/HRPlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/PowerPlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/SpeedPlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/PacePlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/TSSPlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/IFPlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/RepetitionPlannedWorkoutStepTarget"
+        - $ref: "#/components/schemas/SwimStrokePlannedWorkoutStepTarget"
+      discriminator:
+        propertyName: type
+        mapping:
+          PlannedWorkoutStepTarget: "#/components/schemas/PlannedWorkoutStepTarget"
+          CadencePlannedWorkoutStepTarget: "#/components/schemas/CadencePlannedWorkoutStepTarget"
+          HRPlannedWorkoutStepTarget: "#/components/schemas/HRPlannedWorkoutStepTarget"
+          PowerPlannedWorkoutStepTarget: "#/components/schemas/PowerPlannedWorkoutStepTarget"
+          SpeedPlannedWorkoutStepTarget: "#/components/schemas/SpeedPlannedWorkoutStepTarget"
+          PacePlannedWorkoutStepTarget: "#/components/schemas/PacePlannedWorkoutStepTarget"
+          TSSPlannedWorkoutStepTarget: "#/components/schemas/TSSPlannedWorkoutStepTarget"
+          IFPlannedWorkoutStepTarget: "#/components/schemas/IFPlannedWorkoutStepTarget"
+          RepetitionPlannedWorkoutStepTarget: "#/components/schemas/RepetitionPlannedWorkoutStepTarget"
+          SwimStrokePlannedWorkoutStepTarget: "#/components/schemas/SwimStrokePlannedWorkoutStepTarget"
+    PlannedWorkoutStepDuration:
+      type: object
+      properties:
+        duration_type:
+          description:
+            Type of condition that must be fulfilled to consider the workout
+            step complete
+          nullable: false
+          type: string
+          enum:
+            - TIME
+            - DISTANCE_METERS
+            - HR_LESS_THAN
+            - HR_GREATER_THAN
+            - CALORIES
+            - OPEN
+            - POWER_LESS_THAN
+            - POWER_GREATER_THAN
+            - REPETITION_TIME
+            - REPS
+            - FIXED_REST
+            - TIME_AT_VALID_CDA
+            - STEPS
+    TimePlannedWorkoutStepDuration:
+      type: object
+      properties:
+        seconds:
+          type: integer
+          description: Time duration to be elapsed for the workout step
+          nullable: true
+        duration_type:
+          description:
+            Type of condition that must be fulfilled to consider the workout
+            step complete
+          nullable: false
+          type: string
+          enum:
+            - TIME
+            - DISTANCE_METERS
+            - HR_LESS_THAN
+            - HR_GREATER_THAN
+            - CALORIES
+            - OPEN
+            - POWER_LESS_THAN
+            - POWER_GREATER_THAN
+            - REPETITION_TIME
+            - REPS
+            - FIXED_REST
+            - TIME_AT_VALID_CDA
+            - STEPS
+    PowerAbovePlannedWorkoutStepDuration:
+      type: object
+      properties:
+        power_above_watts:
+          type: integer
+          description:
+            Threshold power goal to complete the workout step - once the
+            user reaches above this power level, the step will be completed
+          nullable: true
+        duration_type:
+          description:
+            Type of condition that must be fulfilled to consider the workout
+            step complete
+          nullable: false
+          type: string
+          enum:
+            - TIME
+            - DISTANCE_METERS
+            - HR_LESS_THAN
+            - HR_GREATER_THAN
+            - CALORIES
+            - OPEN
+            - POWER_LESS_THAN
+            - POWER_GREATER_THAN
+            - REPETITION_TIME
+            - REPS
+            - FIXED_REST
+            - TIME_AT_VALID_CDA
+            - STEPS
+    PowerBelowPlannedWorkoutStepDuration:
+      type: object
+      properties:
+        power_below_watts:
+          type: integer
+          description:
+            Threshold power goal to complete the workout step - once the
+            user reaches below this power level, the step will be completed
+          nullable: true
+        duration_type:
+          description:
+            Type of condition that must be fulfilled to consider the workout
+            step complete
+          nullable: false
+          type: string
+          enum:
+            - TIME
+            - DISTANCE_METERS
+            - HR_LESS_THAN
+            - HR_GREATER_THAN
+            - CALORIES
+            - OPEN
+            - POWER_LESS_THAN
+            - POWER_GREATER_THAN
+            - REPETITION_TIME
+            - REPS
+            - FIXED_REST
+            - TIME_AT_VALID_CDA
+            - STEPS
+    FixedRestPlannedWorkoutStepDuration:
+      type: object
+      properties:
+        duration_type:
+          description:
+            Type of condition that must be fulfilled to consider the workout
+            step complete
+          nullable: false
+          type: string
+          enum:
+            - TIME
+            - DISTANCE_METERS
+            - HR_LESS_THAN
+            - HR_GREATER_THAN
+            - CALORIES
+            - OPEN
+            - POWER_LESS_THAN
+            - POWER_GREATER_THAN
+            - REPETITION_TIME
+            - REPS
+            - FIXED_REST
+            - TIME_AT_VALID_CDA
+            - STEPS
+        rest_seconds:
+          type: integer
+          description: Time duration to be elapsed for the rest period
+          nullable: true
+    CaloriesPlannedWorkoutStepDuration:
+      type: object
+      properties:
+        calories:
+          type: integer
+          description:
+            Calorie burn target for the workout step - once the user reaches
+            the target, the step will be completed
+          nullable: true
+        duration_type:
+          description:
+            Type of condition that must be fulfilled to consider the workout
+            step complete
+          nullable: false
+          type: string
+          enum:
+            - TIME
+            - DISTANCE_METERS
+            - HR_LESS_THAN
+            - HR_GREATER_THAN
+            - CALORIES
+            - OPEN
+            - POWER_LESS_THAN
+            - POWER_GREATER_THAN
+            - REPETITION_TIME
+            - REPS
+            - FIXED_REST
+            - TIME_AT_VALID_CDA
+            - STEPS
+    HRAbovePlannedWorkoutStepDuration:
+      type: object
+      properties:
+        duration_type:
+          description:
+            Type of condition that must be fulfilled to consider the workout
+            step complete
+          nullable: false
+          type: string
+          enum:
+            - TIME
+            - DISTANCE_METERS
+            - HR_LESS_THAN
+            - HR_GREATER_THAN
+            - CALORIES
+            - OPEN
+            - POWER_LESS_THAN
+            - POWER_GREATER_THAN
+            - REPETITION_TIME
+            - REPS
+            - FIXED_REST
+            - TIME_AT_VALID_CDA
+            - STEPS
+        hr_above_bpm:
+          type: integer
+          description:
+            Threshold heart rate goal to complete the workout step - once
+            the user's heart rate reaches above below this value, the step will be
+            completed
+          nullable: true
+    HRBelowPlannedWorkoutStepDuration:
+      type: object
+      properties:
+        hr_below_bpm:
+          type: integer
+          description:
+            Threshold heart rate goal to complete the workout step - once
+            the user's heart rate reaches below this value, the step will be completed
+          nullable: true
+        duration_type:
+          description:
+            Type of condition that must be fulfilled to consider the workout
+            step complete
+          nullable: false
+          type: string
+          enum:
+            - TIME
+            - DISTANCE_METERS
+            - HR_LESS_THAN
+            - HR_GREATER_THAN
+            - CALORIES
+            - OPEN
+            - POWER_LESS_THAN
+            - POWER_GREATER_THAN
+            - REPETITION_TIME
+            - REPS
+            - FIXED_REST
+            - TIME_AT_VALID_CDA
+            - STEPS
+    RepsPlannedWorkoutStepDuration:
+      type: object
+      properties:
+        reps:
+          type: integer
+          description:
+            Target number of reps for the workout step - once the user
+            completes this rep target, the step will be completed
+          nullable: true
+        duration_type:
+          description:
+            Type of condition that must be fulfilled to consider the workout
+            step complete
+          nullable: false
+          type: string
+          enum:
+            - TIME
+            - DISTANCE_METERS
+            - HR_LESS_THAN
+            - HR_GREATER_THAN
+            - CALORIES
+            - OPEN
+            - POWER_LESS_THAN
+            - POWER_GREATER_THAN
+            - REPETITION_TIME
+            - REPS
+            - FIXED_REST
+            - TIME_AT_VALID_CDA
+            - STEPS
+    DistancePlannedWorkoutStepDuration:
+      type: object
+      properties:
+        duration_type:
+          description:
+            Type of condition that must be fulfilled to consider the workout
+            step complete
+          nullable: false
+          type: string
+          enum:
+            - TIME
+            - DISTANCE_METERS
+            - HR_LESS_THAN
+            - HR_GREATER_THAN
+            - CALORIES
+            - OPEN
+            - POWER_LESS_THAN
+            - POWER_GREATER_THAN
+            - REPETITION_TIME
+            - REPS
+            - FIXED_REST
+            - TIME_AT_VALID_CDA
+            - STEPS
+        distance_meters:
+          type: integer
+          description:
+            Target distance for the workout step - once the user covers
+            this distance, the step will be completed
+          nullable: true
+    StepsPlannedWorkoutStepDuration:
+      type: object
+      properties:
+        steps:
+          type: integer
+          description:
+            Target number of steps for the workout step - once the user
+            performs this number of steps, the step will be completed
+          nullable: true
+        duration_type:
+          description:
+            Type of condition that must be fulfilled to consider the workout
+            step complete
+          nullable: false
+          type: string
+          enum:
+            - TIME
+            - DISTANCE_METERS
+            - HR_LESS_THAN
+            - HR_GREATER_THAN
+            - CALORIES
+            - OPEN
+            - POWER_LESS_THAN
+            - POWER_GREATER_THAN
+            - REPETITION_TIME
+            - REPS
+            - FIXED_REST
+            - TIME_AT_VALID_CDA
+            - STEPS
+    PlannedWorkoutStepDurations:
+      type: object
+      properties: {}
+      oneOf:
+        - $ref: "#/components/schemas/PlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/TimePlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/PowerAbovePlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/PowerBelowPlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/FixedRestPlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/CaloriesPlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/HRAbovePlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/HRBelowPlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/RepsPlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/DistancePlannedWorkoutStepDuration"
+        - $ref: "#/components/schemas/StepsPlannedWorkoutStepDuration"
+      discriminator:
+        propertyName: type
+        mapping:
+          PlannedWorkoutStepDuration: "#/components/schemas/PlannedWorkoutStepDuration"
+          TimePlannedWorkoutStepDuration: "#/components/schemas/TimePlannedWorkoutStepDuration"
+          PowerAbovePlannedWorkoutStepDuration: "#/components/schemas/PowerAbovePlannedWorkoutStepDuration"
+          PowerBelowPlannedWorkoutStepDuration: "#/components/schemas/PowerBelowPlannedWorkoutStepDuration"
+          FixedRestPlannedWorkoutStepDuration: "#/components/schemas/FixedRestPlannedWorkoutStepDuration"
+          CaloriesPlannedWorkoutStepDuration: "#/components/schemas/CaloriesPlannedWorkoutStepDuration"
+          HRAbovePlannedWorkoutStepDuration: "#/components/schemas/HRAbovePlannedWorkoutStepDuration"
+          HRBelowPlannedWorkoutStepDuration: "#/components/schemas/HRBelowPlannedWorkoutStepDuration"
+          RepsPlannedWorkoutStepDuration: "#/components/schemas/RepsPlannedWorkoutStepDuration"
+          DistancePlannedWorkoutStepDuration: "#/components/schemas/DistancePlannedWorkoutStepDuration"
+          StepsPlannedWorkoutStepDuration: "#/components/schemas/StepsPlannedWorkoutStepDuration"
+    PlannedWorkoutStep:
+      type: object
+      properties:
+        targets:
+          type: array
+          description: List of targets for the workout
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepTargets"
+        type:
+          description: Type of workout step - either repeat or one-off
+          type: string
+          enum:
+            - STEP
+            - REPEAT_STEP
+        intensity:
+          description: Planned intensity for the workout step
+          type: string
+          enum:
+            - REST
+            - WARMUP
+            - COOLDOWN
+            - RECOVERY
+            - INTERVAL
+            - ACTIVE
+        order:
+          type: integer
+          description: Position of the workout step in the overall workout
+        description:
+          type: string
+          description: Description of workout step
+        durations:
+          type: array
+          description:
+            List of conditions to be fulfilled for the workout step to
+            be completed - all of the conditions must be completed
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepDurations"
+        name:
+          type: string
+          description: Name of workout step
+    PlannedWorkoutRepeatStep:
+      type: object
+      properties:
+        targets:
+          type: array
+          description: List of targets for the workout
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
+        type:
+          description: Type of workout step - either repeat or one-off
+          nullable: false
+          type: string
+          enum:
+            - STEP
+            - REPEAT_STEP
+        steps:
+          type: array
+          description:
+            List of steps to be repeated for this workout step - e.g. if
+            a user wants to schedule 5 repetitions of 100m sprints plus 20s rest in
+            between
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStep"
+        intensity:
+          type: integer
+          description: Planned intensity for the workout step
+          nullable: true
+        order:
+          type: integer
+          description: Position of the workout step in the overall workout
+          nullable: true
+        description:
+          type: string
+          description: Description of workout step
+          nullable: true
+        durations:
+          type: array
+          description:
+            List of conditions to be fulfilled for the workout step to
+            be completed - all of the conditions must be completed
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
+        name:
+          type: string
+          description: Name of workout step
+          nullable: true
+    SwimmingPlannedWorkoutStep:
+      type: object
+      properties:
+        targets:
+          type: array
+          description: List of targets for the workout
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
+        type:
+          description: Type of workout step - either repeat or one-off
+          nullable: false
+          type: string
+          enum:
+            - STEP
+            - REPEAT_STEP
+        intensity:
+          type: integer
+          description: Planned intensity for the workout step
+          nullable: true
+        order:
+          type: integer
+          description: Position of the workout step in the overall workout
+          nullable: true
+        equipment_type:
+          description: Workout equipment to be used during the workout step
+          nullable: false
+          type: string
+          enum:
+            - NONE
+            - SWIM_FINS
+            - SWIM_KICKBOARD
+            - SWIM_PADDLES
+            - SWIM_PULL_BUOY
+            - SWIM_SNORKEL
+        description:
+          type: string
+          description: Description of workout step
+          nullable: true
+        durations:
+          type: array
+          description:
+            List of conditions to be fulfilled for the workout step to
+            be completed - all of the conditions must be completed
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
+        name:
+          type: string
+          description: Name of workout step
+          nullable: true
+        stroke_type:
+          description: Stroke type used for the workout step (e.g. breaststroke)
+          nullable: false
+          type: string
+          enum:
+            - OTHER
+            - FREESTYLE
+            - BACKSTROKE
+            - BREASTSTROKE
+            - BUTTERFLY
+            - REST
+    CardioPlannedWorkoutStep:
+      type: object
+      properties:
+        targets:
+          type: array
+          description: List of targets for the workout
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
+        type:
+          description: Type of workout step - either repeat or one-off
+          nullable: false
+          type: string
+          enum:
+            - STEP
+            - REPEAT_STEP
+        intensity:
+          type: integer
+          description: Planned intensity for the workout step
+          nullable: true
+        order:
+          type: integer
+          description: Position of the workout step in the overall workout
+          nullable: true
+        exercise_name:
+          type: string
+          description: Name of exercise to be performed for the workout step
+          nullable: true
+        description:
+          type: string
+          description: Description of workout step
+          nullable: true
+        durations:
+          type: array
+          description:
+            List of conditions to be fulfilled for the workout step to
+            be completed - all of the conditions must be completed
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
+        exercise_category:
+          description: Type of exercise to be performed for the workout step
+          nullable: false
+          type: string
+          enum:
+            - UNKNOWN
+            - BENCH_PRESS
+            - CALF_RAISE
+            - CARDIO
+            - CARRY
+            - CHOP
+            - CORE
+            - CRUNCH
+            - CURL
+            - DEADLIFT
+            - FLYE
+            - HIP_RAISE
+            - HIP_STABILITY
+            - HIP_SWING
+            - HYPEREXTENSION
+            - LATERAL_RAISE
+            - LEG_CURL
+            - LEG_RAISE
+            - LUNGE
+            - OLYMPIC_LIFT
+            - PLANK
+            - PLYO
+            - PULL_UP
+            - PUSH_UP
+            - ROW
+            - SHOULDER_PRESS
+            - SHOULDER_STABILITY
+            - SHRUG
+            - SIT_UP
+            - SQUAT
+            - TOTAL_BODY
+            - TRICEPS_EXTENSION
+            - WARM_UP
+            - RUN
+            - BIKE
+            - CARDIO_SENSORS
+        name:
+          type: string
+          description: Name of workout step
+          nullable: true
+    StrengthPlannedWorkoutStep:
+      type: object
+      properties:
+        weight_kg:
+          type: number
+          description: Weight to be lifted for the exercise
+          nullable: true
+        targets:
+          type: array
+          description: List of targets for the workout
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
+        type:
+          description: Type of workout step - either repeat or one-off
+          nullable: false
+          type: string
+          enum:
+            - STEP
+            - REPEAT_STEP
+        intensity:
+          type: integer
+          description: Planned intensity for the workout step
+          nullable: true
+        order:
+          type: integer
+          description: Position of the workout step in the overall workout
+          nullable: true
+        exercise_name:
+          type: string
+          description: Name of strength exercise to be performed for the workout step
+          nullable: true
+        description:
+          type: string
+          description: Description of workout step
+          nullable: true
+        durations:
+          type: array
+          description:
+            List of conditions to be fulfilled for the workout step to
+            be completed - all of the conditions must be completed
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
+        exercise_category:
+          description: Type of strength exercise to be performed for the workout step
+          nullable: false
+          type: string
+          enum:
+            - UNKNOWN
+            - BENCH_PRESS
+            - CALF_RAISE
+            - CARDIO
+            - CARRY
+            - CHOP
+            - CORE
+            - CRUNCH
+            - CURL
+            - DEADLIFT
+            - FLYE
+            - HIP_RAISE
+            - HIP_STABILITY
+            - HIP_SWING
+            - HYPEREXTENSION
+            - LATERAL_RAISE
+            - LEG_CURL
+            - LEG_RAISE
+            - LUNGE
+            - OLYMPIC_LIFT
+            - PLANK
+            - PLYO
+            - PULL_UP
+            - PUSH_UP
+            - ROW
+            - SHOULDER_PRESS
+            - SHOULDER_STABILITY
+            - SHRUG
+            - SIT_UP
+            - SQUAT
+            - TOTAL_BODY
+            - TRICEPS_EXTENSION
+            - WARM_UP
+            - RUN
+            - BIKE
+            - CARDIO_SENSORS
+        name:
+          type: string
+          description: Name of workout step
+          nullable: true
+    YogaPlannedWorkoutStep:
+      type: object
+      properties:
+        targets:
+          type: array
+          description: List of targets for the workout
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
+        type:
+          description: Type of workout step - either repeat or one-off
+          nullable: false
+          type: string
+          enum:
+            - STEP
+            - REPEAT_STEP
+        intensity:
+          type: integer
+          description: Planned intensity for the workout step
+          nullable: true
+        order:
+          type: integer
+          description: Position of the workout step in the overall workout
+          nullable: true
+        description:
+          type: string
+          description: Description of workout step
+          nullable: true
+        durations:
+          type: array
+          description:
+            List of conditions to be fulfilled for the workout step to
+            be completed - all of the conditions must be completed
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
+        name:
+          type: string
+          description: Name of workout step
+          nullable: true
+    PilatesPlannedWorkoutStep:
+      type: object
+      properties:
+        targets:
+          type: array
+          description: List of targets for the workout
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
+        type:
+          description: Type of workout step - either repeat or one-off
+          nullable: false
+          type: string
+          enum:
+            - STEP
+            - REPEAT_STEP
+        intensity:
+          type: integer
+          description: Planned intensity for the workout step
+          nullable: true
+        order:
+          type: integer
+          description: Position of the workout step in the overall workout
+          nullable: true
+        description:
+          type: string
+          description: Description of workout step
+          nullable: true
+        durations:
+          type: array
+          description:
+            List of conditions to be fulfilled for the workout step to
+            be completed - all of the conditions must be completed
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
+        name:
+          type: string
+          description: Name of workout step
+          nullable: true
+    RunningPlannedWorkoutStep:
+      type: object
+      properties:
+        targets:
+          type: array
+          description: List of targets for the workout
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
+        type:
+          description: Type of workout step - either repeat or one-off
+          nullable: false
+          type: string
+          enum:
+            - STEP
+            - REPEAT_STEP
+        intensity:
+          type: integer
+          description: Planned intensity for the workout step
+          nullable: true
+        order:
+          type: integer
+          description: Position of the workout step in the overall workout
+          nullable: true
+        description:
+          type: string
+          description: Description of workout step
+          nullable: true
+        durations:
+          type: array
+          description:
+            List of conditions to be fulfilled for the workout step to
+            be completed - all of the conditions must be completed
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
+        name:
+          type: string
+          description: Name of workout step
+          nullable: true
+    CyclingPlannedWorkoutStep:
+      type: object
+      properties:
+        targets:
+          type: array
+          description: List of targets for the workout
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepTarget"
+        type:
+          description: Type of workout step - either repeat or one-off
+          nullable: false
+          type: string
+          enum:
+            - STEP
+            - REPEAT_STEP
+        intensity:
+          type: integer
+          description: Planned intensity for the workout step
+          nullable: true
+        order:
+          type: integer
+          description: Position of the workout step in the overall workout
+          nullable: true
+        description:
+          type: string
+          description: Description of workout step
+          nullable: true
+        durations:
+          type: array
+          description:
+            List of conditions to be fulfilled for the workout step to
+            be completed - all of the conditions must be completed
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutStepDuration"
+        name:
+          type: string
+          description: Name of workout step
+          nullable: true
+    PlannedWorkoutSteps:
+      type: object
+      properties: {}
+      oneOf:
+        - $ref: "#/components/schemas/PlannedWorkoutStep"
+        - $ref: "#/components/schemas/PlannedWorkoutRepeatStep"
+        - $ref: "#/components/schemas/SwimmingPlannedWorkoutStep"
+        - $ref: "#/components/schemas/CardioPlannedWorkoutStep"
+        - $ref: "#/components/schemas/StrengthPlannedWorkoutStep"
+        - $ref: "#/components/schemas/YogaPlannedWorkoutStep"
+        - $ref: "#/components/schemas/PilatesPlannedWorkoutStep"
+        - $ref: "#/components/schemas/RunningPlannedWorkoutStep"
+        - $ref: "#/components/schemas/CyclingPlannedWorkoutStep"
+      discriminator:
+        propertyName: type
+        mapping:
+          PlannedWorkoutStep: "#/components/schemas/PlannedWorkoutStep"
+          PlannedWorkoutRepeatStep: "#/components/schemas/PlannedWorkoutRepeatStep"
+          SwimmingPlannedWorkoutStep: "#/components/schemas/SwimmingPlannedWorkoutStep"
+          CardioPlannedWorkoutStep: "#/components/schemas/CardioPlannedWorkoutStep"
+          StrengthPlannedWorkoutStep: "#/components/schemas/StrengthPlannedWorkoutStep"
+          YogaPlannedWorkoutStep: "#/components/schemas/YogaPlannedWorkoutStep"
+          PilatesPlannedWorkoutStep: "#/components/schemas/PilatesPlannedWorkoutStep"
+          RunningPlannedWorkoutStep: "#/components/schemas/RunningPlannedWorkoutStep"
+          CyclingPlannedWorkoutStep: "#/components/schemas/CyclingPlannedWorkoutStep"
+    PlannedWorkoutMetadata:
+      type: object
+      properties:
+        estimated_energy_kj:
+          type: [number, "null"]
+          description: Estimated energy expenditure for the workout
+        estimated_speed_meters_per_second:
+          type: [number, "null"]
+          description: Estimated speed for the workout
+        estimated_elevation_gain_meters:
+          type: [number, "null"]
+          description: Estimated elevation gain for the workout
+        estimated_tss:
+          type: [number, "null"]
+          description: Estimated Training Stress Score for the workout
+        estimated_calories:
+          type: [integer, "null"]
+          description: Estimated calorie burn for the workout
+        created_date:
+          type: [string, "null"]
+          description:
+            The creation datetime of the associated workout, in ISO8601
+            format with microsecond precision. TimeZone info will be provided whenever
+            possible. If absent, the time corresponds to the user's local time
+          example: "2022-11-23T09:00:00.000000+02:00"
+          format: date-time
+        planned_date:
+          type: string
+          description:
+            The planned start datetime, in ISO8601 format with microsecond
+            precision. TimeZone info will be provided whenever possible. If absent,
+            the time corresponds to the user's local time
+          example: "2022-11-24T09:00:00.000000+02:00"
+          format: date-time
+          nullable: true
+        type:
+          description:
+            The name - either user-entered or given by the fitness data
+            provider - of the associated workout plan
+          nullable: false
+          type: string
+          enum:
+            - IN_VEHICLE
+            - BIKING
+            - STILL
+            - UNKNOWN
+            - TILTING
+            - WALKING
+            - RUNNING
+            - AEROBICS
+            - BADMINTON
+            - BASEBALL
+            - BASKETBALL
+            - BIATHLON
+            - HANDBIKING
+            - MOUNTAIN_BIKING
+            - ROAD_BIKING
+            - SPINNING
+            - STATIONARY_BIKING
+            - UTILITY_BIKING
+            - BOXING
+            - CALISTHENICS
+            - CIRCUIT_TRAINING
+            - CRICKET
+            - DANCING
+            - ELLIPTICAL
+            - FENCING
+            - AMERICAN_FOOTBALL
+            - AUSTRALIAN_FOOTBALL
+            - ENGLISH_FOOTBALL
+            - FRISBEE
+            - GARDENING
+            - GOLF
+            - GYMNASTICS
+            - HANDBALL
+            - HIKING
+            - HOCKEY
+            - HORSEBACK_RIDING
+            - HOUSEWORK
+            - JUMPING_ROPE
+            - KAYAKING
+            - KETTLEBELL_TRAINING
+            - KICKBOXING
+            - KITESURFING
+            - MARTIAL_ARTS
+            - MEDITATION
+            - MIXED_MARTIAL_ARTS
+            - P90X_EXERCISES
+            - PARAGLIDING
+            - PILATES
+            - POLO
+            - RACQUETBALL
+            - ROCK_CLIMBING
+            - ROWING
+            - ROWING_MACHINE
+            - RUGBY
+            - JOGGING
+            - RUNNING_ON_SAND
+            - TREADMILL_RUNNING
+            - SAILING
+            - SCUBA_DIVING
+            - SKATEBOARDING
+            - SKATING
+            - CROSS_SKATING
+            - INDOOR_ROLLERBLADING
+            - SKIING
+            - BACK_COUNTRY_SKIING
+            - CROSS_COUNTRY_SKIING
+            - DOWNHILL_SKIING
+            - KITE_SKIING
+            - ROLLER_SKIING
+            - SLEDDING
+            - SNOWBOARDING
+            - SNOWMOBILE
+            - SNOWSHOEING
+            - SQUASH
+            - STAIR_CLIMBING
+            - STAIR_CLIMBING_MACHINE
+            - STAND_UP_PADDLEBOARDING
+            - STRENGTH_TRAINING
+            - SURFING
+            - SWIMMING
+            - SWIMMING_SWIMMING_POOL
+            - SWIMMING_OPEN_WATER
+            - TABLE_TENNIS
+            - TEAM_SPORTS
+            - TENNIS
+            - TREADMILL
+            - VOLLEYBALL
+            - VOLLEYBALL_BEACH
+            - VOLLEYBALL_INDOOR
+            - WAKEBOARDING
+            - WALKING_FITNESS
+            - NORDIC_WALKING
+            - WALKING_TREADMILL
+            - WATERPOLO
+            - WEIGHTLIFTING
+            - WHEELCHAIR
+            - WINDSURFING
+            - YOGA
+            - ZUMBA
+            - DIVING
+            - ERGOMETER
+            - ICE_SKATING
+            - INDOOR_SKATING
+            - CURLING
+            - OTHER
+            - CROSSFIT
+            - HIIT
+            - INTERVAL_TRAINING
+            - WALKING_STROLLER
+            - ELEVATOR
+            - ESCALATOR
+            - ARCHERY
+            - SOFTBALL
+            - GUIDED_BREATHING
+            - CARDIO_TRAINING
+            - LACROSSE
+            - STRETCHING
+            - TRIATHLON
+            - INLINE_SKATING
+            - SKY_DIVING
+            - PADDLING
+            - MOUNTAINEERING
+            - FISHING
+            - WATER_SKIING
+            - INDOOR_RUNNING
+        id:
+          type: [string, "null"]
+          default: null
+        estimated_duration_seconds:
+          type: [integer, "null"]
+          description: Estimated workout duration
+        estimated_pace_minutes_per_kilometer:
+          type: [number, "null"]
+          description: Estimated pace for the workout
+        provider:
+          type: string
+          description: Name of the original source of the workout plan
+        estimated_tscore:
+          type: [number, "null"]
+          description: "Estimated training stress score for the workout (normalized power-based metric)"
+        description:
+          type: [string, "null"]
+          description: Description of the workout
+        name:
+          type: [string, "null"]
+          description: Name of the workout plan
+        estimated_distance_meters:
+          type: [integer, "null"]
+          description: Estimated distance for the workout
+        estimated_if:
+          type: [number, "null"]
+          description: Estimated Intensity Factor for the workout
+        pool_length_meters:
+          type: [integer, "null"]
+          description:
+            Pool length of the pool used for the workout - only relevant
+            for swimming activity types
+    PlannedWorkout:
+      type: object
+      properties:
+        steps:
+          type: array
+          description: List of exercises/steps/intervals for the workout plan
+          items:
+            $ref: "#/components/schemas/PlannedWorkoutSteps"
+        metadata:
+          description: Metadata for the workout plan
+          type: object
+          allOf:
+            - $ref: "#/components/schemas/PlannedWorkoutMetadata"
+    DataProcessingWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ProcessingEvent.yaml"
+    UserAuthWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthSuccessEvent.yaml"
+    UserAuthWebhookError:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthErrorEvent.yaml"
+    PermissionChangeWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PermissionChangeEvent.yaml"
+    UserReauthWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/UserReauthEvent.yaml"
+    UserDeauthWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeauthEvent.yaml"
+    AccessRevokedWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AccessRevokedEvent.yaml"
+    GoogleNoDataSourceWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GoogleNoDatasourceEvent.yaml"
+    ConnectionErrorWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ConnectionErrorEvent.yaml"
+    LargeRequestSendingWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LargeRequestSendingEvent.yaml"
+    LargeRequestProcessingResponse:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LargeRequestProcessingEvent.yaml"
+    AuthenticationFailedWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthErrorEvent.yaml"
+    HealthCheckWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HealthcheckEvent.yaml"
+    RateLimitHitWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RateLimitHitEvent.yaml"
+    S3UploadWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/S3PayloadEvent.yaml"
+    ActivityWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityEvent.yaml"
+    DailyWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyEvent.yaml"
+    NutritionWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionEvent.yaml"
+    AthleteWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AthleteEvent.yaml"
+    SleepWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepEvent.yaml"
+    MenstruationWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationEvent.yaml"
+    BodyWebhook:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BodyEvent.yaml"
+    IntegrationsResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Status of the API response
+          example: "success"
+        providers:
+          type: array
+          description: List of integration providers with their details
+          items:
+            $ref: "#/components/schemas/IntegrationProvider"
+    IntegrationProvider:
+      type: object
+      properties:
+        provider:
+          type: string
+          description: Identifier for the provider
+          example: "MAPMYFITNESS"
+        name:
+          type: string
+          description: Display name of the integration
+          example: "MapMyFitness"
+        icon:
+          type: string
+          description: URL for the provider's icon image
+          example: "https://api.tryterra.co/v2/static/assets/img/app_icons/mapmyfitness.webp"
+        setup:
+          type: string
+          description: Indicates how the integration is set up
+          example: "API_KEYS_MANAGED"
+        enabled:
+          type: boolean
+          description: Whether the integration is enabled
+          example: true
+        types:
+          type: object
+          description: Indicates the types of data available through the provider
+          properties:
+            activity:
+              type: boolean
+              example: true
+            body:
+              type: boolean
+              example: false
+            nutrition:
+              type: boolean
+              example: false
+            daily:
+              type: boolean
+              example: false
+            sleep:
+              type: boolean
+              example: false
+            menstruation:
+              type: boolean
+              example: false
+    WebhookEvents:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEventType.yaml"
+
+webhooks:
+  healthcheck:
+    post:
+      description: Healthcheck event sent periodically to verify your event is functional
+      summary: Healthcheck webhook
+      operationId: healthcheckWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HealthCheckWebhook"
+      responses:
+        "200":
+          description: Successful healthcheck response
+  auth:
+    post:
+      description: Occurs when a user attempts to authenticate
+      summary: User authentication webhook
+      operationId: userAuthWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/UserAuthWebhook"
+                - $ref: "#/components/schemas/UserAuthWebhookError"
+
+      responses:
+        "200":
+          description: Successful authentication response
+  deauth:
+    post:
+      description: Occurs when a user deauthenticates through the Terra
+      summary: User deauthentication webhook
+      operationId: userDeauthWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserDeauthWebhook"
+      responses:
+        "200":
+          description: Successful deauthentication response
+  user_reauth:
+    post:
+      description: Occurs when a user successfully authenticates for a second time, with the same account. You will receive a successful auth and a user_reauth payload
+      summary: User reauthentication webhook
+      operationId: userReauthWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserReauthWebhook"
+      responses:
+        "200":
+          description: Successful reauthentication response
+  access_revoked:
+    post:
+      description: Occurs when a user revokes Terra's access from the provider's end
+      summary: Access revoked webhook
+      operationId: accessRevokedWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccessRevokedWebhook"
+      responses:
+        "200":
+          description: Successful access revocation response
+  connection_error:
+    post:
+      description: Occurs when a request to a provider returns an HTTP response of 401, 403 or 412
+      summary: Connection error webhook
+      operationId: connectionErrorWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectionErrorWebhook"
+      responses:
+        "200":
+          description: Successful connection error response
+  google_no_datasource:
+    post:
+      description: Occurs when a Google Fit user doesn't have a data source linked to their account. All data requests for the user will be empty unless they link a data source
+      summary: Google no data source webhook
+      operationId: googleNoDataSourceWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleNoDataSourceWebhook"
+      responses:
+        "200":
+          description: Successful no data source response
+  processing:
+    post:
+      description: Occurs when data is being fetched asynchronously from the provider. The data will be sent through automatically via your Destination, and you can also safely request for it after the time in the retry_after_seconds field.
+      summary: Data processing webhook
+      operationId: dataProcessingWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataProcessingWebhook"
+      responses:
+        "200":
+          description: Successful processing response
+  large_request_sending:
+    post:
+      description: Occurs when more than one month of data has been requested and all data has been successfully submitted
+      summary: Large request sending webhook
+      operationId: largeRequestSendingWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LargeRequestSendingWebhook"
+      responses:
+        "200":
+          description: Successful large request sending response
+  large_request_processing:
+    post:
+      description: Occurs when more a request for over one month of data has been submitted to Terra. Data will be sent in chunks with the same reference field after this request. Each chunk will be at most 10 objects in the data field or 10 MB in size, whichever limit gets hit first
+      summary: Large request processing webhook
+      operationId: largeRequestProcessingWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LargeRequestProcessingResponse"
+      responses:
+        "200":
+          description: Successful large request processing response
+  rate_limit_hit:
+    post:
+      description: Occurs when an asynchronous request has failed due to rate limiting and is going to be retried.
+      summary: Rate limit hit webhook
+      operationId: rateLimitHitWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RateLimitHitWebhook"
+      responses:
+        "200":
+          description: Successful rate limit hit response
+  s3_upload:
+    post:
+      description: Data event sent as a download link.
+      summary: S3 upload webhook
+      operationId: s3UploadWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/S3UploadWebhook"
+      responses:
+        "200":
+          description: Successful S3 upload response
+  activity:
+    post:
+      description: "activity data event: activity updates when new activity is completed"
+      summary: Activity webhook
+      operationId: activityWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityWebhook"
+      responses:
+        "200":
+          description: Successful activity response
+  athlete:
+    post:
+      description: "athlete data event: Occurs throughout the day as users use their wearables."
+      summary: Athlete webhook
+      operationId: athleteWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AthleteWebhook"
+      responses:
+        "200":
+          description: Successful athlete response
+  nutrition:
+    post:
+      description: "nutrition data event: occurs throughout the day as users use their wearables."
+      summary: Nutrition webhook
+      operationId: nutritionWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NutritionWebhook"
+      responses:
+        "200":
+          description: Successful nutrition response
+  daily:
+    post:
+      description: "daily data event: occurs throughout the day as users use their wearables."
+      summary: Daily webhook
+      operationId: dailyWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DailyWebhook"
+      responses:
+        "200":
+          description: Successful daily response
+  sleep:
+    post:
+      description: "sleep data event: occurs throughout the day as users use their wearables."
+      summary: Sleep webhook
+      operationId: sleepWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SleepWebhook"
+      responses:
+        "200":
+          description: Successful sleep response
+  menstruation:
+    post:
+      description: "menstruation data event: occurs throughout the day as users use their wearables."
+      summary: Menstruation webhook
+      operationId: menstruationWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MenstruationWebhook"
+      responses:
+        "200":
+          description: Successful menstruation response
+  body:
+    post:
+      description: "body data event: occurs throughout the day as users use their wearables."
+      summary: Body webhook
+      operationId: bodyWebhook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BodyWebhook"
+      responses:
+        "200":
+          description: Successful body response

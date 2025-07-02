@@ -1,0 +1,9 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TimestampLocalization.yaml
+type: number
+enum:
+  - 0
+  - 1
+examples:
+  - 0
+description: Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC.

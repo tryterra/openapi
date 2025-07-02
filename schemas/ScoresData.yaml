@@ -1,0 +1,25 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ScoresData.yaml
+type: object
+properties:
+  activity:
+    type: number
+    examples:
+      - 92
+    minimum: 0
+    maximum: 100
+    description: Activity score for the given day.
+  recovery:
+    type: number
+    examples:
+      - 78
+    minimum: 0
+    maximum: 100
+    description: Recovery score for the given day.
+  sleep:
+    type: number
+    examples:
+      - 85
+    minimum: 0
+    maximum: 100
+    description: Sleep score for the given day, pertaining to the previous night's sleep.

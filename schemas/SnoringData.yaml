@@ -1,0 +1,29 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SnoringData.yaml
+type: object
+properties:
+  start_time:
+    type: string
+    examples:
+      - 1999-11-23T22:00:00.000000+02:00
+    description: The start time of the recording of snoring data, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+  end_time:
+    type: string
+    examples:
+      - 2022-11-24T08:00:00.000000+01:00
+    description: The end time of the recording of snoring data, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+  num_snoring_events:
+    type: integer
+    examples:
+      - 12
+    description: Number of times over the sleep period when the user started snoring, as determined by the device.
+  samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SnoringSample.yaml
+    description: List of snoring information data points sampled throughout the sleep session.
+  total_snoring_duration_seconds:
+    type: number
+    examples:
+      - 3600
+    description: Total duration for which the user was snoring.

@@ -1,0 +1,19 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/FloorsClimbedSample.yaml
+type: object
+properties:
+  timestamp:
+    type: string
+    examples:
+      - 2022-11-23T09:00:00.000000+02:00
+    description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+  floors_climbed:
+    type: integer
+    examples:
+      - 5
+    description: Cumulative number of elevation gain measured in floors climbed up to associated timestamp, since the start of the payload
+  timer_duration_seconds:
+    type: number
+    examples:
+      - 600
+    description: Time elapsed since the start of the workout, subtracting time during which the recording was paused

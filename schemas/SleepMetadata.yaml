@@ -1,0 +1,31 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepMetadata.yaml
+type: object
+properties:
+  end_time:
+    type: string
+    examples:
+      - 2022-11-24T08:00:00.000000+01:00
+    description: The end time of the associated sleep session, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+  is_nap:
+    type: boolean
+    examples:
+      - false
+    description: Flag indicating whether the sleep session was a nap, or the user's main sleep session for the day.
+  start_time:
+    type: string
+    examples:
+      - 1999-11-23T22:00:00.000000+02:00
+    description: The start time of the associated sleep session, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+  summary_id:
+    type: string
+    description: A unique identifier for the sleep session.
+  timestamp_localization:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TimestampLocalization.yaml
+  upload_type:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepUploadType.yaml
+    description: The upload type for the associated sleep session, providing information on whether this was an automatic sleep or user-entered.
+required:
+  - end_time
+  - start_time
+  - upload_type

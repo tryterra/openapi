@@ -1,0 +1,26 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StrokeType.yaml
+oneOf:
+  - type: string
+    const: other
+    description: Any swimming stroke style that doesn't fit the standard categories.
+    title: Other
+  - type: string
+    const: freestyle
+    description: Front crawl stroke where swimmers alternate arm movements with face in water.
+    title: Freestyle
+  - type: string
+    const: backstroke
+    description: Swimming stroke performed on the back with alternating arm movements.
+    title: Backstroke
+  - type: string
+    const: breaststroke
+    description: Swimming stroke where arms move simultaneously in a heart-shaped pattern with a frog kick.
+    title: Breaststroke
+  - type: string
+    const: butterfly
+    description: Swimming stroke with simultaneous overhead arm movements and dolphin kick.
+    title: Butterfly
+examples:
+  - backstroke
+description: Stroke type used for the workout step (e.g. breaststroke)

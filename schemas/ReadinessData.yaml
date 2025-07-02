@@ -1,0 +1,14 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ReadinessData.yaml
+type: object
+properties:
+  readiness:
+    type: integer
+    examples:
+      - 85
+    minimum: 0
+    maximum: 100
+    description: User's readiness score for a given day, resulting from the sleep session.
+  recovery_level:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RecoveryLevel.yaml
+    description: User's recovery score for a given day, resulting from the sleep session - takes Enum value.

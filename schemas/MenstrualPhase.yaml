@@ -1,0 +1,46 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstrualPhase.yaml
+oneOf:
+  - type: string
+    const: menstrual
+    description: The menstrual phase when bleeding occurs.
+    title: Menstrual
+  - type: string
+    const: follicular
+    description: The follicular phase when follicles in ovaries develop.
+    title: Follicular
+  - type: string
+    const: ovulation
+    description: The ovulation phase when an egg is released.
+    title: Ovulation
+  - type: string
+    const: luteal
+    description: The luteal phase following ovulation.
+    title: Luteal
+  - type: string
+    const: pms
+    description: Premenstrual syndrome phase before menstruation begins.
+    title: PMS
+  - type: string
+    const: fertile
+    description: The fertile window when conception is most likely.
+    title: Fertile
+  - type: string
+    const: first_trimester
+    description: First third of pregnancy, weeks 1-12.
+    title: First Trimester
+  - type: string
+    const: second_trimester
+    description: Middle third of pregnancy, weeks 13-26.
+    title: Second Trimester
+  - type: string
+    const: third_trimester
+    description: Final third of pregnancy, weeks 27-40.
+    title: Third Trimester
+  - type: string
+    const: unknown
+    description: Menstrual cycle phase could not be determined.
+    title: Unknown
+examples:
+  - menstrual
+description: Represents menstrual cycle phases.

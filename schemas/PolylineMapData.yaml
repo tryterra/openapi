@@ -1,0 +1,9 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PolylineMapData.yaml
+type: object
+properties:
+  summary_polyline:
+    type: string
+    examples:
+      - "}_p~iF~ps|U_ulLnnqC_mqNvxq`@"
+    description: The polyline representation of the user's trajectory throughout the workout

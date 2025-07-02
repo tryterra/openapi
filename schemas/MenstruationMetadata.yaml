@@ -1,0 +1,19 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationMetadata.yaml
+type: object
+properties:
+  end_time:
+    type: string
+    examples:
+      - 2022-10-28T10:00:00.000000+01:00
+    description: The end time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h after start_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+  start_time:
+    type: string
+    examples:
+      - 1999-11-23T09:00:00.000000+02:00
+    description: The start time of the associated day, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+  timestamp_localization:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TimestampLocalization.yaml
+required:
+  - end_time
+  - start_time

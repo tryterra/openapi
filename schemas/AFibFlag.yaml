@@ -1,0 +1,18 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AFibFlag.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: AFib was not detected in the heart rhythm analysis.
+    title: Negative
+  - type: number
+    const: 1
+    description: AFib was detected in the heart rhythm analysis.
+    title: Positive
+  - type: number
+    const: 2
+    description: The heart rhythm analysis couldn't determine whether AFib was present or absent.
+    title: Inconclusive
+examples:
+  - 1
+description: Flag indicating the atrial fibrillation classification of the individual

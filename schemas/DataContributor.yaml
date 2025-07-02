@@ -1,0 +1,11 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.yaml
+type: object
+properties:
+  contributor_name:
+    type: string
+  contributor_score:
+    type: number
+required:
+  - contributor_name
+  - contributor_score

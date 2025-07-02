@@ -1,0 +1,53 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityMetadata.yaml
+type: object
+properties:
+  city:
+    type: string
+    examples:
+      - San Francisco
+    description: The City in which the workout was performed.
+  country:
+    type: string
+    examples:
+      - United States
+    description: The Country in which the workout was performed.
+  end_time:
+    type: string
+    examples:
+      - 2022-10-28T10:00:00.000000+01:00
+    description: The end time of the associated workout, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+  name:
+    type: string
+    examples:
+      - Morning Run
+    description: The name - either user-entered or given by the fitness data provider - of the associated workout.
+  start_time:
+    type: string
+    examples:
+      - 1999-11-23T09:00:00.000000+02:00
+    description: The start time of the associated workout, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+  state:
+    type: string
+    examples:
+      - California
+    description: The State in which the workout was performed.
+  summary_id:
+    type: string
+    examples:
+      - 123e4567-e89b-12d3-a456-426614174000
+    description: A unique identifier for the workout - note that this is unique for the given user, and may not be globally unique.
+  timestamp_localization:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TimestampLocalization.yaml
+  type:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityType.yaml
+    description: The type of activity performed for the associated workout.
+  upload_type:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/UploadType.yaml
+    description: The upload type for the associated workout, providing information on whether this was an automatic workout or user-entered.
+required:
+  - end_time
+  - start_time
+  - summary_id
+  - type
+  - upload_type

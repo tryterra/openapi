@@ -1,0 +1,25 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthSuccessEvent.yaml
+type: object
+properties:
+  status:
+    type: string
+    const: success
+    description: Status of authentication
+  user:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
+    description: User who authenticated
+  reference_id:
+    type: string
+    description: Client-provided reference ID
+  widget_session_id:
+    type: string
+    description: Widget session identifier
+required:
+  - status
+  - user
+  - reference_id
+  - widget_session_id
+allOf:
+  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthEvent.yaml
+description: Authentication success event

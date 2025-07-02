@@ -1,0 +1,26 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepUploadType.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: The sleep data upload type is unknown or could not be determined.
+    title: Unknown
+  - type: number
+    const: 1
+    description: The sleep data was manually entered by the user.
+    title: Manual
+  - type: number
+    const: 2
+    description: The sleep data was automatically detected and recorded by a device or service.
+    title: Automatic
+  - type: number
+    const: 3
+    description: The sleep data is preliminary or tentative and may be subject to change.
+    title: Tentative
+  - type: number
+    const: 4
+    description: The sleep data upload type cannot be clearly categorized.
+    title: Indeterminate
+examples:
+  - 1
+description: The upload type for the associated workout, providing information on whether this was an automatic workout or user-entered

@@ -1,0 +1,37 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OtherDeviceData.yaml
+type: object
+properties:
+  manufacturer:
+    type: string
+    examples:
+      - Garmin
+    description: Device manufacturer name.
+  hardware_version:
+    type: string
+    examples:
+      - v2.1
+    description: Hardware version of the device.
+  serial_number:
+    type: string
+    examples:
+      - GR123456789
+    description: Device Serial Number.
+  name:
+    type: string
+    examples:
+      - Forerunner 945
+    description: Device name - note that this can also be the name of the application/package which the data comes from, if coming from a data aggregator such as Google Fit.
+  software_version:
+    type: string
+    examples:
+      - 5.2.1
+    description: Device Software Version.
+  activation_timestamp:
+    type: string
+  data_provided:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeviceDataType.yaml
+  last_upload_date:
+    type: string

@@ -1,0 +1,26 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationEvent.yaml
+type: object
+properties:
+  type:
+    type: string
+    const: menstruation
+  data:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Menstruation.yaml
+    description: Array of menstruation data
+  user:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
+    description: User whose data is being provided
+  version:
+    type: string
+    description: API version
+required:
+  - type
+  - data
+  - user
+  - version
+allOf:
+  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEvent.yaml
+description: Menstruation data event

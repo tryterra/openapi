@@ -1,0 +1,24 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationData.yaml
+type: object
+properties:
+  avg_saturation_percentage:
+    type: number
+    examples:
+      - 97
+    description: Average Oxygen Saturation percentage of the user during the sleep session.
+  end_time:
+    type: string
+    examples:
+      - 2022-11-24T08:00:00.000000+01:00
+    description: The end time of the recording of oxygen saturation, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+  samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationSample.yaml
+    description: Array of Oxygen Saturation percentage datapoints sampled throughout the sleep session.
+  start_time:
+    type: string
+    examples:
+      - 1999-11-23T22:00:00.000000+02:00
+    description: The start time of the recording of oxygen saturation, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.

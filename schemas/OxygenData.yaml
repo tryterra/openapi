@@ -1,0 +1,24 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenData.yaml
+type: object
+properties:
+  avg_saturation_percentage:
+    type: number
+    examples:
+      - 98
+    description: Average Oxygen Saturation percentage of the user during the day (SpO2 or SmO2).
+  saturation_samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationSample.yaml
+    description: Array of Oxygen Saturation percentage datapoints sampled throughout the day.
+  vo2_samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Vo2MaxSample.yaml
+    description: Array of VO2 datapoints sampled throughout the day.
+  vo2max_ml_per_min_per_kg:
+    type: number
+    examples:
+      - 45.5
+    description: VO2Max for the given user.

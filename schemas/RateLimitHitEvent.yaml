@@ -1,0 +1,32 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RateLimitHitEvent.yaml
+type: object
+properties:
+  type:
+    type: string
+    const: rate_limit_hit
+  user:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
+    description: User whose request hit rate limits
+  start_date:
+    type: string
+    description: Start date of the requested data range
+  end_date:
+    type: string
+    description: End date of the requested data range
+  retrying_at:
+    type: string
+    description: When the request will be retried
+  message:
+    type: string
+    description: Information about the rate limit
+required:
+  - type
+  - user
+  - start_date
+  - end_date
+  - retrying_at
+  - message
+allOf:
+  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEvent.yaml
+description: Rate limit hit event

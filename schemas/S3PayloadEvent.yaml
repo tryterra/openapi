@@ -1,0 +1,25 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/S3PayloadEvent.yaml
+type: object
+properties:
+  type:
+    type: string
+    const: s3_payload
+  status:
+    type: string
+    const: success
+    description: Status of the upload
+  url:
+    type: string
+    description: URL to download the data
+  expires_in:
+    type: integer
+    description: Time in seconds until URL expiration
+required:
+  - type
+  - status
+  - url
+  - expires_in
+allOf:
+  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEvent.yaml
+description: S3 Upload event with data download URL

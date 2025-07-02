@@ -1,0 +1,9 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StrainData.yaml
+type: object
+properties:
+  strain_level:
+    type: number
+    examples:
+      - 14.5
+    description: Level of cardiovascular strain imposed on the user during the day.

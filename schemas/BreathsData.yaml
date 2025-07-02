@@ -1,0 +1,39 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BreathsData.yaml
+type: object
+properties:
+  avg_breaths_per_min:
+    type: number
+    examples:
+      - 14
+    description: Average breathing rate of the user during the sleep session.
+  max_breaths_per_min:
+    type: number
+    examples:
+      - 18
+    description: Maximum breathing rate of the user during the sleep session.
+  min_breaths_per_min:
+    type: number
+    examples:
+      - 10
+    description: Minimum breathing rate of the user during the sleep session.
+  on_demand_reading:
+    type: boolean
+    examples:
+      - false
+    description: Flag indicating if the reading was performed on demand, or if it was automatically captured by the device.
+  samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BreathSample.yaml
+    description: List of breathing rate information sampled throughout the sleep session.
+  start_time:
+    type: string
+    examples:
+      - 1999-11-23T22:00:00.000000+02:00
+    description: The start time of the recording of breathing rate data, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+  end_time:
+    type: string
+    examples:
+      - 2022-11-24T08:00:00.000000+01:00
+    description: The end time of the recording of breathing rate data, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.

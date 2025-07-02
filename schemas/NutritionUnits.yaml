@@ -1,0 +1,58 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionUnits.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: The unit of measurement is unknown or not specified.
+    title: Unknown
+  - type: number
+    const: 1
+    description: Measurement in grams, a metric unit of mass.
+    title: Gram
+  - type: number
+    const: 2
+    description: Measurement in teaspoons, approximately 5 milliliters.
+    title: Teaspoon
+  - type: number
+    const: 3
+    description: Measurement in tablespoons, approximately 15 milliliters.
+    title: Tablespoon
+  - type: number
+    const: 4
+    description: Measurement in cups, approximately 240 milliliters.
+    title: Cup
+  - type: number
+    const: 5
+    description: Quantity measured in medium-sized eggs.
+    title: Medium Egg
+  - type: number
+    const: 6
+    description: Quantity measured in large-sized eggs.
+    title: Large Egg
+  - type: number
+    const: 7
+    description: Quantity measured in small-sized eggs.
+    title: Small Egg
+  - type: number
+    const: 8
+    description: Measurement in milliliters, a metric unit of volume.
+    title: Milliliter
+  - type: number
+    const: 9
+    description: Measurement in ounces, approximately 28 grams.
+    title: Ounce
+  - type: number
+    const: 10
+    description: Quantity measured by individual count or number of items.
+    title: Count
+  - type: number
+    const: 11
+    description: Quantity measured in scoops, typically used for protein powder or supplements.
+    title: Scoop
+  - type: number
+    const: 12
+    description: Measurement in fluid ounces, approximately 30 milliliters.
+    title: Fluid Ounce
+examples:
+  - 4
+description: Represents units used for nutrition measurements

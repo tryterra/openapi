@@ -1,0 +1,18 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateContext.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: Heart rate measurement context is not specified.
+    title: Not Set
+  - type: number
+    const: 1
+    description: Heart rate was measured during physical activity or exercise.
+    title: Active
+  - type: number
+    const: 2
+    description: Heart rate was measured during rest or non-active periods.
+    title: Not Active
+examples:
+  - 1
+description: Represents the context in which heart rate was measured.

@@ -1,0 +1,14 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/EnergyData.yaml
+type: object
+properties:
+  energy_kilojoules:
+    type: number
+    examples:
+      - 1200
+    description: Total number of kiloJoules planned to be expended during the workout - represents the user's predefined goal for the workout
+  energy_planned_kilojoules:
+    type: number
+    examples:
+      - 1150
+    description: Total number of kiloJoules expended during the workout

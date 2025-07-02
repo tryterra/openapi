@@ -1,0 +1,30 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityLevel.yaml
+oneOf:
+  - type: number
+    const: 0
+    description: Activity level is unknown or could not be determined.
+    title: Unknown
+  - type: number
+    const: 1
+    description: User is at rest, with minimal to no physical activity.
+    title: Rest
+  - type: number
+    const: 2
+    description: User is awake but inactive or sedentary.
+    title: Inactive
+  - type: number
+    const: 3
+    description: User is engaged in light physical activity such as casual walking.
+    title: Low Intensity
+  - type: number
+    const: 4
+    description: User is engaged in moderate physical activity such as brisk walking or light exercise.
+    title: Medium Intensity
+  - type: number
+    const: 5
+    description: User is engaged in vigorous physical activity such as running or intense exercise.
+    title: High Intensity
+examples:
+  - 4
+description: Intensity of the user's activity at an instant in time

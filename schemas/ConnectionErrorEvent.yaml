@@ -1,0 +1,25 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ConnectionErrorEvent.yaml
+type: object
+properties:
+  type:
+    type: string
+    const: connection_error
+  user:
+    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
+    description: User with connection issues
+  status:
+    type: string
+    const: warning
+    description: Status of the event
+  message:
+    type: string
+    description: Information about the connection issue
+required:
+  - type
+  - user
+  - status
+  - message
+allOf:
+  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEvent.yaml
+description: Connection error event

@@ -1,0 +1,234 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMicros.yaml
+type: object
+properties:
+  biotin_mg:
+    type: number
+    examples:
+      - 0.03
+    description: Biotin content of the associated food(s).
+  caffeine_mg:
+    type: number
+    examples:
+      - 95
+    description: Caffeine content of the associated food(s).
+  calcium_mg:
+    type: number
+    examples:
+      - 1000
+    description: Calcium content of the associated food(s).
+  chloride_mg:
+    type: number
+    examples:
+      - 2300
+    description: Chloride content of the associated food(s).
+  chromium_mg:
+    type: number
+    examples:
+      - 0.035
+    description: Chromium content of the associated food(s).
+  copper_mg:
+    type: number
+    examples:
+      - 0.9
+    description: Copper content of the associated food(s).
+  folate_mg:
+    type: number
+    examples:
+      - 0.4
+    description: Folate content of the associated food(s).
+  folic_acid_mg:
+    type: number
+    examples:
+      - 0.4
+    description: Folic Acid content of the associated food(s).
+  iodine_mg:
+    type: number
+    examples:
+      - 0.15
+    description: Iodine content of the associated food(s).
+  iron_mg:
+    type: number
+    examples:
+      - 8.5
+    description: Iron content of the associated food(s).
+  magnesium_mg:
+    type: number
+    examples:
+      - 320
+    description: Magnesium content of the associated food(s).
+  manganese_mg:
+    type: number
+    examples:
+      - 2.3
+    description: Manganese content of the associated food(s).
+  molybdenum_mg:
+    type: number
+    examples:
+      - 0.045
+    description: Molybdenum content of the associated food(s).
+  niacin_mg:
+    type: number
+    examples:
+      - 16
+    description: Niacin content of the associated food(s).
+  pantothenic_acid_mg:
+    type: number
+    examples:
+      - 5
+    description: Pantothenic content of the associated food(s).
+  phosphorus_mg:
+    type: number
+    examples:
+      - 1000
+    description: Phosphorus content of the associated food(s).
+  potassium_mg:
+    type: number
+    examples:
+      - 3500
+    description: Potassium content of the associated food(s).
+  riboflavin_mg:
+    type: number
+    examples:
+      - 1.3
+    description: Riboflavin content of the associated food(s).
+  selenium_mg:
+    type: number
+    examples:
+      - 0.055
+    description: Selenium content of the associated food(s).
+  thiamin_mg:
+    type: number
+    examples:
+      - 1.2
+    description: Thiamin content of the associated food(s).
+  vitamin_A_mg:
+    type: number
+    examples:
+      - 0.9
+    description: Vitamin A content of the associated food(s).
+  vitamin_B12_mg:
+    type: number
+    examples:
+      - 0.0024
+    description: Vitamin B12 content of the associated food(s).
+  vitamin_B6_mg:
+    type: number
+    examples:
+      - 1.7
+    description: Vitamin B6 content of the associated food(s).
+  vitamin_C_mg:
+    type: number
+    examples:
+      - 90
+    description: Vitamin C content of the associated food(s).
+  vitamin_D_mg:
+    type: number
+    examples:
+      - 0.02
+    description: Vitamin D content of the associated food(s).
+  vitamin_D2_mg:
+    type: number
+    examples:
+      - 0.01
+    description: Vitamin D2 content of the associated food(s).
+  vitamin_D3_mg:
+    type: number
+    examples:
+      - 0.015
+    description: Vitamin D3 content of the associated food(s).
+  vitamin_E_mg:
+    type: number
+    examples:
+      - 15
+    description: Vitamin E content of the associated food(s).
+  vitamin_K_mg:
+    type: number
+    examples:
+      - 0.12
+    description: Vitamin K content of the associated food(s).
+  zinc_mg:
+    type: number
+    examples:
+      - 11
+    description: Zinc content of the associated food(s).
+  cystine_g:
+    type: number
+    examples:
+      - 0.3
+    description: Cystine content of the associated food(s).
+  histidine_g:
+    type: number
+    examples:
+      - 0.6
+    description: Histidine content of the associated food(s).
+  isoleucine_g:
+    type: number
+    examples:
+      - 0.8
+    description: Isoleucine content of the associated food(s).
+  leucine_g:
+    type: number
+    examples:
+      - 1.2
+    description: Leucine content of the associated food(s).
+  lysine_g:
+    type: number
+    examples:
+      - 0.9
+    description: Lysine content of the associated food(s).
+  methionine_g:
+    type: number
+    examples:
+      - 0.6
+    description: Methionine content of the associated food(s).
+  phenylalanine_g:
+    type: number
+    examples:
+      - 0.9
+    description: Phenylalanine content of the associated food(s).
+  threonine_g:
+    type: number
+    examples:
+      - 0.5
+    description: Threonine content of the associated food(s).
+  tryptophan_g:
+    type: number
+    examples:
+      - 0.3
+    description: Tryptophan content of the associated food(s).
+  tyrosine_g:
+    type: number
+    examples:
+      - 0.7
+    description: Tyrosine content of the associated food(s).
+  valine_g:
+    type: number
+    examples:
+      - 0.8
+    description: Valine content of the associated food(s).
+  monounsaturated_fat_g:
+    type: number
+    examples:
+      - 15
+    description: Monounsaturated fat content of the associated food(s).
+  polyunsaturated_fat_g:
+    type: number
+    examples:
+      - 13
+    description: Polyunsaturated fat content of the associated food(s).
+  omega3_g:
+    type: number
+    examples:
+      - 1.6
+    description: Omega3 content of the associated food(s).
+  omega6_g:
+    type: number
+    examples:
+      - 17
+    description: Omega6 content of the associated food(s).
+  starch_g:
+    type: number
+    examples:
+      - 25
+    description: Starch content of the associated food(s).

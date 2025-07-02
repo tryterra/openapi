@@ -1,0 +1,33 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PositionData.yaml
+type: object
+properties:
+  center_pos_lat_lng_deg:
+    type: array
+    items:
+      type: number
+    examples:
+      - - -18.4911
+        - 130.9123
+    description: Position of the user at the midway point of the workout, represented by a 2-value array of latitude, longitude, wherein each of the two numbers can be nullable.
+  end_pos_lat_lng_deg:
+    type: array
+    items:
+      type: number
+    examples:
+      - - -84.4911
+        - -150.9123
+    description: Position of the user at the end of the workout, represented by a 2-value array of latitude, longitude, wherein each of the two numbers can be nullable.
+  position_samples:
+    type: array
+    items:
+      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PositionSample.yaml
+    description: Array of datapoints of the position of the user, sampled throughout the workout.
+  start_pos_lat_lng_deg:
+    type: array
+    items:
+      type: number
+    examples:
+      - - 80.2394
+        - 102.931
+    description: Position of the user at the start of the workout, represented by a 2-value array of latitude, longitude, wherein each of the two numbers can be nullable.
