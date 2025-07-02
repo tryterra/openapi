@@ -2,7 +2,7 @@
 
 ## Building
 ### Typespec Build
-```
+```sh
 cd data_models
 tsp compile . --emit=@typespec/json-schema
 ./promote.sh
