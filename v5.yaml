@@ -350,7 +350,7 @@ paths:
         - name: to_webhook
           in: query
           description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
           schema:
             type: boolean
           required: false
@@ -517,7 +517,7 @@ paths:
         - name: to_webhook
           in: query
           description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
           schema:
             type: boolean
           required: false
@@ -610,7 +610,7 @@ paths:
         - name: to_webhook
           in: query
           description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
           schema:
             type: boolean
           required: false
@@ -920,7 +920,7 @@ paths:
         - name: to_webhook
           in: query
           description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
           schema:
             type: boolean
           required: false
@@ -1034,7 +1034,7 @@ paths:
         - name: to_webhook
           in: query
           description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
           schema:
             type: boolean
           required: false
@@ -1148,7 +1148,7 @@ paths:
         - name: to_webhook
           in: query
           description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
           schema:
             type: boolean
           required: false
@@ -1460,7 +1460,7 @@ paths:
         - name: to_webhook
           in: query
           description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
           schema:
             type: boolean
           required: false
@@ -1651,7 +1651,7 @@ paths:
         - name: to_webhook
           in: query
           description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: false)
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
           schema:
             type: boolean
           required: false
