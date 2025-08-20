@@ -1546,6 +1546,13 @@ paths:
         Used to post workout plans users can follow on their wearable. This can be strength workouts (sets, reps, weight lifted)
         or cardio workouts (warmup, intervals of different intensities, cooldown etc)
       summary: Post workout plans to a provider
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (UUID format) to retrieve data for
+          schema:
+            type: string
+          required: true
       requestBody:
         content:
           application/json:
