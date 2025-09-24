@@ -6,9 +6,9 @@ properties:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceDataDetailed.yaml
     description: Object containing detailed distance information - this may include second-by-second samples.
   distance_meters:
-    type: integer
+    type: number
     examples:
-      - 8500
+      - 8500.45
     description: Total distance covered by the user throughout the day.
   elevation:
     $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ElevationData.yaml

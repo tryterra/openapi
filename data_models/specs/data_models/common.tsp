@@ -147,19 +147,19 @@ model ActiveDurationsData {
 
 model CaloriesData {
     @doc("Basal Metabolic Rate calories - calories burned at rest.")
-    BMR_calories?: integer;
+    BMR_calories?: float;
     
     @doc("Array of calorie data samples recorded throughout the time period.")
     calorie_samples?: CalorieSample[];
     
     @doc("Net calories burned through activity (excluding BMR).")
-    net_activity_calories?: integer;
+    net_activity_calories?: float;
     
     @doc("Net calories consumed through food and drink intake.")
-    net_intake_calories?: integer;
+    net_intake_calories?: float;
     
     @doc("Total calories burned including BMR and activity.")
-    total_burned_calories?: integer;
+    total_burned_calories?: float;
 }
 
 model METData {

@@ -66,8 +66,8 @@ model DailyDistanceData {
     detailed?: DistanceDataDetailed;
 
     @doc("Total distance covered by the user throughout the day.")
-    @example(8500)
-    distance_meters?: integer;
+    @example(8500.45)
+    distance_meters?: float;
 
     @doc("Object containing information on the elevation of the user throughout the day.")
     elevation?: ElevationData;
