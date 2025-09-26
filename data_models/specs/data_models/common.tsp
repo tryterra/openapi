@@ -84,6 +84,13 @@ model ScoresData {
     @minValue(0.0)
     @maxValue(100.0)
     sleep?: float;
+
+
+    @doc("Biological age computed for the given day.")
+    @example(27.0)
+    @minValue(0.0)
+    @maxValue(100.0)
+    biological_age?: float;
 }
 
 model OxygenData {

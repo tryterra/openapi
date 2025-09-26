@@ -23,3 +23,10 @@ properties:
     minimum: 0
     maximum: 100
     description: Sleep score for the given day, pertaining to the previous night's sleep.
+  biological_age:
+    type: number
+    examples:
+      - 27
+    minimum: 0
+    maximum: 100
+    description: Biological age computed for the given day.
