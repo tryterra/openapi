@@ -2147,7 +2147,7 @@ components:
           description: "URL the user is redirected to upon unsuccessful authentication"
           example: "https://myapp.com/failure"
     User:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TerraUser.yaml"
     NoDataReturned:
       type: object
       properties:
@@ -2226,9 +2226,9 @@ components:
           allOf:
             - $ref: "#/components/schemas/User"
     Activity:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Activity.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Activity.yaml"
     Athlete:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Athlete.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Athlete.yaml"
     AthleteCollection:
       type: object
       properties:
@@ -2247,15 +2247,15 @@ components:
           allOf:
             - $ref: "#/components/schemas/User"
     Body:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Body.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Body.yaml"
     Daily:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Daily.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Daily.yaml"
     Menstruation:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Menstruation.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Menstruation.yaml"
     Nutrition:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Nutrition.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Nutrition.yaml"
     Sleep:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Sleep.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Sleep.yaml"
     PlannedWorkoutStepTarget:
       type: object
       properties:
@@ -3781,49 +3781,49 @@ components:
           allOf:
             - $ref: "#/components/schemas/PlannedWorkoutMetadata"
     DataProcessingWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ProcessingEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ProcessingEvent.yaml"
     UserAuthWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthSuccessEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AuthSuccessEvent.yaml"
     UserAuthWebhookError:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthErrorEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AuthErrorEvent.yaml"
     PermissionChangeWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PermissionChangeEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PermissionChangeEvent.yaml"
     UserReauthWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/UserReauthEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/UserReauthEvent.yaml"
     UserDeauthWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeauthEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeauthEvent.yaml"
     AccessRevokedWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AccessRevokedEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AccessRevokedEvent.yaml"
     GoogleNoDataSourceWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GoogleNoDatasourceEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GoogleNoDatasourceEvent.yaml"
     ConnectionErrorWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ConnectionErrorEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ConnectionErrorEvent.yaml"
     LargeRequestSendingWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LargeRequestSendingEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LargeRequestSendingEvent.yaml"
     LargeRequestProcessingResponse:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LargeRequestProcessingEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LargeRequestProcessingEvent.yaml"
     AuthenticationFailedWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthErrorEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AuthErrorEvent.yaml"
     HealthCheckWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HealthcheckEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HealthcheckEvent.yaml"
     RateLimitHitWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RateLimitHitEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RateLimitHitEvent.yaml"
     S3UploadWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/S3PayloadEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/S3PayloadEvent.yaml"
     ActivityWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityEvent.yaml"
     DailyWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyEvent.yaml"
     NutritionWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionEvent.yaml"
     AthleteWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AthleteEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AthleteEvent.yaml"
     SleepWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepEvent.yaml"
     MenstruationWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationEvent.yaml"
     BodyWebhook:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BodyEvent.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BodyEvent.yaml"
     IntegrationsResponse:
       type: object
       properties:
@@ -3882,7 +3882,7 @@ components:
               type: boolean
               example: false
     WebhookEvents:
-      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEventType.yaml"
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WebhookEventType.yaml"
 
 webhooks:
   healthcheck:

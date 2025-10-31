@@ -2387,7 +2387,7 @@ components:
             - $ref: '#/components/schemas/TerraUser'
     Activity:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Activity.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Activity.yaml
       type: object
       properties:
         active_durations_data:
@@ -2453,7 +2453,7 @@ components:
         - metadata
     Athlete:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Athlete.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Athlete.yaml
       type: object
       properties:
         age:
@@ -2520,6 +2520,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DeviceData'
+          description: Array of devices associated with the user's account.
     AthleteCollection:
       type: object
       properties:
@@ -2539,7 +2540,7 @@ components:
             - $ref: '#/components/schemas/TerraUser'
     Body:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Body.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Body.yaml
       type: object
       properties:
         blood_pressure_data:
@@ -2576,7 +2577,7 @@ components:
         - metadata
     Daily:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Daily.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Daily.yaml
       type: object
       properties:
         active_durations_data:
@@ -2622,7 +2623,7 @@ components:
         - metadata
     Menstruation:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Menstruation.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Menstruation.yaml
       type: object
       properties:
         metadata:
@@ -2635,7 +2636,7 @@ components:
         - metadata
     Nutrition:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Nutrition.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Nutrition.yaml
       type: object
       properties:
         drink_samples:
@@ -2658,7 +2659,7 @@ components:
         - metadata
     Sleep:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Sleep.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Sleep.yaml
       type: object
       properties:
         data_enrichment:
@@ -2682,7 +2683,7 @@ components:
         scores:
           type: object
           properties:
-            sleep_score:
+            sleep:
               type: number
               description: User's sleep score.
           description: User's sleep score
@@ -4230,7 +4231,7 @@ components:
       $ref: '#/components/schemas/WebhookEventType'
     TerraUser:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TerraUser.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TerraUser.yaml
       type: object
       properties:
         user_id:
@@ -4270,7 +4271,7 @@ components:
         - provider
     ActivityLevel:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityLevel.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityLevel.yaml
       oneOf:
         - type: number
           const: 0
@@ -4301,7 +4302,7 @@ components:
       description: Intensity of the user's activity at an instant in time
     ActivityLevelSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityLevelSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityLevelSample.yaml
       type: object
       properties:
         timestamp:
@@ -4313,7 +4314,7 @@ components:
           $ref: '#/components/schemas/ActivityLevel'
     ActiveDurationsData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActiveDurationsData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActiveDurationsData.yaml
       type: object
       properties:
         activity_levels_samples:
@@ -4369,7 +4370,7 @@ components:
           type: number
     CalorieSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/CalorieSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/CalorieSample.yaml
       type: object
       properties:
         timestamp:
@@ -4379,28 +4380,35 @@ components:
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         calories:
           type: number
+          description: Number of calories burned at the given timestamp.
         timer_duration_seconds:
           type: number
+          description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     CaloriesData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/CaloriesData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/CaloriesData.yaml
       type: object
       properties:
         BMR_calories:
-          type: integer
+          type: number
+          description: Basal Metabolic Rate calories - calories burned at rest.
         calorie_samples:
           type: array
           items:
             $ref: '#/components/schemas/CalorieSample'
+          description: Array of calorie data samples recorded throughout the time period.
         net_activity_calories:
-          type: integer
+          type: number
+          description: Net calories burned through activity (excluding BMR).
         net_intake_calories:
-          type: integer
+          type: number
+          description: Net calories consumed through food and drink intake.
         total_burned_calories:
-          type: integer
+          type: number
+          description: Total calories burned including BMR and activity.
     DataEnrichment:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataEnrichment.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataEnrichment.yaml
       type: object
       properties:
         stress_score:
@@ -4408,7 +4416,7 @@ components:
           description: User's stress score.
     DeviceDataType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeviceDataType.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeviceDataType.yaml
       oneOf:
         - type: string
           const: STEPS
@@ -4455,7 +4463,7 @@ components:
       description: Represents data types that a certain device contributed to.
     OtherDeviceData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OtherDeviceData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OtherDeviceData.yaml
       type: object
       properties:
         manufacturer:
@@ -4485,15 +4493,18 @@ components:
           description: Device Software Version.
         activation_timestamp:
           type: string
+          description: Activation timestamp of the device, if applicable.
         data_provided:
           type: array
           items:
             $ref: '#/components/schemas/DeviceDataType'
+          description: Data provided by the device, as enumerated types.
         last_upload_date:
           type: string
+          description: Last upload date from the device.
     DeviceData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeviceData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeviceData.yaml
       type: object
       properties:
         activation_timestamp:
@@ -4544,7 +4555,7 @@ components:
           description: Device Software Version.
     DistanceSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceSample.yaml
       type: object
       properties:
         timestamp:
@@ -4564,7 +4575,7 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     ElevationSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ElevationSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ElevationSample.yaml
       type: object
       properties:
         timestamp:
@@ -4584,7 +4595,7 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     FloorsClimbedSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/FloorsClimbedSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/FloorsClimbedSample.yaml
       type: object
       properties:
         timestamp:
@@ -4604,7 +4615,7 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     StepSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StepSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StepSample.yaml
       type: object
       properties:
         timestamp:
@@ -4614,11 +4625,13 @@ components:
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         steps:
           type: integer
+          description: Cumulative number of steps taken up to associated timestamp, since the start of the payload
         timer_duration_seconds:
           type: number
+          description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     DistanceDataDetailed:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceDataDetailed.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceDataDetailed.yaml
       type: object
       properties:
         distance_samples:
@@ -4643,7 +4656,7 @@ components:
           description: Array of detailed samples of steps performed throughout the workout.
     ElevationData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ElevationData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ElevationData.yaml
       type: object
       properties:
         avg_meters:
@@ -4656,13 +4669,13 @@ components:
           examples:
             - 550
           minimum: 0
-          description: Planned elevation gain for the workout.
+          description: Actual elevation gain of the user throughout the workout - this includes all elevation gain, and does _not_ represent net gain.
         gain_planned_meters:
           type: number
           examples:
             - 500
           minimum: 0
-          description: Elevation gain of the user throughout the workout - this includes all elevation gain, and does _not_ represent net gain.
+          description: Planned elevation gain for the workout.
         loss_actual_meters:
           type: number
           examples:
@@ -4681,7 +4694,7 @@ components:
           description: Minimum elevation of the user during the workout.
     SwimmingData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SwimmingData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SwimmingData.yaml
       type: object
       properties:
         num_laps:
@@ -4704,7 +4717,7 @@ components:
           description: Pool length for associated with the day.
     DistanceDataSummary:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceDataSummary.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceDataSummary.yaml
       type: object
       properties:
         distance_meters:
@@ -4712,7 +4725,7 @@ components:
           description: Total distance covered by the user throughout the workout.
         elevation:
           $ref: '#/components/schemas/ElevationData'
-          description: Average elevation of the user throughout the workout.
+          description: Object containing information on the elevation of the user throughout the workout.
         floors_climbed:
           type: integer
           description: Total number of elevation gain in floors climbed equivalent throughout the workout, as determined by the fitness data provider.
@@ -4724,7 +4737,7 @@ components:
           description: Summary information of the user's swimming statistics for the workout, if applicable.
     DistanceData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DistanceData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceData.yaml
       type: object
       properties:
         detailed:
@@ -4735,22 +4748,22 @@ components:
           description: Object containing summary information related to distance covered throughout the workout.
     EnergyData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/EnergyData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/EnergyData.yaml
       type: object
       properties:
         energy_kilojoules:
           type: number
           examples:
             - 1200
-          description: Total number of kiloJoules planned to be expended during the workout - represents the user's predefined goal for the workout
+          description: Total number of kiloJoules expended during the workout
         energy_planned_kilojoules:
           type: number
           examples:
             - 1150
-          description: Total number of kiloJoules expended during the workout
+          description: Total number of kiloJoules planned to be expended during the workout - represents the user's predefined goal for the workout
     HeartRateContext:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateContext.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateContext.yaml
       oneOf:
         - type: number
           const: 0
@@ -4769,7 +4782,7 @@ components:
       description: Represents the context in which heart rate was measured.
     HeartRateDataSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateDataSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateDataSample.yaml
       type: object
       properties:
         timestamp:
@@ -4792,7 +4805,7 @@ components:
           description: Represents the context in which heart rate was measured.
     HeartRateVariabilityDataSampleRMSSD:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateVariabilityDataSampleRMSSD.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateVariabilityDataSampleRMSSD.yaml
       type: object
       properties:
         timestamp:
@@ -4807,7 +4820,7 @@ components:
           description: User's Heart Rate Variability, computed using RMSSD
     HeartRateVariabilityDataSampleSDNN:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateVariabilityDataSampleSDNN.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateVariabilityDataSampleSDNN.yaml
       type: object
       properties:
         timestamp:
@@ -4822,7 +4835,7 @@ components:
           description: User's Heart Rate Variability, computed using SDNN
     HeartRateDataDetailed:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateDataDetailed.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateDataDetailed.yaml
       type: object
       properties:
         hr_samples:
@@ -4842,7 +4855,7 @@ components:
           description: Array of HeartRate Variability data samples recorded for the user during the workout, computed using SDNN.
     HeartRateZone:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateZone.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateZone.yaml
       oneOf:
         - type: number
           const: 0
@@ -4877,7 +4890,7 @@ components:
       description: Represents the heart rate zone the user is currently in during a workout or activity
     HeartRateZoneData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateZoneData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateZoneData.yaml
       type: object
       properties:
         zone:
@@ -4909,7 +4922,7 @@ components:
           description: Duration spent in the heart rate zone
     HeartRateDataSummary:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateDataSummary.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateDataSummary.yaml
       type: object
       properties:
         avg_hr_bpm:
@@ -4958,7 +4971,7 @@ components:
           description: User's maximum HeartRate based on their age, and other factors as determined by the fitness data provider.
     HeartRateData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartRateData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateData.yaml
       type: object
       properties:
         detailed:
@@ -4969,7 +4982,7 @@ components:
           description: Object containing summary heart rate information for the associated workout.
     StrokeType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StrokeType.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StrokeType.yaml
       oneOf:
         - type: string
           const: other
@@ -4996,7 +5009,7 @@ components:
       description: Stroke type used for the workout step (e.g. breaststroke)
     LapSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LapSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LapSample.yaml
       type: object
       properties:
         calories:
@@ -5041,7 +5054,7 @@ components:
           description: Stroke type - only relevant for swimming activities
     LapData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LapData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LapData.yaml
       type: object
       properties:
         laps:
@@ -5051,7 +5064,7 @@ components:
           description: Array of datapoints for each lap performed by the user during the workout.
     METSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/METSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/METSample.yaml
       type: object
       properties:
         timestamp:
@@ -5061,9 +5074,10 @@ components:
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         level:
           type: number
+          description: Metabolic Equivalent of Task (MET) level at the given timestamp
     METData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/METData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/METData.yaml
       type: object
       properties:
         MET_samples:
@@ -5102,7 +5116,7 @@ components:
           description: Number of minutes spent in Moderate Intensity during the workout - based off MET scale.
     TimestampLocalization:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TimestampLocalization.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TimestampLocalization.yaml
       type: number
       enum:
         - 0
@@ -5112,7 +5126,7 @@ components:
       description: Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC.
     ActivityType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityType.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityType.yaml
       oneOf:
         - type: number
           const: 0
@@ -5679,7 +5693,7 @@ components:
       description: The type of activity performed for the associated workout.
     UploadType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/UploadType.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/UploadType.yaml
       oneOf:
         - type: number
           const: 0
@@ -5712,7 +5726,7 @@ components:
       description: The type of upload for the associated workout, providing information on how the workout data was recorded or entered
     ActivityMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityMetadata.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityMetadata.yaml
       type: object
       properties:
         city:
@@ -5766,7 +5780,7 @@ components:
         - upload_type
     CadenceSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/CadenceSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/CadenceSample.yaml
       type: object
       properties:
         timestamp:
@@ -5776,11 +5790,13 @@ components:
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         cadence_rpm:
           type: number
+          description: User's cadence at a given instant in time, in revolutions per minute
         timer_duration_seconds:
           type: number
+          description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     SpeedSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SpeedSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SpeedSample.yaml
       type: object
       properties:
         timestamp:
@@ -5790,11 +5806,13 @@ components:
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         speed_meters_per_second:
           type: number
+          description: Speed of the user at a given instant in time, in meters per second
         timer_duration_seconds:
           type: number
+          description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     TorqueSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TorqueSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TorqueSample.yaml
       type: object
       properties:
         timestamp:
@@ -5814,7 +5832,7 @@ components:
           description: Torque generated at a given instant in time, in Newton-meters
     MovementData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MovementData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MovementData.yaml
       type: object
       properties:
         adjusted_max_speed_meters_per_second:
@@ -5894,7 +5912,7 @@ components:
           description: Array of the datapoints for the user's torque sampled throughout the workout.
     OxygenSaturationType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationType.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenSaturationType.yaml
       oneOf:
         - type: number
           const: 0
@@ -5909,7 +5927,7 @@ components:
       description: Type of oxygen saturation measurement (i.e. blood vs muscle)
     OxygenSaturationSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenSaturationSample.yaml
       type: object
       properties:
         timestamp:
@@ -5927,7 +5945,7 @@ components:
           description: Type of oxygen saturation measurement (i.e. blood vs muscle)
     Vo2MaxSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Vo2MaxSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Vo2MaxSample.yaml
       type: object
       properties:
         timestamp:
@@ -5942,7 +5960,7 @@ components:
           description: User's VO2Max - maximum amount of oxygen the user's body can utilize during exercise
     OxygenData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenData.yaml
       type: object
       properties:
         avg_saturation_percentage:
@@ -5967,7 +5985,7 @@ components:
           description: VO2Max for the given user.
     PolylineMapData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PolylineMapData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PolylineMapData.yaml
       type: object
       properties:
         summary_polyline:
@@ -5977,7 +5995,7 @@ components:
           description: The polyline representation of the user's trajectory throughout the workout
     PositionSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PositionSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PositionSample.yaml
       type: object
       properties:
         timestamp:
@@ -6001,7 +6019,7 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     PositionData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PositionData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PositionData.yaml
       type: object
       properties:
         center_pos_lat_lng_deg:
@@ -6035,7 +6053,7 @@ components:
           description: Position of the user at the start of the workout, represented by a 2-value array of latitude, longitude, wherein each of the two numbers can be nullable.
     PowerSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PowerSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PowerSample.yaml
       type: object
       properties:
         timestamp:
@@ -6055,7 +6073,7 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     PowerData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PowerData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PowerData.yaml
       type: object
       properties:
         avg_watts:
@@ -6075,7 +6093,7 @@ components:
           description: Array containing datapoints of the power output of the user sampled throughout the workout.
     StrainData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StrainData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StrainData.yaml
       type: object
       properties:
         strain_level:
@@ -6085,24 +6103,30 @@ components:
           description: Level of cardiovascular strain imposed on the user during the day.
     TSSSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TSSSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TSSSample.yaml
       type: object
       properties:
         planned:
           type: number
+          description: Planned Training Stress Score value
         actual:
           type: number
+          description: Actual Training Stress Score value achieved
         method:
           type: string
+          description: Method used to calculate the TSS
         intensity_factor_planned:
           type: number
+          description: Planned intensity factor for the training session
         intensity_factor_actual:
           type: number
+          description: Actual intensity factor achieved during the training session
         normalized_power_watts:
           type: number
+          description: Normalized power output in watts
     TSSData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TSSData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TSSData.yaml
       type: object
       properties:
         TSS_samples:
@@ -6112,7 +6136,7 @@ components:
           description: Array of TSS information sampled throughout the workout
     WorkData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WorkData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WorkData.yaml
       type: object
       properties:
         work_kilojoules:
@@ -6122,7 +6146,7 @@ components:
           description: Total work output of the user for the workout, in kilojoules.
     WebhookEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WebhookEvent.yaml
       type: object
       properties:
         type:
@@ -6136,7 +6160,7 @@ components:
       description: Base webhook event structure that all events extend from
     LargeRequestProcessingEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LargeRequestProcessingEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LargeRequestProcessingEvent.yaml
       type: object
       properties:
         type:
@@ -6166,7 +6190,7 @@ components:
       description: Large request processing event
     BloodPressureSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BloodPressureSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BloodPressureSample.yaml
       type: object
       properties:
         timestamp:
@@ -6186,7 +6210,7 @@ components:
           description: User's systolic blood pressure, in mmHg
     BloodPressureData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BloodPressureData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BloodPressureData.yaml
       type: object
       properties:
         blood_pressure_samples:
@@ -6196,7 +6220,7 @@ components:
           description: List of Blood Pressure measurements sampled throughout the day.
     AFibFlag:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AFibFlag.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AFibFlag.yaml
       oneOf:
         - type: number
           const: 0
@@ -6215,7 +6239,7 @@ components:
       description: Flag indicating the atrial fibrillation classification of the individual
     AFibClassificationSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AFibClassificationSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AFibClassificationSample.yaml
       type: object
       properties:
         timestamp:
@@ -6228,7 +6252,7 @@ components:
           description: Flag indicating the atrial fibrillation classification of the individual
     RawECGSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RawECGSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RawECGSample.yaml
       type: object
       properties:
         potential_uV:
@@ -6243,7 +6267,7 @@ components:
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
     ECGReading:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ECGReading.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ECGReading.yaml
       type: object
       properties:
         start_timestamp:
@@ -6264,7 +6288,7 @@ components:
           description: List of raw ECG readings sampled through the day.
     PulseVelocitySample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PulseVelocitySample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PulseVelocitySample.yaml
       type: object
       properties:
         timestamp:
@@ -6279,7 +6303,7 @@ components:
           description: User's Pulse Wave Velocity measurement - velocity at which the blood pressure pulse propagates through the circulatory system
     RRIntervalSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RRIntervalSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RRIntervalSample.yaml
       type: object
       properties:
         rr_interval_ms:
@@ -6299,7 +6323,7 @@ components:
           description: The heart beat value at that specific instance.
     HeartData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HeartData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartData.yaml
       type: object
       properties:
         afib_classification_samples:
@@ -6327,7 +6351,7 @@ components:
           description: List of RR Interval samples throughout the day.
     HydrationMeasurementSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HydrationMeasurementSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HydrationMeasurementSample.yaml
       type: object
       properties:
         timestamp:
@@ -6342,7 +6366,7 @@ components:
           description: Total body water composition of the user, in kilograms.
     HydrationData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HydrationData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HydrationData.yaml
       type: object
       properties:
         day_total_water_consumption_ml:
@@ -6357,7 +6381,7 @@ components:
           description: User's hydration level samples throughout the day.
     KetoneSampleType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/KetoneSampleType.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/KetoneSampleType.yaml
       oneOf:
         - type: number
           const: 0
@@ -6380,7 +6404,7 @@ components:
       description: Flag indicating the ketone sample type (e.g. blood, breath, urine)
     KetoneSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/KetoneSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/KetoneSample.yaml
       type: object
       properties:
         timestamp:
@@ -6398,7 +6422,7 @@ components:
           description: Flag indicating the ketone sample type (e.g. blood, breath, urine)
     KetoneData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/KetoneData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/KetoneData.yaml
       type: object
       properties:
         ketone_samples:
@@ -6408,7 +6432,7 @@ components:
           description: List of ketone data sampled through the day.
     MeasurementDataSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MeasurementDataSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MeasurementDataSample.yaml
       type: object
       properties:
         measurement_time:
@@ -6500,7 +6524,7 @@ components:
           description: User notes associated with the measurement.
     MeasurementsData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MeasurementsData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MeasurementsData.yaml
       type: object
       properties:
         measurements:
@@ -6510,7 +6534,7 @@ components:
           description: List of body metrics & measurements taken throughout the associated day.
     BodyMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BodyMetadata.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BodyMetadata.yaml
       type: object
       properties:
         end_time:
@@ -6530,7 +6554,7 @@ components:
         - start_time
     TemperatureSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TemperatureSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TemperatureSample.yaml
       type: object
       properties:
         timestamp:
@@ -6545,7 +6569,7 @@ components:
           description: Temperature value in degrees Celsius.
     TemperatureData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TemperatureData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TemperatureData.yaml
       type: object
       properties:
         ambient_temperature_samples:
@@ -6565,7 +6589,7 @@ components:
           description: List of skin temperature measurements sampled throughout the day.
     GlucoseFlag:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseFlag.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GlucoseFlag.yaml
       oneOf:
         - type: number
           const: 0
@@ -6584,7 +6608,7 @@ components:
       description: Flag indicating state of user's blood glucose level
     TrendArrow:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TrendArrow.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TrendArrow.yaml
       oneOf:
         - type: number
           const: 0
@@ -6615,7 +6639,7 @@ components:
       description: Flag indicating the current trend in the user's blood glucose level (e.g. rising, constant, falling)
     GlucoseDataSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseDataSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GlucoseDataSample.yaml
       type: object
       properties:
         timestamp:
@@ -6636,7 +6660,7 @@ components:
           description: Flag indicating the current trend in the user's blood glucose level (e.g. rising, constant, falling)
     DailyPatternSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyPatternSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyPatternSample.yaml
       type: object
       properties:
         time_from_midnight:
@@ -6663,7 +6687,7 @@ components:
           description: Percentile 95 of the glucose level at the given time of day.
     GlucoseData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GlucoseData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GlucoseData.yaml
       type: object
       properties:
         blood_glucose_samples:
@@ -6697,69 +6721,82 @@ components:
           description: List of glucose percentile samples throughout the day.
     DataContributor:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DataContributor.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
       type: object
       properties:
         contributor_name:
           type: string
+          description: Name of the factor contributing to the score.
         contributor_score:
           type: number
+          description: Numerical score representing the contribution of this factor.
       required:
         - contributor_name
         - contributor_score
     DailyDataEnrichment:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyDataEnrichment.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyDataEnrichment.yaml
       type: object
       properties:
         cardiovascular_contributors:
           type: array
           items:
             $ref: '#/components/schemas/DataContributor'
+          description: Array of factors contributing to cardiovascular score.
         cardiovascular_score:
           type: number
+          description: Cardiovascular health score for the day.
         immune_contributors:
           type: array
           items:
             $ref: '#/components/schemas/DataContributor'
+          description: Array of factors contributing to immune index.
         immune_index:
           type: number
+          description: Immune system health index for the day.
         readiness_contributors:
           type: array
           items:
             $ref: '#/components/schemas/DataContributor'
+          description: Array of factors contributing to readiness score.
         readiness_score:
           type: number
+          description: Readiness score for the day.
         respiratory_contributors:
           type: array
           items:
             $ref: '#/components/schemas/DataContributor'
+          description: Array of factors contributing to respiratory score.
         respiratory_score:
           type: number
+          description: Respiratory health score for the day.
         start_time:
           type: string
+          description: Start time for the data enrichment calculation period.
         stress_contributors:
           type: array
           items:
             $ref: '#/components/schemas/DataContributor'
+          description: Array of factors contributing to stress score.
         total_stress_score:
           type: number
+          description: Total stress score for the day.
     DailyDistanceData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyDistanceData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyDistanceData.yaml
       type: object
       properties:
         detailed:
           $ref: '#/components/schemas/DistanceDataDetailed'
           description: Object containing detailed distance information - this may include second-by-second samples.
         distance_meters:
-          type: integer
+          type: number
           examples:
-            - 8500
+            - 8500.45
           description: Total distance covered by the user throughout the day.
         elevation:
           $ref: '#/components/schemas/ElevationData'
-          description: Average elevation of the user throughout the day.
+          description: Object containing information on the elevation of the user throughout the day.
         floors_climbed:
           type: integer
           examples:
@@ -6776,7 +6813,7 @@ components:
           description: Summary information of the user's swimming statistics for the day, if applicable.
     DailyMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyMetadata.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyMetadata.yaml
       type: object
       properties:
         end_time:
@@ -6800,7 +6837,7 @@ components:
         - upload_type
     ScoresData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ScoresData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ScoresData.yaml
       type: object
       properties:
         activity:
@@ -6824,9 +6861,16 @@ components:
           minimum: 0
           maximum: 100
           description: Sleep score for the given day, pertaining to the previous night's sleep.
+        biological_age:
+          type: number
+          examples:
+            - 27
+          minimum: 0
+          maximum: 100
+          description: Biological age computed for the given day.
     StressSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StressSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StressSample.yaml
       type: object
       properties:
         timestamp:
@@ -6836,9 +6880,10 @@ components:
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         level:
           type: number
+          description: Stress level measurement at the given timestamp
     StressLevel:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StressLevel.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StressLevel.yaml
       oneOf:
         - type: number
           const: 0
@@ -6865,7 +6910,7 @@ components:
       description: Represents stress level ranges.
     BodyBatterySample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BodyBatterySample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BodyBatterySample.yaml
       type: object
       properties:
         timestamp:
@@ -6875,9 +6920,10 @@ components:
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         level:
           type: number
+          description: Body battery energy level at the given timestamp
     StressData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/StressData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StressData.yaml
       type: object
       properties:
         avg_stress_level:
@@ -6930,7 +6976,7 @@ components:
           examples:
             - 5400
           minimum: 0
-          description: Total number of seconds spent in a stressed state while at rest during the day.
+          description: Total number of seconds spent in any stressed state during the day.
         stress_rating:
           $ref: '#/components/schemas/StressLevel'
           description: Stress rating for the day.
@@ -6941,7 +6987,7 @@ components:
           description: Array of Body Battery data points sampled throughout the day.
     TagEntry:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TagEntry.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TagEntry.yaml
       type: object
       properties:
         timestamp:
@@ -6965,7 +7011,7 @@ components:
         - notes
     TagData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/TagData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TagData.yaml
       type: object
       properties:
         tags:
@@ -6975,7 +7021,7 @@ components:
           description: Array of user-entered tags for the day.
     MenstruationMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationMetadata.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationMetadata.yaml
       type: object
       properties:
         end_time:
@@ -6995,7 +7041,7 @@ components:
         - start_time
     MenstrualPhase:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstrualPhase.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstrualPhase.yaml
       oneOf:
         - type: string
           const: menstrual
@@ -7042,7 +7088,7 @@ components:
       description: Represents menstrual cycle phases.
     MenstruationFlow:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationFlow.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationFlow.yaml
       oneOf:
         - type: number
           const: 0
@@ -7073,7 +7119,7 @@ components:
       description: Flag indicating the strength of the user's menstrual flow
     MenstruationFlowSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationFlowSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationFlowSample.yaml
       type: object
       properties:
         timestamp:
@@ -7086,7 +7132,7 @@ components:
           description: Flag indicating the strength of the user's menstrual flow.
     MenstruationData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationData.yaml
       type: object
       properties:
         period_length_days:
@@ -7131,7 +7177,7 @@ components:
           type: string
           examples:
             - '28'
-          description: Total cycle length.
+          description: Total cycle length in days.
         is_predicted_cycle:
           type: string
           examples:
@@ -7144,7 +7190,7 @@ components:
           description: List of user logs of information related to the strength of user's menstrual flow.
     DrinkSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DrinkSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DrinkSample.yaml
       type: object
       properties:
         timestamp:
@@ -7169,7 +7215,7 @@ components:
           description: Name of drink consumed.
     NutritionMicros:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMicros.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionMicros.yaml
       type: object
       properties:
         biotin_mg:
@@ -7404,7 +7450,7 @@ components:
           description: Starch content of the associated food(s).
     MealType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MealType.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MealType.yaml
       oneOf:
         - type: number
           const: 0
@@ -7439,7 +7485,7 @@ components:
       description: Enum representing the category the consumed food/meal falls under (i.e. Breakfast/Lunch/Dinner etc)
     NutritionUnits:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionUnits.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionUnits.yaml
       oneOf:
         - type: number
           const: 0
@@ -7498,7 +7544,7 @@ components:
       description: Represents units used for nutrition measurements
     NutritionQuantity:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionQuantity.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionQuantity.yaml
       type: object
       properties:
         unit:
@@ -7510,7 +7556,7 @@ components:
         - amount
     NutritionMacros:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMacros.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionMacros.yaml
       type: object
       properties:
         alcohol_g:
@@ -7575,7 +7621,7 @@ components:
           description: Trans fat content of the associated food(s).
     Meal:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/Meal.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Meal.yaml
       type: object
       properties:
         micros:
@@ -7615,7 +7661,7 @@ components:
         - macros
     NutritionMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionMetadata.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionMetadata.yaml
       type: object
       properties:
         end_time:
@@ -7635,7 +7681,7 @@ components:
         - start_time
     NutritionSummary:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionSummary.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionSummary.yaml
       type: object
       properties:
         macros:
@@ -7656,7 +7702,7 @@ components:
           description: Non-water drink consumption of the user for a given day.
     SleepDataEnrichment:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepDataEnrichment.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepDataEnrichment.yaml
       type: object
       properties:
         sleep_contributors:
@@ -7667,7 +7713,7 @@ components:
           type: number
     SleepUploadType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepUploadType.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepUploadType.yaml
       oneOf:
         - type: number
           const: 0
@@ -7694,7 +7740,7 @@ components:
       description: The upload type for the associated workout, providing information on whether this was an automatic workout or user-entered
     SleepMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepMetadata.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepMetadata.yaml
       type: object
       properties:
         end_time:
@@ -7726,7 +7772,7 @@ components:
         - upload_type
     RecoveryLevel:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RecoveryLevel.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RecoveryLevel.yaml
       oneOf:
         - type: number
           const: 0
@@ -7761,7 +7807,7 @@ components:
       description: User's recovery score for a given day, resulting from the sleep session
     ReadinessData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ReadinessData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ReadinessData.yaml
       type: object
       properties:
         readiness:
@@ -7776,7 +7822,7 @@ components:
           description: User's recovery score for a given day, resulting from the sleep session - takes Enum value.
     BreathSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BreathSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BreathSample.yaml
       type: object
       properties:
         timestamp:
@@ -7791,7 +7837,7 @@ components:
           description: User's respiration rate
     BreathsData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BreathsData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BreathsData.yaml
       type: object
       properties:
         avg_breaths_per_min:
@@ -7831,7 +7877,7 @@ components:
           description: The end time of the recording of breathing rate data, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
     OxygenSaturationData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OxygenSaturationData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenSaturationData.yaml
       type: object
       properties:
         avg_saturation_percentage:
@@ -7856,7 +7902,7 @@ components:
           description: The start time of the recording of oxygen saturation, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
     SnoringSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SnoringSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SnoringSample.yaml
       type: object
       properties:
         timestamp:
@@ -7871,7 +7917,7 @@ components:
           description: Duration of snoring episode, in seconds
     SnoringData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SnoringData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SnoringData.yaml
       type: object
       properties:
         start_time:
@@ -7901,7 +7947,7 @@ components:
           description: Total duration for which the user was snoring.
     RespirationData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RespirationData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RespirationData.yaml
       type: object
       properties:
         breaths_data:
@@ -7915,7 +7961,7 @@ components:
           description: Object containing information on snoring metrics for the sleep session.
     AsleepDurations:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AsleepDurations.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AsleepDurations.yaml
       type: object
       properties:
         duration_asleep_state_seconds:
@@ -7945,7 +7991,7 @@ components:
           description: Number of periods of REM sleep captured during the sleep session.
     AwakeDurations:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AwakeDurations.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AwakeDurations.yaml
       type: object
       properties:
         duration_awake_state_seconds:
@@ -7985,7 +8031,7 @@ components:
           description: Wake up latency, defined as time between the moment the user wakes up and the moment they get out of bed.
     SleepLevel:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepLevel.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepLevel.yaml
       oneOf:
         - type: number
           const: 0
@@ -8020,7 +8066,7 @@ components:
       description: Represents the sleep level of the user during a sleep session, indicating the depth and quality of sleep
     SleepHypnogramSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepHypnogramSample.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepHypnogramSample.yaml
       type: object
       properties:
         timestamp:
@@ -8032,7 +8078,7 @@ components:
           $ref: '#/components/schemas/SleepLevel'
     OtherSleepDurations:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/OtherSleepDurations.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OtherSleepDurations.yaml
       type: object
       properties:
         duration_in_bed_seconds:
@@ -8047,7 +8093,7 @@ components:
           description: Total duration during which the user's state (awake, asleep, REM, etc) was unmeasurable during the sleep session.
     SleepDurationsData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepDurationsData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepDurationsData.yaml
       type: object
       properties:
         asleep:
@@ -8073,7 +8119,7 @@ components:
           description: Sleep efficiency of the user given as a percentage, measured as time spent asleep divided by time spent in bed.
     SleepTemperatureData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepTemperatureData.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepTemperatureData.yaml
       type: object
       properties:
         delta:
@@ -8083,7 +8129,7 @@ components:
           description: Variation in user's skin temperature from their baseline.
     HealthcheckEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/HealthcheckEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HealthcheckEvent.yaml
       type: object
       properties:
         type:
@@ -8112,7 +8158,7 @@ components:
       description: Healthcheck event sent periodically to verify your webhook endpoint is functional
     AuthEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AuthEvent.yaml
       type: object
       properties:
         type:
@@ -8129,7 +8175,7 @@ components:
       description: Authentication event
     AuthSuccessEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthSuccessEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AuthSuccessEvent.yaml
       type: object
       properties:
         status:
@@ -8155,7 +8201,7 @@ components:
       description: Authentication success event
     AuthErrorEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AuthErrorEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AuthErrorEvent.yaml
       type: object
       properties:
         status:
@@ -8193,7 +8239,7 @@ components:
       description: Authentication error event
     DeauthEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DeauthEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeauthEvent.yaml
       type: object
       properties:
         type:
@@ -8219,7 +8265,7 @@ components:
       description: User deauthentication event
     UserReauthEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/UserReauthEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/UserReauthEvent.yaml
       type: object
       properties:
         type:
@@ -8249,7 +8295,7 @@ components:
       description: User re-authentication event
     AccessRevokedEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AccessRevokedEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AccessRevokedEvent.yaml
       type: object
       properties:
         type:
@@ -8275,7 +8321,7 @@ components:
       description: Access revoked event when a user revokes access through the provider
     ConnectionErrorEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ConnectionErrorEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ConnectionErrorEvent.yaml
       type: object
       properties:
         type:
@@ -8301,7 +8347,7 @@ components:
       description: Connection error event
     GoogleNoDatasourceEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/GoogleNoDatasourceEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GoogleNoDatasourceEvent.yaml
       type: object
       properties:
         type:
@@ -8327,7 +8373,7 @@ components:
       description: Google no datasource event
     ProcessingEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ProcessingEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ProcessingEvent.yaml
       type: object
       properties:
         type:
@@ -8357,7 +8403,7 @@ components:
       description: Processing event returned when data is being fetched asynchronously
     LargeRequestSendingEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/LargeRequestSendingEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LargeRequestSendingEvent.yaml
       type: object
       properties:
         type:
@@ -8386,7 +8432,7 @@ components:
       description: Large request sending event
     RateLimitHitEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/RateLimitHitEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RateLimitHitEvent.yaml
       type: object
       properties:
         type:
@@ -8419,7 +8465,7 @@ components:
       description: Rate limit hit event
     S3PayloadEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/S3PayloadEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/S3PayloadEvent.yaml
       type: object
       properties:
         type:
@@ -8445,7 +8491,7 @@ components:
       description: S3 Upload event with data download URL
     ActivityEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/ActivityEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityEvent.yaml
       type: object
       properties:
         type:
@@ -8472,7 +8518,7 @@ components:
       description: Activity data event
     AthleteEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/AthleteEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AthleteEvent.yaml
       type: object
       properties:
         type:
@@ -8497,7 +8543,7 @@ components:
       description: Athlete data event
     NutritionEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/NutritionEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionEvent.yaml
       type: object
       properties:
         type:
@@ -8524,7 +8570,7 @@ components:
       description: Nutrition data event
     DailyEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/DailyEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyEvent.yaml
       type: object
       properties:
         type:
@@ -8551,7 +8597,7 @@ components:
       description: Daily data event
     SleepEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/SleepEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepEvent.yaml
       type: object
       properties:
         type:
@@ -8578,7 +8624,7 @@ components:
       description: Sleep data event
     MenstruationEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/MenstruationEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationEvent.yaml
       type: object
       properties:
         type:
@@ -8605,7 +8651,7 @@ components:
       description: Menstruation data event
     BodyEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/BodyEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BodyEvent.yaml
       type: object
       properties:
         type:
@@ -8632,7 +8678,7 @@ components:
       description: Body data event
     PermissionChangeEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/PermissionChangeEvent.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PermissionChangeEvent.yaml
       type: object
       properties:
         type:
@@ -8670,7 +8716,7 @@ components:
       description: Permission change event
     WebhookEventType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/v5-update/schemas/WebhookEventType.yaml
+      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WebhookEventType.yaml
       oneOf:
         - $ref: '#/components/schemas/HealthcheckEvent'
         - $ref: '#/components/schemas/AuthSuccessEvent'
