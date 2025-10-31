@@ -26,7 +26,7 @@ model Sleep {
     @doc("User's sleep score")
     scores?: {
         @doc("User's sleep score.")
-        sleep_score?: float;
+        sleep?: float;
     };
 
     @doc("Object containing information on the user's duration spent in various sleep stages.")

@@ -23,7 +23,7 @@ properties:
   scores:
     type: object
     properties:
-      sleep_score:
+      sleep:
         type: number
         description: User's sleep score.
     description: User's sleep score
