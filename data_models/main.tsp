@@ -11,6 +11,7 @@ import "./specs/data_models/Menstruation.tsp";
 import "./specs/data_models/Athlete.tsp";
 import "./specs/data_models/Body.tsp";
 import "./specs/data_models/Events.tsp";
+import "./specs/data_models/PlannedWorkouts.tsp";
 
 using JsonSchema;
 
