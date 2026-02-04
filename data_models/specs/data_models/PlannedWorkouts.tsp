@@ -87,7 +87,7 @@ enum TargetType {
 
   // TrainingPeaks-style targets
   tss: "tss",
-  if: "if",
+  `if`: "if",
 }
 
 /** Weight unit */
@@ -168,7 +168,7 @@ model StrengthData {
 }
 
 /** Swimming data attached to a step (only valid when using swimming sport types) */
-model SwimmingData {
+model SwimmingStepData {
   /** Swim stroke focus */
   stroke?: SwimStroke;
 
@@ -194,7 +194,7 @@ model WorkoutStep {
   strength?: StrengthData;
 
   /** Optional swimming payload (swimming sport types only) */
-  swimming?: SwimmingData;
+  swimming?: SwimmingStepData;
 }
 
 /** A block of steps that can repeat */
@@ -396,10 +396,10 @@ namespace PlannedWorkouts {
    * PATCH /v2/plannedWorkouts/{ID}?user_id=USER_ID
    */
   @patch
-  @route("/{plannedWorkoutId}")
+  @route("/{planned_workout_id}")
   op updatePlannedWorkout(
     ...TerraHeaders,
-    @path plannedWorkoutId: string,
+    @path planned_workout_id: string,
     @query user_id: string,
     @body body: UpdatePlannedWorkoutRequest
   ): UpdatePlannedWorkoutResponse | {
@@ -416,10 +416,10 @@ namespace PlannedWorkouts {
    * DELETE /v2/plannedWorkouts/{ID}?user_id=USER_ID
    */
   @delete
-  @route("/{plannedWorkoutId}")
+  @route("/{planned_workout_id}")
   op deletePlannedWorkout(
     ...TerraHeaders,
-    @path plannedWorkoutId: string,
+    @path planned_workout_id: string,
     @query user_id: string
   ): DeletePlannedWorkoutResponse | {
     @statusCode statusCode: 404;
