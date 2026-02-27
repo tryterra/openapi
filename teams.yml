@@ -205,18 +205,30 @@ paths:
           required: true
           schema:
             type: string
-        - name: start_time
+        - name: start_date
           in: query
-          required: false
+          required: true
+          description: Start date for the query range (YYYY-MM-DD).
           schema:
             type: string
-            format: date-time
-        - name: end_time
+            format: date
+            example: '2025-01-01'
+        - name: end_date
           in: query
           required: false
+          description: End date for the query range (YYYY-MM-DD). Defaults to start_date + 1 day if omitted.
           schema:
             type: string
-            format: date-time
+            format: date
+            example: '2025-01-07'
+        - name: to_destination
+          in: query
+          required: false
+          description: When `true`, data is sent asynchronously to your configured webhook and the endpoint returns HTTP 202 with a reference ID. When `false` (default), data is returned inline in the response body.
+          schema:
+            type: string
+            enum: ['true', 'false']
+            default: 'false'
       responses:
         '200':
           description: "List of activities within the specified time range for all athletes under the coach"
@@ -231,6 +243,12 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/TeamActivity'
+        '202':
+          description: Data dispatch accepted. Returned when `to_destination=true`. Data will be sent to your configured webhook.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSentToDestination'
       tags:
         - Coaches
   /coaches/{coachId}/activities/metrics/schema:
@@ -245,6 +263,14 @@ paths:
           schema:
             type: string
           description: Unique identifier of the coach.
+        - name: to_destination
+          in: query
+          required: false
+          description: When `true`, data is sent asynchronously to your configured webhook and the endpoint returns HTTP 202 with a reference ID. When `false` (default), data is returned inline in the response body.
+          schema:
+            type: string
+            enum: ['true', 'false']
+            default: 'false'
       responses:
         '200':
           description: Schema retrieved successfully.
@@ -259,6 +285,12 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/MetricSchema'
+        '202':
+          description: Data dispatch accepted. Returned when `to_destination=true`. Data will be sent to your configured webhook.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSentToDestination'
         '404':
           description: Coach not found.
           content:
@@ -277,18 +309,30 @@ paths:
           required: true
           schema:
             type: string
-        - name: start_time
+        - name: start_date
           in: query
-          required: false
+          required: true
+          description: Start date for the query range (YYYY-MM-DD).
           schema:
             type: string
-            format: date-time
-        - name: end_time
+            format: date
+            example: '2025-01-01'
+        - name: end_date
           in: query
           required: false
+          description: End date for the query range (YYYY-MM-DD). Defaults to start_date + 1 day if omitted.
           schema:
             type: string
-            format: date-time
+            format: date
+            example: '2025-01-07'
+        - name: to_destination
+          in: query
+          required: false
+          description: When `true`, data is sent asynchronously to your configured webhook and the endpoint returns HTTP 202 with a reference ID. When `false` (default), data is returned inline in the response body.
+          schema:
+            type: string
+            enum: ['true', 'false']
+            default: 'false'
       responses:
         '200':
           description: "List of tests within the specified time range for all athletes under the coach"
@@ -303,6 +347,59 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/Test'
+        '202':
+          description: Data dispatch accepted. Returned when `to_destination=true`. Data will be sent to your configured webhook.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSentToDestination'
+      tags:
+        - Coaches
+  /coaches/{coachId}/tests/search:
+    post:
+      operationId: searchTestsForCoach
+      summary: Search and filter tests for a specific coach
+      description: Returns tests matching the specified filters. Allows filtering by time range and athlete IDs.
+      parameters:
+        - name: coachId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: to_destination
+          in: query
+          required: false
+          description: When `true`, data is sent asynchronously to your configured webhook and the endpoint returns HTTP 202 with a reference ID. When `false` (default), data is returned inline in the response body.
+          schema:
+            type: string
+            enum: ['true', 'false']
+            default: 'false'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestSearchQuery'
+      responses:
+        '200':
+          description: Filtered list of tests matching the query.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CoachDataReturned'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Test'
+        '202':
+          description: Data dispatch accepted. Returned when `to_destination=true`. Data will be sent to your configured webhook.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSentToDestination'
       tags:
         - Coaches
   /athletes:
@@ -429,6 +526,52 @@ components:
       in: header
       name: dev-id
   schemas:
+    DataSentToDestination:
+      type: object
+      description: Returned when `to_destination=true`. Confirms that data retrieval has been queued and will be delivered to your webhook.
+      properties:
+        coach:
+          $ref: '#/components/schemas/Coach'
+        reference:
+          type: string
+          format: uuid
+          description: Unique reference ID for this dispatch. Can be used to correlate the subsequent webhook delivery.
+          example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+        message:
+          type: string
+          description: Human-readable confirmation message.
+          example: 'Data dispatched to destination'
+        type:
+          type: string
+          description: The type of data being dispatched.
+          enum:
+            - test.dispatched
+            - activity.dispatched
+            - activity.metric.dispatched
+          example: 'activity.dispatched'
+    TestSearchQuery:
+      type: object
+      description: Query body for filtering tests.
+      required:
+        - start_time
+        - end_time
+      properties:
+        start_time:
+          type: string
+          format: date
+          description: Start date for the query range (YYYY-MM-DD).
+          example: '2025-01-01'
+        end_time:
+          type: string
+          format: date
+          description: End date for the query range (YYYY-MM-DD).
+          example: '2025-01-07'
+        athlete_ids:
+          type: array
+          description: Optional list of athlete IDs to filter results. If omitted, returns tests for all athletes.
+          items:
+            type: string
+          example: ['athlete-abc-123', 'athlete-def-456']
     WidgetSessionParams:
       type: object
       properties:
