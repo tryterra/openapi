@@ -1,0 +1,862 @@
+openapi: 3.1.0
+info:
+  title: Terra Workouts + Planned Workouts API
+  version: 0.0.0
+tags: []
+paths:
+  /plannedWorkouts:
+    get:
+      operationId: PlannedWorkouts_listPlannedWorkouts
+      description: |-
+        List planned workouts
+
+        GET /plannedWorkouts?user_id=USER_ID&start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+      parameters:
+        - $ref: '#/components/parameters/TerraHeaders.devId'
+        - $ref: '#/components/parameters/TerraHeaders.apiKey'
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          explode: false
+        - name: start_date
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: end_date
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPlannedWorkoutsResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+  /plannedWorkouts/{planned_workout_id}:
+    get:
+      operationId: PlannedWorkouts_getPlannedWorkout
+      description: |-
+        Get a planned workout by ID
+
+        GET /plannedWorkouts/{planned_workout_id}
+      parameters:
+        - $ref: '#/components/parameters/TerraHeaders.devId'
+        - $ref: '#/components/parameters/TerraHeaders.apiKey'
+        - name: planned_workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlannedWorkout'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+    patch:
+      operationId: PlannedWorkouts_updatePlannedWorkout
+      description: |-
+        Update a planned workout
+
+        PATCH /plannedWorkouts/{planned_workout_id}?user_id=USER_ID
+      parameters:
+        - $ref: '#/components/parameters/TerraHeaders.devId'
+        - $ref: '#/components/parameters/TerraHeaders.apiKey'
+        - name: planned_workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdatePlannedWorkoutResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+        '424':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlannedWorkoutRequest'
+    delete:
+      operationId: PlannedWorkouts_deletePlannedWorkout
+      description: |-
+        Delete a planned workout
+
+        DELETE /plannedWorkouts/{planned_workout_id}?user_id=USER_ID
+      parameters:
+        - $ref: '#/components/parameters/TerraHeaders.devId'
+        - $ref: '#/components/parameters/TerraHeaders.apiKey'
+        - name: planned_workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          explode: false
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+  /workouts:
+    post:
+      operationId: Workouts_createWorkoutTemplate
+      description: |-
+        Create a workout template
+
+        POST /workouts
+      parameters:
+        - $ref: '#/components/parameters/TerraHeaders.devId'
+        - $ref: '#/components/parameters/TerraHeaders.apiKey'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateWorkoutTemplateResponse'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkoutTemplateRequest'
+  /workouts/{workout_id}/plan:
+    post:
+      operationId: Workouts_planWorkout
+      description: |-
+        Plan (schedule) a workout for an athlete
+
+        POST /workouts/{workout_id}/plan?user_id=USER_ID
+      parameters:
+        - $ref: '#/components/parameters/TerraHeaders.devId'
+        - $ref: '#/components/parameters/TerraHeaders.apiKey'
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          explode: false
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanWorkoutResponse'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+        '424':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanWorkoutRequest'
+security:
+  - ApiKeyAuth: []
+    ApiKeyAuth_: []
+components:
+  parameters:
+    TerraHeaders.apiKey:
+      name: x-api-key
+      in: header
+      required: true
+      schema:
+        type: string
+    TerraHeaders.devId:
+      name: dev-id
+      in: header
+      required: true
+      schema:
+        type: string
+  schemas:
+    CoercionWarning:
+      type: object
+      required:
+        - path
+        - message
+      properties:
+        path:
+          type: string
+          description: JSON path to the field that was coerced (e.g., "step_blocks[0].steps[0].intensity_targets")
+        message:
+          type: string
+          description: Human-readable warning message describing what was coerced
+      description: Coercion warning returned when workout features cannot be fully represented
+    CompletionCondition:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          allOf:
+            - $ref: '#/components/schemas/CompletionConditionType'
+          description: Type of completion condition
+        value:
+          type: number
+          format: float
+          minimum: 0
+          description: Value for the completion condition (e.g., 1800 seconds, 5000 meters, 10 reps)
+      description: Completion condition defining how a step ends
+    CompletionConditionType:
+      type: string
+      enum:
+        - time
+        - distance
+        - calories
+        - reps
+        - open
+        - hr_less_than
+        - hr_greater_than
+        - power_less_than
+        - power_greater_than
+      description: Completion condition type - how a step ends
+    CreateWorkoutTemplateRequest:
+      type: object
+      required:
+        - name
+        - sport
+        - step_blocks
+      properties:
+        name:
+          type: string
+          description: Workout name/title
+        sport:
+          allOf:
+            - $ref: '#/components/schemas/SportType'
+          description: Sport/activity type
+        step_blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/StepBlock'
+          description: Blocks of steps that make up the workout
+        description:
+          type: string
+          description: Optional workout description
+        environment:
+          allOf:
+            - $ref: '#/components/schemas/EnvironmentType'
+          description: Indoor/outdoor/pool environment
+        pool_length_meters:
+          type: number
+          format: float
+          minimum: 0
+          description: 'For lap_swimming: pool length in meters (can be overridden at scheduling time)'
+        estimated_duration_seconds:
+          type: number
+          format: float
+          description: Estimated total duration in seconds (read-only, populated on retrieval)
+        estimated_distance_meters:
+          type: number
+          format: float
+          description: Estimated total distance in meters (read-only, populated on retrieval)
+        estimated_calories:
+          type: number
+          format: float
+          description: Estimated total calories (read-only, populated on retrieval)
+      description: Request to create a workout template
+    CreateWorkoutTemplateResponse:
+      type: object
+      required:
+        - status
+        - workout_id
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+        workout_id:
+          type: string
+      description: Response from creating a workout template
+    DrillType:
+      type: string
+      enum:
+        - kick
+        - pull
+        - drill
+      description: Swimming drill type
+    EnvironmentType:
+      type: string
+      enum:
+        - indoor
+        - outdoor
+        - pool
+      description: Environment type for the workout (indoor/outdoor/pool)
+    IntensityTarget:
+      type: object
+      required:
+        - target_type
+      properties:
+        target_type:
+          allOf:
+            - $ref: '#/components/schemas/TargetType'
+          description: Type of target
+        value:
+          type: number
+          format: float
+          minimum: 0
+          description: |-
+            Exact value target. Use for target types that take a single value (e.g., rpe, zone, repetition).
+            Cannot be combined with value_low/value_high.
+        value_low:
+          type: number
+          format: float
+          minimum: 0
+          description: |-
+            Low end of target range. Use for target types that take a range (e.g., speed, heart_rate, power).
+            Cannot be combined with value.
+        value_high:
+          type: number
+          format: float
+          minimum: 0
+          description: |-
+            High end of target range. Use for target types that take a range.
+            Cannot be combined with value. Must be greater than value_low if both are provided.
+      description: |-
+        Intensity target for a workout step.
+
+        **Important**: Use EITHER `value` (exact target) OR `value_low`/`value_high` (range target), never both.
+
+        - **No value targets**: `open` — no fields needed
+        - **Exact value targets**: `repetition`, `rpe`, `heart_rate_zone`, `power_zone`, `tss`, `if`, `swim_stroke` — use `value` only
+        - **Range targets**: `speed`, `pace`, `heart_rate`, `power`, `cadence`, all `*_percentage`, `*_lap` — use `value_low` and/or `value_high`
+
+        Specifying both `value` and `value_low`/`value_high` will return a 400 error.
+      examples:
+        - target_type: open
+        - target_type: rpe
+          value: 7
+        - target_type: heart_rate
+          value_low: 140
+          value_high: 160
+    IntensityType:
+      type: string
+      enum:
+        - warmup
+        - active
+        - rest
+        - recovery
+        - cooldown
+      description: Intensity type for a workout step
+    ListPlannedWorkoutsResponse:
+      type: object
+      required:
+        - planned_workouts
+      properties:
+        planned_workouts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlannedWorkout'
+      description: Response from listing planned workouts
+    PlanWorkoutRequest:
+      type: object
+      required:
+        - planned_date
+      properties:
+        planned_date:
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: Planned/scheduled date in YYYY-MM-DD format
+        threshold_heart_rate:
+          type: number
+          format: float
+          minimum: 0
+          description: |-
+            User's threshold heart rate in BPM.
+            Used to resolve heart_rate_threshold_percentage targets when the device doesn't support native percentages.
+        max_heart_rate:
+          type: number
+          format: float
+          minimum: 0
+          description: |-
+            User's maximum heart rate in BPM.
+            Used to resolve heart_rate_max_percentage targets when the device doesn't support native percentages.
+        threshold_speed:
+          type: number
+          format: float
+          minimum: 0
+          description: |-
+            User's threshold speed in m/s.
+            Used to resolve speed_percentage targets when the device doesn't support native percentages.
+        ftp:
+          type: number
+          format: float
+          minimum: 0
+          description: |-
+            User's functional threshold power in watts.
+            Used to resolve power_percentage targets when the device doesn't support native percentages.
+        pool_length_meters:
+          type: number
+          format: float
+          minimum: 0
+          description: |-
+            Pool length in meters (overrides template value for lap swimming workouts).
+            If not provided, uses the value from the workout template.
+      description: Request body to plan (schedule) a workout for an athlete
+    PlanWorkoutResponse:
+      type: object
+      required:
+        - status
+        - planned_workout_id
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+        planned_workout_id:
+          type: string
+        provider_workout_id:
+          type: string
+        coercion_warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoercionWarning'
+      description: Response from planning a workout
+    PlannedWorkout:
+      type: object
+      required:
+        - planned_workout_id
+        - planned_date
+        - is_external
+        - created_at
+        - last_updated_at
+      properties:
+        planned_workout_id:
+          type: string
+        workout_id:
+          type: string
+        planned_date:
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}$
+        provider_workout_id:
+          type: string
+        coercion_warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoercionWarning'
+        is_external:
+          type: boolean
+        created_at:
+          type: string
+        last_updated_at:
+          type: string
+      description: Individual planned workout in list/get response
+    SportType:
+      type: string
+      enum:
+        - running
+        - cycling
+        - swimming
+        - strength
+        - rowing
+        - yoga
+        - pilates
+        - cardio
+      description: Sport type for the workout. Use the `environment` field on the template for indoor/outdoor/pool distinction.
+    StepBlock:
+      type: object
+      required:
+        - steps
+      properties:
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkoutStep'
+          description: Steps within this block
+        completion_condition:
+          allOf:
+            - $ref: '#/components/schemas/CompletionCondition'
+          description: |-
+            Completion condition for the block (controls repeats).
+
+            Examples:
+            - `{ "type": "reps", "value": 4 }` - Repeat block 4 times
+            - `{ "type": "time", "value": 1200 }` - Repeat until 20 minutes total
+            - `{ "type": "distance", "value": 5000 }` - Repeat until 5km total
+            - `{ "type": "open" }` - No repeat (single execution)
+
+            If omitted, the block executes once (no repeat).
+      description: A block of steps that can repeat
+    StrengthData:
+      type: object
+      properties:
+        exercise_name:
+          type: string
+          description: Name of exercise shown to the athlete
+        weight:
+          type: number
+          format: float
+          minimum: 0
+          description: Load used for the exercise
+        weight_display_unit:
+          allOf:
+            - $ref: '#/components/schemas/WeightUnit'
+          description: Display unit for weight
+      description: Strength data attached to a step (only valid when sport is strength)
+    SwimEquipment:
+      type: string
+      enum:
+        - none
+        - kickboard
+        - paddles
+        - pull_buoy
+        - fins
+        - snorkel
+      description: Swimming equipment values
+    SwimStroke:
+      type: string
+      enum:
+        - freestyle
+        - backstroke
+        - breaststroke
+        - butterfly
+        - mixed
+        - drill
+        - im
+      description: Swimming stroke values
+    SwimmingStepData:
+      type: object
+      properties:
+        stroke:
+          allOf:
+            - $ref: '#/components/schemas/SwimStroke'
+          description: Swim stroke focus
+        drill_type:
+          allOf:
+            - $ref: '#/components/schemas/DrillType'
+          description: Drill type (when stroke is drill)
+        equipment:
+          allOf:
+            - $ref: '#/components/schemas/SwimEquipment'
+          description: Optional swim equipment
+      description: Swimming data attached to a step (only valid when using swimming sport type)
+    TargetType:
+      type: string
+      enum:
+        - open
+        - speed
+        - pace
+        - heart_rate
+        - heart_rate_max_percentage
+        - heart_rate_threshold_percentage
+        - heart_rate_zone
+        - heart_rate_lap
+        - power
+        - power_percentage
+        - power_zone
+        - cadence
+        - rpe
+        - speed_percentage
+        - speed_lap
+        - swim_stroke
+        - repetition
+        - tss
+        - if
+      description: Target type for intensity
+    UpdatePlannedWorkoutRequest:
+      type: object
+      required:
+        - planned_date
+      properties:
+        planned_date:
+          type: string
+          pattern: ^\d{4}-\d{2}-\d{2}$
+          description: New planned date in YYYY-MM-DD format
+      description: Request to update a planned workout
+    UpdatePlannedWorkoutResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+        planned_workout_id:
+          type: string
+        coercion_warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoercionWarning'
+      description: Response from updating a planned workout
+    WeightUnit:
+      type: string
+      enum:
+        - kg
+        - lbs
+      description: Weight unit
+    WorkoutStep:
+      type: object
+      required:
+        - completion_condition
+        - intensity_type
+      properties:
+        completion_condition:
+          allOf:
+            - $ref: '#/components/schemas/CompletionCondition'
+          description: How this step completes
+        intensity_type:
+          allOf:
+            - $ref: '#/components/schemas/IntensityType'
+          description: Intensity type for this step
+        intensity_targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntensityTarget'
+          description: Target intensities for this step (heart rate, power, pace, etc.)
+        notes:
+          type: string
+          description: Optional notes shown to the athlete
+        strength:
+          allOf:
+            - $ref: '#/components/schemas/StrengthData'
+          description: Optional strength payload (strength sport only)
+        swimming:
+          allOf:
+            - $ref: '#/components/schemas/SwimmingStepData'
+          description: Optional swimming payload (swimming sport only)
+      description: A single workout step within a step block
+    WorkoutTemplate:
+      type: object
+      required:
+        - name
+        - sport
+        - step_blocks
+      properties:
+        name:
+          type: string
+          description: Workout name/title
+        sport:
+          allOf:
+            - $ref: '#/components/schemas/SportType'
+          description: Sport/activity type
+        step_blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/StepBlock'
+          description: Blocks of steps that make up the workout
+        description:
+          type: string
+          description: Optional workout description
+        environment:
+          allOf:
+            - $ref: '#/components/schemas/EnvironmentType'
+          description: Indoor/outdoor/pool environment
+        pool_length_meters:
+          type: number
+          format: float
+          minimum: 0
+          description: 'For lap_swimming: pool length in meters (can be overridden at scheduling time)'
+        estimated_duration_seconds:
+          type: number
+          format: float
+          description: Estimated total duration in seconds (read-only, populated on retrieval)
+        estimated_distance_meters:
+          type: number
+          format: float
+          description: Estimated total distance in meters (read-only, populated on retrieval)
+        estimated_calories:
+          type: number
+          format: float
+          description: Estimated total calories (read-only, populated on retrieval)
+      description: Complete workout template
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+    ApiKeyAuth_:
+      type: apiKey
+      in: header
+      name: dev-id
+servers:
+  - url: https://access.tryterra.co/api/v2
+    description: Production server
+    variables: {}
