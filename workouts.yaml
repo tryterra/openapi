@@ -261,6 +261,120 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateWorkoutTemplateRequest'
+    get:
+      operationId: Workouts_listWorkoutTemplates
+      description: |-
+        List all workout templates
+
+        GET /workouts
+      parameters:
+        - $ref: '#/components/parameters/TerraHeaders.devId'
+        - $ref: '#/components/parameters/TerraHeaders.apiKey'
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWorkoutTemplatesResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+  /workouts/{workout_id}:
+    get:
+      operationId: Workouts_getWorkoutTemplate
+      description: |-
+        Get a workout template by ID
+
+        GET /workouts/{workout_id}
+      parameters:
+        - $ref: '#/components/parameters/TerraHeaders.devId'
+        - $ref: '#/components/parameters/TerraHeaders.apiKey'
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutTemplateWithId'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+    delete:
+      operationId: Workouts_deleteWorkoutTemplate
+      description: |-
+        Delete a workout template
+
+        DELETE /workouts/{workout_id}
+      parameters:
+        - $ref: '#/components/parameters/TerraHeaders.devId'
+        - $ref: '#/components/parameters/TerraHeaders.apiKey'
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteWorkoutTemplateResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                required:
+                  - detail
   /workouts/{workout_id}/plan:
     post:
       operationId: Workouts_planWorkout
@@ -455,6 +569,16 @@ components:
         workout_id:
           type: string
       description: Response from creating a workout template
+    DeleteWorkoutTemplateResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+      description: Response from deleting a workout template
     DrillType:
       type: string
       enum:
@@ -535,6 +659,11 @@ components:
           items:
             $ref: '#/components/schemas/PlannedWorkout'
       description: Response from listing planned workouts
+    ListWorkoutTemplatesResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/WorkoutTemplateWithId'
+      description: Response from listing workout templates
     PlanWorkoutRequest:
       type: object
       required:
@@ -847,6 +976,54 @@ components:
           format: float
           description: Estimated total calories (read-only, populated on retrieval)
       description: Complete workout template
+    WorkoutTemplateWithId:
+      type: object
+      required:
+        - name
+        - sport
+        - step_blocks
+        - workout_id
+      properties:
+        name:
+          type: string
+          description: Workout name/title
+        sport:
+          allOf:
+            - $ref: '#/components/schemas/SportType'
+          description: Sport/activity type
+        step_blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/StepBlock'
+          description: Blocks of steps that make up the workout
+        description:
+          type: string
+          description: Optional workout description
+        environment:
+          allOf:
+            - $ref: '#/components/schemas/EnvironmentType'
+          description: Indoor/outdoor/pool environment
+        pool_length_meters:
+          type: number
+          format: float
+          minimum: 0
+          description: 'For lap_swimming: pool length in meters (can be overridden at scheduling time)'
+        estimated_duration_seconds:
+          type: number
+          format: float
+          description: Estimated total duration in seconds (read-only, populated on retrieval)
+        estimated_distance_meters:
+          type: number
+          format: float
+          description: Estimated total distance in meters (read-only, populated on retrieval)
+        estimated_calories:
+          type: number
+          format: float
+          description: Estimated total calories (read-only, populated on retrieval)
+        workout_id:
+          type: string
+          description: Unique identifier for this workout template
+      description: Workout template with its ID (returned by GET endpoints)
   securitySchemes:
     ApiKeyAuth:
       type: apiKey

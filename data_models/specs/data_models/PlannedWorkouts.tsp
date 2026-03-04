@@ -317,6 +317,20 @@ model CreateWorkoutTemplateResponse {
   workout_id: string;
 }
 
+/** Workout template with its ID (returned by GET endpoints) */
+model WorkoutTemplateWithId is WorkoutTemplate {
+  /** Unique identifier for this workout template */
+  workout_id: string;
+}
+
+/** Response from listing workout templates */
+model ListWorkoutTemplatesResponse is Array<WorkoutTemplateWithId> {}
+
+/** Response from deleting a workout template */
+model DeleteWorkoutTemplateResponse {
+  status: "success";
+}
+
 /** Request body to plan (schedule) a workout for an athlete */
 model PlanWorkoutRequest {
   /** Planned/scheduled date in YYYY-MM-DD format */
@@ -421,6 +435,56 @@ namespace Workouts {
     @body body: CreateWorkoutTemplateResponse;
   } | {
     @statusCode statusCode: 400;
+    @body error: { detail: string };
+  } | {
+    @statusCode statusCode: 500;
+    @body error: { detail: string };
+  };
+
+  /**
+   * List all workout templates
+   *
+   * GET /workouts
+   */
+  @get
+  @route("")
+  op listWorkoutTemplates(
+    ...TerraHeaders,
+  ): ListWorkoutTemplatesResponse | {
+    @statusCode statusCode: 500;
+    @body error: { detail: string };
+  };
+
+  /**
+   * Get a workout template by ID
+   *
+   * GET /workouts/{workout_id}
+   */
+  @get
+  @route("/{workout_id}")
+  op getWorkoutTemplate(
+    ...TerraHeaders,
+    @path workout_id: string,
+  ): WorkoutTemplateWithId | {
+    @statusCode statusCode: 404;
+    @body error: { detail: string };
+  } | {
+    @statusCode statusCode: 500;
+    @body error: { detail: string };
+  };
+
+  /**
+   * Delete a workout template
+   *
+   * DELETE /workouts/{workout_id}
+   */
+  @delete
+  @route("/{workout_id}")
+  op deleteWorkoutTemplate(
+    ...TerraHeaders,
+    @path workout_id: string,
+  ): DeleteWorkoutTemplateResponse | {
+    @statusCode statusCode: 404;
     @body error: { detail: string };
   } | {
     @statusCode statusCode: 500;
