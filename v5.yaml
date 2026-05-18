@@ -1111,6 +1111,109 @@ paths:
                     type: string
                     enum: [error]
                     description: indicates that an error happened (value is error)
+  /connections/{connection_id}/hormone:
+    servers:
+      - url: https://api.tryterra.co/v3
+    get:
+      summary: Retrieve hormone data for a given connection ID
+      description:
+        Fetches hormone test events (LH, E3G, PDG, HCG, FSH) for a given connection. Each entry is one test event; hormones not measured at that event appear as null. v3 endpoint, uses different authentication headers from v2 endpoints.
+      tags:
+        - Hormone
+      operationId: Hormone_Fetch
+      security:
+        - TerraClientId: []
+          TerraClientSecret: []
+      parameters:
+        - name: connection_id
+          in: path
+          description: Terra connection ID
+          schema:
+            type: string
+          required: true
+        - name: start_date
+          in: query
+          description: Start date for data query (ISO-8601 date, YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+          required: true
+        - name: end_date
+          in: query
+          description: End date for data query (ISO-8601 date, YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+          required: false
+        - name: to_webhook
+          in: query
+          description: |
+            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
+          schema:
+            type: boolean
+          required: false
+      responses:
+        "200":
+          description: Returned upon successful data request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      connection:
+                        $ref: "#/components/schemas/Connection"
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/HormoneSample"
+                      type:
+                        type: string
+                        enum: [hormone]
+                      version:
+                        type: string
+                        example: "2022-03-16"
+                  - $ref: "#/components/schemas/NoDataReturned"
+                  - $ref: "#/components/schemas/DataSentToWebhook"
+        "400":
+          description: Returned when one or more parameters is malformed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+        "401":
+          description: Returned when v3 credentials (x-terra-client-id and x-terra-client-secret) are invalid or missing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
+        "404":
+          description: Returned when the connection ID does not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum: [error]
   /nutrition:
     get:
       summary: Retrieve nutrition log data for a given user ID
@@ -2122,6 +2225,16 @@ components:
       in: header
       name: dev-id
       description: Your developer ID for authentication and tracking
+    TerraClientId:
+      type: apiKey
+      in: header
+      name: x-terra-client-id
+      description: Your Terra client ID, used to authenticate v3 endpoints alongside x-terra-client-secret
+    TerraClientSecret:
+      type: apiKey
+      in: header
+      name: x-terra-client-secret
+      description: Your Terra client secret, used to authenticate v3 endpoints alongside x-terra-client-id
   schemas:
     WidgetSessionParams:
       type: object
@@ -2252,6 +2365,10 @@ components:
       $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Daily.yaml"
     Menstruation:
       $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Menstruation.yaml"
+    HormoneSample:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HormoneSample.yaml"
+    Connection:
+      $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Connection.yaml"
     Nutrition:
       $ref: "https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Nutrition.yaml"
     Sleep:
