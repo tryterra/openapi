@@ -10,6 +10,8 @@ import "./specs/data_models/Nutrition.tsp";
 import "./specs/data_models/Menstruation.tsp";
 import "./specs/data_models/Athlete.tsp";
 import "./specs/data_models/Body.tsp";
+import "./specs/data_models/Hormone.tsp";
+import "./specs/data_models/Connection.tsp";
 import "./specs/data_models/Events.tsp";
 
 using JsonSchema;

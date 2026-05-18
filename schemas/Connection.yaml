@@ -1,0 +1,43 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Connection.yaml
+type: object
+properties:
+  id:
+    type: integer
+    examples:
+      - 75001
+    description: Terra connection ID.
+  reference_id:
+    type: string
+    examples:
+      - user_external_ref_123
+    description: External user identifier provided at connect time.
+  created_at:
+    type: string
+    examples:
+      - 2026-04-22T11:00:00Z
+    description: RFC3339 timestamp of when the connection was first authorised.
+  provider:
+    type: string
+    examples:
+      - MIRA
+    description: Uppercase provider slug, e.g. MIRA or FITBIT.
+  last_polled_at:
+    type: string
+    description: RFC3339 timestamp of the last poll Terra ran against the provider for this connection. May be null for webhook-only flows.
+  last_updated_at:
+    type: string
+    description: RFC3339 timestamp of the last time Terra received any data from the provider for this connection.
+  most_recent_data_at:
+    type: string
+    description: RFC3339 timestamp of the most recent stored sample. May lag last_updated_at when fetches return no new data.
+  scopes:
+    type: array
+    items:
+      type: string
+    description: Granted OAuth scopes. Empty array for providers without scopes (e.g. Mira).
+required:
+  - id
+  - created_at
+  - provider
+  - scopes
