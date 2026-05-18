@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 # This script promotes the generated JSON schemas to the schemas directory.
 
 rm -rf ../schemas/*
