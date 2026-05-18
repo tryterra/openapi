@@ -1117,7 +1117,10 @@ paths:
     get:
       summary: Retrieve hormone data for a given connection ID
       description:
-        Fetches hormone test events (LH, E3G, PDG, HCG, FSH) for a given connection. Each entry is one test event; hormones not measured at that event appear as null. v3 endpoint, uses different authentication headers from v2 endpoints.
+        Fetches hormone test events (LH, E3G, PDG, HCG, FSH) for a given
+        connection. Each entry is one test event; hormones not measured at
+        that event appear as null. v3 endpoint, uses x-terra-client-id and
+        x-terra-client-secret headers for authentication.
       tags:
         - Hormone
       operationId: Hormone_Fetch
@@ -1145,13 +1148,6 @@ paths:
             type: string
             format: date
           required: false
-        - name: to_webhook
-          in: query
-          description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
-          schema:
-            type: boolean
-          required: false
       responses:
         "200":
           description: Returned upon successful data request
@@ -1170,13 +1166,11 @@ paths:
                       type:
                         type: string
                         enum: [hormone]
-                      version:
-                        type: string
-                        example: "2022-03-16"
                   - $ref: "#/components/schemas/NoDataReturned"
-                  - $ref: "#/components/schemas/DataSentToWebhook"
         "400":
-          description: Returned when one or more parameters is malformed
+          description:
+            Returned when one or more parameters is malformed - an appropriate
+            error message will be returned
           content:
             application/json:
               schema:
@@ -1188,21 +1182,23 @@ paths:
                   status:
                     type: string
                     enum: [error]
+                    description: indicates that an error happened (value is error)
         "401":
-          description: Returned when v3 credentials (x-terra-client-id and x-terra-client-secret) are invalid or missing
+          description:
+            Returned when v3 credentials (x-terra-client-id and
+            x-terra-client-secret) are invalid or missing
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   message:
-                    description: a detailed message describing the error
+                    description: An error message
                     type: string
-                  status:
-                    type: string
-                    enum: [error]
+                    example: unauthorized
         "404":
-          description: Returned when the connection ID does not exist
+          description:
+            Returned when the connection ID does not exist
           content:
             application/json:
               schema:
@@ -1214,6 +1210,7 @@ paths:
                   status:
                     type: string
                     enum: [error]
+                    description: indicates that an error happened (value is error)
   /nutrition:
     get:
       summary: Retrieve nutrition log data for a given user ID
