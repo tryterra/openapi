@@ -13,7 +13,7 @@ info:
     email: "dev@tryterra.co"
 
 servers:
-  - url: https://api.tryterra.co/v2
+  - url: https://access.tryterra.co/api/v2
 security:
   - ApiKeyAuth: []
   - DevID: []
@@ -1112,14 +1112,12 @@ paths:
                     enum: [error]
                     description: indicates that an error happened (value is error)
   /connections/{connection_id}/hormone:
-    servers:
-      - url: https://api.tryterra.co/v3
     get:
       summary: Retrieve hormone data for a given connection ID
       description:
         Fetches hormone test events (LH, E3G, PDG, HCG, FSH) for a given
         connection. Each entry is one test event; hormones not measured at
-        that event appear as null. v3 endpoint, uses x-terra-client-id and
+        that event appear as null. Uses x-terra-client-id and
         x-terra-client-secret headers for authentication.
       tags:
         - Hormone
@@ -3964,7 +3962,7 @@ components:
         icon:
           type: string
           description: URL for the provider's icon image
-          example: "https://api.tryterra.co/v2/static/assets/img/app_icons/mapmyfitness.webp"
+          example: "https://access.tryterra.co/api/v2/static/assets/img/app_icons/mapmyfitness.webp"
         setup:
           type: string
           description: Indicates how the integration is set up
