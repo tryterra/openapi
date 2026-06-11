@@ -1161,24 +1161,18 @@ components:
       description: >
         Returned with HTTP 200 when `to_webhook` is true but the connection has
         no destination configured, so there is nowhere to deliver the requested
-        data. The body uses the problem shape but is not an error.
+        data.
       properties:
-        type:
+        status:
           type: string
-          example: about:blank
-        title:
-          type: string
-          example: ok
-        instance:
-          type: string
-          example: /activity
-        detail:
+          enum: [success]
+          example: success
+        message:
           type: string
           example: no destinations available for this connection
       required:
-        - type
-        - title
-        - instance
+        - status
+        - message
     DataSentToWebhook:
       type: object
       description: >
