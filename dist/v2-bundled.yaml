@@ -1386,7 +1386,7 @@ components:
             instance: /activity
             detail: invalid start_date
     Unauthorized:
-      description: Authentication credentials (dev ID and API key) are missing or invalid.
+      description: Authentication credentials are missing or invalid.
       content:
         application/problem+json:
           schema:
@@ -1397,7 +1397,7 @@ components:
             instance: /activity
             detail: dev-id or x-api-key headers are missing
     NotFound:
-      description: A referenced resource does not exist on Terra's end (e.g. the user_id).
+      description: A referenced resource does not exist on Terra's end.
       content:
         application/problem+json:
           schema:
