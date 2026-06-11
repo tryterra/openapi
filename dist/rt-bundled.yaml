@@ -1,22 +1,12 @@
 openapi: 3.1.0
 info:
   title: Real Time Streaming API
-  version: "2.0"
+  version: '2.0'
 servers:
   - url: https://ws.tryterra.co
-components:
-  securitySchemes:
-    apiKeyAuth:
-      type: apiKey
-      in: header
-      name: x-api-key
-    devIdAuth:
-      type: apiKey
-      in: header
-      name: dev-id
 security:
-  - apiKeyAuth: []
-    devIdAuth: []
+  - ApiKeyAuth: []
+    DevID: []
 paths:
   /auth/developer:
     post:
@@ -57,7 +47,7 @@ paths:
             text/plain:
               examples:
                 Result:
-                  value: ""
+                  value: ''
   /auth/user:
     post:
       summary: Stream - Generate user token
@@ -102,4 +92,16 @@ paths:
             text/plain:
               examples:
                 Result:
-                  value: ""
+                  value: ''
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Your API key for authentication
+    DevID:
+      type: apiKey
+      in: header
+      name: dev-id
+      description: Your developer ID for authentication and tracking

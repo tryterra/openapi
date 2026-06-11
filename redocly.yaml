@@ -4,14 +4,14 @@
 # defined security), and authoring-policy rules as warnings so the gate blocks
 # broken specs without nagging on style. See analysis/openapi-v6-surface-analysis.md §8.
 apis:
-  v5:
-    root: v5.yaml
+  v2:
+    root: apis/v2.yaml
   widget:
-    root: widget.yaml
+    root: apis/widget.yaml
   teams:
-    root: teams.yml
+    root: apis/teams.yaml
   rt:
-    root: rt.yml
+    root: apis/rt.yaml
 
 extends:
   - recommended

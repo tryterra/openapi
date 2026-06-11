@@ -4,8 +4,8 @@ info:
   description: API to manage and retrieve data from team-based fitness tracking devices used in sports training and monitoring.
   version: 1.0.0
 security:
-  - apiKeyAuth: []
-    devIdAuth: []
+  - ApiKeyAuth: []
+    DevID: []
 servers:
   - url: 'https://api.tryterra.co/v2/teams'
     description: Main teams API base URL
@@ -517,14 +517,10 @@ paths:
         - Athletes
 components:
   securitySchemes:
-    apiKeyAuth:
-      type: apiKey
-      in: header
-      name: x-api-key
-    devIdAuth:
-      type: apiKey
-      in: header
-      name: dev-id
+    ApiKeyAuth:
+      $ref: "../components/common.yaml#/securitySchemes/ApiKeyAuth"
+    DevID:
+      $ref: "../components/common.yaml#/securitySchemes/DevID"
   schemas:
     DataSentToDestination:
       type: object
