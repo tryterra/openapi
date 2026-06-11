@@ -1,5 +1,4 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/CaloriesData.yaml
 type: object
 properties:
   BMR_calories:
@@ -8,7 +7,7 @@ properties:
   calorie_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/CalorieSample.yaml
+      $ref: CalorieSample.yaml
     description: Array of calorie data samples recorded throughout the time period.
   net_activity_calories:
     type: number

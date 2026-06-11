@@ -1,9 +1,8 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyDistanceData.yaml
 type: object
 properties:
   detailed:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceDataDetailed.yaml
+    $ref: DistanceDataDetailed.yaml
     description: Object containing detailed distance information - this may include second-by-second samples.
   distance_meters:
     type: number
@@ -11,7 +10,7 @@ properties:
       - 8500.45
     description: Total distance covered by the user throughout the day.
   elevation:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ElevationData.yaml
+    $ref: ElevationData.yaml
     description: Object containing information on the elevation of the user throughout the day.
   floors_climbed:
     type: integer
@@ -25,5 +24,5 @@ properties:
       - 12000
     description: Total number of steps performed during the day.
   swimming:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SwimmingData.yaml
+    $ref: SwimmingData.yaml
     description: Summary information of the user's swimming statistics for the day, if applicable.

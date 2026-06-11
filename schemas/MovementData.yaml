@@ -1,5 +1,4 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MovementData.yaml
 type: object
 properties:
   adjusted_max_speed_meters_per_second:
@@ -35,7 +34,7 @@ properties:
   cadence_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/CadenceSample.yaml
+      $ref: CadenceSample.yaml
     description: Array of cadence values recorded throughout the workout, sampled at intervals determined by the fitness data provider.
   max_cadence_rpm:
     type: number
@@ -70,10 +69,10 @@ properties:
   speed_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SpeedSample.yaml
+      $ref: SpeedSample.yaml
     description: Array of the datapoints for the user's speed sampled throughout the workout.
   torque_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TorqueSample.yaml
+      $ref: TorqueSample.yaml
     description: Array of the datapoints for the user's torque sampled throughout the workout.

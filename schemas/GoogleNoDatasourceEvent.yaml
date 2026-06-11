@@ -1,12 +1,11 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GoogleNoDatasourceEvent.yaml
 type: object
 properties:
   type:
     type: string
     const: google_no_datasource
   user:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TerraUser.yaml
+    $ref: TerraUser.yaml
     description: Affected user
   status:
     type: string
@@ -21,5 +20,5 @@ required:
   - status
   - message
 allOf:
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WebhookEvent.yaml
+  - $ref: WebhookEvent.yaml
 description: Google no datasource event

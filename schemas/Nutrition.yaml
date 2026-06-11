@@ -1,22 +1,21 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Nutrition.yaml
 type: object
 properties:
   drink_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DrinkSample.yaml
+      $ref: DrinkSample.yaml
     description: Information on drinks the user consumed throughout the day.
   meals:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Meal.yaml
+      $ref: Meal.yaml
     description: Information on individual foods consumed throughout a given day.
   metadata:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionMetadata.yaml
+    $ref: NutritionMetadata.yaml
     description: Object containing daily summary metadata.
   summary:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionSummary.yaml
+    $ref: NutritionSummary.yaml
     description: Summative nutritional information for a given day.
 required:
   - metadata

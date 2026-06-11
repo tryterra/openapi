@@ -1,11 +1,10 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyDataEnrichment.yaml
 type: object
 properties:
   cardiovascular_contributors:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
+      $ref: DataContributor.yaml
     description: Array of factors contributing to cardiovascular score.
   cardiovascular_score:
     type: number
@@ -13,7 +12,7 @@ properties:
   immune_contributors:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
+      $ref: DataContributor.yaml
     description: Array of factors contributing to immune index.
   immune_index:
     type: number
@@ -21,7 +20,7 @@ properties:
   readiness_contributors:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
+      $ref: DataContributor.yaml
     description: Array of factors contributing to readiness score.
   readiness_score:
     type: number
@@ -29,7 +28,7 @@ properties:
   respiratory_contributors:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
+      $ref: DataContributor.yaml
     description: Array of factors contributing to respiratory score.
   respiratory_score:
     type: number
@@ -40,7 +39,7 @@ properties:
   stress_contributors:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
+      $ref: DataContributor.yaml
     description: Array of factors contributing to stress score.
   total_stress_score:
     type: number

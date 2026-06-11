@@ -1,20 +1,19 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepDurationsData.yaml
 type: object
 properties:
   asleep:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AsleepDurations.yaml
+    $ref: AsleepDurations.yaml
     description: Object containing information on the duration the user spent asleep during the sleep recording session.
   awake:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AwakeDurations.yaml
+    $ref: AwakeDurations.yaml
     description: Object containing information on the duration the user spent awake during the sleep recording session.
   hypnogram_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepHypnogramSample.yaml
+      $ref: SleepHypnogramSample.yaml
     description: List of sleep stage (Hypnogram) samples recorded during the user's sleep session.
   other:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OtherSleepDurations.yaml
+    $ref: OtherSleepDurations.yaml
     description: Object containing information on the miscellaneous duration data for the sleep recording session.
   sleep_efficiency:
     type: number

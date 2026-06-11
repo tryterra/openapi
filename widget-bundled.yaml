@@ -1,11 +1,13 @@
 openapi: 3.1.0
 info:
-  title: Terra API Team-Based API
-  description: API to manage and retrieve data from team-based fitness tracking devices used in sports training and monitoring.
+  title: Terra Widget API
+  description: Endpoint for generating an authentication-widget session, used to redirect an end user into the Terra Authentication Widget so they can connect a data provider.
   version: 1.0.0
+  license:
+    name: Proprietary
 servers:
   - url: https://access.tryterra.co
-    description: Main teams API base URL
+    description: Main API base URL
 security:
   - apiKeyAuth: []
     devIdAuth: []
@@ -98,6 +100,15 @@ paths:
                       - error
                     description: indicates that an error happened (value is error)
 components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+    devIdAuth:
+      type: apiKey
+      in: header
+      name: dev-id
   schemas:
     WidgetSessionParams:
       type: object

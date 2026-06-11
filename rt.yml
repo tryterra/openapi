@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Real Time Streaming API
-  version: 2.0
+  version: "2.0"
 servers:
   - url: https://ws.tryterra.co
 components:
@@ -49,10 +49,8 @@ paths:
                     example: cG9RvLY5.yvKm778XMIPm1ig93BJEoRCVGHzlrBNjzWdeXePTaMM
               examples:
                 Result:
-                  value: |
-                    {
-                      "token": "cG9RvLY5.yvKm778XMIPm1ig93BJEoRCVGHzlrBNjzWdeXePTaMM"
-                    }
+                  value:
+                    token: cG9RvLY5.yvKm778XMIPm1ig93BJEoRCVGHzlrBNjzWdeXePTaMM
         '403':
           description: Forbidden
           content:
@@ -96,10 +94,8 @@ paths:
                     example: OTYwNWFi5ZWQMTAxMjg0Y2Qw.gzrPzZcS3Gy8QDOxbiPRwu30PTB3VxW0eE
               examples:
                 Result:
-                  value: |
-                    {
-                      "token": "OTYwNWFi5ZWQMTAxMjg0Y2Qw.gzrPzZcS3Gy8QDOxbiPRwu30PTB3VxW0eE"
-                    }
+                  value:
+                    token: OTYwNWFi5ZWQMTAxMjg0Y2Qw.gzrPzZcS3Gy8QDOxbiPRwu30PTB3VxW0eE
         '403':
           description: Forbidden
           content:

@@ -1,0 +1,31 @@
+# Redocly lint configuration for all Terra OpenAPI specs.
+# `redocly lint` (no args) lints every api listed below.
+# Philosophy: keep correctness rules as errors (3.1 validity, hermetic refs,
+# defined security), and authoring-policy rules as warnings so the gate blocks
+# broken specs without nagging on style. See analysis/openapi-v6-surface-analysis.md §8.
+apis:
+  v5:
+    root: v5.yaml
+  widget:
+    root: widget.yaml
+  teams:
+    root: teams.yml
+  rt:
+    root: rt.yml
+
+extends:
+  - recommended
+
+rules:
+  # --- errors: block merge ---
+  struct: error                       # OpenAPI 3.1 structural validity (e.g. no `nullable`)
+  no-unresolved-refs: error           # every $ref must resolve from local files (hermetic)
+  security-defined: error             # no `security` referencing an undefined scheme
+  operation-operationId-unique: error
+  # --- warnings: visible, non-blocking ---
+  operation-4xx-response: warn        # data reads model success as a oneOf; don't hard-fail
+  operation-operationId: warn         # some legacy ops still lack operationIds
+  no-unused-components: warn
+  info-license: warn
+  no-invalid-media-type-examples: warn
+  no-server-example.com: warn

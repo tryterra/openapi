@@ -1,5 +1,4 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/KetoneSample.yaml
 type: object
 properties:
   timestamp:
@@ -13,5 +12,5 @@ properties:
       - 1.5
     description: Ketone in mg per dL
   sample_type:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/KetoneSampleType.yaml
+    $ref: KetoneSampleType.yaml
     description: Flag indicating the ketone sample type (e.g. blood, breath, urine)
