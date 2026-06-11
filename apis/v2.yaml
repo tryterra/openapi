@@ -1114,89 +1114,23 @@ paths:
 components:
   securitySchemes:
     ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: x-api-key
-      description: Your API key for authentication
+      $ref: "../components/common.yaml#/securitySchemes/ApiKeyAuth"
     DevID:
-      type: apiKey
-      in: header
-      name: dev-id
-      description: Your developer ID for authentication and tracking
+      $ref: "../components/common.yaml#/securitySchemes/DevID"
     TerraClientId:
-      type: apiKey
-      in: header
-      name: x-terra-client-id
-      description: Your Terra client ID, used to authenticate v3 endpoints alongside x-terra-client-secret
+      $ref: "../components/common.yaml#/securitySchemes/TerraClientId"
     TerraClientSecret:
-      type: apiKey
-      in: header
-      name: x-terra-client-secret
-      description: Your Terra client secret, used to authenticate v3 endpoints alongside x-terra-client-id
+      $ref: "../components/common.yaml#/securitySchemes/TerraClientSecret"
   responses:
     BadRequest:
-      description: One or more parameters is malformed. The `detail` field describes the specific problem.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-          example:
-            type: about:blank
-            title: bad request
-            instance: /activity
-            detail: invalid start_date
+      $ref: "../components/common.yaml#/responses/BadRequest"
     Unauthorized:
-      description: Authentication credentials (dev ID and API key) are missing or invalid.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-          example:
-            type: about:blank
-            title: unauthorized
-            instance: /activity
-            detail: dev-id or x-api-key headers are missing
+      $ref: "../components/common.yaml#/responses/Unauthorized"
     NotFound:
-      description: A referenced resource does not exist on Terra's end (e.g. the user_id).
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-          example:
-            type: about:blank
-            title: not found
-            instance: /activity
-            detail: user not found
+      $ref: "../components/common.yaml#/responses/NotFound"
   schemas:
     Problem:
-      type: object
-      description: >
-        An error response, following RFC 7807. Returned with
-        `Content-Type: application/problem+json` on every 4xx/5xx response.
-        The HTTP status line carries the status code; it is intentionally not
-        repeated in the body. `type`, `title` and `instance` are always present;
-        `detail` is included when a specific explanation is available.
-      properties:
-        type:
-          type: string
-          description: A URI reference identifying the problem type. Defaults to `about:blank`.
-          example: about:blank
-        title:
-          type: string
-          description: A short, human-readable summary of the problem type (the lowercased HTTP status text).
-          example: unauthorized
-        instance:
-          type: string
-          description: The request path, including any query string, that produced this problem.
-          example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
-        detail:
-          type: string
-          description: A human-readable explanation specific to this occurrence of the problem.
-          example: dev-id or x-api-key headers are missing
-      required:
-        - type
-        - title
-        - instance
+      $ref: "../components/common.yaml#/schemas/Problem"
     WidgetSessionParams:
       type: object
       properties:
@@ -1221,7 +1155,7 @@ components:
           description: "URL the user is redirected to upon unsuccessful authentication"
           example: "https://myapp.com/failure"
     User:
-      $ref: "./schemas/TerraUser.yaml"
+      $ref: "../schemas/TerraUser.yaml"
     NoDestinationsAvailable:
       type: object
       description: >
@@ -1301,9 +1235,9 @@ components:
               format: date-time
               example: "2024-01-20T11:00:00Z"
     Activity:
-      $ref: "./schemas/Activity.yaml"
+      $ref: "../schemas/Activity.yaml"
     Athlete:
-      $ref: "./schemas/Athlete.yaml"
+      $ref: "../schemas/Athlete.yaml"
     AthleteCollection:
       type: object
       properties:
@@ -1321,19 +1255,19 @@ components:
           allOf:
             - $ref: "#/components/schemas/User"
     Body:
-      $ref: "./schemas/Body.yaml"
+      $ref: "../schemas/Body.yaml"
     Daily:
-      $ref: "./schemas/Daily.yaml"
+      $ref: "../schemas/Daily.yaml"
     Menstruation:
-      $ref: "./schemas/Menstruation.yaml"
+      $ref: "../schemas/Menstruation.yaml"
     HormoneSample:
-      $ref: "./schemas/HormoneSample.yaml"
+      $ref: "../schemas/HormoneSample.yaml"
     Connection:
-      $ref: "./schemas/Connection.yaml"
+      $ref: "../schemas/Connection.yaml"
     Nutrition:
-      $ref: "./schemas/Nutrition.yaml"
+      $ref: "../schemas/Nutrition.yaml"
     Sleep:
-      $ref: "./schemas/Sleep.yaml"
+      $ref: "../schemas/Sleep.yaml"
     PlannedWorkoutStepTarget:
       type: object
       properties:
@@ -2755,49 +2689,49 @@ components:
           allOf:
             - $ref: "#/components/schemas/PlannedWorkoutMetadata"
     DataProcessingWebhook:
-      $ref: "./schemas/ProcessingEvent.yaml"
+      $ref: "../schemas/ProcessingEvent.yaml"
     UserAuthWebhook:
-      $ref: "./schemas/AuthSuccessEvent.yaml"
+      $ref: "../schemas/AuthSuccessEvent.yaml"
     UserAuthWebhookError:
-      $ref: "./schemas/AuthErrorEvent.yaml"
+      $ref: "../schemas/AuthErrorEvent.yaml"
     PermissionChangeWebhook:
-      $ref: "./schemas/PermissionChangeEvent.yaml"
+      $ref: "../schemas/PermissionChangeEvent.yaml"
     UserReauthWebhook:
-      $ref: "./schemas/UserReauthEvent.yaml"
+      $ref: "../schemas/UserReauthEvent.yaml"
     UserDeauthWebhook:
-      $ref: "./schemas/DeauthEvent.yaml"
+      $ref: "../schemas/DeauthEvent.yaml"
     AccessRevokedWebhook:
-      $ref: "./schemas/AccessRevokedEvent.yaml"
+      $ref: "../schemas/AccessRevokedEvent.yaml"
     GoogleNoDataSourceWebhook:
-      $ref: "./schemas/GoogleNoDatasourceEvent.yaml"
+      $ref: "../schemas/GoogleNoDatasourceEvent.yaml"
     ConnectionErrorWebhook:
-      $ref: "./schemas/ConnectionErrorEvent.yaml"
+      $ref: "../schemas/ConnectionErrorEvent.yaml"
     LargeRequestSendingWebhook:
-      $ref: "./schemas/LargeRequestSendingEvent.yaml"
+      $ref: "../schemas/LargeRequestSendingEvent.yaml"
     LargeRequestProcessingResponse:
-      $ref: "./schemas/LargeRequestProcessingEvent.yaml"
+      $ref: "../schemas/LargeRequestProcessingEvent.yaml"
     AuthenticationFailedWebhook:
-      $ref: "./schemas/AuthErrorEvent.yaml"
+      $ref: "../schemas/AuthErrorEvent.yaml"
     HealthCheckWebhook:
-      $ref: "./schemas/HealthcheckEvent.yaml"
+      $ref: "../schemas/HealthcheckEvent.yaml"
     RateLimitHitWebhook:
-      $ref: "./schemas/RateLimitHitEvent.yaml"
+      $ref: "../schemas/RateLimitHitEvent.yaml"
     S3UploadWebhook:
-      $ref: "./schemas/S3PayloadEvent.yaml"
+      $ref: "../schemas/S3PayloadEvent.yaml"
     ActivityWebhook:
-      $ref: "./schemas/ActivityEvent.yaml"
+      $ref: "../schemas/ActivityEvent.yaml"
     DailyWebhook:
-      $ref: "./schemas/DailyEvent.yaml"
+      $ref: "../schemas/DailyEvent.yaml"
     NutritionWebhook:
-      $ref: "./schemas/NutritionEvent.yaml"
+      $ref: "../schemas/NutritionEvent.yaml"
     AthleteWebhook:
-      $ref: "./schemas/AthleteEvent.yaml"
+      $ref: "../schemas/AthleteEvent.yaml"
     SleepWebhook:
-      $ref: "./schemas/SleepEvent.yaml"
+      $ref: "../schemas/SleepEvent.yaml"
     MenstruationWebhook:
-      $ref: "./schemas/MenstruationEvent.yaml"
+      $ref: "../schemas/MenstruationEvent.yaml"
     BodyWebhook:
-      $ref: "./schemas/BodyEvent.yaml"
+      $ref: "../schemas/BodyEvent.yaml"
     IntegrationsResponse:
       type: object
       properties:
@@ -2856,7 +2790,7 @@ components:
               type: boolean
               example: false
     WebhookEvents:
-      $ref: "./schemas/WebhookEventType.yaml"
+      $ref: "../schemas/WebhookEventType.yaml"
 
 webhooks:
   healthcheck:

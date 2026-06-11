@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare v5.yaml's documented paths against the live v2 route inventory.
+"""Compare apis/v2.yaml's documented paths against the live v2 route inventory.
 
 The inventory is produced by the terra-v6 route-inventory golden test
 (services/api/internal/endpoints/v2/route_inventory.json). In CI a scheduled
@@ -53,7 +53,7 @@ def router_paths(inventory_file):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--spec", default="v5.yaml")
+    ap.add_argument("--spec", default="apis/v2.yaml")
     ap.add_argument("--inventory", required=True,
                     help="path to terra-v6 route_inventory.json")
     args = ap.parse_args()

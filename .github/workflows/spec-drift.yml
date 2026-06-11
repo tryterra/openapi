@@ -1,6 +1,6 @@
 name: Spec/Router Drift Check
 
-# Weekly backstop: compares v5.yaml's documented paths against the live v2 route
+# Weekly backstop: compares apis/v2.yaml's documented paths against the live v2 route
 # inventory committed in terra-v6 (route_inventory.json, produced by that repo's
 # route-inventory golden test). Fails — and opens an issue — only when the spec
 # documents a path the router no longer serves. See analysis §8.3.
@@ -36,14 +36,14 @@ jobs:
           echo "fetched $(python3 -c 'import json;print(len(json.load(open("route_inventory.json"))))') routes"
 
       - name: Check spec/router drift
-        run: python3 scripts/check_spec_drift.py --spec v5.yaml --inventory route_inventory.json
+        run: python3 scripts/check_spec_drift.py --spec apis/v2.yaml --inventory route_inventory.json
 
       - name: Open issue on drift
         if: failure()
         uses: actions/github-script@v7
         with:
           script: |
-            const title = 'Spec/router drift detected (v5.yaml vs terra-v6 v2 routes)';
+            const title = 'Spec/router drift detected (apis/v2.yaml vs terra-v6 v2 routes)';
             const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner, repo: context.repo.repo,
               state: 'open', labels: 'spec-drift',
@@ -52,5 +52,5 @@ jobs:
             await github.rest.issues.create({
               owner: context.repo.owner, repo: context.repo.repo,
               title, labels: ['spec-drift'],
-              body: 'The weekly drift check failed: v5.yaml documents one or more paths the terra-v6 v2 router no longer serves. See the failed run logs for the list, then update v5.yaml (remove/relocate) or the router.',
+              body: 'The weekly drift check failed: apis/v2.yaml documents one or more paths the terra-v6 v2 router no longer serves. See the failed run logs for the list, then update apis/v2.yaml (remove/relocate) or the router.',
             });

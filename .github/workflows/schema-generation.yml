@@ -78,15 +78,16 @@ jobs:
     - name: Lint OpenAPI specs
       run: redocly lint
 
-    # Bundle drift gate: committed *-bundled.yaml must match a fresh bundle, so
+    # Bundle drift gate: committed dist/ bundles must match a fresh bundle, so
     # the published bundles can never go stale relative to their source specs.
+    # Registry-driven (scripts/bundle-all.sh reads redocly.yaml) — adding an API
+    # needs no change here.
     - name: Check for bundle drift
       run: |
-        redocly bundle v5.yaml -o v5-bundled.yaml
-        redocly bundle widget.yaml -o widget-bundled.yaml
-        if ! git diff --quiet v5-bundled.yaml widget-bundled.yaml; then
-          echo "::error::Committed bundles are stale. Run 'redocly bundle v5.yaml -o v5-bundled.yaml && redocly bundle widget.yaml -o widget-bundled.yaml' and commit the result."
-          git diff --name-only v5-bundled.yaml widget-bundled.yaml
+        ./scripts/bundle-all.sh
+        if ! git diff --quiet dist/; then
+          echo "::error::Committed dist/ bundles are stale. Run ./scripts/bundle-all.sh and commit the result."
+          git diff --name-only dist/
           exit 1
         fi
 
