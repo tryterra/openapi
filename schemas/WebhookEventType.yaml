@@ -1,25 +1,24 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WebhookEventType.yaml
 oneOf:
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HealthcheckEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AuthSuccessEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AuthErrorEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeauthEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/UserReauthEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AccessRevokedEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ConnectionErrorEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GoogleNoDatasourceEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PermissionChangeEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ProcessingEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LargeRequestProcessingEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LargeRequestSendingEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RateLimitHitEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AthleteEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BodyEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepEvent.yaml
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/S3PayloadEvent.yaml
+  - $ref: HealthcheckEvent.yaml
+  - $ref: AuthSuccessEvent.yaml
+  - $ref: AuthErrorEvent.yaml
+  - $ref: DeauthEvent.yaml
+  - $ref: UserReauthEvent.yaml
+  - $ref: AccessRevokedEvent.yaml
+  - $ref: ConnectionErrorEvent.yaml
+  - $ref: GoogleNoDatasourceEvent.yaml
+  - $ref: PermissionChangeEvent.yaml
+  - $ref: ProcessingEvent.yaml
+  - $ref: LargeRequestProcessingEvent.yaml
+  - $ref: LargeRequestSendingEvent.yaml
+  - $ref: RateLimitHitEvent.yaml
+  - $ref: ActivityEvent.yaml
+  - $ref: AthleteEvent.yaml
+  - $ref: BodyEvent.yaml
+  - $ref: DailyEvent.yaml
+  - $ref: MenstruationEvent.yaml
+  - $ref: NutritionEvent.yaml
+  - $ref: SleepEvent.yaml
+  - $ref: S3PayloadEvent.yaml
 description: Union of all possible webhook event types

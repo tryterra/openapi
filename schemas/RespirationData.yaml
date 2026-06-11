@@ -1,13 +1,12 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RespirationData.yaml
 type: object
 properties:
   breaths_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BreathsData.yaml
+    $ref: BreathsData.yaml
     description: Object containing information on breathing rate for the sleep session.
   oxygen_saturation_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenSaturationData.yaml
+    $ref: OxygenSaturationData.yaml
     description: Object containing information on saturation metrics for the sleep session.
   snoring_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SnoringData.yaml
+    $ref: SnoringData.yaml
     description: Object containing information on snoring metrics for the sleep session.

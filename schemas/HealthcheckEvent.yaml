@@ -1,5 +1,4 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HealthcheckEvent.yaml
 type: object
 properties:
   type:
@@ -24,5 +23,5 @@ required:
   - trend_percentage
   - sent_webhooks_last_hour
 allOf:
-  - $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WebhookEvent.yaml
+  - $ref: WebhookEvent.yaml
 description: Healthcheck event sent periodically to verify your webhook endpoint is functional

@@ -1,5 +1,4 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Athlete.yaml
 type: object
 properties:
   age:
@@ -65,5 +64,5 @@ properties:
   devices:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeviceData.yaml
+      $ref: DeviceData.yaml
     description: Array of devices associated with the user's account.

@@ -1,9 +1,8 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LapData.yaml
 type: object
 properties:
   laps:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LapSample.yaml
+      $ref: LapSample.yaml
     description: Array of datapoints for each lap performed by the user during the workout.

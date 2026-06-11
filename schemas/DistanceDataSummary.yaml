@@ -1,12 +1,11 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceDataSummary.yaml
 type: object
 properties:
   distance_meters:
     type: integer
     description: Total distance covered by the user throughout the workout.
   elevation:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ElevationData.yaml
+    $ref: ElevationData.yaml
     description: Object containing information on the elevation of the user throughout the workout.
   floors_climbed:
     type: integer
@@ -15,5 +14,5 @@ properties:
     type: integer
     description: Total number of steps performed during the workout.
   swimming:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SwimmingData.yaml
+    $ref: SwimmingData.yaml
     description: Summary information of the user's swimming statistics for the workout, if applicable.

@@ -683,42 +683,36 @@ components:
       type: object
       properties:
         name:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Name of the metric"
         value:
           oneOf:
             - type: number
             - type: string
-          nullable: true
+            - type: "null"
           description: "Value of the metric"
         unit:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Unit of the metric"
     AthleteMetrics:
       type: object
       properties:
         athlete_id:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "ID of the athlete"
         metrics:
-          type: array
+          type: [array, "null"]
           items:
             $ref: '#/components/schemas/Metric'
-          nullable: true
           description: "List of metrics associated with the athlete"
     DetailedParticipationStatus:
       type: object
       properties:
         athlete_id:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "ID of the athlete"
         external_athlete_id:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "External ID of the athlete"
         is_home_team:
           $ref: '#/components/schemas/IsHomeFlag'
@@ -727,8 +721,7 @@ components:
           $ref: '#/components/schemas/ParticipationType'
           description: "Type of participation in an activity"
         function:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Function of the athlete in the activity"
     ParticipationStatus:
       type: object
@@ -755,16 +748,15 @@ components:
       type: object
       properties:
         period_id:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "ID of the period"
         name:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Name of the period"
         athlete_participation:
-          $ref: '#/components/schemas/ParticipationStatus'
-          nullable: true
+          anyOf:
+            - $ref: '#/components/schemas/ParticipationStatus'
+            - type: "null"
           description: "Participation status of athletes in the period"
         detailed_athlete_participation:
           type: array
@@ -773,12 +765,10 @@ components:
           description: "Detailed participation status of athletes"
           default: []
         start_timestamp_us:
-          type: integer
-          nullable: true
+          type: [integer, "null"]
           description: "Start timestamp of the period in microseconds"
         end_timestamp_us:
-          type: integer
-          nullable: true
+          type: [integer, "null"]
           description: "End timestamp of the period in microseconds"
         athlete_metrics:
           type: array
@@ -788,8 +778,7 @@ components:
       type: object
       properties:
         name:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Name of the team"
         is_home:
           $ref: '#/components/schemas/IsHomeFlag'
@@ -799,91 +788,76 @@ components:
       type: object
       properties:
         activity_id:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Unique identifier for the activity"
         start_timestamp_us:
-          type: integer
-          nullable: true
+          type: [integer, "null"]
           description: "Start timestamp of the activity in microseconds"
         end_timestamp_us:
-          type: integer
-          nullable: true
+          type: [integer, "null"]
           description: "End timestamp of the activity in microseconds"
         description:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Description of the activity"
         teams:
-          type: array
+          type: [array, "null"]
           items:
             $ref: '#/components/schemas/TeamInfo'
-          nullable: true
           description: "List of teams involved in the activity"
         athletes:
-          type: array
+          type: [array, "null"]
           items:
             $ref: '#/components/schemas/Athlete'
-          nullable: true
           description: "List of athletes involved in the activity"
         athlete_participation:
-          $ref: '#/components/schemas/ParticipationStatus'
-          nullable: true
+          anyOf:
+            - $ref: '#/components/schemas/ParticipationStatus'
+            - type: "null"
           description: "Overall participation status of athletes"
         tz_offset_seconds:
-          type: integer
-          nullable: true
+          type: [integer, "null"]
           description: "Timezone offset in seconds"
           default: 0
         periods:
-          type: array
+          type: [array, "null"]
           items:
             $ref: '#/components/schemas/Period'
-          nullable: true
           description: "List of periods in the activity"
           default: []
         activity_metrics:
-          type: array
+          type: [array, "null"]
           items:
             $ref: '#/components/schemas/Metric'
-          nullable: true
           description: "List of metrics associated with the activity"
           default: []
         athlete_metrics:
-          type: object
+          type: [object, "null"]
           additionalProperties:
             type: array
             items:
               $ref: '#/components/schemas/Metric'
-          nullable: true
           description: "Dictionary mapping athlete IDs to their metrics"
           default: {}
         events:
-          type: array
+          type: [array, "null"]
           items:
             type: string
-          nullable: true
           description: "List of events related to the activity"
 
-    components:
     MetricStats:
       type: object
       properties:
         min:
-          type: number
-          nullable: true
+          type: [number, "null"]
           description: "Minimum value of the metric"
         max:
-          type: number
-          nullable: true
+          type: [number, "null"]
           description: "Maximum value of the metric"
         avg:
-          type: number
-          nullable: true
+          type: [number, "null"]
           description: "Average value of the metric"
         value:
-          type: number
-          nullable: true
+          type: [number, "null"]
           description: "Specific value of the metric"
     TestResultMetric:
       type: object
@@ -903,8 +877,7 @@ components:
           $ref: '#/components/schemas/ContractionType'
           description: "Type of muscle contraction"
         value:
-          type: number
-          nullable: true
+          type: [number, "null"]
           description: "Value of the metric"
     Rep:
       type: object
@@ -928,12 +901,10 @@ components:
           items:
             $ref: '#/components/schemas/TestResultMetric'
         timestamp_us:
-          type: integer
-          nullable: true
+          type: [integer, "null"]
           description: "Timestamp of the set in microseconds"
         duration_us:
-          type: integer
-          nullable: true
+          type: [integer, "null"]
           description: "Duration of the set in microseconds"
         side:
           $ref: '#/components/schemas/Side'
@@ -946,12 +917,10 @@ components:
           items:
             $ref: '#/components/schemas/Rep'
         weight:
-          type: number
-          nullable: true
+          type: [number, "null"]
           description: "Weight used for the exercise"
         exercise_name:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Name of the exercise"
         variations:
           type: array
@@ -965,53 +934,49 @@ components:
       type: object
       properties:
         test_id:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Unique identifier for the test"
         display_name:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Human-readable name of the test performed"
         timestamp_us:
-          type: integer
-          nullable: true
+          type: [integer, "null"]
           description: "Timestamp of the test in microseconds"
         test_type:
           $ref: '#/components/schemas/TestType'
         exercise_type:
           $ref: '#/components/schemas/ExerciseType'
         athlete_weight:
-          type: number
-          nullable: true
+          type: [number, "null"]
           description: "Weight of the athlete during the test"
         movement:
-          $ref: '#/components/schemas/BiomechanicalMovement'
-          nullable: true
+          anyOf:
+            - $ref: '#/components/schemas/BiomechanicalMovement'
+            - type: "null"
         tz_offset_seconds:
-          type: integer
-          nullable: true
+          type: [integer, "null"]
           description: "Timezone offset in seconds"
           default: 0
         category:
-          $ref: '#/components/schemas/TestCategory'
-          nullable: true
+          anyOf:
+            - $ref: '#/components/schemas/TestCategory'
+            - type: "null"
         duration_us:
-          type: number
-          nullable: true
+          type: [number, "null"]
           description: "Duration of the test in microseconds"
         body_region:
-          $ref: '#/components/schemas/BodyRegion'
-          nullable: true
+          anyOf:
+            - $ref: '#/components/schemas/BodyRegion'
+            - type: "null"
         position:
-          $ref: '#/components/schemas/Position'
-          nullable: true
+          anyOf:
+            - $ref: '#/components/schemas/Position'
+            - type: "null"
         notes:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Any notes related to the test"
         device:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "The device used for the test"
         test_result_metrics:
           type: array
@@ -1079,43 +1044,13 @@ components:
           examples:
             - "The coach with the provided ID does not exist."
         instance:
-          type: string
+          type: [string, "null"]
           format: uri
-          nullable: true
       required:
         - type
         - title
         - status
         - detail
-    examples:
-      ErrorCoachNotFound:
-        summary: Resource Not Found
-        value:
-          type: "https://api.tryterra.co/probs/not-found"
-          title: "Resource Not Found"
-          status: 404
-          detail: "The coach with the provided ID does not exist."
-      ErrorInvalidRequest:
-        summary: Invalid Request
-        value:
-          type: "https://api.tryterra.co/probs/invalid-request"
-          title: "Invalid Request"
-          status: 400
-          detail: "Missing required query parameter: start_date."
-      ErrorUnauthorized:
-        summary: Unauthorized
-        value:
-          type: "https://api.tryterra.co/probs/unauthorized"
-          title: "Unauthorized"
-          status: 401
-          detail: "Authentication credentials are missing or invalid."
-      ErrorForbidden:
-        summary: Forbidden
-        value:
-          type: "https://api.tryterra.co/probs/forbidden"
-          title: "Forbidden"
-          status: 403
-          detail: "You do not have permission to access this resource."
     CoachesReturned:
       type: object
       properties:
@@ -1150,16 +1085,13 @@ components:
           type: string
           description: "Unique key for the metric."
         display_name:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Human-readable name of the metric."
         unit:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Unit of measurement for the metric."
         type:
-          type: string
-          nullable: true
+          type: [string, "null"]
           description: "Data type of the metric (e.g., integer, float)."
         sport:
           $ref: '#/components/schemas/Sport'
@@ -1212,10 +1144,9 @@ components:
           type: boolean
           description: "Indicates if the field is required."
         options:
-          type: array
+          type: [array, "null"]
           items:
             type: string
-          nullable: true
           description: "Options for select-type fields."
     IsHomeFlag:
       type: integer
@@ -2671,6 +2602,35 @@ components:
         error:
           type: string
           description: Error message.
+  examples:
+    ErrorCoachNotFound:
+      summary: Resource Not Found
+      value:
+        type: "https://api.tryterra.co/probs/not-found"
+        title: "Resource Not Found"
+        status: 404
+        detail: "The coach with the provided ID does not exist."
+    ErrorInvalidRequest:
+      summary: Invalid Request
+      value:
+        type: "https://api.tryterra.co/probs/invalid-request"
+        title: "Invalid Request"
+        status: 400
+        detail: "Missing required query parameter: start_date."
+    ErrorUnauthorized:
+      summary: Unauthorized
+      value:
+        type: "https://api.tryterra.co/probs/unauthorized"
+        title: "Unauthorized"
+        status: 401
+        detail: "Authentication credentials are missing or invalid."
+    ErrorForbidden:
+      summary: Forbidden
+      value:
+        type: "https://api.tryterra.co/probs/forbidden"
+        title: "Forbidden"
+        status: 403
+        detail: "You do not have permission to access this resource."
 webhooks:
   coachRegistered:
     post:

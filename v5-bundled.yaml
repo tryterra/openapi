@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
-  description: The Terra API
+  description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2022.03.16
+  version: 2026.06.11
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -15,7 +15,7 @@ servers:
   - url: https://access.tryterra.co/api/v2
 security:
   - ApiKeyAuth: []
-  - DevID: []
+    DevID: []
 paths:
   /auth/authenticateUser:
     post:
@@ -78,36 +78,9 @@ paths:
                     description: authentication URL the user must be redirected to in order to link their account
                     example: https://www.fitbit.com/oauth2/authorize?response_type=code&client_id=23BBG9&scope=settings+nutrition+sleep+heartrate+electrocardiogram+weight+respiratory_rate+oxygen_saturation+profile+temperature+cardio_fitness+activity+location&state=bLqqjPie9ptwoWm6VBxHCu6JkkoWJp
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. resource)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - success
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
   /auth/generateWidgetSession:
     post:
       summary: Generate an authentication link, using the Terra Authentication Widget
@@ -149,20 +122,7 @@ paths:
                     description: a number in seconds depicting how long the url is valid for
                     example: 900
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
   /users/{user_id}:
     patch:
       summary: Modify user
@@ -209,21 +169,7 @@ paths:
                     description: Indicates that the request was successful
                     example: success
         '400':
-          description: Returned if the parameters are malformed or no user is found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: A detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - success
-                      - error
-                    description: Indicates an error happened
+          $ref: '#/components/responses/BadRequest'
   /auth/deauthenticateUser:
     delete:
       summary: Deauthenticates a user and deletes any cached data for them
@@ -253,21 +199,7 @@ paths:
                     description: indicates that the deauthentication was successful (value is success)
                     type: string
         '404':
-          description: Returned when the user_id is not existent
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - success
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
   /auth/generateAuthToken:
     post:
       tags:
@@ -300,23 +232,7 @@ paths:
                     example: 180
                     default: 0
         '404':
-          description: '404'
-          content:
-            application/json:
-              examples:
-                Result:
-                  value:
-                    status: error
-                    message: Invalid dev-id was provided
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: error
-                  message:
-                    type: string
-                    example: Invalid dev-id was provided
+          $ref: '#/components/responses/NotFound'
       deprecated: false
   /activity:
     get:
@@ -383,120 +299,14 @@ paths:
                         type:
                           - string
                           - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
                   - $ref: '#/components/schemas/DataSentToWebhook'
-                  - $ref: '#/components/schemas/RequestProcessing'
-                  - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
+                  - $ref: '#/components/schemas/NoDestinationsAvailable'
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: An error message
-                    type: string
-                    example: unauthorized
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
-    post:
-      tags:
-        - Activity
-      operationId: Activity_Write
-      description: Used to post activity data to a provider. This endpoint only works for users connected via Wahoo. Returns error for other providers.
-      summary: Post activity data to a provider
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                data:
-                  description: List of user-tracked workouts to post to data provider
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Activity'
-              required:
-                - data
-        required: true
-      responses:
-        '201':
-          description: Returned when activity was successfully created on the provider
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/TerraUser'
-                  log_ids:
-                    description: List of identifiers for the objects created, returned in the same order they were posted. I.e. Posting [ObjectA, ObjectB] will return [IdentifierA, IdentifierB]
-                    type: array
-                    items:
-                      type: string
-                  message:
-                    type: string
-                    default: Activity successfully logged
-        '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
-        '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
   /athlete:
     get:
       summary: Retrieve user profile info for a given user ID
@@ -526,49 +336,14 @@ paths:
               schema:
                 oneOf:
                   - $ref: '#/components/schemas/AthleteCollection'
-                  - $ref: '#/components/schemas/NoDataReturned'
                   - $ref: '#/components/schemas/DataSentToWebhook'
+                  - $ref: '#/components/schemas/NoDestinationsAvailable'
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: An error message
-                    type: string
-                    example: unauthorized
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
   /body:
     get:
       summary: Retrieve body metrics for a given user ID
@@ -634,229 +409,14 @@ paths:
                         type:
                           - string
                           - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
                   - $ref: '#/components/schemas/DataSentToWebhook'
-                  - $ref: '#/components/schemas/RequestProcessing'
-                  - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
+                  - $ref: '#/components/schemas/NoDestinationsAvailable'
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: An error message
-                    type: string
-                    example: unauthorized
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
-    post:
-      tags:
-        - Body
-      operationId: Body_Write
-      description: Used to post body data to a provider. This endpoint only works for users connected via Google Fit. Returns error for other providers.
-      summary: Post body data to a provider
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                data:
-                  description: Body measurement metrics to post to data provider
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Body'
-              required:
-                - data
-        required: true
-      responses:
-        '201':
-          description: Returned when activity was successfully created on the provider
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/TerraUser'
-                  log_ids:
-                    description: List of identifiers for the objects created, returned in the same order they were posted. I.e. Posting [ObjectA, ObjectB] will return [IdentifierA, IdentifierB]
-                    type: array
-                    items:
-                      type: string
-                  message:
-                    type: string
-                    default: Body data successfully logged
-        '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
-        '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
-    delete:
-      tags:
-        - Body
-      operationId: Body_Delete
-      description: Used to delete Body metrics the user has registered on their account
-      summary: Delete body metrics for a given user ID
-      parameters:
-        - name: user_id
-          in: query
-          description: Terra user ID (UUID format) to retrieve data for
-          schema:
-            type: string
-          required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                log_ids:
-                  type: array
-                  description: List of identifiers for body metrics entries to be deleted
-                  items:
-                    type: string
-                  required:
-                    - data
-        required: true
-      responses:
-        '200':
-          description: Returned when all records were deleted successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/TerraUser'
-                  processed_data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          description: Identifier of the body metric entries whose deletion was attempted
-                        response_code:
-                          type: integer
-                          description: Response code from the provider when attempting to delete the body metric entries
-        '207':
-          description: Returned when multiple status codes were obtained from attempting to delete the requested records
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/TerraUser'
-                  processed_data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          description: Identifier of the body metric entry whose deletion was attempted
-                        response_code:
-                          type: integer
-                          description: Response code from the provider when attempting to delete the body metric entry
-        '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
-        '401':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: An error message
-                    type: string
-                    example: unauthorized
-        '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
   /daily:
     get:
       summary: Retrieve daily activity summaries for a given user ID
@@ -922,52 +482,14 @@ paths:
                         type:
                           - string
                           - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
                   - $ref: '#/components/schemas/DataSentToWebhook'
-                  - $ref: '#/components/schemas/RequestProcessing'
-                  - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
+                  - $ref: '#/components/schemas/NoDestinationsAvailable'
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: An error message
-                    type: string
-                    example: unauthorized
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
   /menstruation:
     get:
       summary: Retrieve menstruation data for a given user ID
@@ -1033,144 +555,14 @@ paths:
                         type:
                           - string
                           - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
                   - $ref: '#/components/schemas/DataSentToWebhook'
-                  - $ref: '#/components/schemas/RequestProcessing'
-                  - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
+                  - $ref: '#/components/schemas/NoDestinationsAvailable'
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: An error message
-                    type: string
-                    example: unauthorized
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
-  /connections/{connection_id}/hormone:
-    get:
-      summary: Retrieve hormone data for a given connection ID
-      description: Fetches hormone test events (LH, E3G, PDG, HCG, FSH) for a given connection. Each entry is one test event; hormones not measured at that event appear as null. Uses x-terra-client-id and x-terra-client-secret headers for authentication.
-      tags:
-        - Hormone
-      operationId: Hormone_Fetch
-      security:
-        - TerraClientId: []
-          TerraClientSecret: []
-      parameters:
-        - name: connection_id
-          in: path
-          description: Terra connection ID
-          schema:
-            type: string
-          required: true
-        - name: start_date
-          in: query
-          description: Start date for data query (ISO-8601 date, YYYY-MM-DD)
-          schema:
-            type: string
-            format: date
-          required: true
-        - name: end_date
-          in: query
-          description: End date for data query (ISO-8601 date, YYYY-MM-DD)
-          schema:
-            type: string
-            format: date
-          required: false
-      responses:
-        '200':
-          description: Returned upon successful data request
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - type: object
-                    properties:
-                      connection:
-                        $ref: '#/components/schemas/Connection'
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/HormoneSample'
-                      type:
-                        type: string
-                        enum:
-                          - hormone
-                  - $ref: '#/components/schemas/NoDataReturned'
-        '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
-        '401':
-          description: Returned when v3 credentials (x-terra-client-id and x-terra-client-secret) are invalid or missing
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: An error message
-                    type: string
-                    example: unauthorized
-        '404':
-          description: Returned when the connection ID does not exist
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
   /nutrition:
     get:
       summary: Retrieve nutrition log data for a given user ID
@@ -1236,230 +628,14 @@ paths:
                         type:
                           - string
                           - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
                   - $ref: '#/components/schemas/DataSentToWebhook'
-                  - $ref: '#/components/schemas/RequestProcessing'
-                  - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
+                  - $ref: '#/components/schemas/NoDestinationsAvailable'
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: An error message
-                    type: string
-                    example: unauthorized
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
-    post:
-      tags:
-        - Nutrition
-      operationId: Nutrition_Write
-      description: Used to post nutrition logs to a provider. This endpoint only works for users connected via Fitbit. Returns error for other providers.
-      summary: Post nutrition logs to a provider
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                data:
-                  description: Nutrition entry to post to data provider
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Nutrition'
-              required:
-                - data
-        required: true
-      responses:
-        '201':
-          description: Returned when activity was successfully created on the provider
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/TerraUser'
-                  log_ids:
-                    description: List of identifiers for the objects created, returned in the same order they were posted. I.e. Posting [ObjectA, ObjectB] will return [IdentifierA, IdentifierB]
-                    type: array
-                    items:
-                      type: string
-                  message:
-                    type: string
-                    default: Nutrition successfully logged
-        '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
-        '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
-    delete:
-      tags:
-        - Nutrition
-      operationId: Nutrition_Delete
-      description: Used to delete nutrition logs the user has registered on their account
-      summary: Delete nutrition logs for a given user ID
-      parameters:
-        - name: user_id
-          in: query
-          description: Terra user ID (UUID format) to retrieve data for
-          schema:
-            type: string
-          required: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                data:
-                  type: array
-                  description: List of identifiers for nutrition entries to be deleted
-                  items:
-                    type: string
-                  required:
-                    - data
-        required: true
-      responses:
-        '200':
-          description: Returned when all records were deleted successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/TerraUser'
-                  processed_data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          description: Identifier of the nutrition log whose deletion was attempted
-                        response_code:
-                          type: integer
-                          description: Response code from the provider when attempting to delete the nutrition log
-        '207':
-          description: Returned when multiple status codes were obtained from attempting to delete the requested records
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/TerraUser'
-                  processed_data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          description: Identifier of the nutrition log whose deletion was attempted
-                        response_code:
-                          type: integer
-                          description: Response code from the provider when attempting to delete the nutrition log
-        '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
-        '401':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: An error message
-                    type: string
-                    example: unauthorized
-        '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    enum:
-                      - success
-                      - error
-                    type: string
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
   /sleep:
     get:
       summary: Retrieve sleep sessions for a given user ID
@@ -1525,52 +701,14 @@ paths:
                         type:
                           - string
                           - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
                   - $ref: '#/components/schemas/DataSentToWebhook'
-                  - $ref: '#/components/schemas/RequestProcessing'
-                  - $ref: '#/components/schemas/RateLimitRequestProcessing'
-                  - $ref: '#/components/schemas/LargeRequestProcessingEvent'
+                  - $ref: '#/components/schemas/NoDestinationsAvailable'
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: An error message
-                    type: string
-                    example: unauthorized
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
   /plannedWorkout:
     post:
       tags:
@@ -1618,35 +756,9 @@ paths:
                     type: string
                     default: Planned workout successfully created
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
     get:
       summary: Retrieve workout plans for a given user ID
       description: Used to get workout plans the user has registered on their account. This can be strength workouts (sets, reps, weight lifted) or cardio workouts (warmup, intervals of different intensities, cooldown etc)
@@ -1704,49 +816,14 @@ paths:
                         type:
                           - string
                           - 'null'
-                  - $ref: '#/components/schemas/NoDataReturned'
                   - $ref: '#/components/schemas/DataSentToWebhook'
+                  - $ref: '#/components/schemas/NoDestinationsAvailable'
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Returned when credentials (dev ID and API key) are invalid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: An error message
-                    type: string
-                    example: unauthorized
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
     delete:
       tags:
         - PlannedWorkout
@@ -1814,51 +891,11 @@ paths:
                         type: integer
                         description: Response code from the provider when attempting to delete the planned workout
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Returned when authorization with a data provider has failed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    enum:
-                      - success
-                      - error
-                    type: string
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
   /userInfo:
     get:
       tags:
@@ -1890,7 +927,26 @@ paths:
                     type: object
                     properties:
                       user:
-                        $ref: '#/components/schemas/TerraUser'
+                        description: |
+                          The connection. In addition to the base User fields, this endpoint also returns polling metadata.
+                        allOf:
+                          - $ref: '#/components/schemas/TerraUser'
+                          - type: object
+                            properties:
+                              last_polled_at:
+                                type:
+                                  - string
+                                  - 'null'
+                                format: date-time
+                                description: Last time Terra polled the provider for this connection.
+                                example: '2024-01-20T11:00:00Z'
+                              most_recent_data_at:
+                                type:
+                                  - string
+                                  - 'null'
+                                format: date-time
+                                description: Timestamp of the most recent data point Terra holds for this connection.
+                                example: '2024-01-19T23:00:00Z'
                       status:
                         type: string
                         enum:
@@ -1904,35 +960,9 @@ paths:
                     items:
                       $ref: '#/components/schemas/TerraUser'
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
   /subscriptions:
     get:
       tags:
@@ -1986,20 +1016,7 @@ paths:
                             items:
                               $ref: '#/components/schemas/TerraUser'
         '400':
-          description: Returned when one or more parameters are malformed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: A detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: Indicates that an error occurred (value is `error`)
+          $ref: '#/components/responses/BadRequest'
   /bulkUserInfo:
     post:
       tags:
@@ -2027,35 +1044,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/TerraUser'
         '400':
-          description: Returned when one or more parameters is malformed - an appropriate error message will be returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/BadRequest'
         '404':
-          description: Returned when a parameter does not exist on Terra's end (e.g. user_id)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - error
-                    description: indicates that an error happened (value is error)
+          $ref: '#/components/responses/NotFound'
   /integrations:
     get:
       summary: Get list of available integrations
@@ -2382,7 +1373,66 @@ components:
       in: header
       name: x-terra-client-secret
       description: Your Terra client secret, used to authenticate v3 endpoints alongside x-terra-client-id
+  responses:
+    BadRequest:
+      description: One or more parameters is malformed. The `detail` field describes the specific problem.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: bad request
+            instance: /activity
+            detail: invalid start_date
+    Unauthorized:
+      description: Authentication credentials (dev ID and API key) are missing or invalid.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: unauthorized
+            instance: /activity
+            detail: dev-id or x-api-key headers are missing
+    NotFound:
+      description: A referenced resource does not exist on Terra's end (e.g. the user_id).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: not found
+            instance: /activity
+            detail: user not found
   schemas:
+    Problem:
+      type: object
+      description: |
+        An error response, following RFC 7807. Returned with `Content-Type: application/problem+json` on every 4xx/5xx response. The HTTP status line carries the status code; it is intentionally not repeated in the body. `type`, `title` and `instance` are always present; `detail` is included when a specific explanation is available.
+      properties:
+        type:
+          type: string
+          description: A URI reference identifying the problem type. Defaults to `about:blank`.
+          example: about:blank
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type (the lowercased HTTP status text).
+          example: unauthorized
+        instance:
+          type: string
+          description: The request path, including any query string, that produced this problem.
+          example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+          example: dev-id or x-api-key headers are missing
+      required:
+        - type
+        - title
+        - instance
     WidgetSessionParams:
       type: object
       properties:
@@ -2408,88 +1458,87 @@ components:
           example: https://myapp.com/failure
     User:
       $ref: '#/components/schemas/TerraUser'
-    NoDataReturned:
+    NoDestinationsAvailable:
       type: object
+      description: |
+        Returned with HTTP 200 when `to_webhook` is true but the connection has no destination configured, so there is nowhere to deliver the requested data. The body uses the problem shape but is not an error.
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+          example: ok
+        instance:
+          type: string
+          example: /activity
+        detail:
+          type: string
+          example: no destinations available for this connection
+      required:
+        - type
+        - title
+        - instance
+    DataSentToWebhook:
+      type: object
+      description: |
+        Acknowledgement returned when `to_webhook` is true (the default): the requested data is fetched asynchronously and delivered to your configured destination, and this body confirms the request was accepted.
       properties:
         status:
           type: string
           enum:
             - success
-            - error
-          example: error
-        message:
-          type: string
-          example: No data available for specified time range
-        type:
-          type:
-            - string
-            - 'null'
-          example: no_data
-        user:
-          description: Terra User object
-          type: object
-          allOf:
-            - $ref: '#/components/schemas/TerraUser'
-    RequestProcessing:
-      type: object
-      properties:
-        retry_after_seconds:
-          type: number
-          description: Recommended time after which the request may be retried
-          nullable: true
-          example: 30
-        message:
-          type: string
-          nullable: false
-          example: Request is being processed
+          example: success
         type:
           type: string
-          nullable: false
-          example: processing
-        user:
-          description: Terra User object
-          type: object
-          allOf:
-            - $ref: '#/components/schemas/TerraUser'
-    RateLimitRequestProcessing:
-      type: object
-      properties:
-        message:
-          type: string
-          nullable: false
-          example: Rate limit exceeded
-        type:
-          type: string
-          nullable: false
-          example: rate_limit
-        user:
-          $ref: '#/components/schemas/TerraUser'
-      required:
-        - user
-    DataSentToWebhook:
-      type: object
-      properties:
+          description: The data type that was requested (e.g. `activity`, `sleep`).
+          example: activity
         reference:
           type: string
-          description: Payload reference, tying the request to the webhook payload which will be received
-          nullable: true
-          example: webhook_ref_123
+          description: Payload reference, tying this request to the webhook payload you will receive.
+          example: 5a3c2540-7139-44c6-8158-f81196e2cf2e
+        trace_id:
+          type: string
+          description: Trace identifier for this request (equal to `reference`).
+          example: 5a3c2540-7139-44c6-8158-f81196e2cf2e
         message:
           type: string
-          nullable: false
-          example: Data will be sent to webhook
-        type:
-          type: string
-          nullable: false
-          example: webhook
+          description: Present only for large requests (date range over one month), which are delivered in chunks.
+          example: Large request submitted. The data is being processed and will be sent to your destination in chunks
         user:
-          description: Terra User object
           type: object
-          allOf:
-            - $ref: '#/components/schemas/TerraUser'
+          description: Summary of the connection the data was requested for.
+          properties:
+            user_id:
+              type: string
+              example: 5a3c2540-7139-44c6-8158-f81196e2cf2e
+            provider:
+              type: string
+              example: GARMIN
+            reference_id:
+              type:
+                - string
+                - 'null'
+              example: user123@email.com
+            created_at:
+              type: string
+              format: date-time
+              example: '2024-01-15T09:30:00Z'
+            active:
+              type: boolean
+              example: true
+            scopes:
+              type: string
+              description: Comma-separated list of granted scopes.
+              example: activity,sleep,daily
+            last_webhook_update:
+              type:
+                - string
+                - 'null'
+              format: date-time
+              example: '2024-01-20T11:00:00Z'
     Activity:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Activity.yaml
       type: object
       properties:
         active_durations_data:
@@ -2555,7 +1604,6 @@ components:
         - metadata
     Athlete:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Athlete.yaml
       type: object
       properties:
         age:
@@ -2632,8 +1680,9 @@ components:
           allOf:
             - $ref: '#/components/schemas/Athlete'
         type:
-          type: string
-          nullable: true
+          type:
+            - string
+            - 'null'
           example: athlete
         user:
           description: Terra User object
@@ -2642,7 +1691,6 @@ components:
             - $ref: '#/components/schemas/TerraUser'
     Body:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Body.yaml
       type: object
       properties:
         blood_pressure_data:
@@ -2679,7 +1727,6 @@ components:
         - metadata
     Daily:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Daily.yaml
       type: object
       properties:
         active_durations_data:
@@ -2725,7 +1772,6 @@ components:
         - metadata
     Menstruation:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Menstruation.yaml
       type: object
       properties:
         metadata:
@@ -2738,7 +1784,6 @@ components:
         - metadata
     HormoneSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HormoneSample.yaml
       type: object
       properties:
         timestamp:
@@ -2775,7 +1820,6 @@ components:
         - timestamp
     Connection:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Connection.yaml
       type: object
       properties:
         id:
@@ -2819,7 +1863,6 @@ components:
         - scopes
     Nutrition:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Nutrition.yaml
       type: object
       properties:
         drink_samples:
@@ -2842,7 +1885,6 @@ components:
         - metadata
     Sleep:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Sleep.yaml
       type: object
       properties:
         data_enrichment:
@@ -2883,7 +1925,6 @@ components:
       properties:
         target_type:
           description: Type of target for the workout - i.e. metric type for which a criterion must be met for the workout to be completed
-          nullable: false
           type: string
           enum:
             - SPEED
@@ -2910,13 +1951,13 @@ components:
       type: object
       properties:
         cadence:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Ideal cadence value to be maintained for the workout step
-          nullable: true
           example: 90
         target_type:
           description: Type of target for the workout - i.e. metric type for which a criterion must be met for the workout to be completed
-          nullable: false
           type: string
           enum:
             - SPEED
@@ -2940,26 +1981,28 @@ components:
             - IF
           example: CADENCE
         cadence_low:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Minimum cadence threshold for the workout step - i.e. the user is to stay above this value during the workout
-          nullable: true
           example: 85
         cadence_high:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Maximum cadence threshold for the workout step - i.e. the user is to stay under this value during the workout step
-          nullable: true
           example: 95
     HRPlannedWorkoutStepTarget:
       type: object
       properties:
         hr_percentage_low:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Maximum max heart rate percentage threshold for the workout step - i.e. the user is to stay under this value during the workout step
-          nullable: true
           example: 65.5
         target_type:
           description: Type of target for the workout - i.e. metric type for which a criterion must be met for the workout to be completed
-          nullable: false
           type: string
           enum:
             - SPEED
@@ -2983,31 +2026,34 @@ components:
             - IF
           example: HEART_RATE
         hr_percentage_high:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Minimum heart rate percentage threshold for the workout step - i.e. the user is to stay above this value during the workout
-          nullable: true
           example: 85.5
         hr_percentage:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Ideal percentage of user's maximum HR to be maintained workout step
-          nullable: true
           example: 75.5
         hr_bpm_high:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Maximum heart rate threshold for the workout step - i.e. the user is to stay under this value during the workout step
-          nullable: true
           example: 175
         hr_bpm_low:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Minimum heart rate threshold for the workout step - i.e. the user is to stay above this value during the workout
-          nullable: true
           example: 130
     PowerPlannedWorkoutStepTarget:
       type: object
       properties:
         target_type:
           description: Type of target for the workout - i.e. metric type for which a criterion must be met for the workout to be completed
-          nullable: false
           type: string
           enum:
             - SPEED
@@ -3031,41 +2077,46 @@ components:
             - IF
           example: POWER
         power_percentage_low:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Maximum percentage of Functional Threshold Power for the workout step - i.e. the user is to stay under this value during the workout step
-          nullable: true
           example: 65.5
         power_percentage_high:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Minimum percentage of Functional Threshold Power for the workout step - i.e. the user is to stay above this value during the workout
-          nullable: true
           example: 85.5
         power_watt_high:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Maximum power threshold for the workout step - i.e. the user is to stay under this value during the workout step
-          nullable: true
           example: 300
         power_watt_low:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Minimum power threshold for the workout step - i.e. the user is to stay above this value during the workout
-          nullable: true
           example: 200
         power_watt:
-          type: integer
+          type:
+            - integer
+            - 'null'
           default: null
-          nullable: true
           example: 250
         power_percentage:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Ideal percentage of user's Functional Threshold Power to be maintained workout step
-          nullable: true
           example: 75.5
     SpeedPlannedWorkoutStepTarget:
       type: object
       properties:
         target_type:
           description: Type of target for the workout - i.e. metric type for which a criterion must be met for the workout to be completed
-          nullable: false
           type: string
           enum:
             - SPEED
@@ -3089,31 +2140,34 @@ components:
             - IF
           example: SPEED
         speed_percentage_high:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Maximum speed threshold for the workout step - i.e. the user is to stay under this value during the workout step
-          nullable: true
           example: 85.5
         speed_percentage_low:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Minimum speed threshold for the workout step - i.e. the user is to stay above this value during the workout step
-          nullable: true
           example: 65.5
         speed_percentage:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Ideal percentage of user's Threshold Speed, based off their Threshold Pace, to be maintained workout step. Usually, the Threshold Pace is defined as the pace one could race at for 50 to 60 minutes
-          nullable: true
           example: 75.5
         speed_meters_per_second:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Ideal speed value to be maintained for the workout step
-          nullable: true
           example: 4.2
     PacePlannedWorkoutStepTarget:
       type: object
       properties:
         target_type:
           description: Type of target for the workout - i.e. metric type for which a criterion must be met for the workout to be completed
-          nullable: false
           type: string
           enum:
             - SPEED
@@ -3137,16 +2191,16 @@ components:
             - IF
           example: PACE
         pace_minutes_per_kilometer:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Ideal pace value to be maintained for the workout step
-          nullable: true
           example: 5.5
     TSSPlannedWorkoutStepTarget:
       type: object
       properties:
         target_type:
           description: Type of target for the workout - i.e. metric type for which a criterion must be met for the workout to be completed
-          nullable: false
           type: string
           enum:
             - SPEED
@@ -3170,21 +2224,22 @@ components:
             - IF
           example: TSS
         tss:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Planned Training Stress Score to be achieved for the workout step
-          nullable: true
           example: 100.5
     IFPlannedWorkoutStepTarget:
       type: object
       properties:
         if_high:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Maximum Intensity Factor to be achieved for the workout step
-          nullable: true
           example: 1.2
         target_type:
           description: Type of target for the workout - i.e. metric type for which a criterion must be met for the workout to be completed
-          nullable: false
           type: string
           enum:
             - SPEED
@@ -3208,16 +2263,16 @@ components:
             - IF
           example: IF
         if_low:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Minimum Intensity Factor to be achieved for the workout step
-          nullable: true
           example: 0.8
     RepetitionPlannedWorkoutStepTarget:
       type: object
       properties:
         target_type:
           description: Type of target for the workout - i.e. metric type for which a criterion must be met for the workout to be completed
-          nullable: false
           type: string
           enum:
             - SPEED
@@ -3241,16 +2296,16 @@ components:
             - IF
           example: REPETITION
         repetitions:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Number of repetitions of the workout step to be performed
-          nullable: true
           example: 10
     SwimStrokePlannedWorkoutStepTarget:
       type: object
       properties:
         target_type:
           description: Type of target for the workout - i.e. metric type for which a criterion must be met for the workout to be completed
-          nullable: false
           type: string
           enum:
             - SPEED
@@ -3274,9 +2329,10 @@ components:
             - IF
           example: SWIM_STROKE
         swim_strokes:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Number of swim strokes to be performed during the workout step
-          nullable: true
           example: 50
     PlannedWorkoutStepTargets:
       type: object
@@ -3310,7 +2366,6 @@ components:
       properties:
         duration_type:
           description: Type of condition that must be fulfilled to consider the workout step complete
-          nullable: false
           type: string
           enum:
             - TIME
@@ -3330,12 +2385,12 @@ components:
       type: object
       properties:
         seconds:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Time duration to be elapsed for the workout step
-          nullable: true
         duration_type:
           description: Type of condition that must be fulfilled to consider the workout step complete
-          nullable: false
           type: string
           enum:
             - TIME
@@ -3355,12 +2410,12 @@ components:
       type: object
       properties:
         power_above_watts:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Threshold power goal to complete the workout step - once the user reaches above this power level, the step will be completed
-          nullable: true
         duration_type:
           description: Type of condition that must be fulfilled to consider the workout step complete
-          nullable: false
           type: string
           enum:
             - TIME
@@ -3380,12 +2435,12 @@ components:
       type: object
       properties:
         power_below_watts:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Threshold power goal to complete the workout step - once the user reaches below this power level, the step will be completed
-          nullable: true
         duration_type:
           description: Type of condition that must be fulfilled to consider the workout step complete
-          nullable: false
           type: string
           enum:
             - TIME
@@ -3406,7 +2461,6 @@ components:
       properties:
         duration_type:
           description: Type of condition that must be fulfilled to consider the workout step complete
-          nullable: false
           type: string
           enum:
             - TIME
@@ -3423,19 +2477,20 @@ components:
             - TIME_AT_VALID_CDA
             - STEPS
         rest_seconds:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Time duration to be elapsed for the rest period
-          nullable: true
     CaloriesPlannedWorkoutStepDuration:
       type: object
       properties:
         calories:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Calorie burn target for the workout step - once the user reaches the target, the step will be completed
-          nullable: true
         duration_type:
           description: Type of condition that must be fulfilled to consider the workout step complete
-          nullable: false
           type: string
           enum:
             - TIME
@@ -3456,7 +2511,6 @@ components:
       properties:
         duration_type:
           description: Type of condition that must be fulfilled to consider the workout step complete
-          nullable: false
           type: string
           enum:
             - TIME
@@ -3473,19 +2527,20 @@ components:
             - TIME_AT_VALID_CDA
             - STEPS
         hr_above_bpm:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Threshold heart rate goal to complete the workout step - once the user's heart rate reaches above below this value, the step will be completed
-          nullable: true
     HRBelowPlannedWorkoutStepDuration:
       type: object
       properties:
         hr_below_bpm:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Threshold heart rate goal to complete the workout step - once the user's heart rate reaches below this value, the step will be completed
-          nullable: true
         duration_type:
           description: Type of condition that must be fulfilled to consider the workout step complete
-          nullable: false
           type: string
           enum:
             - TIME
@@ -3505,12 +2560,12 @@ components:
       type: object
       properties:
         reps:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Target number of reps for the workout step - once the user completes this rep target, the step will be completed
-          nullable: true
         duration_type:
           description: Type of condition that must be fulfilled to consider the workout step complete
-          nullable: false
           type: string
           enum:
             - TIME
@@ -3531,7 +2586,6 @@ components:
       properties:
         duration_type:
           description: Type of condition that must be fulfilled to consider the workout step complete
-          nullable: false
           type: string
           enum:
             - TIME
@@ -3548,19 +2602,20 @@ components:
             - TIME_AT_VALID_CDA
             - STEPS
         distance_meters:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Target distance for the workout step - once the user covers this distance, the step will be completed
-          nullable: true
     StepsPlannedWorkoutStepDuration:
       type: object
       properties:
         steps:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Target number of steps for the workout step - once the user performs this number of steps, the step will be completed
-          nullable: true
         duration_type:
           description: Type of condition that must be fulfilled to consider the workout step complete
-          nullable: false
           type: string
           enum:
             - TIME
@@ -3653,7 +2708,6 @@ components:
             $ref: '#/components/schemas/PlannedWorkoutStepTarget'
         type:
           description: Type of workout step - either repeat or one-off
-          nullable: false
           type: string
           enum:
             - STEP
@@ -3664,26 +2718,30 @@ components:
           items:
             $ref: '#/components/schemas/PlannedWorkoutStep'
         intensity:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Planned intensity for the workout step
-          nullable: true
         order:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Position of the workout step in the overall workout
-          nullable: true
         description:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Description of workout step
-          nullable: true
         durations:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
             $ref: '#/components/schemas/PlannedWorkoutStepDuration'
         name:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Name of workout step
-          nullable: true
     SwimmingPlannedWorkoutStep:
       type: object
       properties:
@@ -3694,22 +2752,22 @@ components:
             $ref: '#/components/schemas/PlannedWorkoutStepTarget'
         type:
           description: Type of workout step - either repeat or one-off
-          nullable: false
           type: string
           enum:
             - STEP
             - REPEAT_STEP
         intensity:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Planned intensity for the workout step
-          nullable: true
         order:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Position of the workout step in the overall workout
-          nullable: true
         equipment_type:
           description: Workout equipment to be used during the workout step
-          nullable: false
           type: string
           enum:
             - NONE
@@ -3719,21 +2777,22 @@ components:
             - SWIM_PULL_BUOY
             - SWIM_SNORKEL
         description:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Description of workout step
-          nullable: true
         durations:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
             $ref: '#/components/schemas/PlannedWorkoutStepDuration'
         name:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Name of workout step
-          nullable: true
         stroke_type:
           description: Stroke type used for the workout step (e.g. breaststroke)
-          nullable: false
           type: string
           enum:
             - OTHER
@@ -3752,27 +2811,30 @@ components:
             $ref: '#/components/schemas/PlannedWorkoutStepTarget'
         type:
           description: Type of workout step - either repeat or one-off
-          nullable: false
           type: string
           enum:
             - STEP
             - REPEAT_STEP
         intensity:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Planned intensity for the workout step
-          nullable: true
         order:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Position of the workout step in the overall workout
-          nullable: true
         exercise_name:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Name of exercise to be performed for the workout step
-          nullable: true
         description:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Description of workout step
-          nullable: true
         durations:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
@@ -3780,7 +2842,6 @@ components:
             $ref: '#/components/schemas/PlannedWorkoutStepDuration'
         exercise_category:
           description: Type of exercise to be performed for the workout step
-          nullable: false
           type: string
           enum:
             - UNKNOWN
@@ -3820,16 +2881,18 @@ components:
             - BIKE
             - CARDIO_SENSORS
         name:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Name of workout step
-          nullable: true
     StrengthPlannedWorkoutStep:
       type: object
       properties:
         weight_kg:
-          type: number
+          type:
+            - number
+            - 'null'
           description: Weight to be lifted for the exercise
-          nullable: true
         targets:
           type: array
           description: List of targets for the workout
@@ -3837,27 +2900,30 @@ components:
             $ref: '#/components/schemas/PlannedWorkoutStepTarget'
         type:
           description: Type of workout step - either repeat or one-off
-          nullable: false
           type: string
           enum:
             - STEP
             - REPEAT_STEP
         intensity:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Planned intensity for the workout step
-          nullable: true
         order:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Position of the workout step in the overall workout
-          nullable: true
         exercise_name:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Name of strength exercise to be performed for the workout step
-          nullable: true
         description:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Description of workout step
-          nullable: true
         durations:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
@@ -3865,7 +2931,6 @@ components:
             $ref: '#/components/schemas/PlannedWorkoutStepDuration'
         exercise_category:
           description: Type of strength exercise to be performed for the workout step
-          nullable: false
           type: string
           enum:
             - UNKNOWN
@@ -3905,9 +2970,10 @@ components:
             - BIKE
             - CARDIO_SENSORS
         name:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Name of workout step
-          nullable: true
     YogaPlannedWorkoutStep:
       type: object
       properties:
@@ -3918,32 +2984,35 @@ components:
             $ref: '#/components/schemas/PlannedWorkoutStepTarget'
         type:
           description: Type of workout step - either repeat or one-off
-          nullable: false
           type: string
           enum:
             - STEP
             - REPEAT_STEP
         intensity:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Planned intensity for the workout step
-          nullable: true
         order:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Position of the workout step in the overall workout
-          nullable: true
         description:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Description of workout step
-          nullable: true
         durations:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
             $ref: '#/components/schemas/PlannedWorkoutStepDuration'
         name:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Name of workout step
-          nullable: true
     PilatesPlannedWorkoutStep:
       type: object
       properties:
@@ -3954,32 +3023,35 @@ components:
             $ref: '#/components/schemas/PlannedWorkoutStepTarget'
         type:
           description: Type of workout step - either repeat or one-off
-          nullable: false
           type: string
           enum:
             - STEP
             - REPEAT_STEP
         intensity:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Planned intensity for the workout step
-          nullable: true
         order:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Position of the workout step in the overall workout
-          nullable: true
         description:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Description of workout step
-          nullable: true
         durations:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
             $ref: '#/components/schemas/PlannedWorkoutStepDuration'
         name:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Name of workout step
-          nullable: true
     RunningPlannedWorkoutStep:
       type: object
       properties:
@@ -3990,32 +3062,35 @@ components:
             $ref: '#/components/schemas/PlannedWorkoutStepTarget'
         type:
           description: Type of workout step - either repeat or one-off
-          nullable: false
           type: string
           enum:
             - STEP
             - REPEAT_STEP
         intensity:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Planned intensity for the workout step
-          nullable: true
         order:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Position of the workout step in the overall workout
-          nullable: true
         description:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Description of workout step
-          nullable: true
         durations:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
             $ref: '#/components/schemas/PlannedWorkoutStepDuration'
         name:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Name of workout step
-          nullable: true
     CyclingPlannedWorkoutStep:
       type: object
       properties:
@@ -4026,32 +3101,35 @@ components:
             $ref: '#/components/schemas/PlannedWorkoutStepTarget'
         type:
           description: Type of workout step - either repeat or one-off
-          nullable: false
           type: string
           enum:
             - STEP
             - REPEAT_STEP
         intensity:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Planned intensity for the workout step
-          nullable: true
         order:
-          type: integer
+          type:
+            - integer
+            - 'null'
           description: Position of the workout step in the overall workout
-          nullable: true
         description:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Description of workout step
-          nullable: true
         durations:
           type: array
           description: List of conditions to be fulfilled for the workout step to be completed - all of the conditions must be completed
           items:
             $ref: '#/components/schemas/PlannedWorkoutStepDuration'
         name:
-          type: string
+          type:
+            - string
+            - 'null'
           description: Name of workout step
-          nullable: true
     PlannedWorkoutSteps:
       type: object
       properties: {}
@@ -4113,14 +3191,14 @@ components:
           example: '2022-11-23T09:00:00.000000+02:00'
           format: date-time
         planned_date:
-          type: string
+          type:
+            - string
+            - 'null'
           description: The planned start datetime, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time
           example: '2022-11-24T09:00:00.000000+02:00'
           format: date-time
-          nullable: true
         type:
           description: The name - either user-entered or given by the fitness data provider - of the associated workout plan
-          nullable: false
           type: string
           enum:
             - IN_VEHICLE
@@ -4414,7 +3492,6 @@ components:
       $ref: '#/components/schemas/WebhookEventType'
     TerraUser:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TerraUser.yaml
       type: object
       properties:
         user_id:
@@ -4429,6 +3506,11 @@ components:
             - FITBIT
           minLength: 1
           description: Connection data source
+        created_at:
+          type: string
+          examples:
+            - '2022-12-12T10:00:00.000000+00:00'
+          description: Time at which the connection was created
         last_webhook_update:
           type: string
           examples:
@@ -4454,7 +3536,6 @@ components:
         - provider
     ActivityLevel:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityLevel.yaml
       oneOf:
         - type: number
           const: 0
@@ -4485,7 +3566,6 @@ components:
       description: Intensity of the user's activity at an instant in time
     ActivityLevelSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityLevelSample.yaml
       type: object
       properties:
         timestamp:
@@ -4497,7 +3577,6 @@ components:
           $ref: '#/components/schemas/ActivityLevel'
     ActiveDurationsData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActiveDurationsData.yaml
       type: object
       properties:
         activity_levels_samples:
@@ -4553,7 +3632,6 @@ components:
           type: number
     CalorieSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/CalorieSample.yaml
       type: object
       properties:
         timestamp:
@@ -4569,7 +3647,6 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     CaloriesData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/CaloriesData.yaml
       type: object
       properties:
         BMR_calories:
@@ -4591,7 +3668,6 @@ components:
           description: Total calories burned including BMR and activity.
     DataEnrichment:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataEnrichment.yaml
       type: object
       properties:
         stress_score:
@@ -4599,7 +3675,6 @@ components:
           description: User's stress score.
     DeviceDataType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeviceDataType.yaml
       oneOf:
         - type: string
           const: STEPS
@@ -4646,7 +3721,6 @@ components:
       description: Represents data types that a certain device contributed to.
     OtherDeviceData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OtherDeviceData.yaml
       type: object
       properties:
         manufacturer:
@@ -4687,7 +3761,6 @@ components:
           description: Last upload date from the device.
     DeviceData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeviceData.yaml
       type: object
       properties:
         activation_timestamp:
@@ -4738,7 +3811,6 @@ components:
           description: Device Software Version.
     DistanceSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceSample.yaml
       type: object
       properties:
         timestamp:
@@ -4758,7 +3830,6 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     ElevationSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ElevationSample.yaml
       type: object
       properties:
         timestamp:
@@ -4778,7 +3849,6 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     FloorsClimbedSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/FloorsClimbedSample.yaml
       type: object
       properties:
         timestamp:
@@ -4798,7 +3868,6 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     StepSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StepSample.yaml
       type: object
       properties:
         timestamp:
@@ -4814,7 +3883,6 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     DistanceDataDetailed:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceDataDetailed.yaml
       type: object
       properties:
         distance_samples:
@@ -4839,7 +3907,6 @@ components:
           description: Array of detailed samples of steps performed throughout the workout.
     ElevationData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ElevationData.yaml
       type: object
       properties:
         avg_meters:
@@ -4877,7 +3944,6 @@ components:
           description: Minimum elevation of the user during the workout.
     SwimmingData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SwimmingData.yaml
       type: object
       properties:
         num_laps:
@@ -4900,7 +3966,6 @@ components:
           description: Pool length for associated with the day.
     DistanceDataSummary:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceDataSummary.yaml
       type: object
       properties:
         distance_meters:
@@ -4920,7 +3985,6 @@ components:
           description: Summary information of the user's swimming statistics for the workout, if applicable.
     DistanceData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DistanceData.yaml
       type: object
       properties:
         detailed:
@@ -4931,7 +3995,6 @@ components:
           description: Object containing summary information related to distance covered throughout the workout.
     EnergyData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/EnergyData.yaml
       type: object
       properties:
         energy_kilojoules:
@@ -4946,7 +4009,6 @@ components:
           description: Total number of kiloJoules planned to be expended during the workout - represents the user's predefined goal for the workout
     HeartRateContext:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateContext.yaml
       oneOf:
         - type: number
           const: 0
@@ -4965,7 +4027,6 @@ components:
       description: Represents the context in which heart rate was measured.
     HeartRateDataSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateDataSample.yaml
       type: object
       properties:
         timestamp:
@@ -4988,7 +4049,6 @@ components:
           description: Represents the context in which heart rate was measured.
     HeartRateVariabilityDataSampleRMSSD:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateVariabilityDataSampleRMSSD.yaml
       type: object
       properties:
         timestamp:
@@ -5003,7 +4063,6 @@ components:
           description: User's Heart Rate Variability, computed using RMSSD
     HeartRateVariabilityDataSampleSDNN:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateVariabilityDataSampleSDNN.yaml
       type: object
       properties:
         timestamp:
@@ -5018,7 +4077,6 @@ components:
           description: User's Heart Rate Variability, computed using SDNN
     HeartRateDataDetailed:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateDataDetailed.yaml
       type: object
       properties:
         hr_samples:
@@ -5038,7 +4096,6 @@ components:
           description: Array of HeartRate Variability data samples recorded for the user during the workout, computed using SDNN.
     HeartRateZone:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateZone.yaml
       oneOf:
         - type: number
           const: 0
@@ -5073,7 +4130,6 @@ components:
       description: Represents the heart rate zone the user is currently in during a workout or activity
     HeartRateZoneData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateZoneData.yaml
       type: object
       properties:
         zone:
@@ -5105,7 +4161,6 @@ components:
           description: Duration spent in the heart rate zone
     HeartRateDataSummary:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateDataSummary.yaml
       type: object
       properties:
         avg_hr_bpm:
@@ -5154,7 +4209,6 @@ components:
           description: User's maximum HeartRate based on their age, and other factors as determined by the fitness data provider.
     HeartRateData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateData.yaml
       type: object
       properties:
         detailed:
@@ -5165,7 +4219,6 @@ components:
           description: Object containing summary heart rate information for the associated workout.
     StrokeType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StrokeType.yaml
       oneOf:
         - type: string
           const: other
@@ -5192,7 +4245,6 @@ components:
       description: Stroke type used for the workout step (e.g. breaststroke)
     LapSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LapSample.yaml
       type: object
       properties:
         calories:
@@ -5237,7 +4289,6 @@ components:
           description: Stroke type - only relevant for swimming activities
     LapData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LapData.yaml
       type: object
       properties:
         laps:
@@ -5247,7 +4298,6 @@ components:
           description: Array of datapoints for each lap performed by the user during the workout.
     METSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/METSample.yaml
       type: object
       properties:
         timestamp:
@@ -5260,7 +4310,6 @@ components:
           description: Metabolic Equivalent of Task (MET) level at the given timestamp
     METData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/METData.yaml
       type: object
       properties:
         MET_samples:
@@ -5299,7 +4348,6 @@ components:
           description: Number of minutes spent in Moderate Intensity during the workout - based off MET scale.
     TimestampLocalization:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TimestampLocalization.yaml
       type: number
       enum:
         - 0
@@ -5309,7 +4357,6 @@ components:
       description: Indicates whether the timestamps in this payload are localized (LOCAL) or in UTC.
     ActivityType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityType.yaml
       oneOf:
         - type: number
           const: 0
@@ -5876,7 +4923,6 @@ components:
       description: The type of activity performed for the associated workout.
     UploadType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/UploadType.yaml
       oneOf:
         - type: number
           const: 0
@@ -5909,7 +4955,6 @@ components:
       description: The type of upload for the associated workout, providing information on how the workout data was recorded or entered
     ActivityMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityMetadata.yaml
       type: object
       properties:
         city:
@@ -5963,7 +5008,6 @@ components:
         - upload_type
     CadenceSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/CadenceSample.yaml
       type: object
       properties:
         timestamp:
@@ -5979,7 +5023,6 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     SpeedSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SpeedSample.yaml
       type: object
       properties:
         timestamp:
@@ -5995,7 +5038,6 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     TorqueSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TorqueSample.yaml
       type: object
       properties:
         timestamp:
@@ -6015,7 +5057,6 @@ components:
           description: Torque generated at a given instant in time, in Newton-meters
     MovementData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MovementData.yaml
       type: object
       properties:
         adjusted_max_speed_meters_per_second:
@@ -6095,7 +5136,6 @@ components:
           description: Array of the datapoints for the user's torque sampled throughout the workout.
     OxygenSaturationType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenSaturationType.yaml
       oneOf:
         - type: number
           const: 0
@@ -6110,7 +5150,6 @@ components:
       description: Type of oxygen saturation measurement (i.e. blood vs muscle)
     OxygenSaturationSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenSaturationSample.yaml
       type: object
       properties:
         timestamp:
@@ -6128,7 +5167,6 @@ components:
           description: Type of oxygen saturation measurement (i.e. blood vs muscle)
     Vo2MaxSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Vo2MaxSample.yaml
       type: object
       properties:
         timestamp:
@@ -6143,7 +5181,6 @@ components:
           description: User's VO2Max - maximum amount of oxygen the user's body can utilize during exercise
     OxygenData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenData.yaml
       type: object
       properties:
         avg_saturation_percentage:
@@ -6168,7 +5205,6 @@ components:
           description: VO2Max for the given user.
     PolylineMapData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PolylineMapData.yaml
       type: object
       properties:
         summary_polyline:
@@ -6178,7 +5214,6 @@ components:
           description: The polyline representation of the user's trajectory throughout the workout
     PositionSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PositionSample.yaml
       type: object
       properties:
         timestamp:
@@ -6202,7 +5237,6 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     PositionData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PositionData.yaml
       type: object
       properties:
         center_pos_lat_lng_deg:
@@ -6236,7 +5270,6 @@ components:
           description: Position of the user at the start of the workout, represented by a 2-value array of latitude, longitude, wherein each of the two numbers can be nullable.
     PowerSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PowerSample.yaml
       type: object
       properties:
         timestamp:
@@ -6256,7 +5289,6 @@ components:
           description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
     PowerData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PowerData.yaml
       type: object
       properties:
         avg_watts:
@@ -6276,7 +5308,6 @@ components:
           description: Array containing datapoints of the power output of the user sampled throughout the workout.
     StrainData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StrainData.yaml
       type: object
       properties:
         strain_level:
@@ -6286,7 +5317,6 @@ components:
           description: Level of cardiovascular strain imposed on the user during the day.
     TSSSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TSSSample.yaml
       type: object
       properties:
         planned:
@@ -6309,7 +5339,6 @@ components:
           description: Normalized power output in watts
     TSSData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TSSData.yaml
       type: object
       properties:
         TSS_samples:
@@ -6319,7 +5348,6 @@ components:
           description: Array of TSS information sampled throughout the workout
     WorkData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WorkData.yaml
       type: object
       properties:
         work_kilojoules:
@@ -6327,53 +5355,8 @@ components:
           examples:
             - 450.5
           description: Total work output of the user for the workout, in kilojoules.
-    WebhookEvent:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WebhookEvent.yaml
-      type: object
-      properties:
-        type:
-          type: string
-          description: The type of event
-        status:
-          type: string
-          description: Status of the event
-      required:
-        - type
-      description: Base webhook event structure that all events extend from
-    LargeRequestProcessingEvent:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LargeRequestProcessingEvent.yaml
-      type: object
-      properties:
-        type:
-          type: string
-          const: large_request_processing
-        status:
-          type: string
-          const: processing
-          description: Status of the processing
-        message:
-          type: string
-          description: Information about the processing
-        user:
-          $ref: '#/components/schemas/TerraUser'
-          description: User whose data is being processed
-        reference:
-          type: string
-          description: Reference ID for tracking this request
-      required:
-        - type
-        - status
-        - message
-        - user
-        - reference
-      allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
-      description: Large request processing event
     BloodPressureSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BloodPressureSample.yaml
       type: object
       properties:
         timestamp:
@@ -6393,7 +5376,6 @@ components:
           description: User's systolic blood pressure, in mmHg
     BloodPressureData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BloodPressureData.yaml
       type: object
       properties:
         blood_pressure_samples:
@@ -6403,7 +5385,6 @@ components:
           description: List of Blood Pressure measurements sampled throughout the day.
     AFibFlag:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AFibFlag.yaml
       oneOf:
         - type: number
           const: 0
@@ -6422,7 +5403,6 @@ components:
       description: Flag indicating the atrial fibrillation classification of the individual
     AFibClassificationSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AFibClassificationSample.yaml
       type: object
       properties:
         timestamp:
@@ -6435,7 +5415,6 @@ components:
           description: Flag indicating the atrial fibrillation classification of the individual
     RawECGSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RawECGSample.yaml
       type: object
       properties:
         potential_uV:
@@ -6450,7 +5429,6 @@ components:
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
     ECGReading:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ECGReading.yaml
       type: object
       properties:
         start_timestamp:
@@ -6471,7 +5449,6 @@ components:
           description: List of raw ECG readings sampled through the day.
     PulseVelocitySample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PulseVelocitySample.yaml
       type: object
       properties:
         timestamp:
@@ -6486,7 +5463,6 @@ components:
           description: User's Pulse Wave Velocity measurement - velocity at which the blood pressure pulse propagates through the circulatory system
     RRIntervalSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RRIntervalSample.yaml
       type: object
       properties:
         rr_interval_ms:
@@ -6506,7 +5482,6 @@ components:
           description: The heart beat value at that specific instance.
     HeartData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartData.yaml
       type: object
       properties:
         afib_classification_samples:
@@ -6534,7 +5509,6 @@ components:
           description: List of RR Interval samples throughout the day.
     HydrationMeasurementSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HydrationMeasurementSample.yaml
       type: object
       properties:
         timestamp:
@@ -6549,7 +5523,6 @@ components:
           description: Total body water composition of the user, in kilograms.
     HydrationData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HydrationData.yaml
       type: object
       properties:
         day_total_water_consumption_ml:
@@ -6564,7 +5537,6 @@ components:
           description: User's hydration level samples throughout the day.
     KetoneSampleType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/KetoneSampleType.yaml
       oneOf:
         - type: number
           const: 0
@@ -6587,7 +5559,6 @@ components:
       description: Flag indicating the ketone sample type (e.g. blood, breath, urine)
     KetoneSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/KetoneSample.yaml
       type: object
       properties:
         timestamp:
@@ -6605,7 +5576,6 @@ components:
           description: Flag indicating the ketone sample type (e.g. blood, breath, urine)
     KetoneData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/KetoneData.yaml
       type: object
       properties:
         ketone_samples:
@@ -6615,7 +5585,6 @@ components:
           description: List of ketone data sampled through the day.
     MeasurementDataSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MeasurementDataSample.yaml
       type: object
       properties:
         measurement_time:
@@ -6707,7 +5676,6 @@ components:
           description: User notes associated with the measurement.
     MeasurementsData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MeasurementsData.yaml
       type: object
       properties:
         measurements:
@@ -6717,7 +5685,6 @@ components:
           description: List of body metrics & measurements taken throughout the associated day.
     BodyMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BodyMetadata.yaml
       type: object
       properties:
         end_time:
@@ -6737,7 +5704,6 @@ components:
         - start_time
     TemperatureSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TemperatureSample.yaml
       type: object
       properties:
         timestamp:
@@ -6752,7 +5718,6 @@ components:
           description: Temperature value in degrees Celsius.
     TemperatureData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TemperatureData.yaml
       type: object
       properties:
         ambient_temperature_samples:
@@ -6772,7 +5737,6 @@ components:
           description: List of skin temperature measurements sampled throughout the day.
     GlucoseFlag:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GlucoseFlag.yaml
       oneOf:
         - type: number
           const: 0
@@ -6791,7 +5755,6 @@ components:
       description: Flag indicating state of user's blood glucose level
     TrendArrow:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TrendArrow.yaml
       oneOf:
         - type: number
           const: 0
@@ -6822,7 +5785,6 @@ components:
       description: Flag indicating the current trend in the user's blood glucose level (e.g. rising, constant, falling)
     GlucoseDataSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GlucoseDataSample.yaml
       type: object
       properties:
         timestamp:
@@ -6843,7 +5805,6 @@ components:
           description: Flag indicating the current trend in the user's blood glucose level (e.g. rising, constant, falling)
     DailyPatternSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyPatternSample.yaml
       type: object
       properties:
         time_from_midnight:
@@ -6870,7 +5831,6 @@ components:
           description: Percentile 95 of the glucose level at the given time of day.
     GlucoseData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GlucoseData.yaml
       type: object
       properties:
         blood_glucose_samples:
@@ -6904,7 +5864,6 @@ components:
           description: List of glucose percentile samples throughout the day.
     DataContributor:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DataContributor.yaml
       type: object
       properties:
         contributor_name:
@@ -6918,7 +5877,6 @@ components:
         - contributor_score
     DailyDataEnrichment:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyDataEnrichment.yaml
       type: object
       properties:
         cardiovascular_contributors:
@@ -6966,7 +5924,6 @@ components:
           description: Total stress score for the day.
     DailyDistanceData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyDistanceData.yaml
       type: object
       properties:
         detailed:
@@ -6996,7 +5953,6 @@ components:
           description: Summary information of the user's swimming statistics for the day, if applicable.
     DailyMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyMetadata.yaml
       type: object
       properties:
         end_time:
@@ -7020,7 +5976,6 @@ components:
         - upload_type
     ScoresData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ScoresData.yaml
       type: object
       properties:
         activity:
@@ -7053,7 +6008,6 @@ components:
           description: Biological age computed for the given day.
     StressSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StressSample.yaml
       type: object
       properties:
         timestamp:
@@ -7066,7 +6020,6 @@ components:
           description: Stress level measurement at the given timestamp
     StressLevel:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StressLevel.yaml
       oneOf:
         - type: number
           const: 0
@@ -7093,7 +6046,6 @@ components:
       description: Represents stress level ranges.
     BodyBatterySample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BodyBatterySample.yaml
       type: object
       properties:
         timestamp:
@@ -7106,7 +6058,6 @@ components:
           description: Body battery energy level at the given timestamp
     StressData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StressData.yaml
       type: object
       properties:
         avg_stress_level:
@@ -7170,7 +6121,6 @@ components:
           description: Array of Body Battery data points sampled throughout the day.
     TagEntry:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TagEntry.yaml
       type: object
       properties:
         timestamp:
@@ -7194,7 +6144,6 @@ components:
         - notes
     TagData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TagData.yaml
       type: object
       properties:
         tags:
@@ -7204,7 +6153,6 @@ components:
           description: Array of user-entered tags for the day.
     MenstruationMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationMetadata.yaml
       type: object
       properties:
         end_time:
@@ -7224,7 +6172,6 @@ components:
         - start_time
     MenstrualPhase:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstrualPhase.yaml
       oneOf:
         - type: string
           const: menstrual
@@ -7271,7 +6218,6 @@ components:
       description: Represents menstrual cycle phases.
     MenstruationFlow:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationFlow.yaml
       oneOf:
         - type: number
           const: 0
@@ -7302,7 +6248,6 @@ components:
       description: Flag indicating the strength of the user's menstrual flow
     MenstruationFlowSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationFlowSample.yaml
       type: object
       properties:
         timestamp:
@@ -7315,7 +6260,6 @@ components:
           description: Flag indicating the strength of the user's menstrual flow.
     MenstruationData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationData.yaml
       type: object
       properties:
         period_length_days:
@@ -7373,7 +6317,6 @@ components:
           description: List of user logs of information related to the strength of user's menstrual flow.
     DrinkSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DrinkSample.yaml
       type: object
       properties:
         timestamp:
@@ -7398,7 +6341,6 @@ components:
           description: Name of drink consumed.
     NutritionMicros:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionMicros.yaml
       type: object
       properties:
         biotin_mg:
@@ -7633,7 +6575,6 @@ components:
           description: Starch content of the associated food(s).
     MealType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MealType.yaml
       oneOf:
         - type: number
           const: 0
@@ -7668,7 +6609,6 @@ components:
       description: Enum representing the category the consumed food/meal falls under (i.e. Breakfast/Lunch/Dinner etc)
     NutritionUnits:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionUnits.yaml
       oneOf:
         - type: number
           const: 0
@@ -7727,7 +6667,6 @@ components:
       description: Represents units used for nutrition measurements
     NutritionQuantity:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionQuantity.yaml
       type: object
       properties:
         unit:
@@ -7739,7 +6678,6 @@ components:
         - amount
     NutritionMacros:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionMacros.yaml
       type: object
       properties:
         alcohol_g:
@@ -7804,7 +6742,6 @@ components:
           description: Trans fat content of the associated food(s).
     Meal:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Meal.yaml
       type: object
       properties:
         micros:
@@ -7844,7 +6781,6 @@ components:
         - macros
     NutritionMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionMetadata.yaml
       type: object
       properties:
         end_time:
@@ -7864,7 +6800,6 @@ components:
         - start_time
     NutritionSummary:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionSummary.yaml
       type: object
       properties:
         macros:
@@ -7885,7 +6820,6 @@ components:
           description: Non-water drink consumption of the user for a given day.
     SleepDataEnrichment:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepDataEnrichment.yaml
       type: object
       properties:
         sleep_contributors:
@@ -7896,7 +6830,6 @@ components:
           type: number
     SleepUploadType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepUploadType.yaml
       oneOf:
         - type: number
           const: 0
@@ -7923,7 +6856,6 @@ components:
       description: The upload type for the associated workout, providing information on whether this was an automatic workout or user-entered
     SleepMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepMetadata.yaml
       type: object
       properties:
         end_time:
@@ -7955,7 +6887,6 @@ components:
         - upload_type
     RecoveryLevel:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RecoveryLevel.yaml
       oneOf:
         - type: number
           const: 0
@@ -7990,7 +6921,6 @@ components:
       description: User's recovery score for a given day, resulting from the sleep session
     ReadinessData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ReadinessData.yaml
       type: object
       properties:
         readiness:
@@ -8005,7 +6935,6 @@ components:
           description: User's recovery score for a given day, resulting from the sleep session - takes Enum value.
     BreathSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BreathSample.yaml
       type: object
       properties:
         timestamp:
@@ -8020,7 +6949,6 @@ components:
           description: User's respiration rate
     BreathsData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BreathsData.yaml
       type: object
       properties:
         avg_breaths_per_min:
@@ -8060,7 +6988,6 @@ components:
           description: The end time of the recording of breathing rate data, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
     OxygenSaturationData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenSaturationData.yaml
       type: object
       properties:
         avg_saturation_percentage:
@@ -8085,7 +7012,6 @@ components:
           description: The start time of the recording of oxygen saturation, in ISO8601 format with microsecond precision. Will always fall on midnight of any given day, and will always be equal to 24h before end_time. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
     SnoringSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SnoringSample.yaml
       type: object
       properties:
         timestamp:
@@ -8100,7 +7026,6 @@ components:
           description: Duration of snoring episode, in seconds
     SnoringData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SnoringData.yaml
       type: object
       properties:
         start_time:
@@ -8130,7 +7055,6 @@ components:
           description: Total duration for which the user was snoring.
     RespirationData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RespirationData.yaml
       type: object
       properties:
         breaths_data:
@@ -8144,7 +7068,6 @@ components:
           description: Object containing information on snoring metrics for the sleep session.
     AsleepDurations:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AsleepDurations.yaml
       type: object
       properties:
         duration_asleep_state_seconds:
@@ -8174,7 +7097,6 @@ components:
           description: Number of periods of REM sleep captured during the sleep session.
     AwakeDurations:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AwakeDurations.yaml
       type: object
       properties:
         duration_awake_state_seconds:
@@ -8214,7 +7136,6 @@ components:
           description: Wake up latency, defined as time between the moment the user wakes up and the moment they get out of bed.
     SleepLevel:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepLevel.yaml
       oneOf:
         - type: number
           const: 0
@@ -8249,7 +7170,6 @@ components:
       description: Represents the sleep level of the user during a sleep session, indicating the depth and quality of sleep
     SleepHypnogramSample:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepHypnogramSample.yaml
       type: object
       properties:
         timestamp:
@@ -8261,7 +7181,6 @@ components:
           $ref: '#/components/schemas/SleepLevel'
     OtherSleepDurations:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OtherSleepDurations.yaml
       type: object
       properties:
         duration_in_bed_seconds:
@@ -8276,7 +7195,6 @@ components:
           description: Total duration during which the user's state (awake, asleep, REM, etc) was unmeasurable during the sleep session.
     SleepDurationsData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepDurationsData.yaml
       type: object
       properties:
         asleep:
@@ -8302,7 +7220,6 @@ components:
           description: Sleep efficiency of the user given as a percentage, measured as time spent asleep divided by time spent in bed.
     SleepTemperatureData:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepTemperatureData.yaml
       type: object
       properties:
         delta:
@@ -8310,9 +7227,21 @@ components:
           examples:
             - 0.5
           description: Variation in user's skin temperature from their baseline.
+    WebhookEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        type:
+          type: string
+          description: The type of event
+        status:
+          type: string
+          description: Status of the event
+      required:
+        - type
+      description: Base webhook event structure that all events extend from
     HealthcheckEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HealthcheckEvent.yaml
       type: object
       properties:
         type:
@@ -8341,7 +7270,6 @@ components:
       description: Healthcheck event sent periodically to verify your webhook endpoint is functional
     AuthEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AuthEvent.yaml
       type: object
       properties:
         type:
@@ -8358,7 +7286,6 @@ components:
       description: Authentication event
     AuthSuccessEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AuthSuccessEvent.yaml
       type: object
       properties:
         status:
@@ -8384,7 +7311,6 @@ components:
       description: Authentication success event
     AuthErrorEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AuthErrorEvent.yaml
       type: object
       properties:
         status:
@@ -8422,7 +7348,6 @@ components:
       description: Authentication error event
     DeauthEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeauthEvent.yaml
       type: object
       properties:
         type:
@@ -8448,7 +7373,6 @@ components:
       description: User deauthentication event
     UserReauthEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/UserReauthEvent.yaml
       type: object
       properties:
         type:
@@ -8478,7 +7402,6 @@ components:
       description: User re-authentication event
     AccessRevokedEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AccessRevokedEvent.yaml
       type: object
       properties:
         type:
@@ -8504,7 +7427,6 @@ components:
       description: Access revoked event when a user revokes access through the provider
     ConnectionErrorEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ConnectionErrorEvent.yaml
       type: object
       properties:
         type:
@@ -8530,7 +7452,6 @@ components:
       description: Connection error event
     GoogleNoDatasourceEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/GoogleNoDatasourceEvent.yaml
       type: object
       properties:
         type:
@@ -8556,7 +7477,6 @@ components:
       description: Google no datasource event
     ProcessingEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ProcessingEvent.yaml
       type: object
       properties:
         type:
@@ -8586,7 +7506,6 @@ components:
       description: Processing event returned when data is being fetched asynchronously
     LargeRequestSendingEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/LargeRequestSendingEvent.yaml
       type: object
       properties:
         type:
@@ -8613,9 +7532,37 @@ components:
       allOf:
         - $ref: '#/components/schemas/WebhookEvent'
       description: Large request sending event
+    LargeRequestProcessingEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        type:
+          type: string
+          const: large_request_processing
+        status:
+          type: string
+          const: processing
+          description: Status of the processing
+        message:
+          type: string
+          description: Information about the processing
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being processed
+        reference:
+          type: string
+          description: Reference ID for tracking this request
+      required:
+        - type
+        - status
+        - message
+        - user
+        - reference
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Large request processing event
     RateLimitHitEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/RateLimitHitEvent.yaml
       type: object
       properties:
         type:
@@ -8648,7 +7595,6 @@ components:
       description: Rate limit hit event
     S3PayloadEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/S3PayloadEvent.yaml
       type: object
       properties:
         type:
@@ -8674,7 +7620,6 @@ components:
       description: S3 Upload event with data download URL
     ActivityEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActivityEvent.yaml
       type: object
       properties:
         type:
@@ -8701,7 +7646,6 @@ components:
       description: Activity data event
     AthleteEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/AthleteEvent.yaml
       type: object
       properties:
         type:
@@ -8726,7 +7670,6 @@ components:
       description: Athlete data event
     NutritionEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/NutritionEvent.yaml
       type: object
       properties:
         type:
@@ -8753,7 +7696,6 @@ components:
       description: Nutrition data event
     DailyEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyEvent.yaml
       type: object
       properties:
         type:
@@ -8780,7 +7722,6 @@ components:
       description: Daily data event
     SleepEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/SleepEvent.yaml
       type: object
       properties:
         type:
@@ -8807,7 +7748,6 @@ components:
       description: Sleep data event
     MenstruationEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/MenstruationEvent.yaml
       type: object
       properties:
         type:
@@ -8834,7 +7774,6 @@ components:
       description: Menstruation data event
     BodyEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BodyEvent.yaml
       type: object
       properties:
         type:
@@ -8861,7 +7800,6 @@ components:
       description: Body data event
     PermissionChangeEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/PermissionChangeEvent.yaml
       type: object
       properties:
         type:
@@ -8899,7 +7837,6 @@ components:
       description: Permission change event
     WebhookEventType:
       $schema: https://json-schema.org/draft/2020-12/schema
-      $id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/WebhookEventType.yaml
       oneOf:
         - $ref: '#/components/schemas/HealthcheckEvent'
         - $ref: '#/components/schemas/AuthSuccessEvent'

@@ -1,9 +1,8 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BloodPressureData.yaml
 type: object
 properties:
   blood_pressure_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BloodPressureSample.yaml
+      $ref: BloodPressureSample.yaml
     description: List of Blood Pressure measurements sampled throughout the day.

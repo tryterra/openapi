@@ -12,6 +12,10 @@ model TerraUser {
     @minLength(1)
     provider: string; // not null
 
+    @doc("Time at which the connection was created")
+    @example("2022-12-12T10:00:00.000000+00:00")
+    created_at?: string;
+
     @doc("Last time at which a webhook update was sent for the connection")
     @example("2022-12-12T10:00:00.000000+00:00")
     last_webhook_update?: string;

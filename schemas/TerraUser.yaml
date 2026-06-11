@@ -1,5 +1,4 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TerraUser.yaml
 type: object
 properties:
   user_id:
@@ -14,6 +13,11 @@ properties:
       - FITBIT
     minLength: 1
     description: Connection data source
+  created_at:
+    type: string
+    examples:
+      - 2022-12-12T10:00:00.000000+00:00
+    description: Time at which the connection was created
   last_webhook_update:
     type: string
     examples:

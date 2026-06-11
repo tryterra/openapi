@@ -9,49 +9,52 @@ on:
 jobs:
   generate-schemas:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
         cache-dependency-path: data_models/package-lock.json
-        
+
     - name: Install dependencies
       run: |
         cd data_models
         npm ci
-        
+
+    - name: Install Redocly CLI
+      run: npm install -g @redocly/cli@1.34.2
+
     - name: Run linting
       run: |
         cd data_models
         npm run lint
-        
+
     - name: Run formatting check
       run: |
         cd data_models
         npm run format:check
-        
+
     - name: Run tests
       run: |
         cd data_models
         npm test
-        
+
     - name: Generate TypeSpec schemas
       run: |
         cd data_models
         npx tsp compile . --emit=@typespec/json-schema
-        
+
     - name: Promote schemas
       run: |
         cd data_models
         chmod +x promote.sh
         ./promote.sh
-        
+
     - name: Verify schemas were generated
       run: |
         if [ ! -d "schemas" ] || [ -z "$(ls -A schemas)" ]; then
@@ -59,20 +62,37 @@ jobs:
           exit 1
         fi
         echo "Generated $(ls schemas | wc -l) schema files"
-        
+
+    # Drift gate: committed schemas/ must match freshly-generated output.
+    # Runs on PRs *and* pushes so a direct push to master can't land stale schemas.
+    - name: Check for schema drift
+      run: |
+        git add schemas/
+        if ! git diff --cached --quiet; then
+          echo "::error::Promoted schemas differ from committed schemas/. Run 'cd data_models && npx tsp compile . --emit=@typespec/json-schema && ./promote.sh' and commit the result."
+          git diff --cached --name-only
+          exit 1
+        fi
+
+    # Validate every OpenAPI spec (errors block merge; see redocly.yaml).
+    - name: Lint OpenAPI specs
+      run: redocly lint
+
+    # Bundle drift gate: committed *-bundled.yaml must match a fresh bundle, so
+    # the published bundles can never go stale relative to their source specs.
+    - name: Check for bundle drift
+      run: |
+        redocly bundle v5.yaml -o v5-bundled.yaml
+        redocly bundle widget.yaml -o widget-bundled.yaml
+        if ! git diff --quiet v5-bundled.yaml widget-bundled.yaml; then
+          echo "::error::Committed bundles are stale. Run 'redocly bundle v5.yaml -o v5-bundled.yaml && redocly bundle widget.yaml -o widget-bundled.yaml' and commit the result."
+          git diff --name-only v5-bundled.yaml widget-bundled.yaml
+          exit 1
+        fi
+
     - name: Upload generated schemas
       uses: actions/upload-artifact@v4
       with:
         name: generated-schemas
         path: schemas/
         retention-days: 30
-        
-    - name: Check for schema changes
-      if: github.event_name == 'pull_request'
-      run: |
-        git add schemas/
-        if ! git diff --cached --quiet; then
-          echo "Schema files have changed. Please commit the updated schemas."
-          git diff --cached --name-only
-          exit 1
-        fi

@@ -1,5 +1,4 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OtherDeviceData.yaml
 type: object
 properties:
   manufacturer:
@@ -33,7 +32,7 @@ properties:
   data_provided:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeviceDataType.yaml
+      $ref: DeviceDataType.yaml
     description: Data provided by the device, as enumerated types.
   last_upload_date:
     type: string

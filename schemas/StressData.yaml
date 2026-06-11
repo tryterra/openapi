@@ -1,5 +1,4 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StressData.yaml
 type: object
 properties:
   avg_stress_level:
@@ -33,7 +32,7 @@ properties:
   samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StressSample.yaml
+      $ref: StressSample.yaml
     description: Array of stress level data points sampled throughout the day.
   rest_stress_duration_seconds:
     type: number
@@ -54,10 +53,10 @@ properties:
     minimum: 0
     description: Total number of seconds spent in any stressed state during the day.
   stress_rating:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StressLevel.yaml
+    $ref: StressLevel.yaml
     description: Stress rating for the day.
   body_battery_samples:
     type: array
     items:
-      $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/BodyBatterySample.yaml
+      $ref: BodyBatterySample.yaml
     description: Array of Body Battery data points sampled throughout the day.

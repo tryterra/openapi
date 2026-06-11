@@ -1,45 +1,44 @@
 $schema: https://json-schema.org/draft/2020-12/schema
-$id: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/Daily.yaml
 type: object
 properties:
   active_durations_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ActiveDurationsData.yaml
+    $ref: ActiveDurationsData.yaml
     description: Object containing information related to the time spent in different activity intensities during over the day.
   calories_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/CaloriesData.yaml
+    $ref: CaloriesData.yaml
     description: Object containing calorie-related information for the user during the specific day.
   data_enrichment:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyDataEnrichment.yaml
+    $ref: DailyDataEnrichment.yaml
     description: Object containing additional enrichment data for the day.
   device_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DeviceData.yaml
+    $ref: DeviceData.yaml
     description: Object containing information on the device which recorded data for the day.
   distance_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyDistanceData.yaml
+    $ref: DailyDistanceData.yaml
     description: Object containing information related to distance covered during the associated day.
   heart_rate_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/HeartRateData.yaml
+    $ref: HeartRateData.yaml
     description: Object containing heartrate-related information for the day.
   MET_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/METData.yaml
+    $ref: METData.yaml
     description: Object containing information on the Metabolic Equivalent of Task for the day.
   metadata:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/DailyMetadata.yaml
+    $ref: DailyMetadata.yaml
     description: Object containing daily summary metadata.
   oxygen_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/OxygenData.yaml
+    $ref: OxygenData.yaml
     description: Object containing information on oxygen-related metrics for the day.
   scores:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/ScoresData.yaml
+    $ref: ScoresData.yaml
     description: Scores for the user's performance on different metrics for the given day, as calculated by the fitness data provider.
   strain_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StrainData.yaml
+    $ref: StrainData.yaml
     description: Object containing information on the strain put on the user's body over a day.
   stress_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/StressData.yaml
+    $ref: StressData.yaml
     description: Object containing information on the stress put on the user over a day.
   tag_data:
-    $ref: https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/TagData.yaml
+    $ref: TagData.yaml
     description: Object containing all user-entered or automatically tagged events in the day.
 required:
   - metadata
