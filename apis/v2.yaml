@@ -295,7 +295,6 @@ paths:
                       type:
                         type: [string, "null"]
                   - $ref: "#/components/schemas/DataSentToWebhook"
-                  - $ref: "#/components/schemas/NoDestinationsAvailable"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -332,7 +331,6 @@ paths:
                 oneOf:
                   - $ref: "#/components/schemas/AthleteCollection"
                   - $ref: "#/components/schemas/DataSentToWebhook"
-                  - $ref: "#/components/schemas/NoDestinationsAvailable"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -403,7 +401,6 @@ paths:
                       type:
                         type: [string, "null"]
                   - $ref: "#/components/schemas/DataSentToWebhook"
-                  - $ref: "#/components/schemas/NoDestinationsAvailable"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -474,7 +471,6 @@ paths:
                       type:
                         type: [string, "null"]
                   - $ref: "#/components/schemas/DataSentToWebhook"
-                  - $ref: "#/components/schemas/NoDestinationsAvailable"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -547,7 +543,6 @@ paths:
                       type:
                         type: [string, "null"]
                   - $ref: "#/components/schemas/DataSentToWebhook"
-                  - $ref: "#/components/schemas/NoDestinationsAvailable"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -620,7 +615,6 @@ paths:
                       type:
                         type: [string, "null"]
                   - $ref: "#/components/schemas/DataSentToWebhook"
-                  - $ref: "#/components/schemas/NoDestinationsAvailable"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -693,7 +687,6 @@ paths:
                       type:
                         type: [string, "null"]
                   - $ref: "#/components/schemas/DataSentToWebhook"
-                  - $ref: "#/components/schemas/NoDestinationsAvailable"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -814,7 +807,6 @@ paths:
                       type:
                         type: [string, "null"]
                   - $ref: "#/components/schemas/DataSentToWebhook"
-                  - $ref: "#/components/schemas/NoDestinationsAvailable"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1156,29 +1148,6 @@ components:
           example: "https://myapp.com/failure"
     User:
       $ref: "../schemas/TerraUser.yaml"
-    NoDestinationsAvailable:
-      type: object
-      description: >
-        Returned with HTTP 200 when `to_webhook` is true but the connection has
-        no destination configured, so there is nowhere to deliver the requested
-        data. The body uses the problem shape but is not an error.
-      properties:
-        type:
-          type: string
-          example: about:blank
-        title:
-          type: string
-          example: ok
-        instance:
-          type: string
-          example: /activity
-        detail:
-          type: string
-          example: no destinations available for this connection
-      required:
-        - type
-        - title
-        - instance
     DataSentToWebhook:
       type: object
       description: >
