@@ -1,0 +1,12 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  stroke_type:
+    $ref: SwimStrokeType.yaml
+  drill_type:
+    $ref: DrillType.yaml
+  equipment:
+    type: array
+    items:
+      $ref: SwimEquipmentType.yaml
+description: Swimming details for a step

@@ -1,0 +1,13 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: rest
+  - type: string
+    const: warmup
+  - type: string
+    const: cooldown
+  - type: string
+    const: recovery
+  - type: string
+    const: active
+description: Intensity classification of a workout step

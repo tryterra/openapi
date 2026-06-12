@@ -1,0 +1,17 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: backstroke
+  - type: string
+    const: breaststroke
+  - type: string
+    const: drill
+  - type: string
+    const: butterfly
+  - type: string
+    const: freestyle
+  - type: string
+    const: mixed
+  - type: string
+    const: im
+description: Swim stroke for a swimming step

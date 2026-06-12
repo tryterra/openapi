@@ -704,6 +704,7 @@ paths:
           $ref: '#/components/responses/NotFound'
   /plannedWorkout:
     post:
+      deprecated: true
       tags:
         - PlannedWorkout
       operationId: PlannedWorkout_Write
@@ -753,6 +754,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     get:
+      deprecated: true
       summary: Retrieve workout plans for a given user ID
       description: Used to get workout plans the user has registered on their account. This can be strength workouts (sets, reps, weight lifted) or cardio workouts (warmup, intervals of different intensities, cooldown etc)
       tags:
@@ -817,6 +819,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     delete:
+      deprecated: true
       tags:
         - PlannedWorkout
       operationId: PlannedWorkout_Delete
@@ -884,6 +887,343 @@ paths:
                         description: Response code from the provider when attempting to delete the planned workout
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /workouts:
+    post:
+      tags:
+        - Workouts
+      summary: Create a workout template
+      description: |
+        Stores a reusable workout template. Plan it onto a user's calendar with `POST /workouts/{workout_id}/plan` — the template itself carries no date and is not pushed to any provider until planned.
+      operationId: Workouts_CreateWorkout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkoutTemplate'
+      responses:
+        '200':
+          description: Template stored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                  workout_id:
+                    type: string
+                    example: '1024'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      tags:
+        - Workouts
+      summary: List workout templates
+      description: Returns every workout template stored for your developer account.
+      operationId: Workouts_ListWorkouts
+      responses:
+        '200':
+          description: Stored templates, each including its workout_id
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkoutTemplate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /workouts/{workout_id}:
+    parameters:
+      - name: workout_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags:
+        - Workouts
+      summary: Get a workout template
+      operationId: Workouts_GetWorkout
+      responses:
+        '200':
+          description: The stored template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkoutTemplate'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Workouts
+      summary: Delete a workout template
+      description: |
+        Deletes the template and cascades deletion of every planned workout created from it, including removal from connected providers.
+      operationId: Workouts_DeleteWorkout
+      responses:
+        '204':
+          description: Template and all planned instances deleted
+        '207':
+          description: |
+            Some provider-side deletions failed; the template is retained. Retry to complete the cascade.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '424':
+          description: Provider-side deletion could not be performed; retry later.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /workouts/{workout_id}/plan:
+    post:
+      tags:
+        - Workouts
+      summary: Plan a workout onto a user's calendar
+      description: |
+        Schedules the workout template for a user on a given date and pushes it to the user's connected provider (or queues it for SDK delivery). Athlete metrics personalise zone-based targets for this plan only.
+      operationId: Workouts_PlanWorkout
+      parameters:
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: user_id
+          in: query
+          required: true
+          description: Terra user ID of the connection to plan the workout for
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - planned_date
+              properties:
+                planned_date:
+                  type: string
+                  format: date
+                  description: Date to schedule the workout on (YYYY-MM-DD)
+                ftp:
+                  type: number
+                  description: Functional Threshold Power in watts
+                max_heart_rate:
+                  type: number
+                  description: Maximum heart rate in BPM
+                threshold_heart_rate:
+                  type: number
+                  description: Threshold heart rate in BPM
+                threshold_speed:
+                  type: number
+                  description: Threshold speed in m/s
+                pool_length_meters:
+                  type: number
+                  description: Pool length in meters (overrides the template value)
+      responses:
+        '201':
+          description: Planned workout created and pushed (or queued for SDK delivery)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                  planned_workout_id:
+                    type: string
+                    example: '2048'
+                  provider_workout_id:
+                    type: string
+                    description: Identifier assigned by the provider. Absent for SDK-delivered plans.
+                  coercion_warnings:
+                    type: string
+                    description: Set when the template could not be represented exactly on the provider.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '424':
+          description: The provider rejected the workout push; retry later.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+  /plannedWorkouts:
+    get:
+      tags:
+        - Workouts
+      summary: List planned workouts for a user
+      description: |
+        Returns the user's planned workouts, including workouts created on the provider side (is_external true) where the provider exposes them.
+      operationId: Workouts_ListPlannedWorkouts
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Planned workouts for the connection
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlannedWorkout-2'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /plannedWorkouts/{planned_workout_id}:
+    parameters:
+      - name: planned_workout_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: user_id
+        in: query
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - Workouts
+      summary: Get a planned workout
+      operationId: Workouts_GetPlannedWorkout
+      responses:
+        '200':
+          description: The planned workout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlannedWorkoutSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Workouts
+      summary: Reschedule a planned workout
+      operationId: Workouts_UpdatePlannedWorkout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - planned_date
+              properties:
+                planned_date:
+                  type: string
+                  format: date
+                  description: New scheduled date (YYYY-MM-DD)
+      responses:
+        '200':
+          description: Updated planned workout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlannedWorkoutSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Workouts
+      summary: Delete a planned workout
+      description: Removes the planned workout from the user's calendar and from the connected provider.
+      operationId: Workouts_DeletePlannedWorkout
+      responses:
+        '204':
+          description: Planned workout deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /plannedWorkouts/{planned_workout_id}/payload:
+    get:
+      tags:
+        - Workouts
+      summary: Get a planned workout's device payload
+      description: |
+        Returns the planned workout together with the device-format payload (Apple WorkoutKit representation) generated from its template.
+      operationId: Workouts_GetPlannedWorkoutPayload
+      parameters:
+        - name: planned_workout_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Planned workout with its device payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  planned_workout_id:
+                    type: string
+                  workout_id:
+                    type: string
+                  planned_date:
+                    type: string
+                    format: date
+                  created_at:
+                    type: string
+                    format: date-time
+                  coercion_warnings:
+                    type: array
+                    items:
+                      type: string
+                  workout_payload:
+                    type: object
+                    description: Apple WorkoutKit-format workout generated from the template
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1361,6 +1701,68 @@ components:
             instance: /activity
             detail: user not found
   schemas:
+    WorkoutTemplate:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the workout
+        description:
+          type: string
+          description: Description of the workout
+        sport:
+          $ref: '#/components/schemas/WorkoutSport'
+        environment:
+          $ref: '#/components/schemas/EnvironmentType'
+        pool_length_meters:
+          type: number
+          description: Pool length in meters, for swim workouts
+        step_blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/StepBlock'
+        estimated_duration_seconds:
+          type: number
+          description: Estimated total duration in seconds
+        estimated_distance_meters:
+          type: number
+          description: Estimated total distance in meters
+        estimated_calories:
+          type: number
+          description: Estimated calories burned
+        workout_id:
+          type: string
+          description: Terra identifier of the stored template. Set by Terra in responses; ignored on create.
+      required:
+        - name
+        - sport
+        - step_blocks
+      description: A reusable workout template, created once and planned onto user calendars
+    PlannedWorkoutItem:
+      $ref: '#/components/schemas/PlannedWorkout-2'
+    PlannedWorkoutSummary:
+      type: object
+      description: Summary of a planned workout, returned by the get and reschedule operations.
+      properties:
+        planned_workout_id:
+          type: string
+          example: '2048'
+        planned_date:
+          type: string
+          format: date
+        is_external:
+          type: boolean
+          description: True when the workout was created on the provider side rather than through Terra.
+        workout_id:
+          type: string
+          description: Identifier of the source template. Absent for external workouts.
+        provider_workout_id:
+          type: string
+          description: Identifier assigned by the provider, once pushed.
+        coercion_warnings:
+          type: string
+          description: Set when the template could not be represented exactly on the provider.
     Problem:
       type: object
       description: |
@@ -7151,6 +7553,350 @@ components:
           examples:
             - 0.5
           description: Variation in user's skin temperature from their baseline.
+    WorkoutSport:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: running
+        - type: string
+          const: cycling
+        - type: string
+          const: swimming
+        - type: string
+          const: strength
+        - type: string
+          const: rowing
+        - type: string
+          const: yoga
+        - type: string
+          const: pilates
+        - type: string
+          const: cardio
+        - type: string
+          const: trail_running
+        - type: string
+          const: mountain_biking
+        - type: string
+          const: backcountry_skiing
+        - type: string
+          const: hiking
+        - type: string
+          const: walking
+        - type: string
+          const: elliptical
+        - type: string
+          const: stair_climbing
+      description: Sport a workout template targets. Indoor/outdoor is expressed separately via environment.
+    EnvironmentType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: indoor
+        - type: string
+          const: outdoor
+        - type: string
+          const: pool
+      description: Environment a workout takes place in
+    CompletionConditionType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: time
+        - type: string
+          const: distance
+        - type: string
+          const: hr
+        - type: string
+          const: calories
+        - type: string
+          const: open
+        - type: string
+          const: power
+        - type: string
+          const: reps
+        - type: string
+          const: hr_percentage
+        - type: string
+          const: power_percentage
+        - type: string
+          const: hr_less_than
+        - type: string
+          const: hr_greater_than
+      description: How a step or block is considered complete
+    CompletionCondition:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/CompletionConditionType'
+        value:
+          type: number
+          description: Single value for the condition (e.g. seconds for time, meters for distance)
+        value_low:
+          type: number
+          description: Lower bound when the condition is a range
+        value_high:
+          type: number
+          description: Upper bound when the condition is a range
+      required:
+        - type
+      description: Condition that completes a step or repeats a step block
+    WorkoutStepTargetType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: speed
+        - type: string
+          const: heart_rate
+        - type: string
+          const: open
+        - type: string
+          const: cadence
+        - type: string
+          const: power
+        - type: string
+          const: swim_stroke
+        - type: string
+          const: speed_lap
+        - type: string
+          const: heart_rate_lap
+        - type: string
+          const: pace
+        - type: string
+          const: heart_rate_threshold_percentage
+        - type: string
+          const: heart_rate_max_percentage
+      description: Quantity an intensity target constrains
+    IntensityTarget:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        target_type:
+          $ref: '#/components/schemas/WorkoutStepTargetType'
+        value:
+          type: number
+          description: Single target value
+        value_low:
+          type: number
+          description: Lower bound of the target range
+        value_high:
+          type: number
+          description: Upper bound of the target range
+      required:
+        - target_type
+      description: Target intensity range for a step (e.g. heart-rate or power zone)
+    WorkoutStepIntensity:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: rest
+        - type: string
+          const: warmup
+        - type: string
+          const: cooldown
+        - type: string
+          const: recovery
+        - type: string
+          const: active
+      description: Intensity classification of a workout step
+    StepControlType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: grade
+        - type: string
+          const: resistance
+      description: Equipment control adjusted during a step (e.g. treadmill incline)
+    StepControl:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/StepControlType'
+        value:
+          type: number
+          description: Control value (e.g. 0.02 for a 2% treadmill grade)
+      required:
+        - type
+        - value
+      description: Equipment control applied during a step
+    WeightUnit:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: kg
+        - type: string
+          const: lbs
+      description: Weight display unit for strength exercises
+    StrengthData:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        exercise_name:
+          type: string
+          description: Display name of the exercise
+        weight:
+          type: number
+          description: Weight to lift
+        weight_display_unit:
+          $ref: '#/components/schemas/WeightUnit'
+        exercise_category:
+          type: string
+          description: Garmin Training API exerciseCategory string (e.g. BENCH_PRESS, SQUAT)
+      description: Strength-exercise details for a step
+    SwimStrokeType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: backstroke
+        - type: string
+          const: breaststroke
+        - type: string
+          const: drill
+        - type: string
+          const: butterfly
+        - type: string
+          const: freestyle
+        - type: string
+          const: mixed
+        - type: string
+          const: im
+      description: Swim stroke for a swimming step
+    DrillType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: kick
+        - type: string
+          const: pull
+        - type: string
+          const: drill
+      description: Swim drill type
+    SwimEquipmentType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: none
+        - type: string
+          const: swim_fins
+        - type: string
+          const: swim_kickboard
+        - type: string
+          const: swim_paddles
+        - type: string
+          const: swim_pull_buoy
+        - type: string
+          const: swim_snorkel
+      description: Swim equipment used during a step
+    SwimStepData:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        stroke_type:
+          $ref: '#/components/schemas/SwimStrokeType'
+        drill_type:
+          $ref: '#/components/schemas/DrillType'
+        equipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/SwimEquipmentType'
+      description: Swimming details for a step
+    WorkoutStep:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        completion_condition:
+          $ref: '#/components/schemas/CompletionCondition'
+          description: When this step completes
+        intensity_targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/IntensityTarget'
+          description: Intensity targets to hold during the step
+        intensity_type:
+          $ref: '#/components/schemas/WorkoutStepIntensity'
+        notes:
+          type: string
+          description: Free-text coaching notes shown to the athlete
+        controls:
+          type: array
+          items:
+            $ref: '#/components/schemas/StepControl'
+          description: Equipment controls applied during the step
+        strength:
+          $ref: '#/components/schemas/StrengthData'
+        swimming:
+          $ref: '#/components/schemas/SwimStepData'
+      required:
+        - completion_condition
+        - intensity_type
+      description: A single step within a step block
+    StepBlock:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        completion_condition:
+          $ref: '#/components/schemas/CompletionCondition'
+          description: When this block completes (e.g. repeat count via reps)
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkoutStep'
+      required:
+        - completion_condition
+        - steps
+      description: A block of steps, repeated until its completion condition is met
+    AthleteMetrics:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        threshold_heart_rate:
+          type: number
+          description: Threshold heart rate in BPM
+        max_heart_rate:
+          type: number
+          description: Maximum heart rate in BPM
+        threshold_speed:
+          type: number
+          description: Threshold speed in m/s
+        ftp:
+          type: number
+          description: Functional Threshold Power in watts
+        pool_length_meters:
+          type: number
+          description: Pool length in meters (overrides the template value)
+      description: Athlete-specific metrics used to personalise workout targets for one planned workout
+    PlannedWorkout-2:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        planned_workout_id:
+          type: string
+          description: Terra identifier of the planned workout
+        workout_id:
+          type: string
+          description: Identifier of the workout template this was planned from. Absent for workouts created on the provider side.
+        planned_date:
+          type: string
+          description: Scheduled date (YYYY-MM-DD)
+        provider_workout_id:
+          type: string
+          description: Identifier of the workout on the provider's side, once pushed
+        coercion_warnings:
+          type: string
+          description: Warnings emitted when the template could not be represented exactly on the provider
+        created_at:
+          type: string
+          description: Creation time (RFC 3339)
+        last_updated_at:
+          type: string
+          description: Last update time (RFC 3339)
+        is_external:
+          type: boolean
+          description: True when the workout was created on the provider side rather than through Terra
+        athlete_metrics:
+          $ref: '#/components/schemas/AthleteMetrics'
+      description: A workout template scheduled onto a user's calendar
     WebhookEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -7622,136 +8368,18 @@ components:
       allOf:
         - $ref: '#/components/schemas/WebhookEvent'
       description: Body data event
-    HealthcheckEvent:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      type: object
-      properties:
-        type:
-          type: string
-          const: healthcheck
-        status:
-          type: string
-          description: Status of the healthcheck
-        creation_timestamp:
-          type: string
-          description: Timestamp when the event was created
-        trend_percentage:
-          type: integer
-          description: Percentage change in trends
-        sent_webhooks_last_hour:
-          type: integer
-          description: Number of webhooks sent in the last hour
-      required:
-        - type
-        - status
-        - creation_timestamp
-        - trend_percentage
-        - sent_webhooks_last_hour
-      allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
-      description: Healthcheck event sent periodically to verify your webhook endpoint is functional
-    GoogleNoDatasourceEvent:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      type: object
-      properties:
-        type:
-          type: string
-          const: google_no_datasource
-        user:
-          $ref: '#/components/schemas/TerraUser'
-          description: Affected user
-        status:
-          type: string
-          const: warning
-          description: Status of the event
-        message:
-          type: string
-          description: Information about the issue
-      required:
-        - type
-        - user
-        - status
-        - message
-      allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
-      description: Google no datasource event
-    ProcessingEvent:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      type: object
-      properties:
-        type:
-          type: string
-          const: processing
-        status:
-          type: string
-          const: success
-          description: Status of the processing
-        message:
-          type: string
-          description: Information about the processing
-        user:
-          $ref: '#/components/schemas/TerraUser'
-          description: User whose data is being processed
-        retry_after_seconds:
-          type: integer
-          description: Seconds to wait before retrying
-      required:
-        - type
-        - status
-        - message
-        - user
-        - retry_after_seconds
-      allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
-      description: Processing event returned when data is being fetched asynchronously
-    RateLimitHitEvent:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      type: object
-      properties:
-        type:
-          type: string
-          const: rate_limit_hit
-        user:
-          $ref: '#/components/schemas/TerraUser'
-          description: User whose request hit rate limits
-        start_date:
-          type: string
-          description: Start date of the requested data range
-        end_date:
-          type: string
-          description: End date of the requested data range
-        retrying_at:
-          type: string
-          description: When the request will be retried
-        message:
-          type: string
-          description: Information about the rate limit
-      required:
-        - type
-        - user
-        - start_date
-        - end_date
-        - retrying_at
-        - message
-      allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
-      description: Rate limit hit event
     WebhookEventType:
       $schema: https://json-schema.org/draft/2020-12/schema
       oneOf:
-        - $ref: '#/components/schemas/HealthcheckEvent'
         - $ref: '#/components/schemas/AuthSuccessEvent'
         - $ref: '#/components/schemas/AuthErrorEvent'
         - $ref: '#/components/schemas/DeauthEvent'
         - $ref: '#/components/schemas/UserReauthEvent'
         - $ref: '#/components/schemas/AccessRevokedEvent'
         - $ref: '#/components/schemas/ConnectionErrorEvent'
-        - $ref: '#/components/schemas/GoogleNoDatasourceEvent'
         - $ref: '#/components/schemas/PermissionChangeEvent'
-        - $ref: '#/components/schemas/ProcessingEvent'
         - $ref: '#/components/schemas/LargeRequestProcessingEvent'
         - $ref: '#/components/schemas/LargeRequestSendingEvent'
-        - $ref: '#/components/schemas/RateLimitHitEvent'
         - $ref: '#/components/schemas/ActivityEvent'
         - $ref: '#/components/schemas/AthleteEvent'
         - $ref: '#/components/schemas/BodyEvent'

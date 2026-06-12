@@ -1,0 +1,17 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  target_type:
+    $ref: WorkoutStepTargetType.yaml
+  value:
+    type: number
+    description: Single target value
+  value_low:
+    type: number
+    description: Lower bound of the target range
+  value_high:
+    type: number
+    description: Upper bound of the target range
+required:
+  - target_type
+description: Target intensity range for a step (e.g. heart-rate or power zone)
