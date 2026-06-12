@@ -12,18 +12,22 @@ support channel.
 
 | Path | What it is |
 |---|---|
-| `dist/v2-bundled.yaml` | The Terra API (served at `https://access.tryterra.co/api/v2`) — self-contained bundle |
-| `dist/widget-bundled.yaml` | Authentication-widget session API |
-| `dist/teams-bundled.yaml` | Team-based API |
-| `dist/rt-bundled.yaml` | Real-Time streaming API |
-| `schemas/*.yaml` | JSON Schema (2020-12) definitions for every Terra data model and webhook event payload — usable for client-side validation and codegen |
+| `dist/core/v2-bundled.yaml` | The Terra API (served at `https://access.tryterra.co/api/v2`) — self-contained bundle |
+| `dist/core/widget-bundled.yaml` | Authentication-widget session API |
+| `dist/core/teams-bundled.yaml` | Team-based API |
+| `dist/core/rt-bundled.yaml` | Real-Time streaming API |
+| `dist/vantage/` | Vantage (blood & DNA) API — published once its first endpoints are documented |
+| `schemas/core/*.yaml` | JSON Schema (2020-12) definitions for every Terra data model and webhook event payload — usable for client-side validation and codegen |
+
+Each top-level directory under `dist/` and `schemas/` is owned by one source
+repository and synced independently — the layout is uniform per publisher.
 
 All bundles are fully self-contained (no remote `$ref`s) and lint clean against
 OpenAPI 3.1. Stable raw URLs:
 
 ```
-https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/dist/<name>-bundled.yaml
-https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/<Model>.yaml
+https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/dist/<namespace>/<name>-bundled.yaml
+https://raw.githubusercontent.com/tryterra/openapi/refs/heads/master/schemas/<namespace>/<Model>.yaml
 ```
 
 ## Usage
