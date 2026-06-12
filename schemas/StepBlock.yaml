@@ -1,0 +1,14 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  completion_condition:
+    $ref: CompletionCondition.yaml
+    description: When this block completes (e.g. repeat count via reps)
+  steps:
+    type: array
+    items:
+      $ref: WorkoutStep.yaml
+required:
+  - completion_condition
+  - steps
+description: A block of steps, repeated until its completion condition is met

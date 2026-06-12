@@ -1,0 +1,25 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: speed
+  - type: string
+    const: heart_rate
+  - type: string
+    const: open
+  - type: string
+    const: cadence
+  - type: string
+    const: power
+  - type: string
+    const: swim_stroke
+  - type: string
+    const: speed_lap
+  - type: string
+    const: heart_rate_lap
+  - type: string
+    const: pace
+  - type: string
+    const: heart_rate_threshold_percentage
+  - type: string
+    const: heart_rate_max_percentage
+description: Quantity an intensity target constrains

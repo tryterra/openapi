@@ -1,0 +1,33 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: running
+  - type: string
+    const: cycling
+  - type: string
+    const: swimming
+  - type: string
+    const: strength
+  - type: string
+    const: rowing
+  - type: string
+    const: yoga
+  - type: string
+    const: pilates
+  - type: string
+    const: cardio
+  - type: string
+    const: trail_running
+  - type: string
+    const: mountain_biking
+  - type: string
+    const: backcountry_skiing
+  - type: string
+    const: hiking
+  - type: string
+    const: walking
+  - type: string
+    const: elliptical
+  - type: string
+    const: stair_climbing
+description: Sport a workout template targets. Indoor/outdoor is expressed separately via environment.

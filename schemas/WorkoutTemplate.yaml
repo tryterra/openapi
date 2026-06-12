@@ -1,0 +1,37 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  name:
+    type: string
+    description: Name of the workout
+  description:
+    type: string
+    description: Description of the workout
+  sport:
+    $ref: WorkoutSport.yaml
+  environment:
+    $ref: EnvironmentType.yaml
+  pool_length_meters:
+    type: number
+    description: Pool length in meters, for swim workouts
+  step_blocks:
+    type: array
+    items:
+      $ref: StepBlock.yaml
+  estimated_duration_seconds:
+    type: number
+    description: Estimated total duration in seconds
+  estimated_distance_meters:
+    type: number
+    description: Estimated total distance in meters
+  estimated_calories:
+    type: number
+    description: Estimated calories burned
+  workout_id:
+    type: string
+    description: Terra identifier of the stored template. Set by Terra in responses; ignored on create.
+required:
+  - name
+  - sport
+  - step_blocks
+description: A reusable workout template, created once and planned onto user calendars

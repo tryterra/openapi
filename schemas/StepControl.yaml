@@ -1,0 +1,12 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  type:
+    $ref: StepControlType.yaml
+  value:
+    type: number
+    description: Control value (e.g. 0.02 for a 2% treadmill grade)
+required:
+  - type
+  - value
+description: Equipment control applied during a step

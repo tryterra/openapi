@@ -1,0 +1,29 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  completion_condition:
+    $ref: CompletionCondition.yaml
+    description: When this step completes
+  intensity_targets:
+    type: array
+    items:
+      $ref: IntensityTarget.yaml
+    description: Intensity targets to hold during the step
+  intensity_type:
+    $ref: WorkoutStepIntensity.yaml
+  notes:
+    type: string
+    description: Free-text coaching notes shown to the athlete
+  controls:
+    type: array
+    items:
+      $ref: StepControl.yaml
+    description: Equipment controls applied during the step
+  strength:
+    $ref: StrengthData.yaml
+  swimming:
+    $ref: SwimStepData.yaml
+required:
+  - completion_condition
+  - intensity_type
+description: A single step within a step block

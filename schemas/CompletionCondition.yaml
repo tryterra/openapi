@@ -1,0 +1,17 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  type:
+    $ref: CompletionConditionType.yaml
+  value:
+    type: number
+    description: Single value for the condition (e.g. seconds for time, meters for distance)
+  value_low:
+    type: number
+    description: Lower bound when the condition is a range
+  value_high:
+    type: number
+    description: Upper bound when the condition is a range
+required:
+  - type
+description: Condition that completes a step or repeats a step block

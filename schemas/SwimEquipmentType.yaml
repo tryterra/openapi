@@ -1,0 +1,15 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: none
+  - type: string
+    const: swim_fins
+  - type: string
+    const: swim_kickboard
+  - type: string
+    const: swim_paddles
+  - type: string
+    const: swim_pull_buoy
+  - type: string
+    const: swim_snorkel
+description: Swim equipment used during a step

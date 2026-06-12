@@ -1,0 +1,25 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: time
+  - type: string
+    const: distance
+  - type: string
+    const: hr
+  - type: string
+    const: calories
+  - type: string
+    const: open
+  - type: string
+    const: power
+  - type: string
+    const: reps
+  - type: string
+    const: hr_percentage
+  - type: string
+    const: power_percentage
+  - type: string
+    const: hr_less_than
+  - type: string
+    const: hr_greater_than
+description: How a step or block is considered complete

@@ -12,7 +12,7 @@ security:
 paths:
   /auth/generateWidgetSession:
     servers:
-      - url: https://access.tryterra.co/api/v2/auth/generateWidgetSession
+      - url: https://access.tryterra.co/api/v2
     post:
       summary: Generate an authentication link, using the Terra Authentication Widget
       description: Generates a link to redirect an end user to for them to select an integration and log in with their fitness data provider
