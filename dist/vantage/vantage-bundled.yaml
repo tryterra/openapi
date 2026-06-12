@@ -1,0 +1,1131 @@
+openapi: 3.1.0
+info:
+  contact: {}
+  description: Use your **client_id** as the username and **client_secret** as the password for Basic Authentication.
+  title: Terra Blood DNA Device API
+  version: '1.0'
+servers:
+  - url: https://vantage.tryterra.co
+paths:
+  /api/v1/orders/activate:
+    get:
+      summary: Serve kit activation page
+      tags:
+        - activation
+      security: []
+      description: Returns an HTML page for end users to activate their test kit and provide test-taker information
+      parameters:
+        - name: kit_id
+          in: query
+          description: Supplier Kit ID from test kit packaging
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: HTML activation form
+          content:
+            text/html:
+              schema:
+                type: string
+        '400':
+          description: Invalid kit ID
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Internal server error
+          content:
+            text/html:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+    post:
+      summary: Activate a test kit
+      tags:
+        - activation
+      security: []
+      description: Registers test-taker details with the supplier and updates order item status. This endpoint is called after the test-taker receives their kit and provides their information.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivationContextDTO'
+        description: Activation details including test-taker info
+        required: true
+      responses:
+        '200':
+          description: Kit activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivateKitResponse'
+        '400':
+          description: Invalid request body or kit already activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Kit not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: Kit already activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Supplier service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/clients/webhook-url:
+    patch:
+      summary: Update webhook URL
+      tags:
+        - clients
+      description: Update or clear the webhook URL for the authenticated client. The webhook URL must use HTTPS if provided, or can be empty to clear it. Note this means webhooks will no longer be sent to your previous endpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWebhookUrlRequest'
+        description: Webhook URL update request
+        required: true
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Webhook URL updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '400':
+          description: Bad request - invalid URL format or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Unauthorized - invalid client credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+        '404':
+          description: Client not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/orders:
+    post:
+      summary: Create a new order
+      tags:
+        - orders
+      description: Create a new blood, DNA, or device test order
+      security:
+        - BasicAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+        description: Order creation request
+        required: true
+      responses:
+        '201':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrderResponse'
+        '400':
+          description: Bad request - invalid JSON or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrderValidationError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/orders/{orderID}:
+    get:
+      summary: Get order by order ID
+      tags:
+        - orders
+      description: Returns complete order details including items, recipient, and status
+      parameters:
+        - name: orderID
+          in: path
+          description: Order ID
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOrderResponse'
+        '400':
+          description: Invalid order ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Unauthorized - invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/products:
+    get:
+      summary: List all product types
+      tags:
+        - products
+      description: Returns all available diagnostic test categories (e.g., Blood Tests, DNA Tests)
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved product types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductType'
+        '401':
+          description: Unauthorized - invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/products/{id}:
+    get:
+      summary: Get products by type ID
+      tags:
+        - products
+      description: Returns all products within a specific product type category
+      parameters:
+        - name: id
+          in: path
+          description: Product Type ID
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid product type ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Unauthorized - invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+        '404':
+          description: No product types were found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: Product type id 100 not found
+                  instance:
+                    type: string
+                    example: /api/v1/products/100
+                  status:
+                    type: integer
+                    example: 404
+                  title:
+                    type: string
+                    example: Resource Not Found
+                  type:
+                    type: string
+                    example: https://api.terra-diagnostics.com/errors/not-found-error
+                required:
+                  - detail
+                  - instance
+                  - status
+                  - title
+                  - type
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/products/{id}/variants:
+    get:
+      summary: Get product variants by product ID
+      tags:
+        - products
+      description: Returns all available variants/options for a specific diagnostic test product (e.g., different panel sizes, customizations)
+      parameters:
+        - name: id
+          in: path
+          description: Product ID
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved variants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductVariant'
+        '400':
+          description: Invalid product ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Unauthorized - invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+        '404':
+          description: No product variants were found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: Product variant id 100 not found
+                  instance:
+                    type: string
+                    example: /api/v1/products/100/variants
+                  status:
+                    type: integer
+                    example: 404
+                  title:
+                    type: string
+                    example: Resource Not Found
+                  type:
+                    type: string
+                    example: https://api.terra-diagnostics.com/errors/not-found-error
+                required:
+                  - detail
+                  - instance
+                  - status
+                  - title
+                  - type
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/results/{orderItemID}:
+    get:
+      summary: Get presigned URL for test results
+      tags:
+        - results
+      description: 'Returns a time-limited presigned URL to download normalized test results in FHIR format (JSON). The URL is valid for 15 minutes. Note: Every orderItemID can only be associated with maximum 1 panel, hence results can be uniquely identified by orderItemID.'
+      parameters:
+        - name: orderItemID
+          in: path
+          description: Order Item ID
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - name: test_taker_id
+          in: query
+          description: Test Taker ID
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Successfully generated download URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetResultsURLResponse'
+        '400':
+          description: Invalid or missing order item ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - invalid client credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+        '404':
+          description: Results not found for this order item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/results/{orderItemID}/acknowledge:
+    post:
+      summary: Acknowledge results receipt
+      tags:
+        - results
+      description: Confirms that test results have been successfully retrieved and processed by the test taker/end user. Required for compliance and audit trails.
+      parameters:
+        - name: orderItemID
+          in: path
+          description: Order Item ID
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - name: test_taker_id
+          in: query
+          description: Test Taker ID
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Results acknowledged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcknowledgeResultsResponse'
+        '400':
+          description: Invalid order item ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Unauthorized - invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+        '404':
+          description: Order item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    ClientResponse:
+      type: object
+      properties:
+        client_id:
+          type: string
+          example: client_abc123
+        customer_id:
+          type: string
+          example: cust_xyz789
+        webhook_url:
+          type: string
+          example: https://your-domain.com/webhooks/terra
+    UpdateWebhookUrlRequest:
+      type: object
+      properties:
+        webhook_url:
+          type: string
+          example: https://your-domain.com/webhooks/terra
+    AddressDTO:
+      description: Physical address for shipping test kits
+      type: object
+      properties:
+        address_line_1:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: 123 Baker Street
+        address_line_2:
+          type: string
+          maxLength: 100
+          example: Flat 4B
+        administrative_area:
+          type: string
+          maxLength: 50
+          example: Greater London
+        city:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: London
+        country_code:
+          type: string
+          description: ISO 3166-1 alpha-2 (e.g., "GB", "US")
+          example: GB
+        id:
+          type: integer
+          example: 987654321
+        is_validated:
+          type: boolean
+          example: true
+        postal_code:
+          type: string
+          example: NW1 6XE
+      required:
+        - address_line_1
+        - administrative_area
+        - city
+        - country_code
+        - postal_code
+    RecipientDTO:
+      description: The recipient who will receive the test kit and may or may not be the test-taker (supplier-dependent)
+      type: object
+      properties:
+        country_code:
+          type: integer
+          example: 44
+        date_of_birth:
+          type: string
+          example: '1990-05-15'
+        email:
+          type: string
+          maxLength: 100
+          example: sarah.johnson@example.com
+        first_name:
+          type: string
+          maxLength: 50
+          example: Sarah
+        gender_at_birth:
+          type: string
+          enum:
+            - m
+            - f
+            - other
+          example: f
+        id:
+          type: string
+          example: '123456789'
+        last_name:
+          type: string
+          maxLength: 50
+          example: Johnson
+        phone_number:
+          type: integer
+          example: 447700900123
+      required:
+        - country_code
+        - date_of_birth
+        - email
+        - first_name
+        - gender_at_birth
+        - last_name
+        - phone_number
+    ProblemDetail:
+      description: Standard error response format following RFC 7807 specification
+      type: object
+      properties:
+        detail:
+          type: string
+          example: One or more required fields are missing or invalid
+        instance:
+          type: string
+          example: /orders/create
+        status:
+          type: integer
+          example: 400
+        title:
+          type: string
+          example: Validation Error
+        type:
+          type: string
+          example: https://terra.dev/errors/validation-error
+    AuthenticationError:
+      description: Authentication error response (401)
+      type: object
+      properties:
+        detail:
+          type: string
+          example: Invalid Credentials
+        instance:
+          type: string
+          example: ''
+        status:
+          type: integer
+          example: 401
+        title:
+          type: string
+          example: Authentication Required/Failed
+        type:
+          type: string
+          example: https://api.terra-diagnostics.com/errors/authentication-error
+      required:
+        - detail
+        - status
+        - title
+        - type
+    ActivateKitResponse:
+      description: Confirmation that kit was activated successfully
+      type: object
+      properties:
+        kit_id:
+          type: string
+          example: KIT123456789
+        message:
+          type: string
+          example: Kit activated successfully
+        success:
+          type: boolean
+          example: true
+    ActivationContextAddress:
+      description: Current address of the test-taker (may differ from shipping address)
+      type: object
+      properties:
+        address_line_1:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: 456 Oxford Street
+        address_line_2:
+          type: string
+          maxLength: 100
+          example: Apt 7C
+        administrative_area:
+          type: string
+          maxLength: 50
+          example: Greater Manchester
+        city:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Manchester
+        country_code:
+          type: string
+          description: ISO 3166-1 alpha-2 (e.g., "GB", "US")
+          example: GB
+        postal_code:
+          type: string
+          example: M1 5GD
+      required:
+        - address_line_1
+        - administrative_area
+        - city
+        - country_code
+        - postal_code
+    ActivationContextRecipient:
+      description: Test-taker personal information (may differ from original recipient)
+      type: object
+      properties:
+        country_code:
+          type: integer
+          example: 44
+        date_of_birth:
+          type: string
+          example: '1985-03-20'
+        email:
+          type: string
+          example: john.smith@example.com
+        first_name:
+          type: string
+          example: John
+        gender_at_birth:
+          type: string
+          enum:
+            - m
+            - f
+            - other
+          example: m
+        last_name:
+          type: string
+          example: Smith
+        phone_number:
+          type: integer
+          example: 447700900456
+      required:
+        - country_code
+        - date_of_birth
+        - email
+        - gender_at_birth
+        - phone_number
+    ActivationContextDTO:
+      description: Information provided by test-taker when activating their kit
+      type: object
+      properties:
+        address:
+          $ref: '#/components/schemas/ActivationContextAddress'
+        collection_date:
+          type: string
+          example: '2025-11-15T09:00:00Z'
+        recipient:
+          $ref: '#/components/schemas/ActivationContextRecipient'
+        supplier_kit_id:
+          type: string
+          example: KIT123456789
+      required:
+        - address
+    OrderItemRequest:
+      description: Individual product variant and quantity in an order
+      type: object
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 1
+        variant_id:
+          type: string
+          minLength: 1
+          example: '555666777'
+      required:
+        - quantity
+        - variant_id
+    CreateOrderRequest:
+      description: Request body for creating a new diagnostic test order
+      type: object
+      properties:
+        client_order_reference_id:
+          description: Your unique order identifier that you generate (for idempotency and tracking)
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: ORDER-2024-001
+        collection_type:
+          type: string
+        items:
+          description: Only need product_variant_id and quantity completely define what was ordered
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/OrderItemRequest'
+        recipient:
+          description: Details of the person who ordered. Depending on the supplier recipient is not necessarily the test-taker. Although some suppliers enforce this constraint on us.
+          allOf:
+            - $ref: '#/components/schemas/RecipientDTO'
+        requested_lab_address:
+          $ref: '#/components/schemas/AddressDTO'
+        shipping_address:
+          $ref: '#/components/schemas/AddressDTO'
+      required:
+        - client_order_reference_id
+        - collection_type
+        - items
+        - recipient
+    OrderFinancialDTO:
+      description: Price breakdown including subtotal, tax, shipping, discounts
+      type: object
+      properties:
+        currency:
+          description: '@Description ISO 4217 format (e.g. 840 = USD)'
+          type: integer
+          example: 840
+        discount_cents:
+          type: integer
+          minimum: 0
+          example: 500
+        total_cents:
+          type: integer
+          minimum: 0
+          example: 10400
+      required:
+        - currency
+        - total_cents
+    OrderItemResponse:
+      description: Individual test kit or product in the order
+      type: object
+      properties:
+        currency:
+          type: integer
+          example: 840
+        item_status:
+          type: integer
+          example: 2
+        lab_tracking_number:
+          type: string
+          example: LAB987654321
+        order_id:
+          type: string
+          example: '123456789'
+        order_item_id:
+          type: string
+          example: '987654321'
+        price_per_item_cents:
+          type: integer
+          example: 9990
+        product_type_id:
+          type: string
+          example: '1'
+        quantity:
+          type: integer
+          example: 1
+        results_status:
+          type: string
+          example: awaiting_sample
+        variant_id:
+          type: string
+          example: '555666777'
+    CreateOrderResponse:
+      description: Response containing the created order details including tracking information
+      type: object
+      properties:
+        confirmed_lab_address:
+          $ref: '#/components/schemas/AddressDTO'
+        estimated_delivery:
+          type: string
+          example: '2025-11-20'
+        order_id:
+          type: string
+          example: '123456789'
+        order_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+        order_status:
+          type: string
+          example: pending_shipment
+        recipient_id:
+          type: string
+          example: '987654321'
+        tracking_number:
+          type: string
+          example: TRK123456789GB
+    GetOrderResponse:
+      description: Full order information including items, recipient, address, and financials
+      type: object
+      properties:
+        client_id:
+          type: string
+          example: terra_client_abc123
+        client_order_reference_id:
+          type: string
+          example: ORDER-2024-001
+        collection_type:
+          type: string
+          example: AT_HOME
+        confirmed_lab_address:
+          $ref: '#/components/schemas/AddressDTO'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+        order_financials:
+          $ref: '#/components/schemas/OrderFinancialDTO'
+        order_id:
+          type: string
+          example: '123456789'
+        order_status:
+          type: string
+          example: shipped
+        recipient:
+          $ref: '#/components/schemas/RecipientDTO'
+        requested_lab_address:
+          $ref: '#/components/schemas/AddressDTO'
+        shipping_address:
+          $ref: '#/components/schemas/AddressDTO'
+        supplier_id:
+          type: string
+          example: '1'
+    CreateOrderValidationError:
+      description: Validation error when creating an order
+      type: object
+      properties:
+        detail:
+          type: string
+          example: One or more required fields are missing or invalid
+        instance:
+          type: string
+          example: /api/v1/orders
+        status:
+          type: integer
+          example: 400
+        title:
+          type: string
+          example: Validation Failed
+        type:
+          type: string
+          example: https://api.terra-diagnostics.com/errors/validation-error
+        invalid_fields:
+          type: array
+          description: Per-field validation errors
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: PhoneNumber
+              message:
+                type: string
+                example: PhoneNumber is not a valid phone number for the provided country code
+              tag:
+                type: string
+                example: phone_with_country
+              value:
+                type: string
+                example: '1234567890'
+      required:
+        - detail
+        - instance
+        - status
+        - title
+        - type
+    ErrorResponse:
+      description: Standard error response format
+      type: object
+      properties:
+        details:
+          type: string
+          example: Order item ID must be a valid positive integer
+        error:
+          type: string
+          example: Invalid orderItemID
+    GetResultsURLResponse:
+      description: Response containing a presigned URL to download test results
+      type: object
+      properties:
+        download_url:
+          type: string
+          example: https://storage.googleapis.com/bucket/results/123.json?signature=abc123
+        expires_at:
+          type: string
+          example: '2025-10-23T18:00:00Z'
+        format:
+          type: string
+          enum:
+            - json
+          example: json
+    AcknowledgeResultsResponse:
+      description: Confirmation that results were acknowledged
+      type: object
+      properties:
+        status:
+          type: string
+          example: acknowledged
+    AvailabilityStatus:
+      type: integer
+      format: int32
+      enum:
+        - 0
+        - 1
+        - 2
+      x-enum-varnames:
+        - AvailabilityStatus_AVAILABILITY_STATUS_UNSPECIFIED
+        - AvailabilityStatus_AVAILABILITY_STATUS_IN_STOCK
+        - AvailabilityStatus_AVAILABILITY_STATUS_OUT_OF_STOCK
+    Currency:
+      type: integer
+      format: int32
+      enum:
+        - 0
+        - 840
+        - 978
+        - 826
+      x-enum-comments:
+        Currency_CURRENCY_EUR: Euro (ISO 4217)
+        Currency_CURRENCY_GBP: British Pound Sterling (ISO 4217)
+        Currency_CURRENCY_UNSPECIFIED: Required zero value for proto3
+        Currency_CURRENCY_USD: United States Dollar (ISO 4217)
+      x-enum-descriptions:
+        - Required zero value for proto3
+        - United States Dollar (ISO 4217)
+        - Euro (ISO 4217)
+        - British Pound Sterling (ISO 4217)
+      x-enum-varnames:
+        - Currency_CURRENCY_UNSPECIFIED
+        - Currency_CURRENCY_USD
+        - Currency_CURRENCY_EUR
+        - Currency_CURRENCY_GBP
+    Image:
+      type: object
+      properties:
+        altText:
+          type: string
+        displayOrder:
+          type: integer
+          format: int32
+        height:
+          type: integer
+          format: int32
+        id:
+          type: integer
+          format: int64
+        productID:
+          type: integer
+          format: int64
+        url:
+          type: string
+        variantID:
+          type: integer
+          format: int64
+        width:
+          type: integer
+          format: int32
+    ProductVariant:
+      type: object
+      properties:
+        availableCollectionTypes:
+          type: array
+          items:
+            type: integer
+            format: int32
+        currency:
+          type: integer
+          format: int32
+        descriptiveAttrsOverride:
+          type: object
+          additionalProperties: {}
+        id:
+          type: integer
+          format: int64
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        priceCents:
+          type: integer
+          format: int32
+        productExternalSKU:
+          type: string
+        productID:
+          type: integer
+          format: int64
+        productTypeID:
+          type: integer
+          format: int64
+        supplierID:
+          type: integer
+          format: int32
+        variantAvailability:
+          type: integer
+          format: int32
+        variantDefiningAttrs:
+          type: object
+          additionalProperties: {}
+        variantName:
+          type: string
+    Product:
+      type: object
+      properties:
+        availability:
+          $ref: '#/components/schemas/AvailabilityStatus'
+        basePriceCents:
+          type: integer
+          format: int32
+        currency:
+          $ref: '#/components/schemas/Currency'
+        description:
+          type: string
+        id:
+          type: integer
+          format: int64
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        modelDescriptiveAttrs:
+          type: object
+          additionalProperties:
+            type: string
+        name:
+          type: string
+        productTypeID:
+          type: integer
+          format: int64
+        supplierID:
+          type: integer
+          format: int32
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariant'
+    ProductType:
+      type: object
+      properties:
+        description:
+          type: string
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
