@@ -9,7 +9,7 @@ properties:
     description: The new user record
   old_user:
     $ref: TerraUser.yaml
-    description: The old user record that will be deleted
+    description: The old user record that will be deleted, when available
   status:
     type: string
     const: warning
@@ -20,7 +20,6 @@ properties:
 required:
   - type
   - new_user
-  - old_user
   - status
   - message
 allOf:

@@ -1,6 +1,9 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
+  type:
+    type: string
+    const: auth
   status:
     type: string
     const: success
@@ -8,17 +11,19 @@ properties:
   user:
     $ref: TerraUser.yaml
     description: User who authenticated
-  reference_id:
+  message:
     type: string
-    description: Client-provided reference ID
+    description: Human-readable confirmation message
+  flow_id:
+    type: string
+    description: Identifier of the authentication flow that completed
   widget_session_id:
     type: string
     description: Widget session identifier
 required:
+  - type
   - status
   - user
-  - reference_id
-  - widget_session_id
 allOf:
-  - $ref: AuthEvent.yaml
+  - $ref: WebhookEvent.yaml
 description: Authentication success event

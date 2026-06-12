@@ -1,36 +1,25 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
+  type:
+    type: string
+    const: auth_cancelled
   status:
     type: string
     const: error
     description: Status of authentication
-  user:
-    $ref: TerraUser.yaml
-    description: User who attempted to authenticate
-  provider:
+  flow_id:
     type: string
-    description: Provider information
-  message:
-    type: string
-    description: Error message
+    description: Identifier of the authentication flow that failed
   reason:
     type: string
     description: Reason for the error
   reference_id:
     type: string
     description: Client-provided reference ID
-  widget_session_id:
-    type: string
-    description: Widget session identifier
 required:
+  - type
   - status
-  - user
-  - provider
-  - message
-  - reason
-  - reference_id
-  - widget_session_id
 allOf:
-  - $ref: AuthEvent.yaml
-description: Authentication error event
+  - $ref: WebhookEvent.yaml
+description: Authentication error event, sent when an authentication flow fails or is cancelled
