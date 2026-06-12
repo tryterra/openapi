@@ -1179,55 +1179,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /plannedWorkouts/{planned_workout_id}/payload:
-    get:
-      tags:
-        - Workouts
-      summary: Get a planned workout's device payload
-      description: |
-        Returns the planned workout together with the device-format payload (Apple WorkoutKit representation) generated from its template.
-      operationId: Workouts_GetPlannedWorkoutPayload
-      parameters:
-        - name: planned_workout_id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: user_id
-          in: query
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Planned workout with its device payload
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  planned_workout_id:
-                    type: string
-                  workout_id:
-                    type: string
-                  planned_date:
-                    type: string
-                    format: date
-                  created_at:
-                    type: string
-                    format: date-time
-                  coercion_warnings:
-                    type: array
-                    items:
-                      type: string
-                  workout_payload:
-                    type: object
-                    description: Apple WorkoutKit-format workout generated from the template
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
   /userInfo:
     get:
       tags:
