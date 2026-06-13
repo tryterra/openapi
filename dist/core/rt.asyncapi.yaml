@@ -1,0 +1,342 @@
+asyncapi: 3.0.0
+# AsyncAPI 3.0 (not 3.1) is deliberate: Fern and most WebSocket SDK generators
+# ingest 2.6/3.0, not 3.1 yet. The WebSocket protocol below cannot be expressed
+# in OpenAPI — the REST token-issuance endpoints that gate this connection live
+# in the companion OpenAPI document, apis/rt.yaml.
+#
+# Source of truth: services/streaming (gateway). The opcode set and close codes
+# are the legacy websocket-backend wire contract that SDKs in the field depend
+# on; they are asserted against the Go constants by the streaming spec-drift
+# test (services/streaming/internal/spec_drift_test.go).
+info:
+  title: Terra Real-Time Streaming API (WebSocket)
+  version: "2.0"
+  description: |
+    Bidirectional WebSocket protocol for streaming health and fitness data in
+    real time. Two roles share one protocol over a single `/connect` socket:
+
+    - **Producer** (`user` session) — pushes a user's live samples to Terra.
+    - **Consumer** (`developer` session) — receives the live dispatch stream
+      for all of a developer's users, and can replay recent history.
+
+    A connection is authenticated with a single-use token obtained from the
+    REST token endpoints (see the companion OpenAPI document `rt.yaml`:
+    `POST /auth/user` for producers, `POST /auth/developer` for consumers).
+
+    ## Connection lifecycle
+
+    1. Client opens the socket: `GET /connect` (standard WebSocket upgrade; no
+       auth headers or query parameters on the upgrade itself).
+    2. Server immediately sends **HELLO** (op 2) with the heartbeat interval.
+    3. Client must send **IDENTIFY** (op 3) with its token within the identify
+       timeout, or the server closes with `4000`.
+    4. On a valid token the server replies **READY** (op 4); the session is now
+       a producer or consumer per the token type.
+    5. Producers send **SUBMIT** (op 6); consumers receive **DISPATCH** (op 5)
+       and may request history with **REPLAY** (op 7).
+    6. The client sends **HEARTBEAT** (op 0) each interval; the server echoes
+       **HEARTBEAT_ACK** (op 1). A missed heartbeat is closed with `4005`.
+
+    ## Close codes
+
+    | Code | Meaning |
+    |------|---------|
+    | 1000 | Normal closure |
+    | 1011 | Internal error (e.g. a SUBMIT failed to enqueue) |
+    | 4000 | No IDENTIFY received within the identify timeout |
+    | 4001 | Token invalid, expired, or already redeemed |
+    | 4002 | Consumer session limit reached for this developer |
+    | 4003 | A second IDENTIFY was sent on an already-identified session |
+    | 4004 | Unknown opcode received |
+    | 4005 | Heartbeat deadline exceeded |
+
+    All frames are JSON text messages. Every frame carries an integer `op`;
+    `d` is the opcode-specific payload.
+  contact:
+    name: Terra API
+    url: https://tryterra.co/
+    email: dev@tryterra.co
+
+servers:
+  production:
+    host: ws.tryterra.co
+    protocol: wss
+    description: Production streaming gateway.
+
+channels:
+  connect:
+    address: /connect
+    title: Streaming socket
+    description: |
+      The single WebSocket endpoint. Opened with a standard upgrade request;
+      authentication happens in-protocol via the IDENTIFY frame, not on the
+      upgrade. Carries every message below in both directions.
+    bindings:
+      ws:
+        method: GET
+    messages:
+      hello:
+        $ref: '#/components/messages/Hello'
+      heartbeat:
+        $ref: '#/components/messages/Heartbeat'
+      heartbeatAck:
+        $ref: '#/components/messages/HeartbeatAck'
+      identify:
+        $ref: '#/components/messages/Identify'
+      ready:
+        $ref: '#/components/messages/Ready'
+      submit:
+        $ref: '#/components/messages/Submit'
+      replay:
+        $ref: '#/components/messages/Replay'
+      dispatch:
+        $ref: '#/components/messages/Dispatch'
+
+operations:
+  # action is from the gateway's perspective: `send` = gateway -> client,
+  # `receive` = client -> gateway.
+  sendHello:
+    action: send
+    channel:
+      $ref: '#/channels/connect'
+    title: Greet a new connection
+    summary: Sent by the gateway immediately after the socket opens.
+    messages:
+      - $ref: '#/channels/connect/messages/hello'
+
+  receiveIdentify:
+    action: receive
+    channel:
+      $ref: '#/channels/connect'
+    title: Authenticate the session
+    summary: |
+      Client authenticates with a single-use token. The token type selects the
+      session role (producer vs consumer). Must arrive before the identify
+      timeout or the connection is closed with 4000.
+    messages:
+      - $ref: '#/channels/connect/messages/identify'
+    reply:
+      channel:
+        $ref: '#/channels/connect'
+      messages:
+        - $ref: '#/channels/connect/messages/ready'
+
+  receiveHeartbeat:
+    action: receive
+    channel:
+      $ref: '#/channels/connect'
+    title: Keep-alive
+    summary: Client sends one heartbeat per interval; the gateway echoes an ack.
+    messages:
+      - $ref: '#/channels/connect/messages/heartbeat'
+    reply:
+      channel:
+        $ref: '#/channels/connect'
+      messages:
+        - $ref: '#/channels/connect/messages/heartbeatAck'
+
+  receiveSubmit:
+    action: receive
+    channel:
+      $ref: '#/channels/connect'
+    title: Submit real-time data (producer)
+    summary: |
+      Producer sessions push a live data sample. The payload is opaque to the
+      gateway and forwarded to the consumer dispatch stream for the same
+      developer. Only valid on a `user` (producer) session.
+    messages:
+      - $ref: '#/channels/connect/messages/submit'
+
+  receiveReplay:
+    action: receive
+    channel:
+      $ref: '#/channels/connect'
+    title: Replay recent dispatches (consumer)
+    summary: |
+      Consumer sessions request historical dispatches in an exclusive
+      (after, before) dispatch-id range. Each matching dispatch is streamed
+      back as a DISPATCH frame. Only valid on a `developer` (consumer) session.
+    messages:
+      - $ref: '#/channels/connect/messages/replay'
+
+  sendDispatch:
+    action: send
+    channel:
+      $ref: '#/channels/connect'
+    title: Deliver a real-time dispatch (consumer)
+    summary: |
+      A live or replayed data sample delivered to consumer sessions. `seq` is a
+      monotonic dispatch cursor usable as the `after` bound of a later REPLAY.
+    messages:
+      - $ref: '#/channels/connect/messages/dispatch'
+
+components:
+  messages:
+    Hello:
+      name: hello
+      title: HELLO (op 2)
+      summary: Server greeting with the expected heartbeat interval.
+      payload:
+        $ref: '#/components/schemas/HelloFrame'
+    Heartbeat:
+      name: heartbeat
+      title: HEARTBEAT (op 0)
+      summary: Client keep-alive.
+      payload:
+        $ref: '#/components/schemas/HeartbeatFrame'
+    HeartbeatAck:
+      name: heartbeat_ack
+      title: HEARTBEAT_ACK (op 1)
+      summary: Server heartbeat echo.
+      payload:
+        $ref: '#/components/schemas/HeartbeatAckFrame'
+    Identify:
+      name: identify
+      title: IDENTIFY (op 3)
+      summary: Client authentication frame.
+      payload:
+        $ref: '#/components/schemas/IdentifyFrame'
+    Ready:
+      name: ready
+      title: READY (op 4)
+      summary: Session authenticated and ready.
+      payload:
+        $ref: '#/components/schemas/ReadyFrame'
+    Submit:
+      name: submit
+      title: SUBMIT (op 6)
+      summary: Producer real-time data submission.
+      payload:
+        $ref: '#/components/schemas/SubmitFrame'
+    Replay:
+      name: replay
+      title: REPLAY (op 7)
+      summary: Consumer history request.
+      payload:
+        $ref: '#/components/schemas/ReplayFrame'
+    Dispatch:
+      name: dispatch
+      title: DISPATCH (op 5)
+      summary: Real-time data delivered to a consumer.
+      payload:
+        $ref: '#/components/schemas/DispatchFrame'
+
+  schemas:
+    Opcode:
+      type: integer
+      description: |
+        Frame opcode. 0 HEARTBEAT, 1 HEARTBEAT_ACK, 2 HELLO, 3 IDENTIFY,
+        4 READY, 5 DISPATCH, 6 SUBMIT, 7 REPLAY.
+      enum: [0, 1, 2, 3, 4, 5, 6, 7]
+
+    RealtimePayload:
+      type: object
+      additionalProperties: true
+      description: |
+        A real-time data sample. The shape is defined by the producer / SDK and
+        passed through opaquely (the gateway does not interpret it); `data_type`
+        on the frame labels it (e.g. `heart_rate`).
+
+    HelloFrame:
+      type: object
+      required: [op, d]
+      properties:
+        op:
+          const: 2
+        d:
+          type: object
+          required: [heartbeat_interval]
+          properties:
+            heartbeat_interval:
+              type: integer
+              description: Milliseconds between client heartbeats.
+              examples: [40000]
+
+    HeartbeatFrame:
+      type: object
+      required: [op]
+      properties:
+        op:
+          const: 0
+
+    HeartbeatAckFrame:
+      type: object
+      required: [op]
+      properties:
+        op:
+          const: 1
+
+    IdentifyFrame:
+      type: object
+      required: [op, d]
+      properties:
+        op:
+          const: 3
+        d:
+          type: object
+          required: [type, token]
+          properties:
+            type:
+              type: integer
+              description: Session role — 0 producer (user), 1 consumer (developer).
+              enum: [0, 1]
+            token:
+              type: string
+              description: Single-use token from the REST token endpoint.
+
+    ReadyFrame:
+      type: object
+      required: [op]
+      properties:
+        op:
+          const: 4
+
+    SubmitFrame:
+      type: object
+      required: [op, d, t]
+      properties:
+        op:
+          const: 6
+        t:
+          type: string
+          description: Data type label for the payload (e.g. `heart_rate`).
+        d:
+          $ref: '#/components/schemas/RealtimePayload'
+
+    ReplayFrame:
+      type: object
+      required: [op, d]
+      properties:
+        op:
+          const: 7
+        d:
+          type: object
+          description: Exclusive dispatch-id range — after < dispatch_id < before.
+          properties:
+            after:
+              type: integer
+              format: int64
+              description: Lower exclusive bound; a dispatch `seq` from a prior frame.
+            before:
+              type: integer
+              format: int64
+              description: Upper exclusive bound. Omit for "everything after `after`".
+
+    DispatchFrame:
+      type: object
+      required: [op, d, uid, seq, t]
+      properties:
+        op:
+          const: 5
+        uid:
+          type: string
+          description: The producing user's identifier.
+        seq:
+          type: integer
+          format: int64
+          description: Monotonic dispatch cursor; usable as a later REPLAY `after` bound.
+        t:
+          type: string
+          description: Data type label (mirrors the producer's SUBMIT `t`).
+        d:
+          $ref: '#/components/schemas/RealtimePayload'

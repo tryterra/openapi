@@ -2,97 +2,89 @@ openapi: 3.1.0
 info:
   title: Real Time Streaming API
   version: '2.0'
+  description: |
+    Token issuance for the Terra real-time streaming WebSocket. Call one of the
+    endpoints below with your developer credentials to mint a single-use,
+    short-lived token, then open the streaming socket and present the token in
+    the IDENTIFY frame.
+
+    - `POST /auth/user` — a **producer** token for a single user (push live
+      samples).
+    - `POST /auth/developer` — a **consumer** token (receive the live dispatch
+      stream for all of your users).
+
+    The WebSocket protocol itself — the `/connect` socket, its frame opcodes,
+    handshake, heartbeats, and close codes — is documented separately in the
+    AsyncAPI document `rt.asyncapi.yaml` (OpenAPI cannot express a bidirectional
+    socket protocol).
 servers:
   - url: https://ws.tryterra.co
 security:
   - ApiKeyAuth: []
     DevID: []
+  - BasicAuth: []
 paths:
   /auth/developer:
     post:
-      parameters:
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-        - name: x-api-key
-          in: header
-          description: your API key
-          required: true
-          schema:
-            type: string
       summary: Stream - Generate developer token
-      description: Endpoint for generation of a token for a developer (consumer) connection
+      description: Generates a single-use token for a developer (consumer) connection.
       operationId: generate-developer-token
       responses:
         '200':
-          description: Successful response
+          description: Token generated.
           content:
             application/json:
               schema:
                 type: object
+                required:
+                  - token
                 properties:
                   token:
                     type: string
+                    description: Single-use token to present in the IDENTIFY frame.
                     example: cG9RvLY5.yvKm778XMIPm1ig93BJEoRCVGHzlrBNjzWdeXePTaMM
-              examples:
-                Result:
-                  value:
-                    token: cG9RvLY5.yvKm778XMIPm1ig93BJEoRCVGHzlrBNjzWdeXePTaMM
+        '400':
+          description: Missing or malformed authentication headers.
         '403':
-          description: Forbidden
-          content:
-            text/plain:
-              examples:
-                Result:
-                  value: ''
+          description: Invalid developer credentials.
+        '500':
+          description: Token generation failed.
   /auth/user:
     post:
       summary: Stream - Generate user token
-      description: Endpoint for generation of a token for a user (producer) connection
+      description: |
+        Generates a single-use token for a user (producer) connection. The `id`
+        identifies the user the token is scoped to — a v6 connection id or a v5
+        compatibility user UUID — and must belong to the authenticating
+        developer.
       operationId: generate-user-token
       parameters:
         - name: id
           in: query
-          description: The ID of the user to generate a token for
-          schema:
-            type: string
-        - name: dev-id
-          in: header
-          description: your developer ID
-          required: true
-          schema:
-            type: string
-        - name: x-api-key
-          in: header
-          description: your API key
+          description: The id of the user to generate a token for.
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: Successful response
+          description: Token generated.
           content:
             application/json:
               schema:
                 type: object
+                required:
+                  - token
                 properties:
                   token:
                     type: string
+                    description: Single-use token to present in the IDENTIFY frame.
                     example: OTYwNWFi5ZWQMTAxMjg0Y2Qw.gzrPzZcS3Gy8QDOxbiPRwu30PTB3VxW0eE
-              examples:
-                Result:
-                  value:
-                    token: OTYwNWFi5ZWQMTAxMjg0Y2Qw.gzrPzZcS3Gy8QDOxbiPRwu30PTB3VxW0eE
+        '400':
+          description: Missing `id` parameter, or missing/malformed authentication headers.
         '403':
-          description: Forbidden
-          content:
-            text/plain:
-              examples:
-                Result:
-                  value: ''
+          description: Invalid credentials, or the user does not belong to this developer.
+        '500':
+          description: Token generation failed.
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -105,3 +97,11 @@ components:
       in: header
       name: dev-id
       description: Your developer ID for authentication and tracking
+    BasicAuth:
+      type: http
+      scheme: basic
+      description: |
+        HTTP Basic credentials carrying your developer ID as the username and API
+        key as the password (`Authorization: Basic base64(dev-id:api-key)`). An
+        alternative to the dev-id / x-api-key header pair on the streaming token
+        endpoints.
