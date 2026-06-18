@@ -2,19 +2,29 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   BMR_calories:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Basal Metabolic Rate calories - calories burned at rest.
   calorie_samples:
-    type: array
-    items:
-      $ref: CalorieSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: CalorieSample.yaml
+      - type: "null"
     description: Array of calorie data samples recorded throughout the time period.
   net_activity_calories:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Net calories burned through activity (excluding BMR).
   net_intake_calories:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Net calories consumed through food and drink intake.
   total_burned_calories:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Total calories burned including BMR and activity.

@@ -5,7 +5,9 @@ properties:
     $ref: MenstruationMetadata.yaml
     description: Object containing daily summary metadata.
   menstruation_data:
-    $ref: MenstruationData.yaml
+    anyOf:
+      - $ref: MenstruationData.yaml
+      - type: "null"
     description: Object containing information on user's menstruation for a given day.
 required:
   - metadata

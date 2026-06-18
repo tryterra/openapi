@@ -2,8 +2,12 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   sleep_contributors:
-    type: array
-    items:
-      $ref: DataContributor.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: DataContributor.yaml
+      - type: "null"
   sleep_score:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"

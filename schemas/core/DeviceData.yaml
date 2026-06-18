@@ -2,48 +2,68 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   activation_timestamp:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - 2022-12-25T00:00:00.000000+05:00
     description: Activation timestamp of the device, if applicable.
   data_provided:
-    type: array
-    items:
-      $ref: DeviceDataType.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: DeviceDataType.yaml
+      - type: "null"
     description: Data provided by the device, as enumerated types.
   hardware_version:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - v2.1
     description: Hardware version of the device.
   last_upload_date:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Last upload date from the device.
   manufacturer:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - Garmin
     description: Device manufacturer name.
   name:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - Forerunner 945
     description: Device name - note that this can also be the name of the application/package which the data comes from, if coming from a data aggregator such as Google Fit.
   other_devices:
-    type: array
-    items:
-      $ref: OtherDeviceData.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: OtherDeviceData.yaml
+      - type: "null"
     description: Data pertaining to other devices which may have contributed data for this workout.
   sensor_state:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Sensor state of the device.
   serial_number:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - GR123456789
     description: Device Serial Number.
   software_version:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - 5.2.1
     description: Device Software Version.

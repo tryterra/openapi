@@ -2,11 +2,17 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   breaths_data:
-    $ref: BreathsData.yaml
+    anyOf:
+      - $ref: BreathsData.yaml
+      - type: "null"
     description: Object containing information on breathing rate for the sleep session.
   oxygen_saturation_data:
-    $ref: OxygenSaturationData.yaml
+    anyOf:
+      - $ref: OxygenSaturationData.yaml
+      - type: "null"
     description: Object containing information on saturation metrics for the sleep session.
   snoring_data:
-    $ref: SnoringData.yaml
+    anyOf:
+      - $ref: SnoringData.yaml
+      - type: "null"
     description: Object containing information on snoring metrics for the sleep session.

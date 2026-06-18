@@ -4,13 +4,19 @@ properties:
   type:
     $ref: CompletionConditionType.yaml
   value:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Single value for the condition (e.g. seconds for time, meters for distance)
   value_low:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Lower bound when the condition is a range
   value_high:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Upper bound when the condition is a range
 required:
   - type

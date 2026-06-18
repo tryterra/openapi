@@ -2,7 +2,9 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   ketone_samples:
-    type: array
-    items:
-      $ref: KetoneSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: KetoneSample.yaml
+      - type: "null"
     description: List of ketone data sampled through the day.

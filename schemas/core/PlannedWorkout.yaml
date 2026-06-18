@@ -2,29 +2,47 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   planned_workout_id:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Terra identifier of the planned workout
   workout_id:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Identifier of the workout template this was planned from. Absent for workouts created on the provider side.
   planned_date:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Scheduled date (YYYY-MM-DD)
   provider_workout_id:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Identifier of the workout on the provider's side, once pushed
   coercion_warnings:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Warnings emitted when the template could not be represented exactly on the provider
   created_at:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Creation time (RFC 3339)
   last_updated_at:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Last update time (RFC 3339)
   is_external:
-    type: boolean
+    anyOf:
+      - type: boolean
+      - type: "null"
     description: True when the workout was created on the provider side rather than through Terra
   athlete_metrics:
-    $ref: AthleteMetrics.yaml
+    anyOf:
+      - $ref: AthleteMetrics.yaml
+      - type: "null"
 description: A workout template scheduled onto a user's calendar

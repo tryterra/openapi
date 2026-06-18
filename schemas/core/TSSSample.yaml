@@ -2,20 +2,32 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   planned:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Planned Training Stress Score value
   actual:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Actual Training Stress Score value achieved
   method:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Method used to calculate the TSS
   intensity_factor_planned:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Planned intensity factor for the training session
   intensity_factor_actual:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Actual intensity factor achieved during the training session
   normalized_power_watts:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Normalized power output in watts

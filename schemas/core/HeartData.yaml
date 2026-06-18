@@ -2,25 +2,35 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   afib_classification_samples:
-    type: array
-    items:
-      $ref: AFibClassificationSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: AFibClassificationSample.yaml
+      - type: "null"
     description: List of Atrial Fibrillation classification measurements sampled through the day.
   ecg_signal:
-    type: array
-    items:
-      $ref: ECGReading.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: ECGReading.yaml
+      - type: "null"
     description: List of ECGReadings sampled through the day.
   heart_rate_data:
-    $ref: HeartRateData.yaml
+    anyOf:
+      - $ref: HeartRateData.yaml
+      - type: "null"
     description: Object containing heart rate data.
   pulse_wave_velocity_samples:
-    type: array
-    items:
-      $ref: PulseVelocitySample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: PulseVelocitySample.yaml
+      - type: "null"
     description: List of Pulse Wave Velocity measurements sampled throughout the day. This represents a measurement of arterial stiffness that is an independent predictor of cardiovascular risk.
   rr_interval_samples:
-    type: array
-    items:
-      $ref: RRIntervalSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: RRIntervalSample.yaml
+      - type: "null"
     description: List of RR Interval samples throughout the day.

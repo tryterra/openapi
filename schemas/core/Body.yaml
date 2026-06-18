@@ -2,34 +2,52 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   blood_pressure_data:
-    $ref: BloodPressureData.yaml
+    anyOf:
+      - $ref: BloodPressureData.yaml
+      - type: "null"
     description: Object containing information on user's Blood Pressure.
   device_data:
-    $ref: DeviceData.yaml
+    anyOf:
+      - $ref: DeviceData.yaml
+      - type: "null"
     description: Object containing information on the device which recorded data for the payload.
   heart_data:
-    $ref: HeartData.yaml
+    anyOf:
+      - $ref: HeartData.yaml
+      - type: "null"
     description: Object containing information on user's heart metrics.
   hydration_data:
-    $ref: HydrationData.yaml
+    anyOf:
+      - $ref: HydrationData.yaml
+      - type: "null"
     description: Object containing information on user's hydration (both internal & consumption of water) for the day.
   ketone_data:
-    $ref: KetoneData.yaml
+    anyOf:
+      - $ref: KetoneData.yaml
+      - type: "null"
     description: Object containing information on user's ketone data for the day.
   measurements_data:
-    $ref: MeasurementsData.yaml
+    anyOf:
+      - $ref: MeasurementsData.yaml
+      - type: "null"
     description: Object containing information on body measurements for the day.
   metadata:
     $ref: BodyMetadata.yaml
     description: Object containing daily summary metadata.
   oxygen_data:
-    $ref: OxygenData.yaml
+    anyOf:
+      - $ref: OxygenData.yaml
+      - type: "null"
     description: Object containing information on user's oxygen-related data.
   temperature_data:
-    $ref: TemperatureData.yaml
+    anyOf:
+      - $ref: TemperatureData.yaml
+      - type: "null"
     description: Object containing temperature information (core, skin, ambient) during the day.
   glucose_data:
-    $ref: GlucoseData.yaml
+    anyOf:
+      - $ref: GlucoseData.yaml
+      - type: "null"
     description: Object containing information on user's blood glucose for the day.
 required:
   - metadata

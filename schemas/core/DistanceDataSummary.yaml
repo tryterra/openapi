@@ -2,17 +2,27 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   distance_meters:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     description: Total distance covered by the user throughout the workout.
   elevation:
-    $ref: ElevationData.yaml
+    anyOf:
+      - $ref: ElevationData.yaml
+      - type: "null"
     description: Object containing information on the elevation of the user throughout the workout.
   floors_climbed:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     description: Total number of elevation gain in floors climbed equivalent throughout the workout, as determined by the fitness data provider.
   steps:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     description: Total number of steps performed during the workout.
   swimming:
-    $ref: SwimmingData.yaml
+    anyOf:
+      - $ref: SwimmingData.yaml
+      - type: "null"
     description: Summary information of the user's swimming statistics for the workout, if applicable.

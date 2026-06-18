@@ -2,20 +2,26 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   drink_samples:
-    type: array
-    items:
-      $ref: DrinkSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: DrinkSample.yaml
+      - type: "null"
     description: Information on drinks the user consumed throughout the day.
   meals:
-    type: array
-    items:
-      $ref: Meal.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: Meal.yaml
+      - type: "null"
     description: Information on individual foods consumed throughout a given day.
   metadata:
     $ref: NutritionMetadata.yaml
     description: Object containing daily summary metadata.
   summary:
-    $ref: NutritionSummary.yaml
+    anyOf:
+      - $ref: NutritionSummary.yaml
+      - type: "null"
     description: Summative nutritional information for a given day.
 required:
   - metadata

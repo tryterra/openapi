@@ -2,12 +2,16 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   readiness:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     examples:
       - 85
     minimum: 0
     maximum: 100
     description: User's readiness score for a given day, resulting from the sleep session.
   recovery_level:
-    $ref: RecoveryLevel.yaml
+    anyOf:
+      - $ref: RecoveryLevel.yaml
+      - type: "null"
     description: User's recovery score for a given day, resulting from the sleep session - takes Enum value.

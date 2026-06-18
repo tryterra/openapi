@@ -2,7 +2,9 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   delta:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 0.5
     description: Variation in user's skin temperature from their baseline.

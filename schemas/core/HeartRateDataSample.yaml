@@ -2,20 +2,28 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   timestamp:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - 2022-11-23T09:00:00.000000+02:00
     description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
   bpm:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 142
     description: User's heart rate in bpm
   timer_duration_seconds:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 600
     description: Time elapsed since the start of the workout, subtracting time during which the recording was paused
   context:
-    $ref: HeartRateContext.yaml
+    anyOf:
+      - $ref: HeartRateContext.yaml
+      - type: "null"
     description: Represents the context in which heart rate was measured.

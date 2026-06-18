@@ -5,7 +5,9 @@ properties:
     type: string
     description: The type of event
   status:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Status of the event
 required:
   - type

@@ -2,45 +2,67 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   cardiovascular_contributors:
-    type: array
-    items:
-      $ref: DataContributor.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: DataContributor.yaml
+      - type: "null"
     description: Array of factors contributing to cardiovascular score.
   cardiovascular_score:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Cardiovascular health score for the day.
   immune_contributors:
-    type: array
-    items:
-      $ref: DataContributor.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: DataContributor.yaml
+      - type: "null"
     description: Array of factors contributing to immune index.
   immune_index:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Immune system health index for the day.
   readiness_contributors:
-    type: array
-    items:
-      $ref: DataContributor.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: DataContributor.yaml
+      - type: "null"
     description: Array of factors contributing to readiness score.
   readiness_score:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Readiness score for the day.
   respiratory_contributors:
-    type: array
-    items:
-      $ref: DataContributor.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: DataContributor.yaml
+      - type: "null"
     description: Array of factors contributing to respiratory score.
   respiratory_score:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Respiratory health score for the day.
   start_time:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Start time for the data enrichment calculation period.
   stress_contributors:
-    type: array
-    items:
-      $ref: DataContributor.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: DataContributor.yaml
+      - type: "null"
     description: Array of factors contributing to stress score.
   total_stress_score:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Total stress score for the day.

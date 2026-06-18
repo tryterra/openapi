@@ -7,7 +7,9 @@ properties:
       - 75001
     description: Terra connection ID.
   reference_id:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - user_external_ref_123
     description: External user identifier provided at connect time.
@@ -22,13 +24,19 @@ properties:
       - MIRA
     description: Uppercase provider slug, e.g. MIRA or FITBIT.
   last_polled_at:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: RFC3339 timestamp of the last poll Terra ran against the provider for this connection. May be null for webhook-only flows.
   last_updated_at:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: RFC3339 timestamp of the last time Terra received any data from the provider for this connection.
   most_recent_data_at:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: RFC3339 timestamp of the most recent stored sample. May lag last_updated_at when fetches return no new data.
   scopes:
     type: array

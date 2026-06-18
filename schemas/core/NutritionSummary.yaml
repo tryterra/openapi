@@ -2,18 +2,26 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   macros:
-    $ref: NutritionMacros.yaml
+    anyOf:
+      - $ref: NutritionMacros.yaml
+      - type: "null"
     description: Summary of macronutrient information for a given day.
   micros:
-    $ref: NutritionMicros.yaml
+    anyOf:
+      - $ref: NutritionMicros.yaml
+      - type: "null"
     description: Summary of micronutrient information for a given day.
   water_ml:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 2000
     description: Water consumption of the user for a given day.
   drink_ml:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 500
     description: Non-water drink consumption of the user for a given day.

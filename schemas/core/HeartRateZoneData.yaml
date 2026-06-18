@@ -2,29 +2,39 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   zone:
-    $ref: HeartRateZone.yaml
+    anyOf:
+      - $ref: HeartRateZone.yaml
+      - type: "null"
     description: Heart rate zone designation
   start_percentage:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 60
     minimum: 0
     maximum: 100
     description: Start percentage (based off user's max HR) of the HR zone
   end_percentage:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 70
     minimum: 0
     maximum: 100
     description: End percentage (based off user's max HR) of the HR zone
   name:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - Aerobic
     description: Name of the associated heart rate zone
   duration_seconds:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 300
     description: Duration spent in the heart rate zone

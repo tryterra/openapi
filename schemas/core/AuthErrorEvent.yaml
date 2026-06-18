@@ -9,13 +9,19 @@ properties:
     const: error
     description: Status of authentication
   flow_id:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Identifier of the authentication flow that failed
   reason:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Reason for the error
   reference_id:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Client-provided reference ID
 required:
   - type

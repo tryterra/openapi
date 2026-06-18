@@ -2,7 +2,9 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   laps:
-    type: array
-    items:
-      $ref: LapSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: LapSample.yaml
+      - type: "null"
     description: Array of datapoints for each lap performed by the user during the workout.

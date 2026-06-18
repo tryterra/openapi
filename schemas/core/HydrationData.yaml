@@ -2,12 +2,16 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   day_total_water_consumption_ml:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 2500
     description: User's total water consumption throughout the day.
   hydration_amount_samples:
-    type: array
-    items:
-      $ref: HydrationMeasurementSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: HydrationMeasurementSample.yaml
+      - type: "null"
     description: User's hydration level samples throughout the day.

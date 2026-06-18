@@ -2,22 +2,30 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   distance_samples:
-    type: array
-    items:
-      $ref: DistanceSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: DistanceSample.yaml
+      - type: "null"
     description: Array of detailed samples of distance covered throughout the workout.
   elevation_samples:
-    type: array
-    items:
-      $ref: ElevationSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: ElevationSample.yaml
+      - type: "null"
     description: Array of detailed samples of elevation throughout the workout.
   floors_climbed_samples:
-    type: array
-    items:
-      $ref: FloorsClimbedSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: FloorsClimbedSample.yaml
+      - type: "null"
     description: Array of detailed samples of floors climbed throughout the workout, as determined by the fitness data provider.
   step_samples:
-    type: array
-    items:
-      $ref: StepSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: StepSample.yaml
+      - type: "null"
     description: Array of detailed samples of steps performed throughout the workout.

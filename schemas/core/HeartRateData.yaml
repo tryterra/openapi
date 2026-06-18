@@ -2,8 +2,12 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   detailed:
-    $ref: HeartRateDataDetailed.yaml
+    anyOf:
+      - $ref: HeartRateDataDetailed.yaml
+      - type: "null"
     description: Object containing detailed heart rate information for the associated workout.
   summary:
-    $ref: HeartRateDataSummary.yaml
+    anyOf:
+      - $ref: HeartRateDataSummary.yaml
+      - type: "null"
     description: Object containing summary heart rate information for the associated workout.

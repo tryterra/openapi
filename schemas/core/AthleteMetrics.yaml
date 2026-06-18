@@ -2,18 +2,28 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   threshold_heart_rate:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Threshold heart rate in BPM
   max_heart_rate:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Maximum heart rate in BPM
   threshold_speed:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Threshold speed in m/s
   ftp:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Functional Threshold Power in watts
   pool_length_meters:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Pool length in meters (overrides the template value)
 description: Athlete-specific metrics used to personalise workout targets for one planned workout

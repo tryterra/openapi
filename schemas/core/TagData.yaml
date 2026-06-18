@@ -2,7 +2,9 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   tags:
-    type: array
-    items:
-      $ref: TagEntry.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: TagEntry.yaml
+      - type: "null"
     description: Array of user-entered tags for the day.

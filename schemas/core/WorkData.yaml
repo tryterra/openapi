@@ -2,7 +2,9 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   work_kilojoules:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 450.5
     description: Total work output of the user for the workout, in kilojoules.

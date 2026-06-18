@@ -2,35 +2,47 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   avg_meters:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 950
     description: Average elevation of the user throughout the workout.
   gain_actual_meters:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 550
     minimum: 0
     description: Actual elevation gain of the user throughout the workout - this includes all elevation gain, and does _not_ represent net gain.
   gain_planned_meters:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 500
     minimum: 0
     description: Planned elevation gain for the workout.
   loss_actual_meters:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 450
     minimum: 0
     description: Elevation loss of the user throughout the workout.
   max_meters:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 1200
     description: Maximum elevation of the user during the workout.
   min_meters:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 800
     description: Minimum elevation of the user during the workout.

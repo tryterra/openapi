@@ -2,17 +2,23 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   ambient_temperature_samples:
-    type: array
-    items:
-      $ref: TemperatureSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: TemperatureSample.yaml
+      - type: "null"
     description: List of ambient temperature measurements sampled throughout the day.
   body_temperature_samples:
-    type: array
-    items:
-      $ref: TemperatureSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: TemperatureSample.yaml
+      - type: "null"
     description: List of body temperature measurements sampled throughout the day.
   skin_temperature_samples:
-    type: array
-    items:
-      $ref: TemperatureSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: TemperatureSample.yaml
+      - type: "null"
     description: List of skin temperature measurements sampled throughout the day.

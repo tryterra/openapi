@@ -2,7 +2,9 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   TSS_samples:
-    type: array
-    items:
-      $ref: TSSSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: TSSSample.yaml
+      - type: "null"
     description: Array of TSS information sampled throughout the workout

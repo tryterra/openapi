@@ -2,35 +2,51 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   data_enrichment:
-    $ref: SleepDataEnrichment.yaml
+    anyOf:
+      - $ref: SleepDataEnrichment.yaml
+      - type: "null"
     description: Object containing additional enrichment data for the sleep session.
   device_data:
-    $ref: DeviceData.yaml
+    anyOf:
+      - $ref: DeviceData.yaml
+      - type: "null"
     description: Object containing information on the device which recorded data for the payload.
   heart_rate_data:
-    $ref: HeartRateData.yaml
+    anyOf:
+      - $ref: HeartRateData.yaml
+      - type: "null"
     description: Object containing information on the user's heart rate during the sleep session.
   metadata:
     $ref: SleepMetadata.yaml
     description: Object containing daily summary metadata.
   readiness_data:
-    $ref: ReadinessData.yaml
+    anyOf:
+      - $ref: ReadinessData.yaml
+      - type: "null"
     description: Object containing information on the user's readiness for the day, based off the quality and duration of their sleep.
   respiration_data:
-    $ref: RespirationData.yaml
+    anyOf:
+      - $ref: RespirationData.yaml
+      - type: "null"
     description: Object containing information on the user's respiration throughout the sleep session.
   scores:
     type: object
     properties:
       sleep:
-        type: number
+        anyOf:
+          - type: number
+          - type: "null"
         description: User's sleep score.
     description: User's sleep score
   sleep_durations_data:
-    $ref: SleepDurationsData.yaml
+    anyOf:
+      - $ref: SleepDurationsData.yaml
+      - type: "null"
     description: Object containing information on the user's duration spent in various sleep stages.
   temperature_data:
-    $ref: SleepTemperatureData.yaml
+    anyOf:
+      - $ref: SleepTemperatureData.yaml
+      - type: "null"
     description: Object containing body temperature information of the user during the sleep recording session.
 required:
   - metadata

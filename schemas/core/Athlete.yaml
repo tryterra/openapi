@@ -2,67 +2,93 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   age:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     examples:
       - 28
     description: User's age.
   country:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - United States
     description: User's country of residence.
   bio:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - Passionate runner and cyclist
     description: User's bio - a short description they display on their profile.
   state:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - California
     description: User's state of residence.
   last_name:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - Smith
     description: User's last name.
   sex:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - male
     description: User's sex.
   city:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - San Francisco
     description: User's city of residence.
   email:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - user@example.com
     description: User's email.
   date_of_birth:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - 1999-11-23
     description: User's date of birth, in ISO8601 format.
   first_name:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - John
     description: User's first name.
   gender:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - male
     description: User's gender.
   joined_provider:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - 2023-01-15
     description: User's account creation date.
   devices:
-    type: array
-    items:
-      $ref: DeviceData.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: DeviceData.yaml
+      - type: "null"
     description: Array of devices associated with the user's account.

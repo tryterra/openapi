@@ -2,19 +2,25 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   num_laps:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     examples:
       - 20
     minimum: 0
     description: Total number of swimming laps performed during the day.
   num_strokes:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     examples:
       - 500
     minimum: 0
     description: Total number of swimming strokes performed during the day.
   pool_length_meters:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     examples:
       - 25
     minimum: 0

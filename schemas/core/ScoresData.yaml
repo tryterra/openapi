@@ -2,28 +2,36 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   activity:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 92
     minimum: 0
     maximum: 100
     description: Activity score for the given day.
   recovery:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 78
     minimum: 0
     maximum: 100
     description: Recovery score for the given day.
   sleep:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 85
     minimum: 0
     maximum: 100
     description: Sleep score for the given day, pertaining to the previous night's sleep.
   biological_age:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 27
     minimum: 0

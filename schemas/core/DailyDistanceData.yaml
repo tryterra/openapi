@@ -2,27 +2,39 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   detailed:
-    $ref: DistanceDataDetailed.yaml
+    anyOf:
+      - $ref: DistanceDataDetailed.yaml
+      - type: "null"
     description: Object containing detailed distance information - this may include second-by-second samples.
   distance_meters:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 8500.45
     description: Total distance covered by the user throughout the day.
   elevation:
-    $ref: ElevationData.yaml
+    anyOf:
+      - $ref: ElevationData.yaml
+      - type: "null"
     description: Object containing information on the elevation of the user throughout the day.
   floors_climbed:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     examples:
       - 15
     minimum: 0
     description: Total number of elevation gain in floors climbed equivalent throughout the day, as determined by the fitness data provider.
   steps:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     examples:
       - 12000
     description: Total number of steps performed during the day.
   swimming:
-    $ref: SwimmingData.yaml
+    anyOf:
+      - $ref: SwimmingData.yaml
+      - type: "null"
     description: Summary information of the user's swimming statistics for the day, if applicable.

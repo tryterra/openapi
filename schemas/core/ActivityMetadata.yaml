@@ -2,12 +2,16 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   city:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - San Francisco
     description: The City in which the workout was performed.
   country:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - United States
     description: The Country in which the workout was performed.
@@ -17,7 +21,9 @@ properties:
       - 2022-10-28T10:00:00.000000+01:00
     description: The end time of the associated workout, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
   name:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - Morning Run
     description: The name - either user-entered or given by the fitness data provider - of the associated workout.
@@ -27,7 +33,9 @@ properties:
       - 1999-11-23T09:00:00.000000+02:00
     description: The start time of the associated workout, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
   state:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - California
     description: The State in which the workout was performed.
@@ -37,7 +45,9 @@ properties:
       - 123e4567-e89b-12d3-a456-426614174000
     description: A unique identifier for the workout - note that this is unique for the given user, and may not be globally unique.
   timestamp_localization:
-    $ref: TimestampLocalization.yaml
+    anyOf:
+      - $ref: TimestampLocalization.yaml
+      - type: "null"
   type:
     $ref: ActivityType.yaml
     description: The type of activity performed for the associated workout.

@@ -2,14 +2,22 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   exercise_name:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Display name of the exercise
   weight:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Weight to lift
   weight_display_unit:
-    $ref: WeightUnit.yaml
+    anyOf:
+      - $ref: WeightUnit.yaml
+      - type: "null"
   exercise_category:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Garmin Training API exerciseCategory string (e.g. BENCH_PRESS, SQUAT)
 description: Strength-exercise details for a step

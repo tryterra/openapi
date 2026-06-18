@@ -7,27 +7,37 @@ properties:
       - 2026-05-07T08:00:00+02:00
     description: ISO-8601 timestamp of the test event, including timezone offset.
   lh_mIU_per_ml:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 5.2
     description: Luteinizing hormone reading, milli-international units per millilitre.
   e3g_ng_per_ml:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 108.5
     description: Estrone-3-glucuronide reading, nanograms per millilitre. Urinary estrogen metabolite, rises before ovulation.
   pdg_ug_per_ml:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 2.4
     description: Pregnanediol glucuronide reading, micrograms per millilitre. Urinary progesterone metabolite, confirms ovulation.
   hcg_mIU_per_ml:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 0.8
     description: Human chorionic gonadotropin reading, milli-international units per millilitre. Pregnancy hormone.
   fsh_mIU_per_ml:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 4.8
     description: Follicle-stimulating hormone reading, milli-international units per millilitre. Ovarian reserve / menopause indicator.

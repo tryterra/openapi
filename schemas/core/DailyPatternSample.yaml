@@ -2,24 +2,36 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   time_from_midnight:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     examples:
       - 9
     minimum: 0
     maximum: 23
     description: Hour of the day, represented as an integer from 0 to 23, where 0 is midnight and 23 is the hour before the next midnight.
   percentile_5:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     description: Percentile 5 of the glucose level at the given time of day.
   percentile_25:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     description: Percentile 25 of the glucose level at the given time of day.
   percentile_50:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     description: Percentile 50 of the glucose level at the given time of day.
   percentile_75:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     description: Percentile 75 of the glucose level at the given time of day.
   percentile_95:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     description: Percentile 95 of the glucose level at the given time of day.

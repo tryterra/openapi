@@ -2,7 +2,9 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   blood_pressure_samples:
-    type: array
-    items:
-      $ref: BloodPressureSample.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: BloodPressureSample.yaml
+      - type: "null"
     description: List of Blood Pressure measurements sampled throughout the day.

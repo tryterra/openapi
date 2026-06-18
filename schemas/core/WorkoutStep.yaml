@@ -5,24 +5,34 @@ properties:
     $ref: CompletionCondition.yaml
     description: When this step completes
   intensity_targets:
-    type: array
-    items:
-      $ref: IntensityTarget.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: IntensityTarget.yaml
+      - type: "null"
     description: Intensity targets to hold during the step
   intensity_type:
     $ref: WorkoutStepIntensity.yaml
   notes:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Free-text coaching notes shown to the athlete
   controls:
-    type: array
-    items:
-      $ref: StepControl.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: StepControl.yaml
+      - type: "null"
     description: Equipment controls applied during the step
   strength:
-    $ref: StrengthData.yaml
+    anyOf:
+      - $ref: StrengthData.yaml
+      - type: "null"
   swimming:
-    $ref: SwimStepData.yaml
+    anyOf:
+      - $ref: SwimStepData.yaml
+      - type: "null"
 required:
   - completion_condition
   - intensity_type

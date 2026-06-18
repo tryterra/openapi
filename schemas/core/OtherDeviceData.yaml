@@ -2,38 +2,54 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   manufacturer:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - Garmin
     description: Device manufacturer name.
   hardware_version:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - v2.1
     description: Hardware version of the device.
   serial_number:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - GR123456789
     description: Device Serial Number.
   name:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - Forerunner 945
     description: Device name - note that this can also be the name of the application/package which the data comes from, if coming from a data aggregator such as Google Fit.
   software_version:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     examples:
       - 5.2.1
     description: Device Software Version.
   activation_timestamp:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Activation timestamp of the device, if applicable.
   data_provided:
-    type: array
-    items:
-      $ref: DeviceDataType.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: DeviceDataType.yaml
+      - type: "null"
     description: Data provided by the device, as enumerated types.
   last_upload_date:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Last upload date from the device.

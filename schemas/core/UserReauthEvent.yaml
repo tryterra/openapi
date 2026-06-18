@@ -8,7 +8,9 @@ properties:
     $ref: TerraUser.yaml
     description: The new user record
   old_user:
-    $ref: TerraUser.yaml
+    anyOf:
+      - $ref: TerraUser.yaml
+      - type: "null"
     description: The old user record that will be deleted, when available
   status:
     type: string

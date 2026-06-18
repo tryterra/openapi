@@ -5,30 +5,44 @@ properties:
     type: string
     description: Name of the workout
   description:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Description of the workout
   sport:
     $ref: WorkoutSport.yaml
   environment:
-    $ref: EnvironmentType.yaml
+    anyOf:
+      - $ref: EnvironmentType.yaml
+      - type: "null"
   pool_length_meters:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Pool length in meters, for swim workouts
   step_blocks:
     type: array
     items:
       $ref: StepBlock.yaml
   estimated_duration_seconds:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Estimated total duration in seconds
   estimated_distance_meters:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Estimated total distance in meters
   estimated_calories:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Estimated calories burned
   workout_id:
-    type: string
+    anyOf:
+      - type: string
+      - type: "null"
     description: Terra identifier of the stored template. Set by Terra in responses; ignored on create.
 required:
   - name

@@ -2,11 +2,17 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   stroke_type:
-    $ref: SwimStrokeType.yaml
+    anyOf:
+      - $ref: SwimStrokeType.yaml
+      - type: "null"
   drill_type:
-    $ref: DrillType.yaml
+    anyOf:
+      - $ref: DrillType.yaml
+      - type: "null"
   equipment:
-    type: array
-    items:
-      $ref: SwimEquipmentType.yaml
+    anyOf:
+      - type: array
+        items:
+          $ref: SwimEquipmentType.yaml
+      - type: "null"
 description: Swimming details for a step

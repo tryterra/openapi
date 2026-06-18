@@ -2,27 +2,37 @@ $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
   duration_asleep_state_seconds:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 25200
     description: Total duration for which the user was asleep, in any state.
   duration_deep_sleep_state_seconds:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 5400
     description: Total duration for which the user was in a state of deep sleep.
   duration_light_sleep_state_seconds:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 14400
     description: Total duration for which the user was in a state of light sleep.
   duration_REM_sleep_state_seconds:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     examples:
       - 5400
     description: Total duration for which the user was in a state of REM sleep.
   num_REM_events:
-    type: integer
+    anyOf:
+      - type: integer
+      - type: "null"
     examples:
       - 4
     description: Number of periods of REM sleep captured during the sleep session.

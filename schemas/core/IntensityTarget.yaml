@@ -4,13 +4,19 @@ properties:
   target_type:
     $ref: WorkoutStepTargetType.yaml
   value:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Single target value
   value_low:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Lower bound of the target range
   value_high:
-    type: number
+    anyOf:
+      - type: number
+      - type: "null"
     description: Upper bound of the target range
 required:
   - target_type
