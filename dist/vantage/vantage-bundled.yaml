@@ -582,10 +582,9 @@ components:
         gender_at_birth:
           type: string
           enum:
-            - m
-            - f
-            - other
-          example: f
+            - male
+            - female
+          example: female
         id:
           type: string
           example: '123456789'
@@ -714,10 +713,9 @@ components:
         gender_at_birth:
           type: string
           enum:
-            - m
-            - f
-            - other
-          example: m
+            - male
+            - female
+          example: male
         last_name:
           type: string
           example: Smith
@@ -1019,9 +1017,9 @@ components:
     Image:
       type: object
       properties:
-        altText:
+        alt_text:
           type: string
-        displayOrder:
+        display_order:
           type: integer
           format: int32
         height:
@@ -1030,12 +1028,12 @@ components:
         id:
           type: integer
           format: int64
-        productID:
+        product_id:
           type: integer
           format: int64
         url:
           type: string
-        variantID:
+        variant_id:
           type: integer
           format: int64
         width:
@@ -1044,15 +1042,14 @@ components:
     ProductVariant:
       type: object
       properties:
-        availableCollectionTypes:
+        available_collection_types:
           type: array
           items:
-            type: integer
-            format: int32
+            type: string
         currency:
           type: integer
           format: int32
-        descriptiveAttrsOverride:
+        descriptive_attrs_override:
           type: object
           additionalProperties: {}
         id:
@@ -1062,34 +1059,34 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Image'
-        priceCents:
+        price_cents:
           type: integer
           format: int32
-        productExternalSKU:
+        product_external_sku:
           type: string
-        productID:
+        product_id:
           type: integer
           format: int64
-        productTypeID:
+        product_type_id:
           type: integer
           format: int64
-        supplierID:
+        supplier_id:
           type: integer
           format: int32
-        variantAvailability:
+        variant_availability:
           type: integer
           format: int32
-        variantDefiningAttrs:
+        variant_defining_attrs:
           type: object
           additionalProperties: {}
-        variantName:
+        variant_name:
           type: string
     Product:
       type: object
       properties:
         availability:
           $ref: '#/components/schemas/AvailabilityStatus'
-        basePriceCents:
+        base_price_cents:
           type: integer
           format: int32
         currency:
@@ -1103,16 +1100,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Image'
-        modelDescriptiveAttrs:
+        model_descriptive_attrs:
           type: object
           additionalProperties:
             type: string
         name:
           type: string
-        productTypeID:
+        product_type_id:
           type: integer
           format: int64
-        supplierID:
+        supplier_id:
           type: integer
           format: int32
         variants:
