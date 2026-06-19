@@ -844,6 +844,12 @@ components:
         variant_id:
           type: string
           example: '555666777'
+      required:
+        - variant_id
+        - product_type_id
+        - price_per_item_cents
+        - quantity
+        - currency
     CreateOrderResponse:
       description: Response containing the created order details including tracking information
       type: object
@@ -869,6 +875,9 @@ components:
         tracking_number:
           type: string
           example: TRK123456789GB
+      required:
+        - order_id
+        - recipient_id
     GetOrderResponse:
       description: Full order information including items, recipient, address, and financials
       type: object
@@ -905,6 +914,16 @@ components:
         supplier_id:
           type: string
           example: '1'
+      required:
+        - order_id
+        - supplier_id
+        - client_id
+        - client_order_reference_id
+        - recipient
+        - shipping_address
+        - items
+        - order_financials
+        - collection_type
     CreateOrderValidationError:
       description: Validation error when creating an order
       type: object
