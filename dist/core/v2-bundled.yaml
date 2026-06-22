@@ -123,53 +123,6 @@ paths:
                     example: 900
         '400':
           $ref: '#/components/responses/BadRequest'
-  /users/{user_id}:
-    patch:
-      summary: Modify user
-      description: Update a Terra user's reference_id or active status
-      tags:
-        - User
-      operationId: User_ModifyUser
-      parameters:
-        - name: user_id
-          in: path
-          description: Terra user ID to update
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                reference_id:
-                  type: string
-                  description: Identifier on your system to associate with this user
-                  example: updatedUser123
-                active:
-                  type: boolean
-                  description: Whether the user should remain active
-      responses:
-        '200':
-          description: Returned upon successful user modification
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/TerraUser'
-                  status:
-                    type: string
-                    enum:
-                      - success
-                      - error
-                    description: Indicates that the request was successful
-                    example: success
-        '400':
-          $ref: '#/components/responses/BadRequest'
   /auth/deauthenticateUser:
     delete:
       summary: Deauthenticates a user and deletes any cached data for them
