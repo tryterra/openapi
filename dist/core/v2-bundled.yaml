@@ -1094,6 +1094,46 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+  /payload/resend:
+    post:
+      tags:
+        - Webhooks
+      operationId: Webhooks_ResendPayload
+      summary: Resend a previously delivered webhook payload
+      description: |
+        Re-dispatches a stored normalised payload to your configured webhook
+        destinations, identified by the original webhook event ID. The user
+        and data type are read from the stored payload itself, so only the
+        event ID is required.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - event_id
+              properties:
+                event_id:
+                  type: string
+                  description: ID of the original webhook event to resend (the `reference` field surfaced on the original delivery).
+                  example: 5b04b6a4-09bd-4fc4-8bbb-6c44f0a2c0ef
+        required: true
+      responses:
+        '200':
+          description: Returned when the payload was successfully re-queued for delivery.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                      - error
+                    example: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /integrations:
     get:
       summary: Get list of available integrations
