@@ -48,11 +48,6 @@ properties:
           $ref: OtherDeviceData.yaml
       - type: "null"
     description: Data pertaining to other devices which may have contributed data for this workout.
-  sensor_state:
-    anyOf:
-      - type: string
-      - type: "null"
-    description: Sensor state of the device.
   serial_number:
     anyOf:
       - type: string

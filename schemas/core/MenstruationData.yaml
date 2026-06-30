@@ -10,7 +10,7 @@ properties:
     description: Total length of period (i.e. menstrual bleeding).
   current_phase:
     anyOf:
-      - $ref: MenstrualPhase.yaml
+      - $ref: MenstruationInterval.yaml
       - type: "null"
     description: Phase in associated cycle, (i.e. menstruation, fertile etc).
   length_of_current_phase_days:
@@ -57,17 +57,17 @@ properties:
     description: Last time when the user recorded information regarding their cycle, in ISO8601 format, with microseconds precision.
   cycle_length_days:
     anyOf:
-      - type: string
+      - type: integer
       - type: "null"
     examples:
-      - "28"
+      - 28
     description: Total cycle length in days.
   is_predicted_cycle:
     anyOf:
-      - type: string
+      - type: boolean
       - type: "null"
     examples:
-      - "true"
+      - true
     description: Flag indicating whether associated object is a prediction or user-logged information.
   menstruation_flow:
     anyOf:
@@ -76,3 +76,31 @@ properties:
           $ref: MenstruationFlowSample.yaml
       - type: "null"
     description: List of user logs of information related to the strength of user's menstrual flow.
+  intervals:
+    anyOf:
+      - type: array
+        items:
+          $ref: MenstruationIntervalSample.yaml
+      - type: "null"
+    description: List of cycle phase intervals, each spanning a contiguous date range within the cycle.
+  fertility_window_start:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - 2022-11-12
+    description: Start of the fertility window, in ISO8601 format.
+  fertility_window_end:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - 2022-11-17
+    description: End of the fertility window, in ISO8601 format.
+  ovulation_day:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - 2022-11-15
+    description: Predicted ovulation day, in ISO8601 format.

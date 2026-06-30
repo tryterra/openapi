@@ -78,17 +78,17 @@ properties:
     examples:
       - male
     description: User's gender.
-  joined_provider:
+  account_creation_date:
     anyOf:
       - type: string
       - type: "null"
     examples:
       - 2023-01-15
-    description: User's account creation date.
-  devices:
+    description: User's account creation date with the provider, in ISO8601 format.
+  provider_user_id:
     anyOf:
-      - type: array
-        items:
-          $ref: DeviceData.yaml
+      - type: string
       - type: "null"
-    description: Array of devices associated with the user's account.
+    examples:
+      - a1b2c3d4e5
+    description: The user's unique identifier as assigned by the data provider.

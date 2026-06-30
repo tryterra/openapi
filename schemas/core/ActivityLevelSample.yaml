@@ -8,7 +8,15 @@ properties:
     examples:
       - 2022-11-23T09:00:00.000000+02:00
     description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
-  level:
+  activity_level:
     anyOf:
       - $ref: ActivityLevel.yaml
       - type: "null"
+    description: The user's activity level for the sample.
+  timer_duration_seconds:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 60
+    description: Duration the activity-level timer has been running, in seconds.

@@ -1813,20 +1813,20 @@ components:
           examples:
             - male
           description: User's gender.
-        joined_provider:
+        account_creation_date:
           anyOf:
             - type: string
             - type: 'null'
           examples:
             - '2023-01-15'
-          description: User's account creation date.
-        devices:
+          description: User's account creation date with the provider, in ISO8601 format.
+        provider_user_id:
           anyOf:
-            - type: array
-              items:
-                $ref: '#/components/schemas/DeviceData'
+            - type: string
             - type: 'null'
-          description: Array of devices associated with the user's account.
+          examples:
+            - a1b2c3d4e5
+          description: The user's unique identifier as assigned by the data provider.
     AthleteCollection:
       type: object
       properties:
@@ -2140,14 +2140,10 @@ components:
             - type: 'null'
           description: Object containing information on the user's respiration throughout the sleep session.
         scores:
-          type: object
-          properties:
-            sleep:
-              anyOf:
-                - type: number
-                - type: 'null'
-              description: User's sleep score.
-          description: User's sleep score
+          anyOf:
+            - $ref: '#/components/schemas/SleepScores'
+            - type: 'null'
+          description: Scores summarising the user's sleep session.
         sleep_durations_data:
           anyOf:
             - $ref: '#/components/schemas/SleepDurationsData'
@@ -2354,10 +2350,18 @@ components:
           examples:
             - '2022-11-23T09:00:00.000000+02:00'
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
-        level:
+        activity_level:
           anyOf:
             - $ref: '#/components/schemas/ActivityLevel'
             - type: 'null'
+          description: The user's activity level for the sample.
+        timer_duration_seconds:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 60
+          description: Duration the activity-level timer has been running, in seconds.
     ActiveDurationsData:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -2485,15 +2489,69 @@ components:
             - type: number
             - type: 'null'
           description: Total calories burned including BMR and activity.
+    RecordFloat:
+      type: object
+      properties: {}
+      unevaluatedProperties:
+        type: number
     DataEnrichment:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
       properties:
-        stress_score:
+        efficiency_score:
           anyOf:
-            - type: integer
+            - type: number
             - type: 'null'
-          description: User's stress score.
+          examples:
+            - 82
+          description: Efficiency score for the workout.
+        efficiency_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the efficiency score.
+        strain_score:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 14.5
+          description: Strain score for the workout.
+        strain_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the strain score.
+        rcrs_score:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 9
+          description: Recovery-corrected relative strain (RCRS) score for the workout.
+        rcrs_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the RCRS score.
+        trimp_score:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 120
+          description: Training impulse (TRIMP) score for the workout.
+        trimp_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the TRIMP score.
+      $defs:
+        RecordFloat:
+          type: object
+          properties: {}
+          unevaluatedProperties:
+            type: number
     DeviceDataType:
       $schema: https://json-schema.org/draft/2020-12/schema
       oneOf:
@@ -2579,11 +2637,6 @@ components:
           examples:
             - 5.2.1
           description: Device Software Version.
-        activation_timestamp:
-          anyOf:
-            - type: string
-            - type: 'null'
-          description: Activation timestamp of the device, if applicable.
         data_provided:
           anyOf:
             - type: array
@@ -2647,11 +2700,6 @@ components:
                 $ref: '#/components/schemas/OtherDeviceData'
             - type: 'null'
           description: Data pertaining to other devices which may have contributed data for this workout.
-        sensor_state:
-          anyOf:
-            - type: string
-            - type: 'null'
-          description: Sensor state of the device.
         serial_number:
           anyOf:
             - type: string
@@ -2729,7 +2777,7 @@ components:
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         floors_climbed:
           anyOf:
-            - type: integer
+            - type: number
             - type: 'null'
           examples:
             - 5
@@ -2754,7 +2802,7 @@ components:
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         steps:
           anyOf:
-            - type: integer
+            - type: number
             - type: 'null'
           description: Cumulative number of steps taken up to associated timestamp, since the start of the payload
         timer_duration_seconds:
@@ -2877,7 +2925,7 @@ components:
       properties:
         distance_meters:
           anyOf:
-            - type: integer
+            - type: number
             - type: 'null'
           description: Total distance covered by the user throughout the workout.
         elevation:
@@ -3041,49 +3089,17 @@ components:
                 $ref: '#/components/schemas/HeartRateVariabilityDataSampleSDNN'
             - type: 'null'
           description: Array of HeartRate Variability data samples recorded for the user during the workout, computed using SDNN.
-    HeartRateZone:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      oneOf:
-        - type: number
-          const: 0
-          description: Resting heart rate zone.
-          title: Zone 0
-        - type: number
-          const: 1
-          description: Very light activity zone.
-          title: Zone 1
-        - type: number
-          const: 2
-          description: Light activity zone.
-          title: Zone 2
-        - type: number
-          const: 3
-          description: Moderate activity zone.
-          title: Zone 3
-        - type: number
-          const: 4
-          description: Hard activity zone.
-          title: Zone 4
-        - type: number
-          const: 5
-          description: Maximum effort zone.
-          title: Zone 5
-        - type: number
-          const: 6
-          description: Heart rate zone that doesn't fit into the standard zones or couldn't be classified.
-          title: Other
-      examples:
-        - 2
-      description: Represents the heart rate zone the user is currently in during a workout or activity
     HeartRateZoneData:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
       properties:
         zone:
           anyOf:
-            - $ref: '#/components/schemas/HeartRateZone'
+            - type: integer
             - type: 'null'
-          description: Heart rate zone designation
+          examples:
+            - 2
+          description: Heart rate zone designation, as a zero-based zone index.
         start_percentage:
           anyOf:
             - type: number
@@ -3194,32 +3210,6 @@ components:
             - $ref: '#/components/schemas/HeartRateDataSummary'
             - type: 'null'
           description: Object containing summary heart rate information for the associated workout.
-    StrokeType:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      oneOf:
-        - type: string
-          const: other
-          description: Any swimming stroke style that doesn't fit the standard categories.
-          title: Other
-        - type: string
-          const: freestyle
-          description: Front crawl stroke where swimmers alternate arm movements with face in water.
-          title: Freestyle
-        - type: string
-          const: backstroke
-          description: Swimming stroke performed on the back with alternating arm movements.
-          title: Backstroke
-        - type: string
-          const: breaststroke
-          description: Swimming stroke where arms move simultaneously in a heart-shaped pattern with a frog kick.
-          title: Breaststroke
-        - type: string
-          const: butterfly
-          description: Swimming stroke with simultaneous overhead arm movements and dolphin kick.
-          title: Butterfly
-      examples:
-        - backstroke
-      description: Stroke type used for the workout step (e.g. breaststroke)
     LapSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -3275,11 +3265,25 @@ components:
           description: The end time of the associated lap, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time
         stroke_type:
           anyOf:
-            - $ref: '#/components/schemas/StrokeType'
+            - type: string
             - type: 'null'
           examples:
             - freestyle
           description: Stroke type - only relevant for swimming activities
+        avg_watts:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 210
+          description: Average power output during the lap, in watts.
+        active_duration_seconds:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          examples:
+            - 120
+          description: Active duration of the lap, in seconds.
     LapData:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -4290,6 +4294,13 @@ components:
           examples:
             - 45.5
           description: VO2Max for the given user.
+        day_avg_vo2max_ml_per_min_per_kg:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 44
+          description: Day-average VO2 max, in millilitres per minute per kilogram.
     PolylineMapData:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -4524,6 +4535,20 @@ components:
                 $ref: '#/components/schemas/BloodPressureSample'
             - type: 'null'
           description: List of Blood Pressure measurements sampled throughout the day.
+        day_avg_systolic_bp:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 120
+          description: Day-average systolic blood pressure, in mmHg.
+        day_avg_diastolic_bp:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 80
+          description: Day-average diastolic blood pressure, in mmHg.
     AFibFlag:
       $schema: https://json-schema.org/draft/2020-12/schema
       oneOf:
@@ -4720,6 +4745,13 @@ components:
                 $ref: '#/components/schemas/HydrationMeasurementSample'
             - type: 'null'
           description: User's hydration level samples throughout the day.
+        day_avg_hydration_kg:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 42
+          description: Day-average body hydration, in kilograms.
     KetoneSampleType:
       $schema: https://json-schema.org/draft/2020-12/schema
       oneOf:
@@ -4776,6 +4808,13 @@ components:
                 $ref: '#/components/schemas/KetoneSample'
             - type: 'null'
           description: List of ketone data sampled through the day.
+        day_avg_ketone_mg_per_dL:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 1.2
+          description: Day-average ketone concentration, in mg/dL.
     MeasurementDataSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -4810,10 +4849,10 @@ components:
           description: User's Resting Metabolic Rate - amount of energy that a person's body needs to function while at rest. RMR accounts for additional low-effort daily activities on top of basic body functions.
         estimated_fitness_age:
           anyOf:
-            - type: string
+            - type: integer
             - type: 'null'
           examples:
-            - '25'
+            - 25
           description: Estimate of how fit the user is compared to their actual age, as measured by the device.
         skin_fold_mm:
           anyOf:
@@ -4901,6 +4940,20 @@ components:
             - type: string
             - type: 'null'
           description: User notes associated with the measurement.
+        visceral_fat_level:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 8
+          description: Visceral fat level of the user.
+        visceral_fat_category:
+          anyOf:
+            - type: string
+            - type: 'null'
+          examples:
+            - normal
+          description: Categorical visceral fat rating of the user.
     MeasurementsData:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -4912,6 +4965,104 @@ components:
                 $ref: '#/components/schemas/MeasurementDataSample'
             - type: 'null'
           description: List of body metrics & measurements taken throughout the associated day.
+        day_avg_bmi:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 22.5
+          description: Day-average body mass index (BMI).
+        day_avg_bmr:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 1600
+          description: Day-average basal metabolic rate (BMR), in kilocalories.
+        day_avg_rmr:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 1500
+          description: Day-average resting metabolic rate (RMR), in kilocalories.
+        day_avg_estimated_fitness_age:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 30
+          description: Day-average estimated fitness age, in years.
+        day_avg_skin_fold_mm:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 12.5
+          description: Day-average skin fold thickness, in millimetres.
+        day_avg_bodyfat_percentage:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 18.2
+          description: Day-average body-fat percentage.
+        day_avg_weight_kg:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 70.5
+          description: Day-average weight, in kilograms.
+        day_avg_height_cm:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 175
+          description: Day-average height, in centimetres.
+        day_avg_bone_mass_g:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 3200
+          description: Day-average bone mass, in grams.
+        day_avg_muscle_mass_g:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 32000
+          description: Day-average muscle mass, in grams.
+        day_avg_lean_mass_g:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 55000
+          description: Day-average lean mass, in grams.
+        day_avg_water_percentage:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 55
+          description: Day-average body-water percentage.
+        day_avg_insulin_units:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 0
+          description: Day-average insulin, in units.
+        day_avg_visceral_fat_level:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 8
+          description: Day-average visceral fat level.
     BodyMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -4976,6 +5127,27 @@ components:
                 $ref: '#/components/schemas/TemperatureSample'
             - type: 'null'
           description: List of skin temperature measurements sampled throughout the day.
+        day_avg_ambient_temperature_celsius:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 21.5
+          description: Day-average ambient temperature, in degrees Celsius.
+        day_avg_body_temperature_celsius:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 36.7
+          description: Day-average body temperature, in degrees Celsius.
+        day_avg_skin_temperature_celsius:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 33.2
+          description: Day-average skin temperature, in degrees Celsius.
     GlucoseFlag:
       $schema: https://json-schema.org/draft/2020-12/schema
       oneOf:
@@ -5037,7 +5209,7 @@ components:
           description: Time with which the record is associated, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
         blood_glucose_mg_per_dL:
           anyOf:
-            - type: integer
+            - type: number
             - type: 'null'
           examples:
             - 95
@@ -5067,27 +5239,27 @@ components:
           description: Hour of the day, represented as an integer from 0 to 23, where 0 is midnight and 23 is the hour before the next midnight.
         percentile_5:
           anyOf:
-            - type: integer
+            - type: number
             - type: 'null'
           description: Percentile 5 of the glucose level at the given time of day.
         percentile_25:
           anyOf:
-            - type: integer
+            - type: number
             - type: 'null'
           description: Percentile 25 of the glucose level at the given time of day.
         percentile_50:
           anyOf:
-            - type: integer
+            - type: number
             - type: 'null'
           description: Percentile 50 of the glucose level at the given time of day.
         percentile_75:
           anyOf:
-            - type: integer
+            - type: number
             - type: 'null'
           description: Percentile 75 of the glucose level at the given time of day.
         percentile_95:
           anyOf:
-            - type: integer
+            - type: number
             - type: 'null'
           description: Percentile 95 of the glucose level at the given time of day.
     GlucoseData:
@@ -5115,6 +5287,21 @@ components:
           examples:
             - 92.5
           description: User's average glucose level throughout the day.
+        day_avg_detailed_blood_glucose_mg_per_dL:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 91
+          description: User's average glucose level throughout the day, computed from the higher-frequency detailed sample stream.
+        day_avg_blood_glucose_mg_per_dl:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 92.5
+          description: Deprecated lower-case alias of day_avg_blood_glucose_mg_per_dL, retained for backwards compatibility. Always carries the same value as that field.
+          deprecated: true
         gmi:
           anyOf:
             - type: number
@@ -5137,88 +5324,95 @@ components:
                 $ref: '#/components/schemas/DailyPatternSample'
             - type: 'null'
           description: List of glucose percentile samples throughout the day.
-    DataContributor:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      type: object
-      properties:
-        contributor_name:
-          type: string
-          description: Name of the factor contributing to the score.
-        contributor_score:
-          type: number
-          description: Numerical score representing the contribution of this factor.
-      required:
-        - contributor_name
-        - contributor_score
     DailyDataEnrichment:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
       properties:
-        cardiovascular_contributors:
-          anyOf:
-            - type: array
-              items:
-                $ref: '#/components/schemas/DataContributor'
-            - type: 'null'
-          description: Array of factors contributing to cardiovascular score.
-        cardiovascular_score:
-          anyOf:
-            - type: number
-            - type: 'null'
-          description: Cardiovascular health score for the day.
-        immune_contributors:
-          anyOf:
-            - type: array
-              items:
-                $ref: '#/components/schemas/DataContributor'
-            - type: 'null'
-          description: Array of factors contributing to immune index.
-        immune_index:
-          anyOf:
-            - type: number
-            - type: 'null'
-          description: Immune system health index for the day.
-        readiness_contributors:
-          anyOf:
-            - type: array
-              items:
-                $ref: '#/components/schemas/DataContributor'
-            - type: 'null'
-          description: Array of factors contributing to readiness score.
-        readiness_score:
-          anyOf:
-            - type: number
-            - type: 'null'
-          description: Readiness score for the day.
-        respiratory_contributors:
-          anyOf:
-            - type: array
-              items:
-                $ref: '#/components/schemas/DataContributor'
-            - type: 'null'
-          description: Array of factors contributing to respiratory score.
-        respiratory_score:
-          anyOf:
-            - type: number
-            - type: 'null'
-          description: Respiratory health score for the day.
-        start_time:
-          anyOf:
-            - type: string
-            - type: 'null'
-          description: Start time for the data enrichment calculation period.
-        stress_contributors:
-          anyOf:
-            - type: array
-              items:
-                $ref: '#/components/schemas/DataContributor'
-            - type: 'null'
-          description: Array of factors contributing to stress score.
         total_stress_score:
           anyOf:
             - type: number
             - type: 'null'
+          examples:
+            - 45
           description: Total stress score for the day.
+        stress_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the stress score.
+        respiratory_score:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 88
+          description: Respiratory health score for the day.
+        respiratory_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the respiratory score.
+        immune_index:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          examples:
+            - 72
+          description: Immune system health index for the day.
+        immune_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the immune index.
+        resilience_score:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          examples:
+            - 65
+          description: Resilience score for the day.
+        resilience_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the resilience score.
+        strain_index:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 12.5
+          description: Strain index for the day.
+        strain_traffic_light:
+          anyOf:
+            - type: string
+            - type: 'null'
+          examples:
+            - GREEN
+          description: Categorical strain rating for the day (e.g. GREEN, AMBER, RED).
+        strain_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the strain index.
+        total_stress_score_v2:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 43
+          description: Total stress score for the day, computed by the v2 model.
+        total_stress_score_v2_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the v2 total stress score.
+      $defs:
+        RecordFloat:
+          type: object
+          properties: {}
+          unevaluatedProperties:
+            type: number
     DailyDistanceData:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -5316,15 +5510,6 @@ components:
           minimum: 0
           maximum: 100
           description: Sleep score for the given day, pertaining to the previous night's sleep.
-        biological_age:
-          anyOf:
-            - type: number
-            - type: 'null'
-          examples:
-            - 27
-          minimum: 0
-          maximum: 100
-          description: Biological age computed for the given day.
     StressSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -5523,51 +5708,51 @@ components:
       required:
         - end_time
         - start_time
-    MenstrualPhase:
+    MenstruationInterval:
       $schema: https://json-schema.org/draft/2020-12/schema
       oneOf:
-        - type: string
-          const: menstrual
-          description: The menstrual phase when bleeding occurs.
-          title: Menstrual
-        - type: string
-          const: follicular
-          description: The follicular phase when follicles in ovaries develop.
+        - type: number
+          const: 0
+          description: Cycle phase is unknown or could not be determined.
+          title: Unknown
+        - type: number
+          const: 1
+          description: Menstrual bleeding (period) phase.
+          title: Period
+        - type: number
+          const: 2
+          description: Follicular phase, when ovarian follicles develop.
           title: Follicular
-        - type: string
-          const: ovulation
-          description: The ovulation phase when an egg is released.
+        - type: number
+          const: 3
+          description: Fertile window, when conception is most likely.
+          title: Fertile Window
+        - type: number
+          const: 4
+          description: Ovulation phase, when an egg is released.
           title: Ovulation
-        - type: string
-          const: luteal
-          description: The luteal phase following ovulation.
+        - type: number
+          const: 5
+          description: Luteal phase, following ovulation.
           title: Luteal
-        - type: string
-          const: pms
+        - type: number
+          const: 6
           description: Premenstrual syndrome phase before menstruation begins.
           title: PMS
-        - type: string
-          const: fertile
-          description: The fertile window when conception is most likely.
-          title: Fertile
-        - type: string
-          const: first_trimester
+        - type: number
+          const: 7
           description: First third of pregnancy, weeks 1-12.
           title: First Trimester
-        - type: string
-          const: second_trimester
+        - type: number
+          const: 8
           description: Middle third of pregnancy, weeks 13-26.
           title: Second Trimester
-        - type: string
-          const: third_trimester
+        - type: number
+          const: 9
           description: Final third of pregnancy, weeks 27-40.
           title: Third Trimester
-        - type: string
-          const: unknown
-          description: Menstrual cycle phase could not be determined.
-          title: Unknown
       examples:
-        - menstrual
+        - 1
       description: Represents menstrual cycle phases.
     MenstruationFlow:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -5615,6 +5800,29 @@ components:
             - $ref: '#/components/schemas/MenstruationFlow'
             - type: 'null'
           description: Flag indicating the strength of the user's menstrual flow.
+    MenstruationIntervalSample:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        start_timestamp:
+          anyOf:
+            - type: string
+            - type: 'null'
+          examples:
+            - '2022-11-23T09:00:00.000000+02:00'
+          description: Start of the cycle-phase interval, in ISO8601 format.
+        end_timestamp:
+          anyOf:
+            - type: string
+            - type: 'null'
+          examples:
+            - '2022-11-28T09:00:00.000000+02:00'
+          description: End of the cycle-phase interval, in ISO8601 format.
+        phase:
+          anyOf:
+            - $ref: '#/components/schemas/MenstruationInterval'
+            - type: 'null'
+          description: Cycle phase covered by this interval.
     MenstruationData:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -5628,7 +5836,7 @@ components:
           description: Total length of period (i.e. menstrual bleeding).
         current_phase:
           anyOf:
-            - $ref: '#/components/schemas/MenstrualPhase'
+            - $ref: '#/components/schemas/MenstruationInterval'
             - type: 'null'
           description: Phase in associated cycle, (i.e. menstruation, fertile etc).
         length_of_current_phase_days:
@@ -5675,17 +5883,17 @@ components:
           description: Last time when the user recorded information regarding their cycle, in ISO8601 format, with microseconds precision.
         cycle_length_days:
           anyOf:
-            - type: string
+            - type: integer
             - type: 'null'
           examples:
-            - '28'
+            - 28
           description: Total cycle length in days.
         is_predicted_cycle:
           anyOf:
-            - type: string
+            - type: boolean
             - type: 'null'
           examples:
-            - 'true'
+            - true
           description: Flag indicating whether associated object is a prediction or user-logged information.
         menstruation_flow:
           anyOf:
@@ -5694,6 +5902,92 @@ components:
                 $ref: '#/components/schemas/MenstruationFlowSample'
             - type: 'null'
           description: List of user logs of information related to the strength of user's menstrual flow.
+        intervals:
+          anyOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/MenstruationIntervalSample'
+            - type: 'null'
+          description: List of cycle phase intervals, each spanning a contiguous date range within the cycle.
+        fertility_window_start:
+          anyOf:
+            - type: string
+            - type: 'null'
+          examples:
+            - '2022-11-12'
+          description: Start of the fertility window, in ISO8601 format.
+        fertility_window_end:
+          anyOf:
+            - type: string
+            - type: 'null'
+          examples:
+            - '2022-11-17'
+          description: End of the fertility window, in ISO8601 format.
+        ovulation_day:
+          anyOf:
+            - type: string
+            - type: 'null'
+          examples:
+            - '2022-11-15'
+          description: Predicted ovulation day, in ISO8601 format.
+    NutritionUnits:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      oneOf:
+        - type: number
+          const: 0
+          description: The unit of measurement is unknown or not specified.
+          title: Unknown
+        - type: number
+          const: 1
+          description: Measurement in grams, a metric unit of mass.
+          title: Gram
+        - type: number
+          const: 2
+          description: Measurement in teaspoons, approximately 5 milliliters.
+          title: Teaspoon
+        - type: number
+          const: 3
+          description: Measurement in tablespoons, approximately 15 milliliters.
+          title: Tablespoon
+        - type: number
+          const: 4
+          description: Measurement in cups, approximately 240 milliliters.
+          title: Cup
+        - type: number
+          const: 5
+          description: Quantity measured in medium-sized eggs.
+          title: Medium Egg
+        - type: number
+          const: 6
+          description: Quantity measured in large-sized eggs.
+          title: Large Egg
+        - type: number
+          const: 7
+          description: Quantity measured in small-sized eggs.
+          title: Small Egg
+        - type: number
+          const: 8
+          description: Measurement in milliliters, a metric unit of volume.
+          title: Milliliter
+        - type: number
+          const: 9
+          description: Measurement in ounces, approximately 28 grams.
+          title: Ounce
+        - type: number
+          const: 10
+          description: Quantity measured by individual count or number of items.
+          title: Count
+        - type: number
+          const: 11
+          description: Quantity measured in scoops, typically used for protein powder or supplements.
+          title: Scoop
+        - type: number
+          const: 12
+          description: Measurement in fluid ounces, approximately 30 milliliters.
+          title: Fluid Ounce
+      examples:
+        - 4
+      description: Represents units used for nutrition measurements
     DrinkSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -5714,11 +6008,9 @@ components:
           description: Volume of drink consumed
         drink_unit:
           anyOf:
-            - type: string
+            - $ref: '#/components/schemas/NutritionUnits'
             - type: 'null'
-          examples:
-            - ml
-          description: Unit of measurement for the drink
+          description: Unit of measurement for the drink volume.
         drink_name:
           anyOf:
             - type: string
@@ -5751,6 +6043,13 @@ components:
           examples:
             - 1000
           description: Calcium content of the associated food(s).
+        sodium_mg:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 2300
+          description: Sodium content of the associated food(s).
         chloride_mg:
           anyOf:
             - type: number
@@ -6086,64 +6385,6 @@ components:
       examples:
         - 1
       description: Enum representing the category the consumed food/meal falls under (i.e. Breakfast/Lunch/Dinner etc)
-    NutritionUnits:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      oneOf:
-        - type: number
-          const: 0
-          description: The unit of measurement is unknown or not specified.
-          title: Unknown
-        - type: number
-          const: 1
-          description: Measurement in grams, a metric unit of mass.
-          title: Gram
-        - type: number
-          const: 2
-          description: Measurement in teaspoons, approximately 5 milliliters.
-          title: Teaspoon
-        - type: number
-          const: 3
-          description: Measurement in tablespoons, approximately 15 milliliters.
-          title: Tablespoon
-        - type: number
-          const: 4
-          description: Measurement in cups, approximately 240 milliliters.
-          title: Cup
-        - type: number
-          const: 5
-          description: Quantity measured in medium-sized eggs.
-          title: Medium Egg
-        - type: number
-          const: 6
-          description: Quantity measured in large-sized eggs.
-          title: Large Egg
-        - type: number
-          const: 7
-          description: Quantity measured in small-sized eggs.
-          title: Small Egg
-        - type: number
-          const: 8
-          description: Measurement in milliliters, a metric unit of volume.
-          title: Milliliter
-        - type: number
-          const: 9
-          description: Measurement in ounces, approximately 28 grams.
-          title: Ounce
-        - type: number
-          const: 10
-          description: Quantity measured by individual count or number of items.
-          title: Count
-        - type: number
-          const: 11
-          description: Quantity measured in scoops, typically used for protein powder or supplements.
-          title: Scoop
-        - type: number
-          const: 12
-          description: Measurement in fluid ounces, approximately 30 milliliters.
-          title: Fluid Ounce
-      examples:
-        - 4
-      description: Represents units used for nutrition measurements
     NutritionQuantity:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -6335,16 +6576,60 @@ components:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
       properties:
-        sleep_contributors:
-          anyOf:
-            - type: array
-              items:
-                $ref: '#/components/schemas/DataContributor'
-            - type: 'null'
         sleep_score:
           anyOf:
             - type: number
             - type: 'null'
+          examples:
+            - 85
+          description: Sleep score for the session.
+        sleep_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the sleep score.
+        readiness_score:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 82
+          description: Readiness score resulting from the sleep session.
+        readiness_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the readiness score.
+        sleep_score_v2:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 84
+          description: Sleep score for the session, computed by the v2 model.
+        sleep_score_v2_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the v2 sleep score.
+        respiratory_score_v2:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 90
+          description: Respiratory score for the session, computed by the v2 model.
+        respiratory_score_v2_contributors:
+          anyOf:
+            - $ref: '#/components/schemas/RecordFloat'
+            - type: 'null'
+          description: Map of contributing factor name to its weighted contribution to the v2 respiratory score.
+      $defs:
+        RecordFloat:
+          type: object
+          properties: {}
+          unevaluatedProperties:
+            type: number
     SleepUploadType:
       $schema: https://json-schema.org/draft/2020-12/schema
       oneOf:
@@ -6408,47 +6693,13 @@ components:
         - end_time
         - start_time
         - upload_type
-    RecoveryLevel:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      oneOf:
-        - type: number
-          const: 0
-          description: Recovery level could not be determined or is not available.
-          title: Unknown
-        - type: number
-          const: 1
-          description: Extremely low recovery.
-          title: Very Poor
-        - type: number
-          const: 2
-          description: Low recovery level.
-          title: Poor
-        - type: number
-          const: 3
-          description: Below average recovery.
-          title: Compromised
-        - type: number
-          const: 4
-          description: Moderate recovery level.
-          title: Ok
-        - type: number
-          const: 5
-          description: Above average recovery.
-          title: Good
-        - type: number
-          const: 6
-          description: Excellent recovery level.
-          title: Very Good
-      examples:
-        - 5
-      description: User's recovery score for a given day, resulting from the sleep session
     ReadinessData:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
       properties:
         readiness:
           anyOf:
-            - type: integer
+            - type: number
             - type: 'null'
           examples:
             - 85
@@ -6457,9 +6708,9 @@ components:
           description: User's readiness score for a given day, resulting from the sleep session.
         recovery_level:
           anyOf:
-            - $ref: '#/components/schemas/RecoveryLevel'
+            - type: number
             - type: 'null'
-          description: User's recovery score for a given day, resulting from the sleep session - takes Enum value.
+          description: User's recovery score for a given day, resulting from the sleep session.
     BreathSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -6639,6 +6890,17 @@ components:
             - $ref: '#/components/schemas/SnoringData'
             - type: 'null'
           description: Object containing information on snoring metrics for the sleep session.
+    SleepScores:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        sleep:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 85
+          description: User's sleep score for the session.
     AsleepDurations:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object

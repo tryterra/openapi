@@ -22,3 +22,24 @@ properties:
           $ref: TemperatureSample.yaml
       - type: "null"
     description: List of skin temperature measurements sampled throughout the day.
+  day_avg_ambient_temperature_celsius:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 21.5
+    description: Day-average ambient temperature, in degrees Celsius.
+  day_avg_body_temperature_celsius:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 36.7
+    description: Day-average body temperature, in degrees Celsius.
+  day_avg_skin_temperature_celsius:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 33.2
+    description: Day-average skin temperature, in degrees Celsius.

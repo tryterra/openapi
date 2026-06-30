@@ -3,9 +3,11 @@ type: object
 properties:
   zone:
     anyOf:
-      - $ref: HeartRateZone.yaml
+      - type: integer
       - type: "null"
-    description: Heart rate zone designation
+    examples:
+      - 2
+    description: Heart rate zone designation, as a zero-based zone index.
   start_percentage:
     anyOf:
       - type: number

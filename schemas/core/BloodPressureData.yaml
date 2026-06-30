@@ -8,3 +8,17 @@ properties:
           $ref: BloodPressureSample.yaml
       - type: "null"
     description: List of Blood Pressure measurements sampled throughout the day.
+  day_avg_systolic_bp:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 120
+    description: Day-average systolic blood pressure, in mmHg.
+  day_avg_diastolic_bp:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 80
+    description: Day-average diastolic blood pressure, in mmHg.

@@ -8,3 +8,10 @@ properties:
           $ref: KetoneSample.yaml
       - type: "null"
     description: List of ketone data sampled through the day.
+  day_avg_ketone_mg_per_dL:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 1.2
+    description: Day-average ketone concentration, in mg/dL.

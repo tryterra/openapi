@@ -30,14 +30,10 @@ properties:
       - type: "null"
     description: Object containing information on the user's respiration throughout the sleep session.
   scores:
-    type: object
-    properties:
-      sleep:
-        anyOf:
-          - type: number
-          - type: "null"
-        description: User's sleep score.
-    description: User's sleep score
+    anyOf:
+      - $ref: SleepScores.yaml
+      - type: "null"
+    description: Scores summarising the user's sleep session.
   sleep_durations_data:
     anyOf:
       - $ref: SleepDurationsData.yaml

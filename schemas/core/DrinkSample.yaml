@@ -17,11 +17,9 @@ properties:
     description: Volume of drink consumed
   drink_unit:
     anyOf:
-      - type: string
+      - $ref: NutritionUnits.yaml
       - type: "null"
-    examples:
-      - ml
-    description: Unit of measurement for the drink
+    description: Unit of measurement for the drink volume.
   drink_name:
     anyOf:
       - type: string

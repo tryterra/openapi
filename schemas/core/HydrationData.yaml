@@ -15,3 +15,10 @@ properties:
           $ref: HydrationMeasurementSample.yaml
       - type: "null"
     description: User's hydration level samples throughout the day.
+  day_avg_hydration_kg:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 42
+    description: Day-average body hydration, in kilograms.

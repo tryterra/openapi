@@ -1,8 +1,57 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
-  stress_score:
+  efficiency_score:
     anyOf:
-      - type: integer
+      - type: number
       - type: "null"
-    description: User's stress score.
+    examples:
+      - 82
+    description: Efficiency score for the workout.
+  efficiency_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the efficiency score.
+  strain_score:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 14.5
+    description: Strain score for the workout.
+  strain_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the strain score.
+  rcrs_score:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 9
+    description: Recovery-corrected relative strain (RCRS) score for the workout.
+  rcrs_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the RCRS score.
+  trimp_score:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 120
+    description: Training impulse (TRIMP) score for the workout.
+  trimp_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the TRIMP score.
+$defs:
+  RecordFloat:
+    type: object
+    properties: {}
+    unevaluatedProperties:
+      type: number

@@ -22,6 +22,13 @@ properties:
     examples:
       - 1000
     description: Calcium content of the associated food(s).
+  sodium_mg:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 2300
+    description: Sodium content of the associated food(s).
   chloride_mg:
     anyOf:
       - type: number

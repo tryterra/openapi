@@ -29,3 +29,10 @@ properties:
     examples:
       - 45.5
     description: VO2Max for the given user.
+  day_avg_vo2max_ml_per_min_per_kg:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 44
+    description: Day-average VO2 max, in millilitres per minute per kilogram.

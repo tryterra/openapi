@@ -3,7 +3,7 @@ type: object
 properties:
   readiness:
     anyOf:
-      - type: integer
+      - type: number
       - type: "null"
     examples:
       - 85
@@ -12,6 +12,6 @@ properties:
     description: User's readiness score for a given day, resulting from the sleep session.
   recovery_level:
     anyOf:
-      - $ref: RecoveryLevel.yaml
+      - type: number
       - type: "null"
-    description: User's recovery score for a given day, resulting from the sleep session - takes Enum value.
+    description: User's recovery score for a given day, resulting from the sleep session.

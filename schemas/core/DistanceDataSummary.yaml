@@ -3,7 +3,7 @@ type: object
 properties:
   distance_meters:
     anyOf:
-      - type: integer
+      - type: number
       - type: "null"
     description: Total distance covered by the user throughout the workout.
   elevation:

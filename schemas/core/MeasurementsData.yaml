@@ -8,3 +8,101 @@ properties:
           $ref: MeasurementDataSample.yaml
       - type: "null"
     description: List of body metrics & measurements taken throughout the associated day.
+  day_avg_bmi:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 22.5
+    description: Day-average body mass index (BMI).
+  day_avg_bmr:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 1600
+    description: Day-average basal metabolic rate (BMR), in kilocalories.
+  day_avg_rmr:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 1500
+    description: Day-average resting metabolic rate (RMR), in kilocalories.
+  day_avg_estimated_fitness_age:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 30
+    description: Day-average estimated fitness age, in years.
+  day_avg_skin_fold_mm:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 12.5
+    description: Day-average skin fold thickness, in millimetres.
+  day_avg_bodyfat_percentage:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 18.2
+    description: Day-average body-fat percentage.
+  day_avg_weight_kg:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 70.5
+    description: Day-average weight, in kilograms.
+  day_avg_height_cm:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 175
+    description: Day-average height, in centimetres.
+  day_avg_bone_mass_g:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 3200
+    description: Day-average bone mass, in grams.
+  day_avg_muscle_mass_g:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 32000
+    description: Day-average muscle mass, in grams.
+  day_avg_lean_mass_g:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 55000
+    description: Day-average lean mass, in grams.
+  day_avg_water_percentage:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 55
+    description: Day-average body-water percentage.
+  day_avg_insulin_units:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 0
+    description: Day-average insulin, in units.
+  day_avg_visceral_fat_level:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 8
+    description: Day-average visceral fat level.

@@ -1,0 +1,10 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  sleep:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 85
+    description: User's sleep score for the session.

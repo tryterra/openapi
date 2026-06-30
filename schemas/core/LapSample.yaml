@@ -52,8 +52,22 @@ properties:
     description: The end time of the associated lap, in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time
   stroke_type:
     anyOf:
-      - $ref: StrokeType.yaml
+      - type: string
       - type: "null"
     examples:
       - freestyle
     description: Stroke type - only relevant for swimming activities
+  avg_watts:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 210
+    description: Average power output during the lap, in watts.
+  active_duration_seconds:
+    anyOf:
+      - type: integer
+      - type: "null"
+    examples:
+      - 120
+    description: Active duration of the lap, in seconds.

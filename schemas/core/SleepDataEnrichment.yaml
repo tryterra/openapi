@@ -1,13 +1,57 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
-  sleep_contributors:
-    anyOf:
-      - type: array
-        items:
-          $ref: DataContributor.yaml
-      - type: "null"
   sleep_score:
     anyOf:
       - type: number
       - type: "null"
+    examples:
+      - 85
+    description: Sleep score for the session.
+  sleep_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the sleep score.
+  readiness_score:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 82
+    description: Readiness score resulting from the sleep session.
+  readiness_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the readiness score.
+  sleep_score_v2:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 84
+    description: Sleep score for the session, computed by the v2 model.
+  sleep_score_v2_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the v2 sleep score.
+  respiratory_score_v2:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 90
+    description: Respiratory score for the session, computed by the v2 model.
+  respiratory_score_v2_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the v2 respiratory score.
+$defs:
+  RecordFloat:
+    type: object
+    properties: {}
+    unevaluatedProperties:
+      type: number

@@ -36,11 +36,6 @@ properties:
     examples:
       - 5.2.1
     description: Device Software Version.
-  activation_timestamp:
-    anyOf:
-      - type: string
-      - type: "null"
-    description: Activation timestamp of the device, if applicable.
   data_provided:
     anyOf:
       - type: array

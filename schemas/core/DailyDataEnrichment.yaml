@@ -1,68 +1,88 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 type: object
 properties:
-  cardiovascular_contributors:
-    anyOf:
-      - type: array
-        items:
-          $ref: DataContributor.yaml
-      - type: "null"
-    description: Array of factors contributing to cardiovascular score.
-  cardiovascular_score:
-    anyOf:
-      - type: number
-      - type: "null"
-    description: Cardiovascular health score for the day.
-  immune_contributors:
-    anyOf:
-      - type: array
-        items:
-          $ref: DataContributor.yaml
-      - type: "null"
-    description: Array of factors contributing to immune index.
-  immune_index:
-    anyOf:
-      - type: number
-      - type: "null"
-    description: Immune system health index for the day.
-  readiness_contributors:
-    anyOf:
-      - type: array
-        items:
-          $ref: DataContributor.yaml
-      - type: "null"
-    description: Array of factors contributing to readiness score.
-  readiness_score:
-    anyOf:
-      - type: number
-      - type: "null"
-    description: Readiness score for the day.
-  respiratory_contributors:
-    anyOf:
-      - type: array
-        items:
-          $ref: DataContributor.yaml
-      - type: "null"
-    description: Array of factors contributing to respiratory score.
-  respiratory_score:
-    anyOf:
-      - type: number
-      - type: "null"
-    description: Respiratory health score for the day.
-  start_time:
-    anyOf:
-      - type: string
-      - type: "null"
-    description: Start time for the data enrichment calculation period.
-  stress_contributors:
-    anyOf:
-      - type: array
-        items:
-          $ref: DataContributor.yaml
-      - type: "null"
-    description: Array of factors contributing to stress score.
   total_stress_score:
     anyOf:
       - type: number
       - type: "null"
+    examples:
+      - 45
     description: Total stress score for the day.
+  stress_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the stress score.
+  respiratory_score:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 88
+    description: Respiratory health score for the day.
+  respiratory_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the respiratory score.
+  immune_index:
+    anyOf:
+      - type: integer
+      - type: "null"
+    examples:
+      - 72
+    description: Immune system health index for the day.
+  immune_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the immune index.
+  resilience_score:
+    anyOf:
+      - type: integer
+      - type: "null"
+    examples:
+      - 65
+    description: Resilience score for the day.
+  resilience_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the resilience score.
+  strain_index:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 12.5
+    description: Strain index for the day.
+  strain_traffic_light:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - GREEN
+    description: Categorical strain rating for the day (e.g. GREEN, AMBER, RED).
+  strain_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the strain index.
+  total_stress_score_v2:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 43
+    description: Total stress score for the day, computed by the v2 model.
+  total_stress_score_v2_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: Map of contributing factor name to its weighted contribution to the v2 total stress score.
+$defs:
+  RecordFloat:
+    type: object
+    properties: {}
+    unevaluatedProperties:
+      type: number

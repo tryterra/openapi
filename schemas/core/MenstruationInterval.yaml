@@ -1,0 +1,45 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+oneOf:
+  - type: number
+    const: 0
+    description: Cycle phase is unknown or could not be determined.
+    title: Unknown
+  - type: number
+    const: 1
+    description: Menstrual bleeding (period) phase.
+    title: Period
+  - type: number
+    const: 2
+    description: Follicular phase, when ovarian follicles develop.
+    title: Follicular
+  - type: number
+    const: 3
+    description: Fertile window, when conception is most likely.
+    title: Fertile Window
+  - type: number
+    const: 4
+    description: Ovulation phase, when an egg is released.
+    title: Ovulation
+  - type: number
+    const: 5
+    description: Luteal phase, following ovulation.
+    title: Luteal
+  - type: number
+    const: 6
+    description: Premenstrual syndrome phase before menstruation begins.
+    title: PMS
+  - type: number
+    const: 7
+    description: First third of pregnancy, weeks 1-12.
+    title: First Trimester
+  - type: number
+    const: 8
+    description: Middle third of pregnancy, weeks 13-26.
+    title: Second Trimester
+  - type: number
+    const: 9
+    description: Final third of pregnancy, weeks 27-40.
+    title: Third Trimester
+examples:
+  - 1
+description: Represents menstrual cycle phases.

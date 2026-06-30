@@ -22,6 +22,21 @@ properties:
     examples:
       - 92.5
     description: User's average glucose level throughout the day.
+  day_avg_detailed_blood_glucose_mg_per_dL:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 91
+    description: User's average glucose level throughout the day, computed from the higher-frequency detailed sample stream.
+  day_avg_blood_glucose_mg_per_dl:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 92.5
+    description: Deprecated lower-case alias of day_avg_blood_glucose_mg_per_dL, retained for backwards compatibility. Always carries the same value as that field.
+    deprecated: true
   gmi:
     anyOf:
       - type: number

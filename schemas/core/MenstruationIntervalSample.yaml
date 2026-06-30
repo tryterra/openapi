@@ -1,0 +1,22 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  start_timestamp:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - 2022-11-23T09:00:00.000000+02:00
+    description: Start of the cycle-phase interval, in ISO8601 format.
+  end_timestamp:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - 2022-11-28T09:00:00.000000+02:00
+    description: End of the cycle-phase interval, in ISO8601 format.
+  phase:
+    anyOf:
+      - $ref: MenstruationInterval.yaml
+      - type: "null"
+    description: Cycle phase covered by this interval.
