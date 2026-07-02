@@ -560,6 +560,30 @@ oneOf:
     const: 148
     description: Activity type for playing hurling.
     title: Hurling
+  - type: number
+    const: 149
+    description: Activity type for running on off-road or natural terrain trails.
+    title: Trail Running
+  - type: number
+    const: 150
+    description: Activity type for cycling on gravel or mixed-surface roads.
+    title: Gravel Cycling
+  - type: number
+    const: 151
+    description: Activity type for a multisport session combining more than one discipline.
+    title: Multisport
+  - type: number
+    const: 152
+    description: Activity type for riding an electrically assisted bicycle.
+    title: E-Biking
+  - type: number
+    const: 153
+    description: Activity type for riding an electrically assisted mountain bike.
+    title: E-Mountain Biking
+  - type: number
+    const: 154
+    description: Activity type for a physical therapy or rehabilitation session.
+    title: Physical Therapy
 examples:
   - 8
 description: The type of activity performed for the associated workout.
