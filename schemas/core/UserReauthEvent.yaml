@@ -19,6 +19,11 @@ properties:
   message:
     type: string
     description: Information about the re-authentication
+  version:
+    type: string
+    examples:
+      - 2022-03-16
+    description: Payload schema version
 required:
   - type
   - new_user

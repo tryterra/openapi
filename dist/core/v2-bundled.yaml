@@ -1204,6 +1204,29 @@ webhooks:
               oneOf:
                 - $ref: '#/components/schemas/AuthSuccessEvent'
                 - $ref: '#/components/schemas/AuthErrorEvent'
+            examples:
+              authSuccess:
+                summary: Successful authentication
+                value:
+                  type: auth
+                  status: success
+                  message: User has successfully authenticated
+                  widget_session_id: 3e982b74-1a94-4d9a-b6a3-f92c6e4d21b5
+                  user:
+                    user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                    provider: GARMIN
+                    last_webhook_update: null
+                    scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                    reference_id: your-user-123
+                    active: true
+              authCancelled:
+                summary: Failed or cancelled authentication
+                value:
+                  type: auth_cancelled
+                  status: error
+                  flow_id: b2f9c611-52c8-4a63-9082-7e50e2f5a1cd
+                  reason: access_denied
+                  reference_id: your-user-123
       responses:
         '200':
           description: Successful authentication response
@@ -1219,12 +1242,23 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/DeauthEvent'
+            example:
+              type: deauth
+              status: success
+              message: User has deauthenticated
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: false
       responses:
         '200':
           description: Successful deauthentication response
   user_reauth:
     post:
-      description: Occurs when a user successfully authenticates for a second time, with the same account. You will receive a successful auth and a user_reauth payload
+      description: Occurs when a user authenticates again for the same provider account. The previous user record is replaced — new_user carries the replacement record and old_user the record being deleted
       summary: User reauthentication webhook
       operationId: userReauthWebhook
       tags:
@@ -1234,6 +1268,25 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/UserReauthEvent'
+            example:
+              type: user_reauth
+              status: warning
+              message: User has reauthenticated and old ID has been deleted
+              version: '2022-03-16'
+              new_user:
+                user_id: 9c8b7a65-4321-4fed-a0b9-87c6d5e4f321
+                provider: GARMIN
+                last_webhook_update: '2026-07-02T08:03:11.204000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: true
+              old_user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-06-28T17:40:52.118000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: false
       responses:
         '200':
           description: Successful reauthentication response
@@ -1249,6 +1302,17 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/AccessRevokedEvent'
+            example:
+              type: access_revoked
+              status: warning
+              message: User revoked access
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: false
       responses:
         '200':
           description: Successful access revocation response
@@ -1264,6 +1328,20 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/PermissionChangeEvent'
+            example:
+              type: permission_change
+              status: warning
+              message: User permissions have been modified
+              version: '2022-03-16'
+              scopes_added: BODY_EXPORT
+              scopes_removed: ''
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT,BODY_EXPORT
+                reference_id: your-user-123
+                active: true
       responses:
         '200':
           description: Successful permission change response
@@ -1279,6 +1357,17 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/ConnectionErrorEvent'
+            example:
+              type: connection_error
+              status: warning
+              message: 'Connection degraded: the provider rejected Terra''s access token; the user may need to reauthenticate'
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: true
       responses:
         '200':
           description: Successful connection error response
@@ -1294,6 +1383,18 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/LargeRequestSendingEvent'
+            example:
+              type: large_request_sending
+              reference: d3f1a9c2-6b1e-4f0a-8f21-9e5b2c7a4d10
+              message: Large request payloads are being sent
+              expected_payloads: 43
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: true
       responses:
         '200':
           description: Successful large request sending response
@@ -1309,6 +1410,18 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/LargeRequestProcessingEvent'
+            example:
+              type: large_request_processing
+              status: processing
+              reference: d3f1a9c2-6b1e-4f0a-8f21-9e5b2c7a4d10
+              message: Large request is being processed; payloads will be delivered when ready
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: true
       responses:
         '200':
           description: Successful large request processing response
@@ -1324,6 +1437,11 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/S3PayloadEvent'
+            example:
+              type: s3_payload
+              status: success
+              url: https://terra-payload-bucket.s3.eu-west-2.amazonaws.com/payloads/40f7b0e1/activity-2026-07-01.json?X-Amz-Signature=...
+              expires_in: 300
       responses:
         '200':
           description: Successful S3 upload response
@@ -1339,6 +1457,35 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/ActivityEvent'
+            example:
+              type: activity
+              version: '2022-03-16'
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: true
+              data:
+                - metadata:
+                    name: Morning Run
+                    summary_id: 123e4567-e89b-12d3-a456-426614174000
+                    start_time: '2026-07-01T07:04:11.000000+01:00'
+                    end_time: '2026-07-01T07:52:48.000000+01:00'
+                    type: 8
+                    upload_type: 1
+                  distance_data:
+                    summary:
+                      distance_meters: 8250.4
+                      steps: 7902
+                  calories_data:
+                    total_burned_calories: 512.5
+                    net_activity_calories: 431.2
+                  heart_rate_data:
+                    summary:
+                      avg_hr_bpm: 148.2
+                      max_hr_bpm: 181
       responses:
         '200':
           description: Successful activity response
@@ -1354,6 +1501,24 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/AthleteEvent'
+            example:
+              type: athlete
+              version: '2022-03-16'
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: true
+              athlete:
+                first_name: John
+                last_name: Smith
+                sex: male
+                date_of_birth: '1991-04-12'
+                email: john.smith@example.com
+                city: San Francisco
+                country: United States
       responses:
         '200':
           description: Successful athlete response
@@ -1369,6 +1534,27 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/NutritionEvent'
+            example:
+              type: nutrition
+              version: '2022-03-16'
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: true
+              data:
+                - metadata:
+                    start_time: '2026-07-01T00:00:00.000000+01:00'
+                    end_time: '2026-07-02T00:00:00.000000+01:00'
+                  summary:
+                    macros:
+                      calories: 2105
+                      protein_g: 128.4
+                      carbohydrates_g: 231
+                      fat_g: 71.3
+                    water_ml: 2300
       responses:
         '200':
           description: Successful nutrition response
@@ -1384,6 +1570,28 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/DailyEvent'
+            example:
+              type: daily
+              version: '2022-03-16'
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: true
+              data:
+                - metadata:
+                    start_time: '2026-07-01T00:00:00.000000+01:00'
+                    end_time: '2026-07-02T00:00:00.000000+01:00'
+                    upload_type: 0
+                  distance_data:
+                    steps: 11894
+                    distance_meters: 9412.7
+                  calories_data:
+                    total_burned_calories: 2450.8
+                  active_durations_data:
+                    activity_seconds: 5340
       responses:
         '200':
           description: Successful daily response
@@ -1399,6 +1607,30 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/SleepEvent'
+            example:
+              type: sleep
+              version: '2022-03-16'
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: true
+              data:
+                - metadata:
+                    start_time: '2026-06-30T23:12:00.000000+01:00'
+                    end_time: '2026-07-01T07:02:00.000000+01:00'
+                    is_nap: false
+                    upload_type: 1
+                  sleep_durations_data:
+                    asleep:
+                      duration_asleep_state_seconds: 25200
+                      duration_deep_sleep_state_seconds: 5400
+                      duration_REM_sleep_state_seconds: 5100
+                    awake:
+                      duration_awake_state_seconds: 1500
+                    sleep_efficiency: 91.5
       responses:
         '200':
           description: Successful sleep response
@@ -1414,6 +1646,26 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/MenstruationEvent'
+            example:
+              type: menstruation
+              version: '2022-03-16'
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: true
+              data:
+                - metadata:
+                    start_time: '2026-07-01T00:00:00.000000+01:00'
+                    end_time: '2026-07-02T00:00:00.000000+01:00'
+                  menstruation_data:
+                    period_start_date: '2026-06-28'
+                    day_in_cycle: 4
+                    period_length_days: 5
+                    current_phase: 1
+                    is_predicted_cycle: false
       responses:
         '200':
           description: Successful menstruation response
@@ -1429,6 +1681,30 @@ webhooks:
           application/json:
             schema:
               $ref: '#/components/schemas/BodyEvent'
+            example:
+              type: body
+              version: '2022-03-16'
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: GARMIN
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ACTIVITY_EXPORT,HEALTH_EXPORT
+                reference_id: your-user-123
+                active: true
+              data:
+                - metadata:
+                    start_time: '2026-07-01T00:00:00.000000+01:00'
+                    end_time: '2026-07-02T00:00:00.000000+01:00'
+                  measurements_data:
+                    measurements:
+                      - measurement_time: '2026-07-01T07:55:02.000000+01:00'
+                        weight_kg: 72.4
+                        bodyfat_percentage: 17.9
+                        BMI: 22.6
+                  heart_data:
+                    heart_rate_data:
+                      summary:
+                        resting_hr_bpm: 52
       responses:
         '200':
           description: Successful body response
@@ -7676,6 +7952,11 @@ components:
         message:
           type: string
           description: Information about the re-authentication
+        version:
+          type: string
+          examples:
+            - '2022-03-16'
+          description: Payload schema version
       required:
         - type
         - new_user
