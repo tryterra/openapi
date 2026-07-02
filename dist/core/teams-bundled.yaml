@@ -530,6 +530,9 @@ paths:
 webhooks:
   coachRegistered:
     post:
+      operationId: coachRegisteredWebhook
+      tags:
+        - Webhooks
       summary: Webhook to notify about a coach registration
       requestBody:
         required: true
@@ -542,6 +545,9 @@ webhooks:
           description: Webhook processed
   athleteRegistered:
     post:
+      operationId: athleteRegisteredWebhook
+      tags:
+        - Webhooks
       summary: Webhook to notify about one or more athlete registrations
       requestBody:
         required: true
