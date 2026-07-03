@@ -1189,6 +1189,214 @@ paths:
               schema:
                 $ref: '#/components/schemas/IntegrationsResponse'
       security: []
+  /lab-reports:
+    post:
+      summary: Upload a lab report
+      description: Upload a single lab report file (PDF, PNG, JPEG, GIF, or WebP) as multipart form data. Returns an `upload_id`; a single upload may fan out to multiple sessions, so learn the `session_id`(s) from the webhook events or from `GET /lab-reports?upload_id=...`.
+      tags:
+        - Lab Reports
+      operationId: LabReports_Upload
+      parameters:
+        - name: reference_id
+          in: query
+          required: false
+          description: Your external identifier for this report or patient.
+          schema:
+            type: string
+          example: patient_456
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The lab report file (PDF, PNG, JPEG, GIF, or WebP; max 20 MB).
+      responses:
+        '202':
+          description: Upload accepted for processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabReportUploadResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+    get:
+      summary: List lab report sessions
+      description: List lab report sessions for your account, with optional reference, upload, and inclusive date-range filters. Use the date filters to narrow large result sets.
+      tags:
+        - Lab Reports
+      operationId: LabReports_List
+      parameters:
+        - name: reference_id
+          in: query
+          required: false
+          description: Filter by your external reference ID.
+          schema:
+            type: string
+        - name: upload_id
+          in: query
+          required: false
+          description: Filter by upload handle — returns every report from that upload.
+          schema:
+            type: string
+        - name: report_date_from
+          in: query
+          required: false
+          description: Lab report date lower bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          schema:
+            type: string
+            format: date
+        - name: report_date_to
+          in: query
+          required: false
+          description: Lab report date upper bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          schema:
+            type: string
+            format: date
+        - name: uploaded_at_from
+          in: query
+          required: false
+          description: Upload date lower bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          schema:
+            type: string
+            format: date
+        - name: uploaded_at_to
+          in: query
+          required: false
+          description: Upload date upper bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: A list of lab report sessions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabReportListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /lab-reports/{session_id}:
+    get:
+      summary: Retrieve a lab report session
+      description: Retrieve a report's metadata, results, reference ranges, and status history. Immutable and cacheable — presigned file URLs and mutable per-destination delivery state live on the `/files` and `/deliveries` sub-resources.
+      tags:
+        - Lab Reports
+      operationId: LabReports_Retrieve
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          description: The session's snowflake ID.
+          schema:
+            type: string
+          example: '297405620317847552'
+      responses:
+        '200':
+          description: The lab report session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabReportSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete a lab report session
+      description: Soft-delete a session. It is marked deleted immediately; associated storage is cleaned up by a background process.
+      tags:
+        - Lab Reports
+      operationId: LabReports_Delete
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          description: The session's snowflake ID.
+          schema:
+            type: string
+          example: '297405620317847552'
+      responses:
+        '204':
+          description: The session was deleted.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /lab-reports/{session_id}/deliveries:
+    get:
+      summary: List delivery outcomes
+      description: The per-destination delivery state for a report. Each opted-in destination is tracked independently, so one failure never hides delivery to the others (and is why a session can be `partially_sent`).
+      tags:
+        - Lab Reports
+      operationId: LabReports_ListDeliveries
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          description: The session's snowflake ID.
+          schema:
+            type: string
+          example: '297405620317847552'
+      responses:
+        '200':
+          description: Per-destination delivery outcomes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabReportDeliveriesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /lab-reports/{session_id}/files:
+    get:
+      summary: List input files
+      description: The uploaded input files and report thumbnail, with freshly minted presigned download URLs. URLs expire; fetch again to mint new ones.
+      tags:
+        - Lab Reports
+      operationId: LabReports_ListFiles
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          description: The session's snowflake ID.
+          schema:
+            type: string
+          example: '297405620317847552'
+      responses:
+        '200':
+          description: Input files and thumbnail with presigned URLs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabReportFilesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 webhooks:
   auth:
     post:
@@ -1754,6 +1962,18 @@ components:
             title: not found
             instance: /activity
             detail: user not found
+    Forbidden:
+      description: The credential is not authorized for this operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    PayloadTooLarge:
+      description: The uploaded payload exceeds the size limit.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Problem'
   schemas:
     WorkoutTemplate:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -2563,6 +2783,401 @@ components:
               example: false
     WebhookEvents:
       $ref: '#/components/schemas/WebhookEventType'
+    LabReportUploadResponse:
+      type: object
+      description: Returned by the upload endpoint. A single upload may fan out to multiple sessions.
+      required:
+        - upload_id
+        - current_status
+      properties:
+        upload_id:
+          type: string
+          description: Durable correlation key for the upload; every resulting session and webhook carries it.
+          example: upl_4a2b8c1d
+        current_status:
+          type: string
+          description: Processing status as a clean lowercase string.
+          example: processing
+    LabReportReprocessResponse:
+      type: object
+      required:
+        - session_id
+        - current_status
+      properties:
+        session_id:
+          type: string
+          example: '297405620317847552'
+        current_status:
+          type: string
+          example: processing
+    LabReportListResponse:
+      type: object
+      required:
+        - sessions
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabReportSession'
+    LabReportSession:
+      type: object
+      description: A lab report session. Returned in full on retrieve; list items carry the summary fields only (no `results`/`panels`).
+      required:
+        - session_id
+        - report_type
+        - current_status
+      properties:
+        session_id:
+          type: string
+          example: '297405620317847552'
+        upload_id:
+          type: string
+        reference_id:
+          type: string
+          description: Your external reference; omitted if not set.
+        report_type:
+          type: string
+          description: Report type as a clean lowercase string (open enum — handle unknown values gracefully).
+          example: lab
+        current_status:
+          type: string
+          description: Current status as a clean lowercase string (open enum), e.g. `processing`, `sent`, `partially_sent`, `failed`.
+          example: sent
+        uploaded_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        report_date:
+          type: string
+          description: Date printed on the report (`YYYY-MM-DD`); omitted if not extracted.
+        report_time:
+          type: string
+          description: Time printed on the report (`HH:MM`, 24-hour); omitted if not extracted.
+        collection_date:
+          type: string
+          description: Specimen collection date (`YYYY-MM-DD`); omitted if not extracted.
+        collection_time:
+          type: string
+          description: Specimen collection time (`HH:MM`, 24-hour); omitted if not extracted.
+        report_locale:
+          type: string
+          example: en-GB
+        lab_name:
+          type: string
+        patient_age_at_collection:
+          type: integer
+          format: int64
+          description: Patient age in years; omitted if unknown.
+        patient_sex:
+          type: string
+          description: Clean lowercase string (open enum); omitted if unspecified.
+          example: female
+        input_bytes:
+          type: integer
+          format: int64
+        results_count:
+          type: integer
+          format: int64
+        output_bytes:
+          type: integer
+          format: int64
+        file_count:
+          type: integer
+          format: int64
+        status_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabReportStatusEntry'
+        results:
+          type: array
+          description: The layered biomarker results. Populated on retrieve, not on list.
+          items:
+            $ref: '#/components/schemas/LabReportResult'
+        panels:
+          type: array
+          description: Report-level panels that results reference by `panel_id`. Omitted if the report has no panel grouping.
+          items:
+            $ref: '#/components/schemas/LabReportPanel'
+        report_notes:
+          type: string
+    LabReportStatusEntry:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        note:
+          type: string
+    LabReportPanel:
+      type: object
+      description: A report-level grouping that results reference by `panel_id`.
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Report-local ordinal; matches `LabReportBiomarker.panel_id`.
+        name:
+          type: string
+          description: Verbatim panel header as printed on the report.
+        key:
+          type: string
+          description: Normalized dedup key (deterministic text, not a LOINC code).
+    LabReportResult:
+      type: object
+      description: 'One layered result: verbatim `source`, normalized `biomarker` identity, one typed `measurement`, and the `interpretation`. `measurement` and `interpretation` are byte-identical to the webhook payload.'
+      required:
+        - source
+        - biomarker
+        - measurement
+        - interpretation
+      properties:
+        source:
+          $ref: '#/components/schemas/LabReportResultSource'
+        biomarker:
+          $ref: '#/components/schemas/LabReportBiomarker'
+        measurement:
+          $ref: '#/components/schemas/LabReportMeasurement'
+        interpretation:
+          $ref: '#/components/schemas/LabReportInterpretation'
+        reference_ranges:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabReportReferenceRange'
+    LabReportResultSource:
+      type: object
+      description: The verbatim provenance layer — what the report literally printed.
+      properties:
+        name:
+          type: string
+        panel:
+          type: string
+        value:
+          type: string
+          description: Raw value string as printed.
+        units:
+          type: string
+        flag:
+          type: string
+          description: Verbatim flag; the coded form is under `interpretation`.
+        method:
+          type: string
+        notes:
+          type: string
+        reference_text:
+          type: string
+    LabReportBiomarker:
+      type: object
+      description: The normalized identity layer.
+      required:
+        - key
+      properties:
+        key:
+          type:
+            - string
+            - 'null'
+          description: Canonical biomarker slug, or null when unmatched — the sole no-match signal. Do not key off `loinc_code`, which can be null on a match.
+        display_name:
+          type: string
+        loinc_code:
+          type: string
+          description: LOINC code; omitted when the matched biomarker has no LOINC mapping.
+        panel_id:
+          type: integer
+          format: int64
+          description: References `panels[].id` on the enclosing session.
+        panel_key:
+          type: string
+        specimen:
+          type: string
+    LabReportMeasurement:
+      type: object
+      description: The single typed value of a result. Exactly one value field is set, named by `type`.
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          description: One of `numeric`, `bounded`, `qualitative`, `text`, `absent`.
+          example: numeric
+        numeric:
+          type: number
+        bounded:
+          $ref: '#/components/schemas/LabReportBoundedValue'
+        qualitative:
+          $ref: '#/components/schemas/LabReportQualitativeValue'
+        text:
+          type: string
+        absent_reason:
+          type: string
+        units:
+          type: string
+        ucum_code:
+          type: string
+    LabReportBoundedValue:
+      type: object
+      description: A one-sided bound. operator is `lt` or `gt`; value is the magnitude (e.g. lt with 0.5 means "<0.5").
+      required:
+        - operator
+        - value
+      properties:
+        operator:
+          type: string
+          description: '`lt` or `gt`.'
+        value:
+          type: number
+    LabReportQualitativeValue:
+      type: object
+      properties:
+        text:
+          type: string
+        code:
+          type: string
+          description: Coded qualitative answer (LOINC/SNOMED) when available.
+    LabReportInterpretation:
+      type: object
+      description: The per-result abnormality layer.
+      required:
+        - flag
+        - source
+      properties:
+        flag:
+          type:
+            - string
+            - 'null'
+          description: Coded signal (`high`/`low`/`normal`), or null when there is no signal.
+        flag_raw:
+          type: string
+          description: The lab's verbatim flag.
+        source:
+          type: string
+          description: Provenance of `flag` — `report`, `computed`, or `none`.
+        applied_range:
+          $ref: '#/components/schemas/LabReportAppliedRange'
+    LabReportAppliedRange:
+      type: object
+      description: Bounds of the reference range the flag was judged against.
+      properties:
+        lower:
+          type: number
+        upper:
+          type: number
+    LabReportReferenceRange:
+      type: object
+      description: One reference range. `type` describes the range, not a verdict on the result.
+      properties:
+        lower:
+          type: number
+        upper:
+          type: number
+        type:
+          type: string
+        context:
+          $ref: '#/components/schemas/LabReportRangeContext'
+    LabReportRangeContext:
+      type: object
+      description: The patient dimensions a reference range is scoped by.
+      properties:
+        sex:
+          type: string
+        age_lower:
+          type: integer
+          format: int64
+        age_upper:
+          type: integer
+          format: int64
+        pregnancy_status:
+          type: string
+        gestational_week_lower:
+          type: integer
+          format: int64
+        gestational_week_upper:
+          type: integer
+          format: int64
+        cycle_phase:
+          type: string
+        reference_population:
+          type: string
+        modifiers:
+          type: array
+          items:
+            type: string
+    LabReportDeliveriesResponse:
+      type: object
+      required:
+        - deliveries
+      properties:
+        deliveries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabReportDelivery'
+    LabReportDelivery:
+      type: object
+      required:
+        - destination_id
+        - status
+        - attempt_count
+      properties:
+        destination_id:
+          type: string
+        destination_type:
+          type: string
+          description: The destination's type (e.g. `webhook`, `s3`).
+        status:
+          type: string
+          description: '`pending`, `delivered`, or `failed`.'
+        attempt_count:
+          type: integer
+          format: int32
+          description: Retry count — 0 on the first attempt, incremented per retry.
+        last_error:
+          type: string
+          description: Most recent delivery error; omitted when delivered.
+    LabReportFilesResponse:
+      type: object
+      required:
+        - files
+      properties:
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabReportFile'
+        thumbnail:
+          $ref: '#/components/schemas/LabReportFile'
+        expires_at:
+          type: string
+          format: date-time
+          description: Applies to every presigned URL in the response.
+    LabReportArtifactsResponse:
+      type: object
+      required:
+        - artifacts
+      properties:
+        artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabReportFile'
+        expires_at:
+          type: string
+          format: date-time
+    LabReportFile:
+      type: object
+      description: One downloadable object with a presigned URL.
+      required:
+        - presigned_url
+      properties:
+        filename:
+          type: string
+        presigned_url:
+          type: string
+          format: uri
     TerraUser:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
