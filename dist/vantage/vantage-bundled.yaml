@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Use your **client_id** as the username and **client_secret** as the password for Basic Authentication.
   title: Terra Blood DNA Device API
-  version: '1.0'
+  version: 2026.07.03
 servers:
   - url: https://vantage.tryterra.co
 paths:
