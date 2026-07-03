@@ -1,0 +1,8 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  text:
+    type: string
+  code:
+    type: string
+    description: Coded qualitative answer (LOINC/SNOMED) when available.

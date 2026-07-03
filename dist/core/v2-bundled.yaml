@@ -2784,52 +2784,56 @@ components:
     WebhookEvents:
       $ref: '#/components/schemas/WebhookEventType'
     LabReportUploadResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
       type: object
-      description: Returned by the upload endpoint. A single upload may fan out to multiple sessions.
-      required:
-        - upload_id
-        - current_status
       properties:
         upload_id:
           type: string
+          examples:
+            - upl_4a2b8c1d
           description: Durable correlation key for the upload; every resulting session and webhook carries it.
-          example: upl_4a2b8c1d
         current_status:
           type: string
+          examples:
+            - processing
           description: Processing status as a clean lowercase string.
-          example: processing
-    LabReportReprocessResponse:
-      type: object
       required:
-        - session_id
+        - upload_id
         - current_status
+      description: Returned by the upload endpoint. A single upload may fan out to multiple sessions.
+    LabReportReprocessResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
       properties:
         session_id:
           type: string
-          example: '297405620317847552'
+          examples:
+            - '297405620317847552'
         current_status:
           type: string
-          example: processing
-    LabReportListResponse:
-      type: object
+          examples:
+            - processing
       required:
-        - sessions
+        - session_id
+        - current_status
+    LabReportListResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
       properties:
         sessions:
           type: array
           items:
             $ref: '#/components/schemas/LabReportSession'
-    LabReportSession:
-      type: object
-      description: A lab report session. Returned in full on retrieve; list items carry the summary fields only (no `results`/`panels`).
       required:
-        - session_id
-        - report_type
-        - current_status
+        - sessions
+    LabReportSession:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
       properties:
         session_id:
           type: string
-          example: '297405620317847552'
+          examples:
+            - '297405620317847552'
         upload_id:
           type: string
         reference_id:
@@ -2837,12 +2841,14 @@ components:
           description: Your external reference; omitted if not set.
         report_type:
           type: string
+          examples:
+            - lab
           description: Report type as a clean lowercase string (open enum — handle unknown values gracefully).
-          example: lab
         current_status:
           type: string
-          description: Current status as a clean lowercase string (open enum), e.g. `processing`, `sent`, `partially_sent`, `failed`.
-          example: sent
+          examples:
+            - sent
+          description: Current status as a clean lowercase string (open enum), e.g. processing, sent, partially_sent, failed.
         uploaded_at:
           type: string
           format: date-time
@@ -2851,61 +2857,62 @@ components:
           format: date-time
         report_date:
           type: string
-          description: Date printed on the report (`YYYY-MM-DD`); omitted if not extracted.
+          description: Date printed on the report (YYYY-MM-DD); omitted if not extracted.
         report_time:
           type: string
-          description: Time printed on the report (`HH:MM`, 24-hour); omitted if not extracted.
+          description: Time printed on the report (HH:MM, 24-hour); omitted if not extracted.
         collection_date:
           type: string
-          description: Specimen collection date (`YYYY-MM-DD`); omitted if not extracted.
+          description: Specimen collection date (YYYY-MM-DD); omitted if not extracted.
         collection_time:
           type: string
-          description: Specimen collection time (`HH:MM`, 24-hour); omitted if not extracted.
+          description: Specimen collection time (HH:MM, 24-hour); omitted if not extracted.
         report_locale:
           type: string
-          example: en-GB
+          examples:
+            - en-GB
         lab_name:
           type: string
         patient_age_at_collection:
           type: integer
-          format: int64
           description: Patient age in years; omitted if unknown.
         patient_sex:
           type: string
+          examples:
+            - female
           description: Clean lowercase string (open enum); omitted if unspecified.
-          example: female
         input_bytes:
           type: integer
-          format: int64
         results_count:
           type: integer
-          format: int64
         output_bytes:
           type: integer
-          format: int64
         file_count:
           type: integer
-          format: int64
         status_history:
           type: array
           items:
             $ref: '#/components/schemas/LabReportStatusEntry'
         results:
           type: array
-          description: The layered biomarker results. Populated on retrieve, not on list.
           items:
             $ref: '#/components/schemas/LabReportResult'
+          description: The layered biomarker results. Populated on retrieve, not on list.
         panels:
           type: array
-          description: Report-level panels that results reference by `panel_id`. Omitted if the report has no panel grouping.
           items:
             $ref: '#/components/schemas/LabReportPanel'
+          description: Report-level panels that results reference by panel_id. Omitted if the report has no panel grouping.
         report_notes:
           type: string
-    LabReportStatusEntry:
-      type: object
       required:
-        - status
+        - session_id
+        - report_type
+        - current_status
+      description: A lab report session. Returned in full on retrieve; list items carry the summary fields only (no results/panels).
+    LabReportStatusEntry:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
       properties:
         status:
           type: string
@@ -2914,30 +2921,27 @@ components:
           format: date-time
         note:
           type: string
-    LabReportPanel:
-      type: object
-      description: A report-level grouping that results reference by `panel_id`.
       required:
-        - id
+        - status
+    LabReportPanel:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
       properties:
         id:
           type: integer
-          format: int64
-          description: Report-local ordinal; matches `LabReportBiomarker.panel_id`.
+          description: Report-local ordinal; matches LabReportBiomarker.panel_id.
         name:
           type: string
           description: Verbatim panel header as printed on the report.
         key:
           type: string
           description: Normalized dedup key (deterministic text, not a LOINC code).
-    LabReportResult:
-      type: object
-      description: 'One layered result: verbatim `source`, normalized `biomarker` identity, one typed `measurement`, and the `interpretation`. `measurement` and `interpretation` are byte-identical to the webhook payload.'
       required:
-        - source
-        - biomarker
-        - measurement
-        - interpretation
+        - id
+      description: A report-level grouping that results reference by panel_id.
+    LabReportResult:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
       properties:
         source:
           $ref: '#/components/schemas/LabReportResultSource'
@@ -2951,9 +2955,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LabReportReferenceRange'
+      required:
+        - source
+        - biomarker
+        - measurement
+        - interpretation
+      description: 'One layered result: verbatim source, normalized biomarker identity, one typed measurement, and the interpretation. measurement and interpretation are byte-identical to the webhook payload.'
     LabReportResultSource:
+      $schema: https://json-schema.org/draft/2020-12/schema
       type: object
-      description: The verbatim provenance layer — what the report literally printed.
       properties:
         name:
           type: string
@@ -2966,24 +2976,23 @@ components:
           type: string
         flag:
           type: string
-          description: Verbatim flag; the coded form is under `interpretation`.
+          description: Verbatim flag; the coded form is under interpretation.
         method:
           type: string
         notes:
           type: string
         reference_text:
           type: string
+      description: The verbatim provenance layer — what the report literally printed.
     LabReportBiomarker:
+      $schema: https://json-schema.org/draft/2020-12/schema
       type: object
-      description: The normalized identity layer.
-      required:
-        - key
       properties:
         key:
-          type:
-            - string
-            - 'null'
-          description: Canonical biomarker slug, or null when unmatched — the sole no-match signal. Do not key off `loinc_code`, which can be null on a match.
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Canonical biomarker slug, or null when unmatched — the sole no-match signal. Do not key off loinc_code, which can be null on a match.
         display_name:
           type: string
         loinc_code:
@@ -2991,22 +3000,23 @@ components:
           description: LOINC code; omitted when the matched biomarker has no LOINC mapping.
         panel_id:
           type: integer
-          format: int64
-          description: References `panels[].id` on the enclosing session.
+          description: References panels[].id on the enclosing session.
         panel_key:
           type: string
         specimen:
           type: string
-    LabReportMeasurement:
-      type: object
-      description: The single typed value of a result. Exactly one value field is set, named by `type`.
       required:
-        - type
+        - key
+      description: The normalized identity layer.
+    LabReportMeasurement:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
       properties:
         type:
           type: string
-          description: One of `numeric`, `bounded`, `qualitative`, `text`, `absent`.
-          example: numeric
+          examples:
+            - numeric
+          description: One of numeric, bounded, qualitative, text, absent.
         numeric:
           type: number
         bounded:
@@ -3021,19 +3031,24 @@ components:
           type: string
         ucum_code:
           type: string
-    LabReportBoundedValue:
-      type: object
-      description: A one-sided bound. operator is `lt` or `gt`; value is the magnitude (e.g. lt with 0.5 means "<0.5").
       required:
-        - operator
-        - value
+        - type
+      description: The single typed value of a result. Exactly one value field is set, named by type.
+    LabReportBoundedValue:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
       properties:
         operator:
           type: string
-          description: '`lt` or `gt`.'
+          description: lt or gt.
         value:
           type: number
+      required:
+        - operator
+        - value
+      description: A one-sided bound. operator is lt or gt; value is the magnitude (e.g. lt with 0.5 means <0.5).
     LabReportQualitativeValue:
+      $schema: https://json-schema.org/draft/2020-12/schema
       type: object
       properties:
         text:
@@ -3042,36 +3057,38 @@ components:
           type: string
           description: Coded qualitative answer (LOINC/SNOMED) when available.
     LabReportInterpretation:
+      $schema: https://json-schema.org/draft/2020-12/schema
       type: object
-      description: The per-result abnormality layer.
-      required:
-        - flag
-        - source
       properties:
         flag:
-          type:
-            - string
-            - 'null'
-          description: Coded signal (`high`/`low`/`normal`), or null when there is no signal.
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Coded signal (high/low/normal), or null when there is no signal.
         flag_raw:
           type: string
           description: The lab's verbatim flag.
         source:
           type: string
-          description: Provenance of `flag` — `report`, `computed`, or `none`.
+          description: Provenance of flag — report, computed, or none.
         applied_range:
           $ref: '#/components/schemas/LabReportAppliedRange'
+      required:
+        - flag
+        - source
+      description: The per-result abnormality layer.
     LabReportAppliedRange:
+      $schema: https://json-schema.org/draft/2020-12/schema
       type: object
-      description: Bounds of the reference range the flag was judged against.
       properties:
         lower:
           type: number
         upper:
           type: number
+      description: Bounds of the reference range the flag was judged against.
     LabReportReferenceRange:
+      $schema: https://json-schema.org/draft/2020-12/schema
       type: object
-      description: One reference range. `type` describes the range, not a verdict on the result.
       properties:
         lower:
           type: number
@@ -3081,26 +3098,23 @@ components:
           type: string
         context:
           $ref: '#/components/schemas/LabReportRangeContext'
+      description: One reference range. type describes the range, not a verdict on the result.
     LabReportRangeContext:
+      $schema: https://json-schema.org/draft/2020-12/schema
       type: object
-      description: The patient dimensions a reference range is scoped by.
       properties:
         sex:
           type: string
         age_lower:
           type: integer
-          format: int64
         age_upper:
           type: integer
-          format: int64
         pregnancy_status:
           type: string
         gestational_week_lower:
           type: integer
-          format: int64
         gestational_week_upper:
           type: integer
-          format: int64
         cycle_phase:
           type: string
         reference_population:
@@ -3109,41 +3123,42 @@ components:
           type: array
           items:
             type: string
+      description: The patient dimensions a reference range is scoped by.
     LabReportDeliveriesResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
       type: object
-      required:
-        - deliveries
       properties:
         deliveries:
           type: array
           items:
             $ref: '#/components/schemas/LabReportDelivery'
-    LabReportDelivery:
-      type: object
       required:
-        - destination_id
-        - status
-        - attempt_count
+        - deliveries
+    LabReportDelivery:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
       properties:
         destination_id:
           type: string
         destination_type:
           type: string
-          description: The destination's type (e.g. `webhook`, `s3`).
+          description: The destination's type (e.g. webhook, s3).
         status:
           type: string
-          description: '`pending`, `delivered`, or `failed`.'
+          description: pending, delivered, or failed.
         attempt_count:
           type: integer
-          format: int32
           description: Retry count — 0 on the first attempt, incremented per retry.
         last_error:
           type: string
           description: Most recent delivery error; omitted when delivered.
-    LabReportFilesResponse:
-      type: object
       required:
-        - files
+        - destination_id
+        - status
+        - attempt_count
+    LabReportFilesResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
       properties:
         files:
           type: array
@@ -3155,10 +3170,11 @@ components:
           type: string
           format: date-time
           description: Applies to every presigned URL in the response.
-    LabReportArtifactsResponse:
-      type: object
       required:
-        - artifacts
+        - files
+    LabReportArtifactsResponse:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
       properties:
         artifacts:
           type: array
@@ -3167,17 +3183,19 @@ components:
         expires_at:
           type: string
           format: date-time
-    LabReportFile:
-      type: object
-      description: One downloadable object with a presigned URL.
       required:
-        - presigned_url
+        - artifacts
+    LabReportFile:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
       properties:
         filename:
           type: string
         presigned_url:
           type: string
-          format: uri
+      required:
+        - presigned_url
+      description: One downloadable object with a presigned URL.
     TerraUser:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object

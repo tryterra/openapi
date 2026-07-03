@@ -1,0 +1,10 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  filename:
+    type: string
+  presigned_url:
+    type: string
+required:
+  - presigned_url
+description: One downloadable object with a presigned URL.

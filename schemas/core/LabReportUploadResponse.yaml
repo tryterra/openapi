@@ -1,0 +1,17 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  upload_id:
+    type: string
+    examples:
+      - upl_4a2b8c1d
+    description: Durable correlation key for the upload; every resulting session and webhook carries it.
+  current_status:
+    type: string
+    examples:
+      - processing
+    description: Processing status as a clean lowercase string.
+required:
+  - upload_id
+  - current_status
+description: Returned by the upload endpoint. A single upload may fan out to multiple sessions.

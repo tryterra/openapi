@@ -1,0 +1,21 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  source:
+    $ref: LabReportResultSource.yaml
+  biomarker:
+    $ref: LabReportBiomarker.yaml
+  measurement:
+    $ref: LabReportMeasurement.yaml
+  interpretation:
+    $ref: LabReportInterpretation.yaml
+  reference_ranges:
+    type: array
+    items:
+      $ref: LabReportReferenceRange.yaml
+required:
+  - source
+  - biomarker
+  - measurement
+  - interpretation
+description: "One layered result: verbatim source, normalized biomarker identity, one typed measurement, and the interpretation. measurement and interpretation are byte-identical to the webhook payload."

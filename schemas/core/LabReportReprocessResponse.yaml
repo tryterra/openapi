@@ -1,0 +1,14 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  session_id:
+    type: string
+    examples:
+      - "297405620317847552"
+  current_status:
+    type: string
+    examples:
+      - processing
+required:
+  - session_id
+  - current_status

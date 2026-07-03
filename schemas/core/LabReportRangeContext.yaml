@@ -1,0 +1,24 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  sex:
+    type: string
+  age_lower:
+    type: integer
+  age_upper:
+    type: integer
+  pregnancy_status:
+    type: string
+  gestational_week_lower:
+    type: integer
+  gestational_week_upper:
+    type: integer
+  cycle_phase:
+    type: string
+  reference_population:
+    type: string
+  modifiers:
+    type: array
+    items:
+      type: string
+description: The patient dimensions a reference range is scoped by.

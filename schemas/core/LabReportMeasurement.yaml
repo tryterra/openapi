@@ -1,0 +1,25 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  type:
+    type: string
+    examples:
+      - numeric
+    description: One of numeric, bounded, qualitative, text, absent.
+  numeric:
+    type: number
+  bounded:
+    $ref: LabReportBoundedValue.yaml
+  qualitative:
+    $ref: LabReportQualitativeValue.yaml
+  text:
+    type: string
+  absent_reason:
+    type: string
+  units:
+    type: string
+  ucum_code:
+    type: string
+required:
+  - type
+description: The single typed value of a result. Exactly one value field is set, named by type.

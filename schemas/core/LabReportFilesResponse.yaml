@@ -1,0 +1,15 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  files:
+    type: array
+    items:
+      $ref: LabReportFile.yaml
+  thumbnail:
+    $ref: LabReportFile.yaml
+  expires_at:
+    type: string
+    format: date-time
+    description: Applies to every presigned URL in the response.
+required:
+  - files

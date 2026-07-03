@@ -1,0 +1,12 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  artifacts:
+    type: array
+    items:
+      $ref: LabReportFile.yaml
+  expires_at:
+    type: string
+    format: date-time
+required:
+  - artifacts

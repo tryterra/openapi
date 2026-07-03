@@ -1,0 +1,23 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  key:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Canonical biomarker slug, or null when unmatched — the sole no-match signal. Do not key off loinc_code, which can be null on a match.
+  display_name:
+    type: string
+  loinc_code:
+    type: string
+    description: LOINC code; omitted when the matched biomarker has no LOINC mapping.
+  panel_id:
+    type: integer
+    description: References panels[].id on the enclosing session.
+  panel_key:
+    type: string
+  specimen:
+    type: string
+required:
+  - key
+description: The normalized identity layer.

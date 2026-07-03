@@ -1,0 +1,12 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  lower:
+    type: number
+  upper:
+    type: number
+  type:
+    type: string
+  context:
+    $ref: LabReportRangeContext.yaml
+description: One reference range. type describes the range, not a verdict on the result.

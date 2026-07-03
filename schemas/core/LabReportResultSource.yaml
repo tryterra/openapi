@@ -1,0 +1,22 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  name:
+    type: string
+  panel:
+    type: string
+  value:
+    type: string
+    description: Raw value string as printed.
+  units:
+    type: string
+  flag:
+    type: string
+    description: Verbatim flag; the coded form is under interpretation.
+  method:
+    type: string
+  notes:
+    type: string
+  reference_text:
+    type: string
+description: The verbatim provenance layer — what the report literally printed.

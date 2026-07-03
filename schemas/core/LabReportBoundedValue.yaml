@@ -1,0 +1,12 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  operator:
+    type: string
+    description: lt or gt.
+  value:
+    type: number
+required:
+  - operator
+  - value
+description: A one-sided bound. operator is lt or gt; value is the magnitude (e.g. lt with 0.5 means <0.5).

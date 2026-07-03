@@ -1,0 +1,15 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  id:
+    type: integer
+    description: Report-local ordinal; matches LabReportBiomarker.panel_id.
+  name:
+    type: string
+    description: Verbatim panel header as printed on the report.
+  key:
+    type: string
+    description: Normalized dedup key (deterministic text, not a LOINC code).
+required:
+  - id
+description: A report-level grouping that results reference by panel_id.

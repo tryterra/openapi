@@ -1,0 +1,20 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  flag:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Coded signal (high/low/normal), or null when there is no signal.
+  flag_raw:
+    type: string
+    description: The lab's verbatim flag.
+  source:
+    type: string
+    description: Provenance of flag — report, computed, or none.
+  applied_range:
+    $ref: LabReportAppliedRange.yaml
+required:
+  - flag
+  - source
+description: The per-result abnormality layer.

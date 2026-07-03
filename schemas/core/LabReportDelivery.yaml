@@ -1,0 +1,21 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  destination_id:
+    type: string
+  destination_type:
+    type: string
+    description: The destination's type (e.g. webhook, s3).
+  status:
+    type: string
+    description: pending, delivered, or failed.
+  attempt_count:
+    type: integer
+    description: Retry count — 0 on the first attempt, incremented per retry.
+  last_error:
+    type: string
+    description: Most recent delivery error; omitted when delivered.
+required:
+  - destination_id
+  - status
+  - attempt_count
