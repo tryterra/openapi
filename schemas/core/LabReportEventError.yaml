@@ -1,0 +1,17 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  code:
+    type: string
+    examples:
+      - extraction_failed
+    description: "Finite code: file_unreadable, extraction_failed, standardization_failed, internal."
+  message:
+    type: string
+  retriable:
+    type: boolean
+required:
+  - code
+  - message
+  - retriable
+description: Structured failure reason. retriable tells you whether re-submitting the same input could succeed (a transient internal fault) or the input must change first (e.g. an unreadable file).

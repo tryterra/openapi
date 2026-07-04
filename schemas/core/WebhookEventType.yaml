@@ -18,5 +18,7 @@ oneOf:
   - $ref: SleepEvent.yaml
   - $ref: PlannedWorkoutEvent.yaml
   - $ref: HormoneEvent.yaml
+  - $ref: LabReportCompletedEvent.yaml
+  - $ref: LabReportFailedEvent.yaml
   - $ref: S3PayloadEvent.yaml
 description: Union of all possible webhook event types

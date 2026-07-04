@@ -1,0 +1,26 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  type:
+    type: string
+    const: lab_report.failed
+  event_id:
+    type: string
+    examples:
+      - evt_7c1f0a92-52c8-4a63-9082-7e50e2f5a1cd
+    description: Stable event id; identical across redeliveries of the same event — dedup on it.
+  occurred_at:
+    type: string
+    format: date-time
+    description: RFC3339 UTC instant the event occurred.
+  upload_id:
+    type: string
+    description: Correlates every event produced from one upload (a multi-report upload fans out to several); omitted for sessions minted before the upload contract.
+  data:
+    $ref: LabReportFailureData.yaml
+required:
+  - type
+  - event_id
+  - occurred_at
+  - data
+description: "Lab report failed event: a report terminally failed processing; `data` carries the structured reason."

@@ -1,0 +1,12 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  collection_date:
+    type: string
+    description: Specimen collection date (YYYY-MM-DD); omitted if not extracted.
+  collection_time:
+    type: string
+    description: Specimen collection time (HH:MM, 24-hour); omitted if not extracted.
+allOf:
+  - $ref: LabReportResultSource.yaml
+description: The retrieve source layer plus the specimen collection date/time (the retrieve carries these on the session, which a webhook consumer does not separately fetch).

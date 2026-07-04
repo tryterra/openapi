@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.07.03
+  version: 2026.07.04
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -1916,6 +1916,67 @@ webhooks:
       responses:
         '200':
           description: Successful body response
+  lab_report:
+    post:
+      description: 'lab_report data event: sent when a lab report finishes processing. The envelope type is lab_report.completed (normalized results delivered under data) or lab_report.failed (a terminal failure, with a structured reason). Both share the lab_report destination event type; branch on the envelope type. Unlike wearable events these are report-scoped, so they carry no user or version.'
+      summary: Lab report webhook
+      operationId: labReportWebhook
+      tags:
+        - Webhooks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabReportWebhook'
+            examples:
+              completed:
+                summary: Report processed successfully
+                value:
+                  type: lab_report.completed
+                  event_id: evt_4a2b8c1d-3f9e-4c0a-8b21-9d6e5f2a1c7b
+                  occurred_at: '2026-07-01T09:12:33Z'
+                  upload_id: upl_9d6e5f2a1c7b
+                  data:
+                    session_id: '297405620317847552'
+                    reference_id: your-patient-123
+                    report_date: '2026-06-30'
+                    report_locale: en-GB
+                    results_count: 1
+                    results:
+                      - source:
+                          name: Haemoglobin
+                          value: '14.2'
+                          units: g/dL
+                          collection_date: '2026-06-29'
+                        biomarker:
+                          key: hemoglobin
+                          display_name: Hemoglobin
+                          loinc_code: 718-7
+                        measurement:
+                          type: numeric
+                          numeric: 14.2
+                          units: g/dL
+                          ucum_code: g/dL
+                        interpretation:
+                          flag: normal
+                          source: report
+                    panels: []
+              failed:
+                summary: Report terminally failed
+                value:
+                  type: lab_report.failed
+                  event_id: evt_7c1f0a92-52c8-4a63-9082-7e50e2f5a1cd
+                  occurred_at: '2026-07-01T09:15:02Z'
+                  data:
+                    session_id: '297405620317847552'
+                    reference_id: your-patient-123
+                    error:
+                      code: file_unreadable
+                      message: The uploaded file could not be read.
+                      retriable: false
+      responses:
+        '200':
+          description: Successful lab_report response
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -2724,6 +2785,10 @@ components:
       $ref: '#/components/schemas/PlannedWorkoutEvent'
     HormoneWebhook:
       $ref: '#/components/schemas/HormoneEvent'
+    LabReportWebhook:
+      oneOf:
+        - $ref: '#/components/schemas/LabReportCompletedEvent'
+        - $ref: '#/components/schemas/LabReportFailedEvent'
     IntegrationsResponse:
       type: object
       properties:
@@ -8971,6 +9036,158 @@ components:
       allOf:
         - $ref: '#/components/schemas/WebhookEvent'
       description: Body data event
+    LabReportEventResultSource:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        collection_date:
+          type: string
+          description: Specimen collection date (YYYY-MM-DD); omitted if not extracted.
+        collection_time:
+          type: string
+          description: Specimen collection time (HH:MM, 24-hour); omitted if not extracted.
+      allOf:
+        - $ref: '#/components/schemas/LabReportResultSource'
+      description: The retrieve source layer plus the specimen collection date/time (the retrieve carries these on the session, which a webhook consumer does not separately fetch).
+    LabReportEventResult:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        source:
+          $ref: '#/components/schemas/LabReportEventResultSource'
+      required:
+        - source
+      allOf:
+        - $ref: '#/components/schemas/LabReportResult'
+      description: 'One layered webhook result: the retrieve result, but its source additionally carries the specimen collection date/time.'
+    LabReportEventData:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        session_id:
+          type: string
+          examples:
+            - '297405620317847552'
+        reference_id:
+          type: string
+          description: Your external reference; omitted if not set.
+        report_date:
+          type: string
+          description: Date printed on the report (YYYY-MM-DD); omitted if not extracted.
+        report_time:
+          type: string
+          description: Time printed on the report (HH:MM, 24-hour); omitted if not extracted.
+        report_locale:
+          type: string
+          examples:
+            - en-GB
+        results_count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabReportEventResult'
+        panels:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabReportPanel'
+          description: Report-level panels that results reference by panel_id. Omitted if the report has no panel grouping.
+        report_notes:
+          type: string
+      required:
+        - session_id
+        - results_count
+        - results
+      description: The completed lab report resource. Shares the layered result/panel shapes with the retrieve endpoint, minus the session-lifecycle fields (status, byte counts, timestamps).
+    LabReportCompletedEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        type:
+          type: string
+          const: lab_report.completed
+        event_id:
+          type: string
+          examples:
+            - evt_4a2b8c1d-3f9e-4c0a-8b21-9d6e5f2a1c7b
+          description: Stable event id; identical across redeliveries of the same event — dedup on it.
+        occurred_at:
+          type: string
+          format: date-time
+          description: RFC3339 UTC instant the event occurred.
+        upload_id:
+          type: string
+          description: Correlates every event produced from one upload (a multi-report upload fans out to several); omitted for sessions minted before the upload contract.
+        data:
+          $ref: '#/components/schemas/LabReportEventData'
+      required:
+        - type
+        - event_id
+        - occurred_at
+        - data
+      description: 'Lab report completed event: a report finished processing; its normalized results are delivered under `data`.'
+    LabReportEventError:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        code:
+          type: string
+          examples:
+            - extraction_failed
+          description: 'Finite code: file_unreadable, extraction_failed, standardization_failed, internal.'
+        message:
+          type: string
+        retriable:
+          type: boolean
+      required:
+        - code
+        - message
+        - retriable
+      description: Structured failure reason. retriable tells you whether re-submitting the same input could succeed (a transient internal fault) or the input must change first (e.g. an unreadable file).
+    LabReportFailureData:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        session_id:
+          type: string
+          examples:
+            - '297405620317847552'
+        reference_id:
+          type: string
+          description: Your external reference; omitted if not set.
+        error:
+          $ref: '#/components/schemas/LabReportEventError'
+      required:
+        - session_id
+        - error
+      description: The failed lab report resource.
+    LabReportFailedEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        type:
+          type: string
+          const: lab_report.failed
+        event_id:
+          type: string
+          examples:
+            - evt_7c1f0a92-52c8-4a63-9082-7e50e2f5a1cd
+          description: Stable event id; identical across redeliveries of the same event — dedup on it.
+        occurred_at:
+          type: string
+          format: date-time
+          description: RFC3339 UTC instant the event occurred.
+        upload_id:
+          type: string
+          description: Correlates every event produced from one upload (a multi-report upload fans out to several); omitted for sessions minted before the upload contract.
+        data:
+          $ref: '#/components/schemas/LabReportFailureData'
+      required:
+        - type
+        - event_id
+        - occurred_at
+        - data
+      description: 'Lab report failed event: a report terminally failed processing; `data` carries the structured reason.'
     PlannedWorkoutEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -9044,5 +9261,7 @@ components:
         - $ref: '#/components/schemas/SleepEvent'
         - $ref: '#/components/schemas/PlannedWorkoutEvent'
         - $ref: '#/components/schemas/HormoneEvent'
+        - $ref: '#/components/schemas/LabReportCompletedEvent'
+        - $ref: '#/components/schemas/LabReportFailedEvent'
         - $ref: '#/components/schemas/S3PayloadEvent'
       description: Union of all possible webhook event types

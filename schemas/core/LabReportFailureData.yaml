@@ -1,0 +1,16 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  session_id:
+    type: string
+    examples:
+      - "297405620317847552"
+  reference_id:
+    type: string
+    description: Your external reference; omitted if not set.
+  error:
+    $ref: LabReportEventError.yaml
+required:
+  - session_id
+  - error
+description: The failed lab report resource.

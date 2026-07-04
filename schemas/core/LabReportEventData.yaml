@@ -1,0 +1,38 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  session_id:
+    type: string
+    examples:
+      - "297405620317847552"
+  reference_id:
+    type: string
+    description: Your external reference; omitted if not set.
+  report_date:
+    type: string
+    description: Date printed on the report (YYYY-MM-DD); omitted if not extracted.
+  report_time:
+    type: string
+    description: Time printed on the report (HH:MM, 24-hour); omitted if not extracted.
+  report_locale:
+    type: string
+    examples:
+      - en-GB
+  results_count:
+    type: integer
+  results:
+    type: array
+    items:
+      $ref: LabReportEventResult.yaml
+  panels:
+    type: array
+    items:
+      $ref: LabReportPanel.yaml
+    description: Report-level panels that results reference by panel_id. Omitted if the report has no panel grouping.
+  report_notes:
+    type: string
+required:
+  - session_id
+  - results_count
+  - results
+description: The completed lab report resource. Shares the layered result/panel shapes with the retrieve endpoint, minus the session-lifecycle fields (status, byte counts, timestamps).

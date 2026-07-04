@@ -1,0 +1,10 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  source:
+    $ref: LabReportEventResultSource.yaml
+required:
+  - source
+allOf:
+  - $ref: LabReportResult.yaml
+description: "One layered webhook result: the retrieve result, but its source additionally carries the specimen collection date/time."
