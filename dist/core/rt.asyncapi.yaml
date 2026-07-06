@@ -10,7 +10,7 @@ asyncapi: 3.0.0
 # test (services/streaming/internal/spec_drift_test.go).
 info:
   title: Terra Real-Time Streaming API (WebSocket)
-  version: "2.0"
+  version: 2026.07.06
   description: |
     Bidirectional WebSocket protocol for streaming health and fitness data in
     real time. Two roles share one protocol over a single `/connect` socket:

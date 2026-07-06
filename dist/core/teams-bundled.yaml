@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Terra API Team-Based API
   description: API to manage and retrieve data from team-based fitness tracking devices used in sports training and monitoring.
-  version: 1.0.0
+  version: 2026.07.06
 servers:
   - url: https://api.tryterra.co/v2/teams
     description: Main teams API base URL
