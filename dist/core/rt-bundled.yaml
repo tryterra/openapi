@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Real Time Streaming API
-  version: 2026.07.06
+  version: 2026.07.07
   description: |
     Token issuance for the Terra real-time streaming WebSocket. Call one of the
     endpoints below with your developer credentials to mint a single-use,

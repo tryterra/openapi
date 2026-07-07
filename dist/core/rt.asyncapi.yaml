@@ -10,12 +10,13 @@ asyncapi: 3.0.0
 # test (services/streaming/internal/spec_drift_test.go).
 info:
   title: Terra Real-Time Streaming API (WebSocket)
-  version: 2026.07.06
+  version: 2026.07.07
   description: |
     Bidirectional WebSocket protocol for streaming health and fitness data in
     real time. Two roles share one protocol over a single `/connect` socket:
 
-    - **Producer** (`user` session) — pushes a user's live samples to Terra.
+    - **Producer** (`user` session) — pushes a user's live samples to Terra,
+      and may report device-link (Bluetooth) presence with STATUS (op 8).
     - **Consumer** (`developer` session) — receives the live dispatch stream
       for all of a developer's users, and can replay recent history.
 
@@ -42,12 +43,13 @@ info:
     | Code | Meaning |
     |------|---------|
     | 1000 | Normal closure |
+    | 1003 | Malformed frame — unparseable JSON, or an invalid REPLAY payload |
     | 1011 | Internal error (e.g. a SUBMIT failed to enqueue) |
     | 4000 | No IDENTIFY received within the identify timeout |
     | 4001 | Token invalid, expired, or already redeemed |
     | 4002 | Consumer session limit reached for this developer |
     | 4003 | A second IDENTIFY was sent on an already-identified session |
-    | 4004 | Unknown opcode received |
+    | 4004 | Unknown opcode, or an opcode not valid for this session role (e.g. SUBMIT on a consumer, REPLAY on a producer) |
     | 4005 | Heartbeat deadline exceeded |
 
     All frames are JSON text messages. Every frame carries an integer `op`;
@@ -91,6 +93,8 @@ channels:
         $ref: '#/components/messages/Replay'
       dispatch:
         $ref: '#/components/messages/Dispatch'
+      status:
+        $ref: '#/components/messages/Status'
 
 operations:
   # action is from the gateway's perspective: `send` = gateway -> client,
@@ -159,6 +163,21 @@ operations:
     messages:
       - $ref: '#/channels/connect/messages/replay'
 
+  receiveStatus:
+    action: receive
+    channel:
+      $ref: '#/channels/connect'
+    title: Report device-link presence (producer)
+    summary: |
+      Producer sessions may report their current device-link (Bluetooth) state.
+      Presence-only and additive: the gateway records it to a short-lived
+      presence key and never warehouses, bills, or dispatches it. Only valid on
+      a `user` (producer) session. Optional — clients that never send it are
+      fully conformant, and a malformed STATUS is dropped without closing the
+      socket.
+    messages:
+      - $ref: '#/channels/connect/messages/status'
+
   sendDispatch:
     action: send
     channel:
@@ -220,14 +239,20 @@ components:
       summary: Real-time data delivered to a consumer.
       payload:
         $ref: '#/components/schemas/DispatchFrame'
+    Status:
+      name: status
+      title: STATUS (op 8)
+      summary: Producer device-link (Bluetooth) presence report.
+      payload:
+        $ref: '#/components/schemas/StatusFrame'
 
   schemas:
     Opcode:
       type: integer
       description: |
         Frame opcode. 0 HEARTBEAT, 1 HEARTBEAT_ACK, 2 HELLO, 3 IDENTIFY,
-        4 READY, 5 DISPATCH, 6 SUBMIT, 7 REPLAY.
-      enum: [0, 1, 2, 3, 4, 5, 6, 7]
+        4 READY, 5 DISPATCH, 6 SUBMIT, 7 REPLAY, 8 STATUS.
+      enum: [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
     RealtimePayload:
       type: object
@@ -311,16 +336,22 @@ components:
           const: 7
         d:
           type: object
+          required: [before]
           description: Exclusive dispatch-id range — after < dispatch_id < before.
           properties:
             after:
               type: integer
               format: int64
-              description: Lower exclusive bound; a dispatch `seq` from a prior frame.
+              description: >-
+                Lower exclusive bound; a dispatch `seq` from a prior frame.
+                Defaults to 0 (from the earliest retained dispatch) if omitted.
             before:
               type: integer
               format: int64
-              description: Upper exclusive bound. Omit for "everything after `after`".
+              description: >-
+                Upper exclusive bound — required. Set it to the `seq` of the
+                first live DISPATCH seen after reconnecting. A REPLAY that omits
+                `before` matches nothing (it is treated as an upper bound of 0).
 
     DispatchFrame:
       type: object
@@ -340,3 +371,37 @@ components:
           description: Data type label (mirrors the producer's SUBMIT `t`).
         d:
           $ref: '#/components/schemas/RealtimePayload'
+        synthetic:
+          type: boolean
+          description: >-
+            Present and true only for synthetic test traffic (the dashboard's
+            "generate test data" tool). Absent on real user data. Consumers can
+            filter on it to exclude test samples from the shared stream.
+
+    StatusFrame:
+      type: object
+      required: [op, d]
+      description: >-
+        Producer-only device-link (Bluetooth) presence report. Additive and
+        presence-only: the gateway records `connected` to a short-lived
+        presence key and never warehouses, bills, or dispatches it. Optional —
+        a producer that never sends STATUS is fully conformant.
+      properties:
+        op:
+          const: 8
+        d:
+          type: object
+          required: [connected]
+          properties:
+            connected:
+              type: boolean
+              description: Current device-link (Bluetooth) state of the producer.
+            device_id:
+              type: string
+              description: Optional identifier of the linked device (diagnostics only).
+            source:
+              type: string
+              description: Optional SDK/source attribution (diagnostics only).
+            reason:
+              type: string
+              description: Optional human-readable state reason (diagnostics only).
