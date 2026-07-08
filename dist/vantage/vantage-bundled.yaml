@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Use your **client_id** as the username and **client_secret** as the password for Basic Authentication.
   title: Terra Blood DNA Device API
-  version: 2026.07.03
+  version: 2026.07.08
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -95,7 +95,17 @@ paths:
       summary: Update webhook URL
       tags:
         - clients
-      description: Update or clear the webhook URL for the authenticated client. The webhook URL must use HTTPS if provided, or can be empty to clear it. Note this means webhooks will no longer be sent to your previous endpoint
+      description: |
+        Update or clear the webhook URL for the authenticated client. The
+        webhook URL must use HTTPS if provided, or can be empty to clear it.
+        Note this means webhooks will no longer be sent to your previous
+        endpoint.
+
+        Deliveries to your endpoint carry an `X-Terra-Signature` header of the
+        form `t=<timestamp>,v1=<hex-hmac>` where `t` is the send time in Unix
+        seconds and `v1` is `HMAC-SHA256(secret, t + "." + payload)` — the
+        same scheme as all Terra webhooks. Verify by recomputing the HMAC
+        from the received `t` and the raw body.
       requestBody:
         content:
           application/json:
@@ -501,6 +511,13 @@ components:
     BasicAuth:
       type: http
       scheme: basic
+      description: |
+        Authenticate with your Terra API credentials: username = your Terra
+        `dev-id`, password = your Terra API key — the same credentials used for
+        every other Terra API. The header pair `dev-id` + `x-api-key` is also
+        accepted. Suspended credentials receive 403; accounts without the
+        Vantage entitlement receive 403 once entitlement enforcement is
+        enabled.
   schemas:
     ClientResponse:
       type: object
