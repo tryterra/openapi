@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.07.06
+  version: 2026.07.08
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -1194,7 +1194,7 @@ paths:
       summary: Upload a lab report
       description: Upload a single lab report file (PDF, PNG, JPEG, GIF, or WebP) as multipart form data. Returns an `upload_id`; a single upload may fan out to multiple sessions, so learn the `session_id`(s) from the webhook events or from `GET /lab-reports?upload_id=...`.
       tags:
-        - Lab Reports
+        - LabReports
       operationId: LabReports_Upload
       parameters:
         - name: reference_id
@@ -1236,7 +1236,7 @@ paths:
       summary: List lab report sessions
       description: List lab report sessions for your account, with optional reference, upload, and inclusive date-range filters. Use the date filters to narrow large result sets.
       tags:
-        - Lab Reports
+        - LabReports
       operationId: LabReports_List
       parameters:
         - name: reference_id
@@ -1295,7 +1295,7 @@ paths:
       summary: Retrieve a lab report session
       description: Retrieve a report's metadata, results, reference ranges, and status history. Immutable and cacheable — presigned file URLs and mutable per-destination delivery state live on the `/files` and `/deliveries` sub-resources.
       tags:
-        - Lab Reports
+        - LabReports
       operationId: LabReports_Get
       parameters:
         - name: session_id
@@ -1322,7 +1322,7 @@ paths:
       summary: Delete a lab report session
       description: Soft-delete a session. It is marked deleted immediately; associated storage is cleaned up by a background process.
       tags:
-        - Lab Reports
+        - LabReports
       operationId: LabReports_Delete
       parameters:
         - name: session_id
@@ -1346,7 +1346,7 @@ paths:
       summary: List delivery outcomes
       description: The per-destination delivery state for a report. Each opted-in destination is tracked independently, so one failure never hides delivery to the others (and is why a session can be `partially_sent`).
       tags:
-        - Lab Reports
+        - LabReports
       operationId: LabReports_ListDeliveries
       parameters:
         - name: session_id
@@ -1374,7 +1374,7 @@ paths:
       summary: List input files
       description: The uploaded input files and report thumbnail, with freshly minted presigned download URLs. URLs expire; fetch again to mint new ones.
       tags:
-        - Lab Reports
+        - LabReports
       operationId: LabReports_ListFiles
       parameters:
         - name: session_id
