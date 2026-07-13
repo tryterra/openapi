@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Use your **client_id** as the username and **client_secret** as the password for Basic Authentication.
   title: Terra Blood DNA Device API
-  version: 2026.07.13
+  version: 2026.07.13.1
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -190,6 +190,20 @@ paths:
           schema:
             type: string
             example: '333410942627700736'
+        - name: since
+          in: query
+          required: false
+          description: Only orders created at/after this RFC3339 timestamp.
+          schema:
+            type: string
+            format: date-time
+        - name: missing
+          in: query
+          required: false
+          description: true = only delivered/completed orders with at least one item whose results aren't in yet (the overview's "missing results" set).
+          schema:
+            type: boolean
+            default: false
         - name: status
           in: query
           required: false
@@ -520,6 +534,13 @@ paths:
         - products
       description: Returns all available variants/options for a specific diagnostic test product (e.g., different panel sizes, customizations)
       parameters:
+        - name: show_all
+          in: query
+          required: false
+          description: Include variants of catalog-disabled products (curation view).
+          schema:
+            type: boolean
+            default: false
         - name: id
           in: path
           description: Product ID
@@ -737,6 +758,157 @@ paths:
                 $ref: '#/components/schemas/AuthenticationError'
         '404':
           description: Order item not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/labs:
+    get:
+      summary: List nearby lab draw sites
+      tags:
+        - labs
+      description: Returns nearby Patient Service Centers (lab draw sites) for a US zip code, used when placing a GO_TO_LAB order.
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: zip_code
+          in: query
+          required: true
+          description: 5-digit US zip (optionally with 4-digit suffix)
+          schema:
+            type: string
+            example: '10001'
+      responses:
+        '200':
+          description: Nearby lab draw sites
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLabsResponse'
+        '400':
+          description: Missing or invalid zip code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Missing or invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/overview:
+    get:
+      summary: Analytics overview
+      tags:
+        - analytics
+      description: 'Client-scoped analytics summary for a time window: order totals with a by-status breakdown, results in vs. still missing, and webhook failures with a daily series.'
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: since
+          in: query
+          required: false
+          description: Start of the window (RFC3339). Defaults to until minus 7 days.
+          schema:
+            type: string
+            format: date-time
+        - name: until
+          in: query
+          required: false
+          description: End of the window (RFC3339). Defaults to now.
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Analytics summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OverviewResponse'
+        '400':
+          description: Invalid time window
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Missing or invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/webhook-deliveries:
+    get:
+      summary: List webhook delivery outcomes
+      tags:
+        - analytics
+      description: Client-scoped keyset list of terminal webhook delivery outcomes, newest first. Use outcome=failed to see only permanently-failed deliveries.
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: outcome
+          in: query
+          required: false
+          description: One delivery outcome, or "failed" (rejected|invalid|dead_lettered).
+          schema:
+            type: string
+            enum:
+              - delivered
+              - rejected
+              - invalid
+              - dead_lettered
+              - replayed
+              - failed
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: cursor
+          in: query
+          required: false
+          description: event_id from the previous page's next_cursor
+          schema:
+            type: string
+            example: '333410942627700737'
+      responses:
+        '200':
+          description: One page of delivery outcomes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookDeliveriesResponse'
+        '400':
+          description: Invalid pagination or filter parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Missing or invalid credentials
           content:
             application/json:
               schema:
@@ -1279,6 +1451,13 @@ components:
         product_type_id:
           type: string
           example: '1'
+        test_taker_ids:
+          type: array
+          description: Test takers registered on this item (present once a kit is activated).
+          items:
+            type: string
+          example:
+            - '333410942627700738'
         quantity:
           type: integer
           example: 1
@@ -1610,3 +1789,170 @@ components:
           format: int64
         name:
           type: string
+    ListLabsResponse:
+      type: object
+      required:
+        - labs
+      properties:
+        labs:
+          type: array
+          items:
+            $ref: '#/components/schemas/PSCLocation'
+    PSCLocation:
+      description: A Patient Service Center (lab draw site).
+      type: object
+      required:
+        - code
+        - name
+        - address
+        - phone
+        - latitude
+        - longitude
+        - scheduling
+        - distance
+      properties:
+        code:
+          type: string
+          example: PSC12345
+        name:
+          type: string
+          example: Quest Diagnostics - Midtown
+        address:
+          $ref: '#/components/schemas/AddressDTO'
+        phone:
+          type: string
+          example: +1-212-555-0100
+        hours:
+          type: object
+          additionalProperties:
+            type: string
+          description: Opening hours keyed by weekday.
+          example:
+            monday: 08:00-17:00
+        latitude:
+          type: number
+          example: 40.7549
+        longitude:
+          type: number
+          example: -73.984
+        scheduling:
+          type: boolean
+          description: Whether online scheduling is open.
+        distance:
+          type: number
+          description: Miles from the requested zip.
+    OverviewResponse:
+      type: object
+      required:
+        - orders
+        - results
+        - webhooks
+      properties:
+        orders:
+          type: object
+          required:
+            - total
+            - by_status
+          properties:
+            total:
+              type: integer
+              example: 27
+            by_status:
+              type: object
+              additionalProperties:
+                type: integer
+              description: Order counts keyed by current fulfilment status string.
+              example:
+                order.completed: 29
+                order.processing: 8
+        results:
+          type: object
+          required:
+            - total
+            - missing
+          properties:
+            total:
+              type: integer
+              example: 7
+            missing:
+              type: integer
+              example: 8
+        webhooks:
+          type: object
+          required:
+            - failed_total
+            - daily
+          properties:
+            failed_total:
+              type: integer
+              example: 5
+            daily:
+              type: array
+              items:
+                type: object
+                required:
+                  - date
+                  - failed
+                properties:
+                  date:
+                    type: string
+                    example: '2026-05-16'
+                  failed:
+                    type: integer
+                    example: 1
+    WebhookDeliveriesResponse:
+      type: object
+      required:
+        - deliveries
+      properties:
+        deliveries:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookDelivery'
+        next_cursor:
+          type: string
+          description: Pass as ?cursor= for the next page; absent on the last page.
+          example: '333410942627700737'
+    WebhookDelivery:
+      type: object
+      required:
+        - event_id
+        - event_type
+        - order_id
+        - order_item_id
+        - outcome
+        - final_status_code
+        - attempts
+        - completed_at
+        - event_created_at
+      properties:
+        event_id:
+          type: string
+          example: '333410942627700737'
+        event_type:
+          type: string
+          example: EVENT_TYPE_ORDER_ITEM_RESULTS_STATUS_CHANGED
+        order_id:
+          type: string
+          example: '333410942627700736'
+        order_item_id:
+          type: string
+          example: '333410942627700737'
+        outcome:
+          type: string
+          description: 'One of: delivered, rejected, invalid, dead_lettered, replayed.'
+          example: dead_lettered
+        final_status_code:
+          type:
+            - integer
+            - 'null'
+          example: 500
+        attempts:
+          type: integer
+          example: 6
+        completed_at:
+          type: string
+          format: date-time
+        event_created_at:
+          type: string
+          format: date-time
