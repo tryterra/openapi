@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Use your **client_id** as the username and **client_secret** as the password for Basic Authentication.
   title: Terra Blood DNA Device API
-  version: 2026.07.08
+  version: 2026.07.13
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -91,6 +91,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
   /api/v1/clients/webhook-url:
+    get:
+      summary: Get the registered webhook URL
+      tags:
+        - clients
+      description: The currently registered webhook destination for this environment ("" when none).
+      security:
+        - BasicAuth: []
+      responses:
+        '200':
+          description: Current destination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
     patch:
       summary: Update webhook URL
       tags:
@@ -147,6 +167,68 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
   /api/v1/orders:
+    get:
+      summary: List orders
+      tags:
+        - orders
+      description: Keyset-paginated index of your orders, newest first. Pass the returned next_cursor to fetch the following page; absence of next_cursor means the last page.
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: cursor
+          in: query
+          required: false
+          description: order_id from the previous page's next_cursor
+          schema:
+            type: string
+            example: '333410942627700736'
+        - name: status
+          in: query
+          required: false
+          description: Filter by order status string (e.g. order.processing)
+          schema:
+            type: string
+        - name: collection_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - AT_HOME
+              - GO_TO_LAB
+      responses:
+        '200':
+          description: One page of orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOrdersResponse'
+        '400':
+          description: Invalid pagination or filter parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Missing or invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
     post:
       summary: Create a new order
       tags:
@@ -227,6 +309,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/orders/{orderID}/simulate:
+    post:
+      summary: Simulate an order lifecycle event (Testing environment only)
+      tags:
+        - orders
+      description: Drives one lifecycle event on your order exactly as a supplier update would — status history is recorded and the corresponding signed webhook is delivered to your registered destination. Only valid forward transitions are accepted. results_ready also stores a sample result so the download and acknowledge flows work end to end. The production environment refuses with 403.
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: orderID
+          in: path
+          required: true
+          schema:
+            type: string
+            example: '333410942627700736'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateOrderRequest'
+      responses:
+        '200':
+          description: Event applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulateOrderResponse'
+        '400':
+          description: Invalid order id, request body, order_item_id, or event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Not available in the production environment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: Order (or order item) not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '422':
+          description: Event is not a valid transition from the current status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/products:
     get:
       summary: List all product types
@@ -256,6 +396,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/products/selection:
+    put:
+      summary: Set catalog selection
+      tags:
+        - products
+      description: 'Curate which products your own catalog reads return. Full-set write: listed products become enabled, every other product disabled. With no selection saved, everything is enabled; products added to the global catalog after your last save default to enabled until you save again. Curation affects catalog reads only — it is not an ordering restriction.'
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCatalogSelectionRequest'
+      responses:
+        '200':
+          description: Selection saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCatalogSelectionResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Missing or invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/products/{id}:
     get:
       summary: Get products by type ID
@@ -263,6 +442,13 @@ paths:
         - products
       description: Returns all products within a specific product type category
       parameters:
+        - name: show_all
+          in: query
+          required: false
+          description: Return the full catalog with per-product enabled flags (curation view).
+          schema:
+            type: boolean
+            default: false
         - name: id
           in: path
           description: Product Type ID
@@ -398,6 +584,61 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+  /api/v1/results:
+    get:
+      summary: List results
+      tags:
+        - results
+      description: Keyset-paginated index of order items with result activity, newest first.
+      security:
+        - BasicAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+        - name: cursor
+          in: query
+          required: false
+          description: order_item_id from the previous page's next_cursor
+          schema:
+            type: string
+            example: '333410942627700737'
+        - name: status
+          in: query
+          required: false
+          description: Filter by results status string (e.g. results.results_ready)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: One page of results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResultsResponse'
+        '400':
+          description: Invalid pagination or filter parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: Missing or invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/results/{orderItemID}:
     get:
       summary: Get presigned URL for test results
@@ -519,6 +760,134 @@ components:
         Vantage entitlement receive 403 once entitlement enforcement is
         enabled.
   schemas:
+    ListOrdersResponse:
+      type: object
+      required:
+        - orders
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderSummary'
+        next_cursor:
+          type: string
+          description: Pass as ?cursor= for the next page; absent on the last page.
+          example: '333410942627700736'
+    OrderSummary:
+      type: object
+      required:
+        - order_id
+        - created_at
+        - collection_type
+        - supplier_id
+        - order_status
+        - total_cents
+        - currency
+        - items
+      properties:
+        order_id:
+          type: string
+          example: '333410942627700736'
+        client_order_reference_id:
+          type: string
+          example: ORDER-2024-001
+        created_at:
+          type: string
+          format: date-time
+        collection_type:
+          type: string
+          enum:
+            - AT_HOME
+            - GO_TO_LAB
+        supplier_id:
+          type: string
+          example: '1'
+        order_status:
+          type: string
+          example: order.payment_processing
+        total_cents:
+          type: integer
+          example: 5540
+        currency:
+          type: integer
+          description: ISO-4217 numeric
+          example: 840
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderSummaryItem'
+    OrderSummaryItem:
+      type: object
+      required:
+        - order_item_id
+        - variant_id
+        - item_status
+        - results_status
+      properties:
+        order_item_id:
+          type: string
+          example: '333410942627700737'
+        variant_id:
+          type: string
+          example: '100011'
+        product_name:
+          type: string
+          example: General Health
+        item_status:
+          type: integer
+          example: 1
+        results_status:
+          type: string
+          example: results.awaiting_sample
+        test_taker_id:
+          type: string
+          example: '333410942627700738'
+    ListResultsResponse:
+      type: object
+      required:
+        - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResultSummary'
+        next_cursor:
+          type: string
+          description: Pass as ?cursor= for the next page; absent on the last page.
+          example: '333410942627700737'
+    ResultSummary:
+      type: object
+      required:
+        - order_item_id
+        - order_id
+        - variant_id
+        - results_status
+        - is_acknowledged
+        - updated_at
+      properties:
+        order_item_id:
+          type: string
+          example: '333410942627700737'
+        order_id:
+          type: string
+          example: '333410942627700736'
+        variant_id:
+          type: string
+          example: '100011'
+        product_name:
+          type: string
+          example: General Health
+        results_status:
+          type: string
+          example: results.results_ready
+        is_acknowledged:
+          type: boolean
+        test_taker_id:
+          type: string
+          example: '333410942627700738'
+        updated_at:
+          type: string
+          format: date-time
     ClientResponse:
       type: object
       properties:
@@ -531,6 +900,64 @@ components:
         webhook_url:
           type: string
           example: https://your-domain.com/webhooks/terra
+    SimulateOrderRequest:
+      type: object
+      required:
+        - event
+      properties:
+        event:
+          type: string
+          description: Lifecycle event to apply.
+          enum:
+            - payment_complete
+            - payment_failed
+            - processing
+            - delayed
+            - cancelled
+            - delivery_fulfilled
+            - completed
+            - kit_activated
+            - sample_processing_in_lab
+            - sample_rejected
+            - partial_results_ready
+            - results_ready
+            - lab_processing_error
+            - escalation_raised
+        order_item_id:
+          type: string
+          description: Narrow a results event to one order item.
+          example: '333410942627700737'
+    SimulateOrderResponse:
+      type: object
+      required:
+        - order_id
+        - applied_event
+      properties:
+        order_id:
+          type: string
+          example: '333410942627700736'
+        applied_event:
+          type: string
+          example: delivery_fulfilled
+    UpdateCatalogSelectionRequest:
+      type: object
+      required:
+        - product_ids
+      properties:
+        product_ids:
+          type: array
+          description: Products to enable; everything else is disabled.
+          items:
+            type: string
+            example: '999888777'
+    UpdateCatalogSelectionResponse:
+      type: object
+      required:
+        - enabled_count
+      properties:
+        enabled_count:
+          type: integer
+          example: 12
     UpdateWebhookUrlRequest:
       type: object
       properties:
@@ -899,6 +1326,24 @@ components:
       description: Full order information including items, recipient, address, and financials
       type: object
       properties:
+        status_history:
+          type: array
+          description: Lifecycle timeline, newest first (order fulfilment + item results events).
+          items:
+            type: object
+            required:
+              - status
+              - changed_at
+            properties:
+              status:
+                type: string
+                example: order.processing
+              order_item_id:
+                type: string
+                example: '333410942627700737'
+              changed_at:
+                type: string
+                format: date-time
         client_id:
           type: string
           example: terra_client_abc123
@@ -1120,6 +1565,9 @@ components:
     Product:
       type: object
       properties:
+        enabled:
+          type: boolean
+          description: Present only on ?show_all=true — the caller's per-product curation flag.
         availability:
           $ref: '#/components/schemas/AvailabilityStatus'
         base_price_cents:
