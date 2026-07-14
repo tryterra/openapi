@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Use your **client_id** as the username and **client_secret** as the password for Basic Authentication.
   title: Terra Blood DNA Device API
-  version: 2026.07.14
+  version: 2026.07.14.1
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -247,7 +247,7 @@ paths:
       summary: Create a new order
       tags:
         - orders
-      description: Create a new blood, DNA, or device test order
+      description: Create a new blood, DNA, or device test order. Products that are disabled in your catalog cannot be ordered and are rejected with 403.
       security:
         - BasicAuth: []
       requestBody:
@@ -270,6 +270,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateOrderValidationError'
+        '403':
+          description: A requested product is not enabled in your catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
         '500':
           description: Internal server error
           content:
@@ -537,7 +543,7 @@ paths:
         - name: show_all
           in: query
           required: false
-          description: Include variants of catalog-disabled products (curation view).
+          description: Include variants of catalog-disabled products (curation view). Disabled products remain non-orderable regardless.
           schema:
             type: boolean
             default: false
@@ -951,7 +957,6 @@ components:
         - order_id
         - created_at
         - collection_type
-        - supplier_id
         - order_status
         - total_cents
         - currency
@@ -971,9 +976,6 @@ components:
           enum:
             - AT_HOME
             - GO_TO_LAB
-        supplier_id:
-          type: string
-          example: '1'
         order_status:
           type: string
           example: order.payment_processing
@@ -1564,12 +1566,8 @@ components:
           $ref: '#/components/schemas/AddressDTO'
         shipping_address:
           $ref: '#/components/schemas/AddressDTO'
-        supplier_id:
-          type: string
-          example: '1'
       required:
         - order_id
-        - supplier_id
         - client_id
         - client_order_reference_id
         - recipient
@@ -1734,17 +1732,12 @@ components:
         price_cents:
           type: integer
           format: int32
-        product_external_sku:
-          type: string
         product_id:
           type: integer
           format: int64
         product_type_id:
           type: integer
           format: int64
-        supplier_id:
-          type: integer
-          format: int32
         variant_availability:
           type: integer
           format: int32
@@ -1784,9 +1777,6 @@ components:
         product_type_id:
           type: integer
           format: int64
-        supplier_id:
-          type: integer
-          format: int32
         variants:
           type: array
           items:
