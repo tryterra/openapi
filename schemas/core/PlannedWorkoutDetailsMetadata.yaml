@@ -1,0 +1,79 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  id:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Identifier of the workout on the provider's side
+  provider:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Provider the workout was fetched from
+  name:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Workout title
+  description:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Workout description, when the provider exposes one
+  type:
+    anyOf:
+      - type: integer
+        minimum: -2147483648
+        maximum: 2147483647
+      - type: "null"
+    description: Numeric activity type of the workout
+  planned_date:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Scheduled date (YYYY-MM-DD), matching the list item's planned_date
+  created_date:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Creation time on the provider's side (RFC 3339)
+  estimated_tss:
+    anyOf:
+      - type: number
+      - type: "null"
+    description: Planned Training Stress Score
+  estimated_if:
+    anyOf:
+      - type: number
+      - type: "null"
+    description: Planned Intensity Factor
+  estimated_duration_seconds:
+    anyOf:
+      - type: number
+      - type: "null"
+  estimated_distance_meters:
+    anyOf:
+      - type: number
+      - type: "null"
+  estimated_calories:
+    anyOf:
+      - type: number
+      - type: "null"
+  estimated_elevation_gain_meters:
+    anyOf:
+      - type: number
+      - type: "null"
+  estimated_energy_kj:
+    anyOf:
+      - type: number
+      - type: "null"
+  estimated_speed_meters_per_second:
+    anyOf:
+      - type: number
+      - type: "null"
+  pool_length_meters:
+    anyOf:
+      - type: number
+      - type: "null"
+description: Summary metadata of a provider-side planned workout

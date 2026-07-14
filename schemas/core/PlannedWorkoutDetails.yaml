@@ -1,0 +1,15 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  metadata:
+    anyOf:
+      - $ref: PlannedWorkoutDetailsMetadata.yaml
+      - type: "null"
+  steps:
+    anyOf:
+      - type: array
+        items:
+          $ref: PlannedWorkoutDetailsStep.yaml
+      - type: "null"
+    description: Structured steps of the workout, when the provider exposes them
+description: Full body of a provider-side planned workout, fetched live from the provider. Present only on external planned workouts (is_external true), which have no Terra workout template.

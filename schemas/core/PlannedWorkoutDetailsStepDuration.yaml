@@ -1,0 +1,50 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  duration_type:
+    type: integer
+    minimum: -2147483648
+    maximum: 2147483647
+  seconds:
+    anyOf:
+      - type: number
+      - type: "null"
+  distance_meters:
+    anyOf:
+      - type: number
+      - type: "null"
+  hr_below_bpm:
+    anyOf:
+      - type: number
+      - type: "null"
+  hr_above_bpm:
+    anyOf:
+      - type: number
+      - type: "null"
+  calories:
+    anyOf:
+      - type: number
+      - type: "null"
+  power_below_watts:
+    anyOf:
+      - type: number
+      - type: "null"
+  power_above_watts:
+    anyOf:
+      - type: number
+      - type: "null"
+  reps:
+    anyOf:
+      - type: number
+      - type: "null"
+  rest_seconds:
+    anyOf:
+      - type: number
+      - type: "null"
+  steps:
+    anyOf:
+      - type: number
+      - type: "null"
+required:
+  - duration_type
+description: Completion condition of a provider planned-workout step

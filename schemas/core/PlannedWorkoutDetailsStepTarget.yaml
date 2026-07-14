@@ -1,0 +1,100 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  target_type:
+    type: integer
+    minimum: -2147483648
+    maximum: 2147483647
+  hr_bpm_high:
+    anyOf:
+      - type: number
+      - type: "null"
+  hr_bpm_low:
+    anyOf:
+      - type: number
+      - type: "null"
+  cadence:
+    anyOf:
+      - type: number
+      - type: "null"
+  cadence_high:
+    anyOf:
+      - type: number
+      - type: "null"
+  cadence_low:
+    anyOf:
+      - type: number
+      - type: "null"
+  power_watt:
+    anyOf:
+      - type: number
+      - type: "null"
+  power_watt_high:
+    anyOf:
+      - type: number
+      - type: "null"
+  power_watt_low:
+    anyOf:
+      - type: number
+      - type: "null"
+  swim_strokes:
+    anyOf:
+      - type: number
+      - type: "null"
+  hr_percentage:
+    anyOf:
+      - type: number
+      - type: "null"
+  hr_percentage_high:
+    anyOf:
+      - type: number
+      - type: "null"
+  hr_percentage_low:
+    anyOf:
+      - type: number
+      - type: "null"
+  speed_percentage:
+    anyOf:
+      - type: number
+      - type: "null"
+  speed_percentage_high:
+    anyOf:
+      - type: number
+      - type: "null"
+  speed_percentage_low:
+    anyOf:
+      - type: number
+      - type: "null"
+  power_percentage:
+    anyOf:
+      - type: number
+      - type: "null"
+  power_percentage_high:
+    anyOf:
+      - type: number
+      - type: "null"
+  power_percentage_low:
+    anyOf:
+      - type: number
+      - type: "null"
+  repetitions:
+    anyOf:
+      - type: integer
+        minimum: -2147483648
+        maximum: 2147483647
+      - type: "null"
+  speed_meters_per_second:
+    anyOf:
+      - type: number
+      - type: "null"
+  speed_meters_per_second_low:
+    anyOf:
+      - type: number
+      - type: "null"
+  speed_meters_per_second_high:
+    anyOf:
+      - type: number
+      - type: "null"
+required:
+  - target_type
+description: Intensity target of a provider planned-workout step

@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.07.13
+  version: 2026.07.14
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -847,7 +847,7 @@ paths:
         - Workouts
       summary: List planned workouts
       description: |
-        Returns the user's planned workouts, including workouts created on the provider side (is_external true) where the provider exposes them.
+        Returns the user's planned workouts, including workouts created on the provider side (is_external true) where the provider exposes them. External workouts carry their full body (title, description, planned metrics, structured steps) under `details`; they are fetched live from the provider and are not stored by Terra. Note that providers may limit how far ahead planned workouts are visible.
       operationId: Workouts_ListPlannedWorkouts
       parameters:
         - name: user_id
@@ -855,6 +855,21 @@ paths:
           required: true
           schema:
             type: string
+        - name: start_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: |
+            Start of the planned-date window (YYYY-MM-DD). When start_date and end_date are omitted, provider-side workouts default to the trailing 30 days; pass an explicit window to list upcoming workouts.
+        - name: end_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: End of the planned-date window (YYYY-MM-DD), inclusive.
       responses:
         '200':
           description: Planned workouts for the connection
@@ -887,6 +902,8 @@ paths:
       tags:
         - Workouts
       summary: Get a planned workout
+      description: |
+        Returns a planned workout created through Terra. Provider-created (external) workouts are not addressable by id — they are returned by the list endpoint with their full body under `details`.
       operationId: Workouts_GetPlannedWorkout
       responses:
         '200':
@@ -8462,6 +8479,334 @@ components:
             - type: 'null'
           description: Pool length in meters (overrides the template value)
       description: Athlete-specific metrics used to personalise workout targets for one planned workout
+    PlannedWorkoutDetailsMetadata:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        id:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Identifier of the workout on the provider's side
+        provider:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Provider the workout was fetched from
+        name:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Workout title
+        description:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Workout description, when the provider exposes one
+        type:
+          anyOf:
+            - type: integer
+              minimum: -2147483648
+              maximum: 2147483647
+            - type: 'null'
+          description: Numeric activity type of the workout
+        planned_date:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Scheduled date (YYYY-MM-DD), matching the list item's planned_date
+        created_date:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Creation time on the provider's side (RFC 3339)
+        estimated_tss:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: Planned Training Stress Score
+        estimated_if:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: Planned Intensity Factor
+        estimated_duration_seconds:
+          anyOf:
+            - type: number
+            - type: 'null'
+        estimated_distance_meters:
+          anyOf:
+            - type: number
+            - type: 'null'
+        estimated_calories:
+          anyOf:
+            - type: number
+            - type: 'null'
+        estimated_elevation_gain_meters:
+          anyOf:
+            - type: number
+            - type: 'null'
+        estimated_energy_kj:
+          anyOf:
+            - type: number
+            - type: 'null'
+        estimated_speed_meters_per_second:
+          anyOf:
+            - type: number
+            - type: 'null'
+        pool_length_meters:
+          anyOf:
+            - type: number
+            - type: 'null'
+      description: Summary metadata of a provider-side planned workout
+    PlannedWorkoutDetailsStepDuration:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        duration_type:
+          type: integer
+          minimum: -2147483648
+          maximum: 2147483647
+        seconds:
+          anyOf:
+            - type: number
+            - type: 'null'
+        distance_meters:
+          anyOf:
+            - type: number
+            - type: 'null'
+        hr_below_bpm:
+          anyOf:
+            - type: number
+            - type: 'null'
+        hr_above_bpm:
+          anyOf:
+            - type: number
+            - type: 'null'
+        calories:
+          anyOf:
+            - type: number
+            - type: 'null'
+        power_below_watts:
+          anyOf:
+            - type: number
+            - type: 'null'
+        power_above_watts:
+          anyOf:
+            - type: number
+            - type: 'null'
+        reps:
+          anyOf:
+            - type: number
+            - type: 'null'
+        rest_seconds:
+          anyOf:
+            - type: number
+            - type: 'null'
+        steps:
+          anyOf:
+            - type: number
+            - type: 'null'
+      required:
+        - duration_type
+      description: Completion condition of a provider planned-workout step
+    PlannedWorkoutDetailsStepTarget:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        target_type:
+          type: integer
+          minimum: -2147483648
+          maximum: 2147483647
+        hr_bpm_high:
+          anyOf:
+            - type: number
+            - type: 'null'
+        hr_bpm_low:
+          anyOf:
+            - type: number
+            - type: 'null'
+        cadence:
+          anyOf:
+            - type: number
+            - type: 'null'
+        cadence_high:
+          anyOf:
+            - type: number
+            - type: 'null'
+        cadence_low:
+          anyOf:
+            - type: number
+            - type: 'null'
+        power_watt:
+          anyOf:
+            - type: number
+            - type: 'null'
+        power_watt_high:
+          anyOf:
+            - type: number
+            - type: 'null'
+        power_watt_low:
+          anyOf:
+            - type: number
+            - type: 'null'
+        swim_strokes:
+          anyOf:
+            - type: number
+            - type: 'null'
+        hr_percentage:
+          anyOf:
+            - type: number
+            - type: 'null'
+        hr_percentage_high:
+          anyOf:
+            - type: number
+            - type: 'null'
+        hr_percentage_low:
+          anyOf:
+            - type: number
+            - type: 'null'
+        speed_percentage:
+          anyOf:
+            - type: number
+            - type: 'null'
+        speed_percentage_high:
+          anyOf:
+            - type: number
+            - type: 'null'
+        speed_percentage_low:
+          anyOf:
+            - type: number
+            - type: 'null'
+        power_percentage:
+          anyOf:
+            - type: number
+            - type: 'null'
+        power_percentage_high:
+          anyOf:
+            - type: number
+            - type: 'null'
+        power_percentage_low:
+          anyOf:
+            - type: number
+            - type: 'null'
+        repetitions:
+          anyOf:
+            - type: integer
+              minimum: -2147483648
+              maximum: 2147483647
+            - type: 'null'
+        speed_meters_per_second:
+          anyOf:
+            - type: number
+            - type: 'null'
+        speed_meters_per_second_low:
+          anyOf:
+            - type: number
+            - type: 'null'
+        speed_meters_per_second_high:
+          anyOf:
+            - type: number
+            - type: 'null'
+      required:
+        - target_type
+      description: Intensity target of a provider planned-workout step
+    PlannedWorkoutDetailsStep:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        order:
+          anyOf:
+            - type: integer
+              minimum: -2147483648
+              maximum: 2147483647
+            - type: 'null'
+        name:
+          anyOf:
+            - type: string
+            - type: 'null'
+        description:
+          anyOf:
+            - type: string
+            - type: 'null'
+        intensity:
+          anyOf:
+            - type: integer
+              minimum: -2147483648
+              maximum: 2147483647
+            - type: 'null'
+          description: Numeric step intensity class
+        type:
+          anyOf:
+            - type: integer
+              minimum: -2147483648
+              maximum: 2147483647
+            - type: 'null'
+          description: 0 = step, 1 = repetition block
+        durations:
+          anyOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/PlannedWorkoutDetailsStepDuration'
+            - type: 'null'
+        targets:
+          anyOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/PlannedWorkoutDetailsStepTarget'
+            - type: 'null'
+        stroke_type:
+          anyOf:
+            - type: integer
+              minimum: -2147483648
+              maximum: 2147483647
+            - type: 'null'
+        equipment_type:
+          anyOf:
+            - type: array
+              items:
+                type: integer
+                minimum: -2147483648
+                maximum: 2147483647
+            - type: 'null'
+        exercise_name:
+          anyOf:
+            - type: string
+            - type: 'null'
+        exercise_category:
+          anyOf:
+            - type: integer
+              minimum: -2147483648
+              maximum: 2147483647
+            - type: 'null'
+        weight_kg:
+          anyOf:
+            - type: number
+            - type: 'null'
+        steps:
+          anyOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/PlannedWorkoutDetailsStep'
+            - type: 'null'
+          description: Child steps of a repetition block
+      description: A step of a provider-side planned workout
+    PlannedWorkoutDetails:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        metadata:
+          anyOf:
+            - $ref: '#/components/schemas/PlannedWorkoutDetailsMetadata'
+            - type: 'null'
+        steps:
+          anyOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/PlannedWorkoutDetailsStep'
+            - type: 'null'
+          description: Structured steps of the workout, when the provider exposes them
+      description: Full body of a provider-side planned workout, fetched live from the provider. Present only on external planned workouts (is_external true), which have no Terra workout template.
     PlannedWorkout:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -8510,6 +8855,11 @@ components:
           anyOf:
             - $ref: '#/components/schemas/AthleteMetrics'
             - type: 'null'
+        details:
+          anyOf:
+            - $ref: '#/components/schemas/PlannedWorkoutDetails'
+            - type: 'null'
+          description: Full workout body (title, description, planned metrics, structured steps) fetched live from the provider. Present only for external workouts (is_external true).
       description: A workout template scheduled onto a user's calendar
     WebhookEvent:
       $schema: https://json-schema.org/draft/2020-12/schema

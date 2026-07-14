@@ -1,0 +1,79 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  order:
+    anyOf:
+      - type: integer
+        minimum: -2147483648
+        maximum: 2147483647
+      - type: "null"
+  name:
+    anyOf:
+      - type: string
+      - type: "null"
+  description:
+    anyOf:
+      - type: string
+      - type: "null"
+  intensity:
+    anyOf:
+      - type: integer
+        minimum: -2147483648
+        maximum: 2147483647
+      - type: "null"
+    description: Numeric step intensity class
+  type:
+    anyOf:
+      - type: integer
+        minimum: -2147483648
+        maximum: 2147483647
+      - type: "null"
+    description: 0 = step, 1 = repetition block
+  durations:
+    anyOf:
+      - type: array
+        items:
+          $ref: PlannedWorkoutDetailsStepDuration.yaml
+      - type: "null"
+  targets:
+    anyOf:
+      - type: array
+        items:
+          $ref: PlannedWorkoutDetailsStepTarget.yaml
+      - type: "null"
+  stroke_type:
+    anyOf:
+      - type: integer
+        minimum: -2147483648
+        maximum: 2147483647
+      - type: "null"
+  equipment_type:
+    anyOf:
+      - type: array
+        items:
+          type: integer
+          minimum: -2147483648
+          maximum: 2147483647
+      - type: "null"
+  exercise_name:
+    anyOf:
+      - type: string
+      - type: "null"
+  exercise_category:
+    anyOf:
+      - type: integer
+        minimum: -2147483648
+        maximum: 2147483647
+      - type: "null"
+  weight_kg:
+    anyOf:
+      - type: number
+      - type: "null"
+  steps:
+    anyOf:
+      - type: array
+        items:
+          $ref: PlannedWorkoutDetailsStep.yaml
+      - type: "null"
+    description: Child steps of a repetition block
+description: A step of a provider-side planned workout

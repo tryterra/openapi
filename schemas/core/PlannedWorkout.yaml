@@ -45,4 +45,9 @@ properties:
     anyOf:
       - $ref: AthleteMetrics.yaml
       - type: "null"
+  details:
+    anyOf:
+      - $ref: PlannedWorkoutDetails.yaml
+      - type: "null"
+    description: Full workout body (title, description, planned metrics, structured steps) fetched live from the provider. Present only for external workouts (is_external true).
 description: A workout template scheduled onto a user's calendar
