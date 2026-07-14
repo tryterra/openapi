@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Use your **client_id** as the username and **client_secret** as the password for Basic Authentication.
   title: Terra Blood DNA Device API
-  version: 2026.07.13.1
+  version: 2026.07.14
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -719,7 +719,7 @@ paths:
       summary: Acknowledge results receipt
       tags:
         - results
-      description: Confirms that test results have been successfully retrieved and processed by the test taker/end user. Required for compliance and audit trails.
+      description: Records the end user's affirmative confirmation that they have received and viewed their results (Schedule C §C6A). Must be triggered by an explicit end-user action (e.g. a checkbox or button in the client's UI) — never automatically by the backend on retrieval or delivery. Required for compliance and audit trails.
       parameters:
         - name: orderItemID
           in: path
@@ -1458,6 +1458,10 @@ components:
             type: string
           example:
             - '333410942627700738'
+        supplier_item_id:
+          type: string
+          description: Supplier-side item identifier (kit ID once assigned). Recoverable here even if the webhook that carried it was missed.
+          example: BXTWP00362
         quantity:
           type: integer
           example: 1
@@ -1523,6 +1527,14 @@ components:
               changed_at:
                 type: string
                 format: date-time
+              escalation_level:
+                type: string
+                example: high
+                description: Present only on escalation_raised entries.
+              acknowledgment_due_by:
+                type: string
+                format: date-time
+                description: Present only on escalation_raised entries.
         client_id:
           type: string
           example: terra_client_abc123
