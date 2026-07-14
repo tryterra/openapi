@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Use your **client_id** as the username and **client_secret** as the password for Basic Authentication.
   title: Terra Blood DNA Device API
-  version: 2026.07.14.1
+  version: 2026.07.14.2
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -1185,6 +1185,8 @@ components:
       properties:
         country_code:
           type: integer
+          format: int64
+          description: Dialing country code. Accepts a JSON string on input to preserve significant leading zeros a number would drop; always returned as an integer.
           example: 44
         date_of_birth:
           type: string
@@ -1212,7 +1214,59 @@ components:
           example: Johnson
         phone_number:
           type: integer
-          example: 447700900123
+          format: int64
+          description: Phone number. Accepts a JSON string on input (to preserve leading zeros) or a full "+"-prefixed E.164 number; always returned as an integer, so leading zeros are not preserved on read.
+          example: 7700900123
+      required:
+        - country_code
+        - date_of_birth
+        - email
+        - first_name
+        - gender_at_birth
+        - last_name
+        - phone_number
+    RecipientRequestDTO:
+      description: Recipient on an order-creation request; phone_number and country_code additionally accept a quoted string to preserve leading zeros.
+      type: object
+      properties:
+        country_code:
+          oneOf:
+            - type: integer
+              format: int64
+            - type: string
+          description: Dialing country code. Send a string to preserve significant leading zeros a JSON number would drop.
+          example: 44
+        date_of_birth:
+          type: string
+          example: '1990-05-15'
+        email:
+          type: string
+          maxLength: 100
+          example: sarah.johnson@example.com
+        first_name:
+          type: string
+          maxLength: 50
+          example: Sarah
+        gender_at_birth:
+          type: string
+          enum:
+            - male
+            - female
+          example: female
+        id:
+          type: string
+          example: '123456789'
+        last_name:
+          type: string
+          maxLength: 50
+          example: Johnson
+        phone_number:
+          oneOf:
+            - type: integer
+              format: int64
+            - type: string
+          description: Phone number. Send a string to preserve significant leading zeros a JSON number would drop, or a full "+"-prefixed E.164 number.
+          example: 7700900123
       required:
         - country_code
         - date_of_birth
@@ -1317,7 +1371,11 @@ components:
       type: object
       properties:
         country_code:
-          type: integer
+          oneOf:
+            - type: integer
+              format: int64
+            - type: string
+          description: Dialing country code. Send a string to preserve significant leading zeros a JSON number would drop.
           example: 44
         date_of_birth:
           type: string
@@ -1338,8 +1396,12 @@ components:
           type: string
           example: Smith
         phone_number:
-          type: integer
-          example: 447700900456
+          oneOf:
+            - type: integer
+              format: int64
+            - type: string
+          description: Phone number. Send a string to preserve significant leading zeros a JSON number would drop, or a full "+"-prefixed E.164 number.
+          example: 7700900456
       required:
         - country_code
         - date_of_birth
@@ -1399,7 +1461,7 @@ components:
         recipient:
           description: Details of the person who ordered. Depending on the supplier recipient is not necessarily the test-taker. Although some suppliers enforce this constraint on us.
           allOf:
-            - $ref: '#/components/schemas/RecipientDTO'
+            - $ref: '#/components/schemas/RecipientRequestDTO'
         requested_lab_address:
           $ref: '#/components/schemas/AddressDTO'
         shipping_address:
