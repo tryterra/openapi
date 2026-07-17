@@ -1,0 +1,21 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+oneOf:
+  - type: number
+    const: 0
+    description: No severity was recorded.
+    title: Unspecified
+  - type: number
+    const: 1
+    description: The user explicitly recorded the symptom as not present.
+    title: Not Present
+  - type: number
+    const: 2
+    title: Mild
+  - type: number
+    const: 3
+    title: Moderate
+  - type: number
+    const: 4
+    title: Severe
+examples:
+  - 3

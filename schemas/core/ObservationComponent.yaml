@@ -1,0 +1,15 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  code:
+    type: string
+    examples:
+      - valence
+    description: Identity of this sub-value, scoped to the observation_type (e.g. valence for a state-of-mind observation).
+  value:
+    anyOf:
+      - $ref: ObservationValue.yaml
+      - type: "null"
+    description: The component's value.
+required:
+  - code

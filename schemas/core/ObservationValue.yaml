@@ -1,0 +1,39 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  value_type:
+    $ref: ObservationValueType.yaml
+    description: Which member of this value union is set.
+  quantity:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 2
+    description: Numeric value, set when value_type is QUANTITY.
+  unit:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - count
+    description: Unit for the quantity, set when value_type is QUANTITY.
+  boolean:
+    anyOf:
+      - type: boolean
+      - type: "null"
+    description: Boolean finding, set when value_type is BOOLEAN.
+  text:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Free-text value, set when value_type is STRING.
+  code:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - luteinizing_hormone_surge
+    description: Coded value, set when value_type is CODE.
+required:
+  - value_type

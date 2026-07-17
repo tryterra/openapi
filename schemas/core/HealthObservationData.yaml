@@ -1,0 +1,49 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  category:
+    anyOf:
+      - $ref: HealthObservationCategory.yaml
+      - type: "null"
+    description: Coarse grouping of the observation, usable for filtering and permissioning.
+  observation_type:
+    type: string
+    examples:
+      - intermenstrual_bleeding
+    description: Normalized snake_case observation identifier.
+  codes:
+    anyOf:
+      - type: array
+        items:
+          $ref: ObservationCode.yaml
+      - type: "null"
+    description: (system, code) tuples identifying the observation in the source platform's vocabulary and, where mapped, standard terminologies (SNOMED CT, LOINC).
+  value:
+    anyOf:
+      - $ref: ObservationValue.yaml
+      - type: "null"
+    description: The observation's value. Absent or NONE-typed for presence-only events.
+  severity:
+    anyOf:
+      - $ref: ObservationSeverity.yaml
+      - type: "null"
+    description: Severity, for symptom observations. Mirrors HealthKit severity semantics.
+  components:
+    anyOf:
+      - type: array
+        items:
+          $ref: ObservationComponent.yaml
+      - type: "null"
+    description: Coded sub-values of a multi-part observation (e.g. State of Mind valence and labels).
+  status:
+    anyOf:
+      - $ref: ObservationStatus.yaml
+      - type: "null"
+    description: Record lifecycle. ENTERED_IN_ERROR retracts the record with this summary_id.
+  notes:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Free-text note attached to the observation by the user or source platform.
+required:
+  - observation_type

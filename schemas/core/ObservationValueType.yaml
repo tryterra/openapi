@@ -1,0 +1,24 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+oneOf:
+  - type: number
+    const: 0
+    description: "Presence-only: the event having occurred is the datum, and no value member is set."
+    title: None
+  - type: number
+    const: 1
+    description: A numeric value; the quantity and unit members are set.
+    title: Quantity
+  - type: number
+    const: 2
+    description: A boolean finding; the boolean member is set.
+    title: Boolean
+  - type: number
+    const: 3
+    description: A free-text value; the text member is set.
+    title: String
+  - type: number
+    const: 4
+    description: A coded value from a bounded set; the code member is set.
+    title: Code
+examples:
+  - 1

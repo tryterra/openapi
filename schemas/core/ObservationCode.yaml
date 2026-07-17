@@ -1,0 +1,21 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  system:
+    type: string
+    examples:
+      - healthkit
+    description: "The vocabulary the code belongs to: the source platform's identifier system (e.g. healthkit) or a standard terminology URI (e.g. http://snomed.info/sct, http://loinc.org)."
+  code:
+    type: string
+    examples:
+      - HKCategoryTypeIdentifierIntermenstrualBleeding
+    description: The code identifying the observation within the system.
+  display:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Human-readable display name for the code, where the system provides one.
+required:
+  - system
+  - code

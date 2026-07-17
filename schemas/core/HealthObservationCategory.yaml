@@ -1,0 +1,40 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+oneOf:
+  - type: number
+    const: 0
+    description: Category is unknown or has not been mapped yet. Observations from source identifiers Terra has not yet catalogued ingest with this category rather than being dropped.
+    title: Unspecified
+  - type: number
+    const: 1
+    description: A logged symptom, such as headache, fever or nausea. Symptom observations carry a severity.
+    title: Symptom
+  - type: number
+    const: 2
+    description: A reproductive-health event, such as intermenstrual bleeding, an ovulation test result, or contraceptive use.
+    title: Reproductive Health
+  - type: number
+    const: 3
+    description: A self-care event, such as toothbrushing or handwashing.
+    title: Self Care
+  - type: number
+    const: 4
+    description: A medication event, such as a logged dose.
+    title: Medication
+  - type: number
+    const: 5
+    description: A discrete health metric or lab-style measurement, such as inhaler usage, blood alcohol content or insulin delivery.
+    title: Lab & Health Metrics
+  - type: number
+    const: 6
+    description: A logged mental-wellbeing observation, such as a momentary emotion or daily mood.
+    title: State of Mind
+  - type: number
+    const: 7
+    description: A device-detected event, such as an irregular-rhythm or sleep-apnea notification.
+    title: Device Event
+  - type: number
+    const: 8
+    description: A record originating from a clinical/EHR source.
+    title: Clinical
+examples:
+  - 1

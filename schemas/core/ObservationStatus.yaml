@@ -1,0 +1,20 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+oneOf:
+  - type: number
+    const: 0
+    description: No lifecycle status was provided; treat as final.
+    title: Unspecified
+  - type: number
+    const: 1
+    description: A complete record.
+    title: Final
+  - type: number
+    const: 2
+    description: A correction to a previously delivered record with the same summary_id; replace the stored copy.
+    title: Amended
+  - type: number
+    const: 3
+    description: The source retracted the record; delete the stored copy for this summary_id.
+    title: Entered In Error
+examples:
+  - 1

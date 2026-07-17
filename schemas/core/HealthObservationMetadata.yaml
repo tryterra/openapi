@@ -1,0 +1,27 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  start_time:
+    type: string
+    examples:
+      - 2022-10-28T10:00:00.000000+01:00
+    description: When the observation occurred (or began), in ISO8601 format with microsecond precision. TimeZone info will be provided whenever possible. If absent, the time corresponds to the user's local time.
+  end_time:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - 2022-10-28T10:05:00.000000+01:00
+    description: When the observation ended, in ISO8601 format, for interval observations. Absent for point-in-time observations.
+  summary_id:
+    type: string
+    examples:
+      - 7C3A5D9E-1F42-4B5A-9C1D-2E8F0A6B4C3D
+    description: Stable identifier for the source record (e.g. the HealthKit sample UUID). Re-deliveries and amendments reuse the same summary_id — treat it as the upsert key.
+  timestamp_localization:
+    anyOf:
+      - $ref: TimestampLocalization.yaml
+      - type: "null"
+required:
+  - start_time
+  - summary_id

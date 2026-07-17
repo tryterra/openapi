@@ -18,6 +18,7 @@ oneOf:
   - $ref: SleepEvent.yaml
   - $ref: PlannedWorkoutEvent.yaml
   - $ref: HormoneEvent.yaml
+  - $ref: HealthObservationEvent.yaml
   - $ref: LabReportCompletedEvent.yaml
   - $ref: LabReportFailedEvent.yaml
   - $ref: S3PayloadEvent.yaml
