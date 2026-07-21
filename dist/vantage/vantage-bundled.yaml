@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted).
   title: Terra Vantage API
-  version: 2026.07.21.1
+  version: 2026.07.21.2
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -1735,10 +1735,9 @@ components:
           type: string
           const: order.status_changed
         event_id:
-          type: integer
-          format: int64
-          description: Unique per event — deduplicate on this.
-          example: 249956485092778000
+          type: string
+          description: Unique per event (64-bit id serialized as a string) — deduplicate on this. Equals the X-Terra-Trace-Id header.
+          example: '249956485092777984'
         timestamp:
           type: integer
           description: Unix seconds when the event was sent.
@@ -1783,10 +1782,9 @@ components:
           type: string
           const: order_item.results_status_change
         event_id:
-          type: integer
-          format: int64
-          description: Unique per event — deduplicate on this.
-          example: 249958796259139600
+          type: string
+          description: Unique per event (64-bit id serialized as a string) — deduplicate on this. Equals the X-Terra-Trace-Id header.
+          example: '249958796259139584'
         timestamp:
           type: integer
           description: Unix seconds when the event was sent.
