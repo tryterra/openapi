@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
   contact: {}
-  description: Use your **client_id** as the username and **client_secret** as the password for Basic Authentication.
-  title: Terra Blood DNA Device API
-  version: 2026.07.14.2
+  description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted).
+  title: Terra Vantage API
+  version: 2026.07.21
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -421,7 +421,7 @@ paths:
       summary: Set catalog selection
       tags:
         - products
-      description: 'Curate which products your own catalog reads return. Full-set write: listed products become enabled, every other product disabled. With no selection saved, everything is enabled; products added to the global catalog after your last save default to enabled until you save again. Curation affects catalog reads only — it is not an ordering restriction.'
+      description: 'Curate which products your own catalog reads return. Full-set write: listed products become enabled, every other product disabled. With no selection saved, everything is enabled; products added to the global catalog after your last save default to enabled until you save again. Disabled products are excluded from catalog reads and cannot be ordered (403).'
       security:
         - BasicAuth: []
       requestBody:
@@ -701,7 +701,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ProblemDetail'
         '401':
           description: Unauthorized - invalid client credentials
           content:
@@ -713,13 +713,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ProblemDetail'
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/results/{orderItemID}/acknowledge:
     post:
       summary: Acknowledge results receipt
@@ -925,6 +925,43 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+webhooks:
+  order.status_changed:
+    post:
+      operationId: webhookOrderStatusChanged
+      security: []
+      summary: Order fulfilment status changed
+      description: |-
+        Sent when an order's fulfilment status changes. `data.status` uses the webhook `fulfillment.*` vocabulary (REST reads of the same order render these states as `order.*`, with payment failure as `order.failed`).
+
+        Deliveries carry `X-Terra-Signature: t=<unix_seconds>,v1=<hex>` where `v1 = HMAC-SHA256(signing_secret, "<t>.<raw_body>")` — verify against the raw body before trusting the payload — plus `X-Terra-Trace-Id` (the event_id). Delivery is at-least-once: dedupe on `event_id`. Each queue delivery makes up to 5 HTTP attempts with exponential backoff (~1s, 2s, 4s, 8s) on network errors/408/429/5xx, and a failed message is redelivered by the queue up to 10 times before dead-lettering — a persistently failing endpoint can therefore see up to ~50 calls for one event. Other 4xx responses are recorded as rejected and not retried at all.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderStatusChangedEvent'
+      responses:
+        '200':
+          description: Return any 2xx quickly to acknowledge receipt.
+  order_item.results_status_change:
+    post:
+      operationId: webhookOrderItemResultsStatusChange
+      security: []
+      summary: Order item results status changed
+      description: |-
+        Sent when an order item's results status changes. `data.results_status` uses the `results.*` vocabulary shared with REST reads.
+
+        Signing, `X-Terra-Trace-Id`, at-least-once delivery, and retry semantics are identical to `order.status_changed` — see its description.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderItemResultsStatusChangedEvent'
+      responses:
+        '200':
+          description: Return any 2xx quickly to acknowledge receipt.
 components:
   securitySchemes:
     BasicAuth:
@@ -1445,13 +1482,17 @@ components:
       type: object
       properties:
         client_order_reference_id:
-          description: Your unique order identifier that you generate (for idempotency and tracking)
+          description: Your unique order identifier that you generate, used for tracking and reconciliation. Not deduplicated server-side — retrying a create with the same value produces a second order.
           type: string
           minLength: 1
           maxLength: 100
           example: ORDER-2024-001
         collection_type:
           type: string
+          enum:
+            - AT_HOME
+            - GO_TO_LAB
+          description: Determines the required address field — shipping_address for AT_HOME, requested_lab_address for GO_TO_LAB.
         items:
           description: Only need product_variant_id and quantity completely define what was ordered
           type: array
@@ -1531,7 +1572,7 @@ components:
           example: 1
         results_status:
           type: string
-          example: awaiting_sample
+          example: results.awaiting_sample
         variant_id:
           type: string
           example: '555666777'
@@ -1559,7 +1600,8 @@ components:
             $ref: '#/components/schemas/OrderItemResponse'
         order_status:
           type: string
-          example: pending_shipment
+          description: Current fulfilment status in the REST `order.*` vocabulary. New orders start at `order.payment_processing`.
+          example: order.payment_processing
         recipient_id:
           type: string
           example: '987654321'
@@ -1621,7 +1663,8 @@ components:
           example: '123456789'
         order_status:
           type: string
-          example: shipped
+          description: Current fulfilment status in the REST `order.*` vocabulary.
+          example: order.delivery_fulfilled
         recipient:
           $ref: '#/components/schemas/RecipientDTO'
         requested_lab_address:
@@ -1680,16 +1723,145 @@ components:
         - status
         - title
         - type
-    ErrorResponse:
-      description: Standard error response format
+    OrderStatusChangedEvent:
       type: object
+      required:
+        - event_type
+        - event_id
+        - timestamp
+        - data
       properties:
-        details:
+        event_type:
           type: string
-          example: Order item ID must be a valid positive integer
-        error:
+          const: order.status_changed
+        event_id:
+          type: integer
+          format: int64
+          description: Unique per event — deduplicate on this.
+          example: 249956485092778000
+        timestamp:
+          type: integer
+          description: Unix seconds when the event was sent.
+          example: 1763661470
+        data:
+          type: object
+          required:
+            - order_id
+            - status
+          properties:
+            order_id:
+              type: string
+              example: '333410942627700736'
+            status:
+              type: string
+              enum:
+                - fulfillment.payment_processing
+                - fulfillment.payment_complete
+                - fulfillment.payment_failed
+                - fulfillment.processing
+                - fulfillment.delayed
+                - fulfillment.cancelled
+                - fulfillment.completed
+                - fulfillment.delivery_fulfilled
+            tracking_number:
+              type: string
+              description: Present once delivery details are available.
+              example: KnD3d5PMZyq5ulNcWkrq
+            supplier_item_id:
+              type: string
+              description: Sandbox payloads only — the supplier-side kit ID.
+              example: '249602021676720128'
+    OrderItemResultsStatusChangedEvent:
+      type: object
+      required:
+        - event_type
+        - event_id
+        - timestamp
+        - data
+      properties:
+        event_type:
           type: string
-          example: Invalid orderItemID
+          const: order_item.results_status_change
+        event_id:
+          type: integer
+          format: int64
+          description: Unique per event — deduplicate on this.
+          example: 249958796259139600
+        timestamp:
+          type: integer
+          description: Unix seconds when the event was sent.
+          example: 1763662021
+        data:
+          type: object
+          required:
+            - order_id
+            - order_item_id
+            - variant_id
+            - results_status
+            - test_taker
+          properties:
+            order_id:
+              type: string
+              example: '333410942627700736'
+            order_item_id:
+              type: string
+              example: '333410942627700737'
+            variant_id:
+              type: string
+              example: '100011'
+            results_status:
+              type: string
+              enum:
+                - results.kit_activated
+                - results.sample_processing_in_lab
+                - results.sample_rejected
+                - results.partial_results_ready
+                - results.results_ready
+                - results.lab_processing_error
+                - results.escalation_raised
+            test_taker:
+              type: object
+              required:
+                - test_taker_id
+                - first_name
+                - last_name
+                - email
+                - country_code
+                - phone_number
+              properties:
+                test_taker_id:
+                  type: string
+                  example: '333410942627700738'
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                country_code:
+                  type: integer
+                  format: int64
+                phone_number:
+                  type: integer
+                  format: int64
+            escalation_level:
+              type: string
+              description: Present on escalation_raised.
+              enum:
+                - not_escalated
+                - very_low
+                - low
+                - medium
+                - high
+                - very_high
+            acknowledgment_due_by:
+              type: string
+              description: Present on escalation_raised — ISO 8601 deadline.
+              example: '2026-07-24T16:04:01Z'
+            failure_cause:
+              type: string
+              description: Present on sample_rejected.
+              example: blood contaminated
     GetResultsURLResponse:
       description: Response containing a presigned URL to download test results
       type: object
