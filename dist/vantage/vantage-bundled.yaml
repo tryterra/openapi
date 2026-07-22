@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted).
   title: Terra Vantage API
-  version: 2026.07.22.1
+  version: 2026.07.22.2
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -1751,6 +1751,13 @@ components:
               value:
                 type: string
                 example: '1234567890'
+        supported_ship_to_countries:
+          type: array
+          description: Present when the order was rejected for an unsupported country (tag unsupported_ship_to_country) - the ISO-3166 alpha-2 codes this test can be ordered in.
+          items:
+            type: string
+          example:
+            - GB
       required:
         - detail
         - instance
@@ -1982,6 +1989,13 @@ components:
           type: array
           items:
             type: string
+        supported_ship_to_countries:
+          type: array
+          description: ISO-3166 alpha-2 codes this test can be ordered in (AT_HOME shipping destination; for GO_TO_LAB, the requested lab country). Gate your address form on it - orders outside these countries are rejected with an unsupported_ship_to_country field error.
+          items:
+            type: string
+          example:
+            - GB
         currency:
           type: integer
           format: int32
