@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted).
   title: Terra Vantage API
-  version: 2026.07.22.3
+  version: 2026.07.22.4
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -2213,7 +2213,8 @@ components:
           example: '333410942627700737'
         event_type:
           type: string
-          example: EVENT_TYPE_ORDER_ITEM_RESULTS_STATUS_CHANGED
+          description: Same vocabulary as the webhook event_type field (currently order.status_changed, order_item.status_changed and order_item.results_status_change). Open set - new event types may appear; treat unknown values as deliveries of a newer event family.
+          example: order_item.results_status_change
         order_id:
           type: string
           example: '333410942627700736'
