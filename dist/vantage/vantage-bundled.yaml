@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted).
   title: Terra Vantage API
-  version: 2026.07.22.4
+  version: 2026.07.22.5
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -1539,6 +1539,8 @@ components:
             - $ref: '#/components/schemas/RecipientRequestDTO'
         requested_lab_address:
           $ref: '#/components/schemas/AddressDTO'
+        requested_lab:
+          $ref: '#/components/schemas/RequestedLab'
         shipping_address:
           $ref: '#/components/schemas/AddressDTO'
       required:
@@ -1621,7 +1623,13 @@ components:
       type: object
       properties:
         confirmed_lab_address:
-          $ref: '#/components/schemas/AddressDTO'
+          allOf:
+            - $ref: '#/components/schemas/AddressDTO'
+          description: 'For GO_TO_LAB orders: the bound draw site''s address - the end user''s selection when requested_lab was sent and verified, otherwise the nearest site to the requested lab address. Best-effort - null when resolution is unavailable; the requisition is typically accepted at any of the supplier network''s sites.'
+        confirmed_lab:
+          anyOf:
+            - $ref: '#/components/schemas/ConfirmedLab'
+            - type: 'null'
         estimated_delivery:
           type: string
           example: '2025-11-20'
@@ -1703,6 +1711,14 @@ components:
           $ref: '#/components/schemas/RecipientDTO'
         requested_lab_address:
           $ref: '#/components/schemas/AddressDTO'
+        confirmed_lab:
+          anyOf:
+            - $ref: '#/components/schemas/ConfirmedLab'
+            - type: 'null'
+        requested_lab:
+          allOf:
+            - $ref: '#/components/schemas/RequestedLab'
+          description: Echo of the selection sent at create time - lets a retrieval-only consumer tell "selected but unbound" from "no selection made".
         shipping_address:
           $ref: '#/components/schemas/AddressDTO'
       required:
@@ -1714,6 +1730,50 @@ components:
         - items
         - order_financials
         - collection_type
+    RequestedLab:
+      description: 'GO_TO_LAB only: bind the order to a draw site chosen from GET /labs. code is the binding identity (row''s code field); postal_code is a lookup hint (row''s address.postal_code, ZIP+4 accepted - normalized to the 5-digit ZIP server-side; defaults to requested_lab_address.postal_code). Unknown codes are rejected with invalid_fields tag unknown_lab_code; if the lookup is temporarily unavailable the order is accepted unbound (confirmed_lab null).'
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          example: T2O
+        postal_code:
+          type: string
+          example: 10001-6975
+    ConfirmedLab:
+      description: The draw site this order is bound to - a GET /labs row minus its request-relative distance field. Null when no binding exists (no selection and nearest-site resolution unavailable, or selection accepted unbound during a lookup outage).
+      type: object
+      required:
+        - code
+        - name
+        - address
+      properties:
+        code:
+          type: string
+          example: T2O
+        name:
+          type: string
+          example: Quest Diagnostics - NYC-26th St
+        address:
+          $ref: '#/components/schemas/AddressDTO'
+        phone:
+          type: string
+          example: 212-555-0100
+        hours:
+          type: object
+          additionalProperties:
+            type: string
+        latitude:
+          type: number
+          example: 40.7448
+        longitude:
+          type: number
+          example: -73.9938
+        scheduling:
+          type: boolean
+          example: true
     CreateOrderValidationError:
       description: Validation error when creating an order
       type: object
