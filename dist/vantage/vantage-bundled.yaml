@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted).
   title: Terra Vantage API
-  version: 2026.07.22
+  version: 2026.07.22.1
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -932,7 +932,7 @@ webhooks:
       security: []
       summary: Order fulfilment status changed
       description: |-
-        Sent when an order's fulfilment status changes. `data.status` uses the webhook `fulfillment.*` vocabulary (REST reads of the same order render these states as `order.*`, with payment failure as `order.failed`).
+        Sent when an order's fulfilment status changes. `data.status` uses the same `order.*` vocabulary as REST reads of the order.
 
         Deliveries carry `X-Terra-Signature: t=<unix_seconds>,v1=<hex>` where `v1 = HMAC-SHA256(signing_secret, "<t>.<raw_body>")` — verify against the raw body before trusting the payload — plus `X-Terra-Trace-Id` (the event_id). Delivery is at-least-once: dedupe on `event_id`. On network errors/408/429/5xx an event gets up to 5 HTTP attempts with exponential backoff (~1s, 2s, 4s, 8s) on first delivery, then single re-attempts with growing delays (5s doubling, capped at 10 minutes) for up to 10 deliveries in total — at most ~14 calls spread over ~30 minutes — before dead-lettering. Other 4xx responses are recorded as rejected and not retried at all.
       requestBody:
@@ -1332,26 +1332,39 @@ components:
           type: string
           example: https://terra.dev/errors/validation-error
     SimulateTransitionProblem:
-      description: 422 returned by the simulate endpoint when the requested event is not a valid forward transition from the current status. Extends ProblemDetail with the two fields a client needs to recover without a GET round-trip.
-      allOf:
-        - $ref: '#/components/schemas/ProblemDetail'
-        - type: object
-          required:
-            - current_status
-            - valid_events
-          properties:
-            current_status:
-              type: string
-              description: The status the rejected event was evaluated against.
-              example: order.payment_complete
-            valid_events:
-              type: array
-              description: Events accepted from current_status, sorted.
-              items:
-                type: string
-              example:
-                - processing
-                - cancelled
+      description: '422 returned by the simulate endpoint when the requested event is not a valid forward transition from the current status. The RFC 7807 problem fields plus the two fields a client needs to recover without a GET round-trip. (Flat rather than an allOf over ProblemDetail: the conformance gate seals declared objects, and sealed allOf branches reject each other''s properties.)'
+      type: object
+      required:
+        - current_status
+        - valid_events
+      properties:
+        detail:
+          type: string
+          example: event "payment_complete" is not a valid transition from the order's current status
+        instance:
+          type: string
+          example: /orders/333410942627700736/simulate
+        status:
+          type: integer
+          example: 422
+        title:
+          type: string
+          example: Unprocessable Entity
+        type:
+          type: string
+          example: https://terra.dev/errors/business-logic-error
+        current_status:
+          type: string
+          description: The status the rejected event was evaluated against.
+          example: order.payment_complete
+        valid_events:
+          type: array
+          description: Events accepted from current_status, sorted.
+          items:
+            type: string
+          example:
+            - processing
+            - cancelled
     AuthenticationError:
       description: Authentication error response (401)
       type: object
@@ -1775,14 +1788,14 @@ components:
             status:
               type: string
               enum:
-                - fulfillment.payment_processing
-                - fulfillment.payment_complete
-                - fulfillment.payment_failed
-                - fulfillment.processing
-                - fulfillment.delayed
-                - fulfillment.cancelled
-                - fulfillment.completed
-                - fulfillment.delivery_fulfilled
+                - order.payment_processing
+                - order.payment_complete
+                - order.payment_failed
+                - order.processing
+                - order.delayed
+                - order.cancelled
+                - order.completed
+                - order.delivery_fulfilled
             tracking_number:
               type: string
               description: Present once delivery details are available.
