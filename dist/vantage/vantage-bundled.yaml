@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted).
   title: Terra Vantage API
-  version: 2026.07.23
+  version: 2026.07.23.1
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -247,9 +247,18 @@ paths:
       summary: Create a new order
       tags:
         - orders
-      description: Create a new blood, DNA, or device test order. Products that are disabled in your catalog cannot be ordered and are rejected with 403.
+      description: Create a new blood, DNA, or device test order. Products that are disabled in your catalog cannot be ordered and are rejected with 403. Payment is authorized then captured as part of order creation; if authorization fails, nothing is created and a 402 is returned.
       security:
         - BasicAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Optional Stripe-style idempotency key. Replaying the same key with the same request body returns the original order without creating or charging again; the same key with a different body returns 409.
+          schema:
+            type: string
+            maxLength: 255
+            example: a1b2c3d4-order-2024-001
       requestBody:
         content:
           application/json:
@@ -270,8 +279,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateOrderValidationError'
+        '402':
+          description: Payment authorization failed. Nothing was created — no supplier order and no charge. Retry after resolving the payment method.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentRequiredProblem'
         '403':
           description: A requested product is not enabled in your catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: The Idempotency-Key was already used with a different request body, or a request with this key is still in progress.
           content:
             application/json:
               schema:
@@ -1363,6 +1384,35 @@ components:
           example:
             - processing
             - cancelled
+    PaymentRequiredProblem:
+      description: '402 returned by POST /orders when payment authorization fails. Nothing is created — no supplier order and no charge. The RFC 7807 problem fields plus a category the client can branch on. (Flat rather than an allOf over ProblemDetail: the conformance gate seals declared objects, and sealed allOf branches reject each other''s properties.)'
+      type: object
+      required:
+        - category
+        - detail
+        - status
+        - title
+        - type
+      properties:
+        detail:
+          type: string
+          example: Payment could not be authorized for this order.
+        instance:
+          type: string
+          example: /api/v1/orders
+        status:
+          type: integer
+          example: 402
+        title:
+          type: string
+          example: Payment Required
+        type:
+          type: string
+          example: https://api.terra-diagnostics.com/errors/payment-required-error
+        category:
+          type: string
+          description: Failure class for programmatic branching.
+          example: payment_failed
     AuthenticationError:
       description: Authentication error response (401)
       type: object
