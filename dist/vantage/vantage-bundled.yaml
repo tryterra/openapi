@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted).
   title: Terra Vantage API
-  version: 2026.07.22.5
+  version: 2026.07.23
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -1221,10 +1221,9 @@ components:
       type: object
       properties:
         country_code:
-          type: integer
-          format: int64
-          description: Dialing country code. Accepts a JSON string on input to preserve significant leading zeros a number would drop; always returned as an integer.
-          example: 44
+          type: string
+          description: Dialing country code digits, without a leading "+" (e.g. "44").
+          example: '44'
         date_of_birth:
           type: string
           example: '1990-05-15'
@@ -1250,10 +1249,9 @@ components:
           maxLength: 50
           example: Johnson
         phone_number:
-          type: integer
-          format: int64
-          description: Phone number. Accepts a JSON string on input (to preserve leading zeros) or a full "+"-prefixed E.164 number; always returned as an integer, so leading zeros are not preserved on read.
-          example: 7911123456
+          type: string
+          description: Full E.164 phone number as stored and dialed, including the "+" and country code (e.g. "+447911123456"). Leading zeros significant to the national number are preserved.
+          example: '+447911123456'
       required:
         - country_code
         - date_of_birth
