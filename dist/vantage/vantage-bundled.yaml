@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted).
   title: Terra Vantage API
-  version: 2026.07.23.1
+  version: 2026.07.23.2
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -1241,10 +1241,6 @@ components:
       description: The recipient who will receive the test kit and may or may not be the test-taker (supplier-dependent)
       type: object
       properties:
-        country_code:
-          type: string
-          description: Dialing country code digits, without a leading "+" (e.g. "44").
-          example: '44'
         date_of_birth:
           type: string
           example: '1990-05-15'
@@ -1271,10 +1267,9 @@ components:
           example: Johnson
         phone_number:
           type: string
-          description: Full E.164 phone number as stored and dialed, including the "+" and country code (e.g. "+447911123456"). Leading zeros significant to the national number are preserved.
+          description: Full E.164 phone number as stored and dialed, including the "+" and country calling code (e.g. "+447911123456"). Leading zeros significant to the national number are preserved.
           example: '+447911123456'
       required:
-        - country_code
         - date_of_birth
         - email
         - first_name
@@ -1282,16 +1277,9 @@ components:
         - last_name
         - phone_number
     RecipientRequestDTO:
-      description: Recipient on an order-creation request; phone_number and country_code additionally accept a quoted string to preserve leading zeros.
+      description: Recipient on an order-creation request. phone_number is a single E.164 string; the separate country_code field was removed and is silently ignored if still sent.
       type: object
       properties:
-        country_code:
-          oneOf:
-            - type: integer
-              format: int64
-            - type: string
-          description: Dialing country code. Send a string to preserve significant leading zeros a JSON number would drop.
-          example: 44
         date_of_birth:
           type: string
           example: '1990-05-15'
@@ -1317,14 +1305,10 @@ components:
           maxLength: 50
           example: Johnson
         phone_number:
-          oneOf:
-            - type: integer
-              format: int64
-            - type: string
-          description: Phone number. Send a string to preserve significant leading zeros a JSON number would drop, or a full "+"-prefixed E.164 number.
-          example: 7911123456
+          type: string
+          description: 'Required, in E.164 format: a leading "+", the country calling code, then the national number (e.g. "+447911123456"). A bare national number or a separate country_code is rejected.'
+          example: '+447911123456'
       required:
-        - country_code
         - date_of_birth
         - email
         - first_name
@@ -1486,16 +1470,9 @@ components:
         - country_code
         - postal_code
     ActivationContextRecipient:
-      description: Test-taker personal information (may differ from original recipient)
+      description: Test-taker personal information (may differ from original recipient). The former country_code field was removed and is silently ignored if still sent.
       type: object
       properties:
-        country_code:
-          oneOf:
-            - type: integer
-              format: int64
-            - type: string
-          description: Dialing country code. Send a string to preserve significant leading zeros a JSON number would drop.
-          example: 44
         date_of_birth:
           type: string
           example: '1985-03-20'
@@ -1515,14 +1492,10 @@ components:
           type: string
           example: Smith
         phone_number:
-          oneOf:
-            - type: integer
-              format: int64
-            - type: string
-          description: Phone number. Send a string to preserve significant leading zeros a JSON number would drop, or a full "+"-prefixed E.164 number.
-          example: 7400123456
+          type: string
+          description: 'Required, in E.164 format: a leading "+", the country calling code, then the national number (e.g. "+447911123456"). A bare national number or a separate country_code is rejected.'
+          example: '+447911123456'
       required:
-        - country_code
         - date_of_birth
         - email
         - gender_at_birth
@@ -1852,13 +1825,13 @@ components:
                 example: PhoneNumber
               message:
                 type: string
-                example: PhoneNumber is not a valid phone number for the provided country code
+                example: 'country_code was removed; send phone_number in E.164 format: +447911123456'
               tag:
                 type: string
-                example: phone_with_country
+                example: e164
               value:
                 type: string
-                example: '1234567890'
+                example: '07911123456'
         supported_ship_to_countries:
           type: array
           description: Present when the order was rejected for an unsupported country (tag unsupported_ship_to_country) - the ISO-3166 alpha-2 codes this test can be ordered in.
@@ -1973,7 +1946,6 @@ components:
                 - first_name
                 - last_name
                 - email
-                - country_code
                 - phone_number
               properties:
                 test_taker_id:
@@ -1985,12 +1957,10 @@ components:
                   type: string
                 email:
                   type: string
-                country_code:
-                  type: integer
-                  format: int64
                 phone_number:
-                  type: integer
-                  format: int64
+                  type: string
+                  description: E.164 phone number
+                  example: '+447911123456'
             escalation_level:
               type: string
               description: Present on escalation_raised.
