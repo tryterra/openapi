@@ -1,0 +1,75 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  distance_meters:
+    anyOf:
+      - type: number
+      - type: "null"
+    description: Distance covered, for loaded carries.
+  duration_seconds:
+    anyOf:
+      - type: number
+      - type: "null"
+    description: Duration of the set, for timed holds and carries.
+  end_time:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: End of the set, ISO 8601. Null when the source does not timestamp sets.
+  load_type:
+    $ref: StrengthLoadType.yaml
+    examples:
+      - external
+    description: "How to read weight_kg. Always present: every set that happened was loaded somehow, so a set Terra could not classify reports `unknown` rather than omitting the field. Open enum — handle unknown values gracefully. Only external means weight_kg is load added to an otherwise unloaded body, so compute volume from external sets alone. Test for external rather than testing against the other values: a load type you do not recognise must be treated as unknown, because counting it as external overstates the load."
+  notes:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: The user's note on this specific set.
+  reps:
+    anyOf:
+      - type: integer
+      - type: "null"
+    examples:
+      - 5
+    description: Repetitions performed, exactly as the source recorded them. For unilateral movements this is per side.
+  rest_after_seconds:
+    anyOf:
+      - type: integer
+      - type: "null"
+    examples:
+      - 120
+    description: Rest taken after this set, within its exercise. Rest between exercises is not represented.
+  rir:
+    anyOf:
+      - type: number
+      - type: "null"
+    description: Reps in reserve. Never converted to or from rpe.
+  rpe:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 8.5
+    description: Rate of perceived exertion, on a 0-10 scale.
+  set_type:
+    anyOf:
+      - $ref: StrengthSetType.yaml
+      - type: "null"
+    examples:
+      - normal
+    description: The type of set as reported by the source, such as normal, warmup, dropset or failure. Open enum — handle unknown values gracefully. unknown when the source does not classify the set.
+  start_time:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Start of the set, ISO 8601. Null when the source does not timestamp sets.
+  weight_kg:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 100
+    description: "Load as the source logged it: a barbell's total, or one dumbbell. Never negative. Null when load_type is unknown, and may also be null for a load_type you do not recognise."
+required:
+  - load_type

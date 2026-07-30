@@ -1,0 +1,56 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: abs
+  - type: string
+    const: adductors
+  - type: string
+    const: ankle
+  - type: string
+    const: back
+  - type: string
+    const: calves
+  - type: string
+    const: chest
+  - type: string
+    const: forearms
+  - type: string
+    const: glutes
+  - type: string
+    const: hamstrings
+  - type: string
+    const: hip
+  - type: string
+    const: hip_abductor
+  - type: string
+    const: hip_adductor
+  - type: string
+    const: hip_flexor
+  - type: string
+    const: lat
+  - type: string
+    const: lower_back
+  - type: string
+    const: neck
+  - type: string
+    const: obliques
+  - type: string
+    const: quadriceps
+  - type: string
+    const: shoulders
+  - type: string
+    const: spine
+  - type: string
+    const: thoracic_spine
+  - type: string
+    const: triceps
+  - type: string
+    const: upper_back
+  - type: string
+    const: unknown
+    description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - abs
+description: The body part a stretch or mobility drill acts on. For a stretch the body part IS the exercise, which is why it is reported separately from the muscles worked. Open enum — handle unknown values gracefully.

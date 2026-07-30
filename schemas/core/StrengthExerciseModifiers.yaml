@@ -1,0 +1,74 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  implement:
+    anyOf:
+      - $ref: StrengthImplement.yaml
+      - type: "null"
+    examples:
+      - barbell
+    description: What provides the load. Open enum — handle unknown values gracefully; the published vocabulary lists the values in use, and a value outside it must pass through rather than be rejected.
+  surface:
+    anyOf:
+      - $ref: StrengthSurface.yaml
+      - type: "null"
+    description: What the body is supported on, when it is not the floor. Open enum.
+  grip_width:
+    anyOf:
+      - $ref: StrengthGripWidth.yaml
+      - type: "null"
+    examples:
+      - close
+    description: How far apart the hands are. Open enum.
+  grip_orientation:
+    anyOf:
+      - $ref: StrengthGripOrientation.yaml
+      - type: "null"
+    description: Which way the hands face. Open enum. Separate from grip_width because the two combine — a close-grip underhand pulldown needs both.
+  laterality:
+    anyOf:
+      - $ref: StrengthLaterality.yaml
+      - type: "null"
+    description: Whether both limbs work together, alternately, or one at a time. Open enum.
+  stance:
+    anyOf:
+      - $ref: StrengthStance.yaml
+      - type: "null"
+    description: Foot arrangement. Open enum.
+  position:
+    anyOf:
+      - $ref: StrengthPosition.yaml
+      - type: "null"
+    examples:
+      - incline
+    description: Orientation of the body or bench. Open enum.
+  bar_position:
+    anyOf:
+      - $ref: StrengthBarPosition.yaml
+      - type: "null"
+    description: Where the implement is carried. Open enum.
+  tempo:
+    anyOf:
+      - $ref: StrengthTempo.yaml
+      - type: "null"
+    description: How the repetition is paced. Open enum.
+  rom:
+    anyOf:
+      - $ref: StrengthRangeOfMotion.yaml
+      - type: "null"
+    description: How much of the movement is performed, or where it starts. Open enum.
+  accommodating_resistance:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Bands or chains added to another implement — not a second implement. The reported weight_kg is the bar alone, since band tension is not expressed in kg, so this also signals that the recorded load understates the real resistance. Open enum.
+  assistance:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: "What makes the movement easier and how: machine, band, partner, balance_support. Names the source of assistance, not the fact of it. Open enum."
+  programme:
+    anyOf:
+      - $ref: StrengthProgramme.yaml
+      - type: "null"
+    description: A programme or population the variant belongs to. Describes context, not a different movement, so it does not distinguish one exercise from another. Open enum.

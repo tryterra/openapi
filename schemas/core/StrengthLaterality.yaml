@@ -1,0 +1,16 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: alternating
+  - type: string
+    const: bilateral
+  - type: string
+    const: unilateral
+  - type: string
+    const: unknown
+    description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - alternating
+description: Whether both limbs work together, alternately, or one at a time. Open enum — handle unknown values gracefully.

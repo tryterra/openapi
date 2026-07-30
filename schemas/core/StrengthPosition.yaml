@@ -1,0 +1,46 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: bent_over
+  - type: string
+    const: decline
+  - type: string
+    const: elevated
+  - type: string
+    const: flat
+  - type: string
+    const: forearm
+  - type: string
+    const: half_kneeling
+  - type: string
+    const: hanging
+  - type: string
+    const: incline
+  - type: string
+    const: inverted
+  - type: string
+    const: kneeling
+  - type: string
+    const: lying
+  - type: string
+    const: pike
+  - type: string
+    const: prone
+  - type: string
+    const: quadruped
+  - type: string
+    const: seated
+  - type: string
+    const: side_lying
+  - type: string
+    const: standing
+  - type: string
+    const: supine
+  - type: string
+    const: unknown
+    description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - bent_over
+description: Orientation of the body or bench. Open enum — handle unknown values gracefully.

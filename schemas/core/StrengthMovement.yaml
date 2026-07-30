@@ -1,0 +1,358 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: ab_rollout
+  - type: string
+    const: arm_circle
+  - type: string
+    const: around_the_world
+  - type: string
+    const: back_extension
+  - type: string
+    const: battle_rope_slam
+  - type: string
+    const: battle_rope_wave
+  - type: string
+    const: bear_crawl
+  - type: string
+    const: bicep_curl
+  - type: string
+    const: bicycle_crunch
+  - type: string
+    const: bike
+  - type: string
+    const: bird_dog
+  - type: string
+    const: body_saw
+  - type: string
+    const: bound
+  - type: string
+    const: box_jump
+  - type: string
+    const: broad_jump
+  - type: string
+    const: burpee
+  - type: string
+    const: butt_kick
+  - type: string
+    const: butt_scoot
+  - type: string
+    const: calf_raise
+  - type: string
+    const: carioca
+  - type: string
+    const: carry
+  - type: string
+    const: chest_fly
+  - type: string
+    const: chest_press
+  - type: string
+    const: chin_up
+  - type: string
+    const: clamshell
+  - type: string
+    const: clean
+  - type: string
+    const: clean_pull
+  - type: string
+    const: climb
+  - type: string
+    const: complex
+  - type: string
+    const: cossack_squat
+  - type: string
+    const: crunch
+  - type: string
+    const: dead_bug
+  - type: string
+    const: deadlift
+  - type: string
+    const: depth_jump
+  - type: string
+    const: diaphragmatic_breathing
+  - type: string
+    const: dip
+  - type: string
+    const: duck_walk
+  - type: string
+    const: elliptical
+  - type: string
+    const: face_pull
+  - type: string
+    const: farmers_carry
+  - type: string
+    const: fire_hydrant
+  - type: string
+    const: flutter_kick
+  - type: string
+    const: foam_roll
+  - type: string
+    const: frog_kick
+  - type: string
+    const: front_raise
+  - type: string
+    const: glute_bridge
+  - type: string
+    const: glute_ham_raise
+  - type: string
+    const: good_morning
+  - type: string
+    const: halo
+  - type: string
+    const: hand_walk
+  - type: string
+    const: handstand_hold
+  - type: string
+    const: handstand_push_up
+  - type: string
+    const: handstand_walk
+  - type: string
+    const: heel_slide
+  - type: string
+    const: heel_touch
+  - type: string
+    const: high_knee
+  - type: string
+    const: high_pull
+  - type: string
+    const: hike
+  - type: string
+    const: hip_abduction
+  - type: string
+    const: hip_adduction
+  - type: string
+    const: hip_circle
+  - type: string
+    const: hip_drop
+  - type: string
+    const: hip_extension
+  - type: string
+    const: hip_flexion
+  - type: string
+    const: hip_hinge
+  - type: string
+    const: hip_thrust
+  - type: string
+    const: hold
+  - type: string
+    const: hollow_hold
+  - type: string
+    const: hop
+  - type: string
+    const: i_raise
+  - type: string
+    const: inchworm
+  - type: string
+    const: jerk
+  - type: string
+    const: jump
+  - type: string
+    const: jump_rope
+  - type: string
+    const: jumping_jack
+  - type: string
+    const: kick
+  - type: string
+    const: knee_raise
+  - type: string
+    const: kneel_to_stand
+  - type: string
+    const: l_sit
+  - type: string
+    const: lat_pulldown
+  - type: string
+    const: lateral_raise
+  - type: string
+    const: lateral_walk
+  - type: string
+    const: leg_circle
+  - type: string
+    const: leg_curl
+  - type: string
+    const: leg_cycle
+  - type: string
+    const: leg_extension
+  - type: string
+    const: leg_press
+  - type: string
+    const: leg_raise
+  - type: string
+    const: leg_swing
+  - type: string
+    const: lunge
+  - type: string
+    const: march
+  - type: string
+    const: monster_walk
+  - type: string
+    const: mountain_climber
+  - type: string
+    const: muscle_up
+  - type: string
+    const: neck_extension
+  - type: string
+    const: neck_flexion
+  - type: string
+    const: neck_lateral_flexion
+  - type: string
+    const: oblique_crunch
+  - type: string
+    const: overhead_press
+  - type: string
+    const: pallof_press
+  - type: string
+    const: pike_up
+  - type: string
+    const: plank
+  - type: string
+    const: plate_flip
+  - type: string
+    const: plate_pinch
+  - type: string
+    const: pull_apart
+  - type: string
+    const: pull_through
+  - type: string
+    const: pull_up
+  - type: string
+    const: pullover
+  - type: string
+    const: punch
+  - type: string
+    const: push_press
+  - type: string
+    const: push_up
+  - type: string
+    const: rear_delt_fly
+  - type: string
+    const: reverse_crunch
+  - type: string
+    const: reverse_hyperextension
+  - type: string
+    const: romanian_deadlift
+  - type: string
+    const: rope_climb
+  - type: string
+    const: row
+  - type: string
+    const: row_erg
+  - type: string
+    const: run
+  - type: string
+    const: russian_twist
+  - type: string
+    const: scapular_pull_up
+  - type: string
+    const: scapular_push_up
+  - type: string
+    const: scapular_retraction
+  - type: string
+    const: scissor_kick
+  - type: string
+    const: shoulder_external_rotation
+  - type: string
+    const: shoulder_internal_rotation
+  - type: string
+    const: shrug
+  - type: string
+    const: shuffle
+  - type: string
+    const: sissy_squat
+  - type: string
+    const: sit_up
+  - type: string
+    const: ski_erg
+  - type: string
+    const: skip
+  - type: string
+    const: slam
+  - type: string
+    const: sled_drag
+  - type: string
+    const: sled_push
+  - type: string
+    const: snatch
+  - type: string
+    const: snatch_balance
+  - type: string
+    const: snatch_pull
+  - type: string
+    const: squat
+  - type: string
+    const: stair_climb
+  - type: string
+    const: star_jump
+  - type: string
+    const: step_down
+  - type: string
+    const: step_over
+  - type: string
+    const: step_up
+  - type: string
+    const: stiff_legged_deadlift
+  - type: string
+    const: stomach_vacuum
+  - type: string
+    const: straight_arm_pulldown
+  - type: string
+    const: stretch
+  - type: string
+    const: superman
+  - type: string
+    const: swim
+  - type: string
+    const: swimmer
+  - type: string
+    const: swing
+  - type: string
+    const: t_raise
+  - type: string
+    const: throw
+  - type: string
+    const: thruster
+  - type: string
+    const: tibialis_raise
+  - type: string
+    const: tire_flip
+  - type: string
+    const: toe_tap
+  - type: string
+    const: toe_walk
+  - type: string
+    const: tricep_extension
+  - type: string
+    const: trunk_lateral_flexion
+  - type: string
+    const: trunk_rotation
+  - type: string
+    const: turkish_get_up
+  - type: string
+    const: upright_row
+  - type: string
+    const: v_sit
+  - type: string
+    const: v_up
+  - type: string
+    const: w_raise
+  - type: string
+    const: walk
+  - type: string
+    const: walkout
+  - type: string
+    const: windmill
+  - type: string
+    const: windshield_wiper
+  - type: string
+    const: wood_chop
+  - type: string
+    const: wrist_curl
+  - type: string
+    const: y_raise
+  - type: string
+    const: unknown
+    description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - ab_rollout
+description: The joint action an exercise performs, stripped of implement, grip, stance, tempo and position. Terra's own vocabulary, not the source's wording. Open enum — handle unknown values gracefully.

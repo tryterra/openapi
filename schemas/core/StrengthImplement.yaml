@@ -1,0 +1,56 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: band
+  - type: string
+    const: barbell
+  - type: string
+    const: battle_rope
+  - type: string
+    const: belt
+  - type: string
+    const: bodyweight
+  - type: string
+    const: cable
+  - type: string
+    const: dumbbell
+  - type: string
+    const: ez_bar
+  - type: string
+    const: handle_band
+  - type: string
+    const: kettlebell
+  - type: string
+    const: landmine
+  - type: string
+    const: loop_band
+  - type: string
+    const: machine
+  - type: string
+    const: machine_assisted
+  - type: string
+    const: medicine_ball
+  - type: string
+    const: mini_band
+  - type: string
+    const: partner
+  - type: string
+    const: pvc
+  - type: string
+    const: sled
+  - type: string
+    const: smith_machine
+  - type: string
+    const: suspension
+  - type: string
+    const: trap_bar
+  - type: string
+    const: weight_plate
+  - type: string
+    const: unknown
+    description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - band
+description: What provides the load. Open enum — handle unknown values gracefully.

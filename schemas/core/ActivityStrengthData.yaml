@@ -1,0 +1,17 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  body_weight_kg:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 78.2
+    description: The user's bodyweight at the time of the workout, when the source records it. Needed to value bodyweight-based sets, and frequently absent.
+  exercises:
+    anyOf:
+      - type: array
+        items:
+          $ref: StrengthExercise.yaml
+      - type: "null"
+    description: The exercises performed, in the order they were started.

@@ -1,0 +1,18 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: crossover
+  - type: string
+    const: curtsy
+  - type: string
+    const: split
+  - type: string
+    const: sumo
+  - type: string
+    const: unknown
+    description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - crossover
+description: Foot arrangement. Open enum — handle unknown values gracefully.

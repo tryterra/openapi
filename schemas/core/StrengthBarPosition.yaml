@@ -1,0 +1,22 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: behind_back
+  - type: string
+    const: behind_neck
+  - type: string
+    const: front_rack
+  - type: string
+    const: goblet
+  - type: string
+    const: overhead
+  - type: string
+    const: zercher
+  - type: string
+    const: unknown
+    description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - behind_back
+description: Where the implement is carried. Open enum — handle unknown values gracefully.

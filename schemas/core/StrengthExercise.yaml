@@ -1,0 +1,72 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  exercise_name:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - Close Grip Bench Press
+    description: The source's own label for the exercise, passed through verbatim. Present whenever the source names the exercise, whether or not it resolved to a movement. Intended for display.
+  movements:
+    anyOf:
+      - type: array
+        items:
+          $ref: StrengthMovement.yaml
+      - type: "null"
+    description: "The joint actions performed, in the order one repetition performs them, with implement, grip, stance, tempo and position all carried in modifiers. Usually one; a clean and jerk is [clean, jerk]. This is the rollup axis, and membership is what to test: a clean and jerk belongs in both clean volume and jerk volume, so ask whether movements contains the value rather than equals it. Open enum — handle unknown values gracefully. Empty when the exercise could not be resolved, in which case exercise_name still says what the source called it."
+  target:
+    anyOf:
+      - $ref: StrengthTarget.yaml
+      - type: "null"
+    description: The body part a stretch or mobility drill targets.
+  modifiers:
+    anyOf:
+      - $ref: StrengthExerciseModifiers.yaml
+      - type: "null"
+    description: "The axes that qualify the exercise. An axis that is absent was not reported by the source — it does NOT mean a default applies, so a squat with no implement is not the same as a bodyweight squat. Axes describe the exercise as performed rather than each movement separately: in a step up to a deficit reverse lunge only the lunge is at a deficit, but the axis describes the whole exercise and exercise_name carries the detail."
+  primary_muscles:
+    anyOf:
+      - type: array
+        items:
+          $ref: StrengthMuscle.yaml
+      - type: "null"
+    description: "The muscles the exercise primarily works, as reported by the source. A list because providers differ: some name exactly one, some name several for the same exercise, and some name none. Empty means the source did not say, not that no muscle is worked. Open enum — handle unknown values gracefully."
+  secondary_muscles:
+    anyOf:
+      - type: array
+        items:
+          $ref: StrengthMuscle.yaml
+      - type: "null"
+    description: The muscles the exercise works without being the focus, as reported by the source. Kept apart from primary_muscles because the distinction drives recovery and volume-per-muscle, which merging the two would lose. Empty means the source did not say. Open enum — handle unknown values gracefully.
+  group_id:
+    anyOf:
+      - type: integer
+      - type: "null"
+    examples:
+      - 1
+    description: Exercises sharing a value were performed together, as a superset or circuit. Unique within this activity only.
+  notes:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: The user's note on the exercise.
+  rpe:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 8.5
+    description: Effort for the exercise as a whole, on a 0-10 scale, when the source records it once per exercise rather than per set.
+  source:
+    anyOf:
+      - $ref: StrengthSource.yaml
+      - type: "null"
+    description: "Where the exercise came from. Open enum — handle unknown values gracefully; the values in use today are user_logged, device_detected and unknown. Only user_logged is user-confirmed. Test for user_logged rather than testing against device_detected, so that a value added later is not trusted by default: anything that is not user_logged may have been inferred by a wearable and may be wrong, rep counts included."
+  sets:
+    anyOf:
+      - type: array
+        items:
+          $ref: StrengthSet.yaml
+      - type: "null"
+    description: The performed sets, in order.

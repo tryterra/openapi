@@ -76,6 +76,11 @@ properties:
       - $ref: PositionData.yaml
       - type: "null"
     description: Object containing information on the user's position throughout the workout.
+  strength_data:
+    anyOf:
+      - $ref: ActivityStrengthData.yaml
+      - type: "null"
+    description: Object containing the sets, reps and load performed during a strength workout. Absent when the activity carries no strength content, or when the source recorded no usable set breakdown.
   power_data:
     anyOf:
       - $ref: PowerData.yaml

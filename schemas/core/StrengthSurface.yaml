@@ -1,0 +1,30 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: bench
+  - type: string
+    const: bosu
+  - type: string
+    const: box
+  - type: string
+    const: floor
+  - type: string
+    const: foam_roller
+  - type: string
+    const: glute_ham_machine
+  - type: string
+    const: preacher_bench
+  - type: string
+    const: swiss_ball
+  - type: string
+    const: treadmill
+  - type: string
+    const: wall
+  - type: string
+    const: unknown
+    description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - bench
+description: What the body is supported on, when it is not the floor. Open enum — handle unknown values gracefully.

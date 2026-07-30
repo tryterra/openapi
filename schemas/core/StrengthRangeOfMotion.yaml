@@ -1,0 +1,22 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: deficit
+  - type: string
+    const: from_blocks
+  - type: string
+    const: from_hang
+  - type: string
+    const: full
+  - type: string
+    const: partial
+  - type: string
+    const: to_bench
+  - type: string
+    const: unknown
+    description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - deficit
+description: How much of the movement is performed, or where it starts. Open enum — handle unknown values gracefully.

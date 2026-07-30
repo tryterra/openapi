@@ -1,0 +1,17 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: assisted
+  - type: string
+    const: bodyweight
+  - type: string
+    const: bodyweight_plus
+  - type: string
+    const: external
+  - type: string
+    const: unknown
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - assisted
+description: How to read weight_kg for this set. Open enum — handle unknown values gracefully.

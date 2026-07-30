@@ -1,0 +1,24 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: eccentric
+  - type: string
+    const: explosive
+  - type: string
+    const: isometric
+  - type: string
+    const: kipping
+  - type: string
+    const: paused
+  - type: string
+    const: pulse
+  - type: string
+    const: tempo_slow
+  - type: string
+    const: unknown
+    description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - eccentric
+description: How the repetition is paced. Open enum — handle unknown values gracefully.

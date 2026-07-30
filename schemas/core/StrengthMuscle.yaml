@@ -1,0 +1,42 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: abductors
+  - type: string
+    const: abs
+  - type: string
+    const: adductors
+  - type: string
+    const: back
+  - type: string
+    const: biceps
+  - type: string
+    const: calves
+  - type: string
+    const: chest
+  - type: string
+    const: forearms
+  - type: string
+    const: glutes
+  - type: string
+    const: hamstrings
+  - type: string
+    const: lower_back
+  - type: string
+    const: neck
+  - type: string
+    const: quadriceps
+  - type: string
+    const: shoulders
+  - type: string
+    const: trapezius
+  - type: string
+    const: triceps
+  - type: string
+    const: unknown
+    description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - abductors
+description: A muscle group an exercise works, used by both primary_muscles and secondary_muscles. Open enum — handle unknown values gracefully.

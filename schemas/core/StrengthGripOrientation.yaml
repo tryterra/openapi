@@ -1,0 +1,24 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: bottoms_up
+  - type: string
+    const: mixed
+  - type: string
+    const: neutral
+  - type: string
+    const: overhand
+  - type: string
+    const: pinch
+  - type: string
+    const: reverse
+  - type: string
+    const: underhand
+  - type: string
+    const: unknown
+    description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+  - type: string
+    description: A value Terra has added since this schema was published.
+examples:
+  - bottoms_up
+description: Which way the hands face. Separate from grip_width because the two combine. Open enum — handle unknown values gracefully.

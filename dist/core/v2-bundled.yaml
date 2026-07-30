@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.07.17.1
+  version: 2026.07.30
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -2288,6 +2288,11 @@ components:
             - $ref: '#/components/schemas/PositionData'
             - type: 'null'
           description: Object containing information on the user's position throughout the workout.
+        strength_data:
+          anyOf:
+            - $ref: '#/components/schemas/ActivityStrengthData'
+            - type: 'null'
+          description: Object containing the sets, reps and load performed during a strength workout. Absent when the activity carries no strength content, or when the source recorded no usable set breakdown.
         power_data:
           anyOf:
             - $ref: '#/components/schemas/PowerData'
@@ -5410,6 +5415,1050 @@ components:
             - - 80.2394
               - 102.931
           description: Position of the user at the start of the workout, represented by a 2-value array of latitude, longitude, wherein each of the two numbers can be nullable.
+    StrengthMovement:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: ab_rollout
+        - type: string
+          const: arm_circle
+        - type: string
+          const: around_the_world
+        - type: string
+          const: back_extension
+        - type: string
+          const: battle_rope_slam
+        - type: string
+          const: battle_rope_wave
+        - type: string
+          const: bear_crawl
+        - type: string
+          const: bicep_curl
+        - type: string
+          const: bicycle_crunch
+        - type: string
+          const: bike
+        - type: string
+          const: bird_dog
+        - type: string
+          const: body_saw
+        - type: string
+          const: bound
+        - type: string
+          const: box_jump
+        - type: string
+          const: broad_jump
+        - type: string
+          const: burpee
+        - type: string
+          const: butt_kick
+        - type: string
+          const: butt_scoot
+        - type: string
+          const: calf_raise
+        - type: string
+          const: carioca
+        - type: string
+          const: carry
+        - type: string
+          const: chest_fly
+        - type: string
+          const: chest_press
+        - type: string
+          const: chin_up
+        - type: string
+          const: clamshell
+        - type: string
+          const: clean
+        - type: string
+          const: clean_pull
+        - type: string
+          const: climb
+        - type: string
+          const: complex
+        - type: string
+          const: cossack_squat
+        - type: string
+          const: crunch
+        - type: string
+          const: dead_bug
+        - type: string
+          const: deadlift
+        - type: string
+          const: depth_jump
+        - type: string
+          const: diaphragmatic_breathing
+        - type: string
+          const: dip
+        - type: string
+          const: duck_walk
+        - type: string
+          const: elliptical
+        - type: string
+          const: face_pull
+        - type: string
+          const: farmers_carry
+        - type: string
+          const: fire_hydrant
+        - type: string
+          const: flutter_kick
+        - type: string
+          const: foam_roll
+        - type: string
+          const: frog_kick
+        - type: string
+          const: front_raise
+        - type: string
+          const: glute_bridge
+        - type: string
+          const: glute_ham_raise
+        - type: string
+          const: good_morning
+        - type: string
+          const: halo
+        - type: string
+          const: hand_walk
+        - type: string
+          const: handstand_hold
+        - type: string
+          const: handstand_push_up
+        - type: string
+          const: handstand_walk
+        - type: string
+          const: heel_slide
+        - type: string
+          const: heel_touch
+        - type: string
+          const: high_knee
+        - type: string
+          const: high_pull
+        - type: string
+          const: hike
+        - type: string
+          const: hip_abduction
+        - type: string
+          const: hip_adduction
+        - type: string
+          const: hip_circle
+        - type: string
+          const: hip_drop
+        - type: string
+          const: hip_extension
+        - type: string
+          const: hip_flexion
+        - type: string
+          const: hip_hinge
+        - type: string
+          const: hip_thrust
+        - type: string
+          const: hold
+        - type: string
+          const: hollow_hold
+        - type: string
+          const: hop
+        - type: string
+          const: i_raise
+        - type: string
+          const: inchworm
+        - type: string
+          const: jerk
+        - type: string
+          const: jump
+        - type: string
+          const: jump_rope
+        - type: string
+          const: jumping_jack
+        - type: string
+          const: kick
+        - type: string
+          const: knee_raise
+        - type: string
+          const: kneel_to_stand
+        - type: string
+          const: l_sit
+        - type: string
+          const: lat_pulldown
+        - type: string
+          const: lateral_raise
+        - type: string
+          const: lateral_walk
+        - type: string
+          const: leg_circle
+        - type: string
+          const: leg_curl
+        - type: string
+          const: leg_cycle
+        - type: string
+          const: leg_extension
+        - type: string
+          const: leg_press
+        - type: string
+          const: leg_raise
+        - type: string
+          const: leg_swing
+        - type: string
+          const: lunge
+        - type: string
+          const: march
+        - type: string
+          const: monster_walk
+        - type: string
+          const: mountain_climber
+        - type: string
+          const: muscle_up
+        - type: string
+          const: neck_extension
+        - type: string
+          const: neck_flexion
+        - type: string
+          const: neck_lateral_flexion
+        - type: string
+          const: oblique_crunch
+        - type: string
+          const: overhead_press
+        - type: string
+          const: pallof_press
+        - type: string
+          const: pike_up
+        - type: string
+          const: plank
+        - type: string
+          const: plate_flip
+        - type: string
+          const: plate_pinch
+        - type: string
+          const: pull_apart
+        - type: string
+          const: pull_through
+        - type: string
+          const: pull_up
+        - type: string
+          const: pullover
+        - type: string
+          const: punch
+        - type: string
+          const: push_press
+        - type: string
+          const: push_up
+        - type: string
+          const: rear_delt_fly
+        - type: string
+          const: reverse_crunch
+        - type: string
+          const: reverse_hyperextension
+        - type: string
+          const: romanian_deadlift
+        - type: string
+          const: rope_climb
+        - type: string
+          const: row
+        - type: string
+          const: row_erg
+        - type: string
+          const: run
+        - type: string
+          const: russian_twist
+        - type: string
+          const: scapular_pull_up
+        - type: string
+          const: scapular_push_up
+        - type: string
+          const: scapular_retraction
+        - type: string
+          const: scissor_kick
+        - type: string
+          const: shoulder_external_rotation
+        - type: string
+          const: shoulder_internal_rotation
+        - type: string
+          const: shrug
+        - type: string
+          const: shuffle
+        - type: string
+          const: sissy_squat
+        - type: string
+          const: sit_up
+        - type: string
+          const: ski_erg
+        - type: string
+          const: skip
+        - type: string
+          const: slam
+        - type: string
+          const: sled_drag
+        - type: string
+          const: sled_push
+        - type: string
+          const: snatch
+        - type: string
+          const: snatch_balance
+        - type: string
+          const: snatch_pull
+        - type: string
+          const: squat
+        - type: string
+          const: stair_climb
+        - type: string
+          const: star_jump
+        - type: string
+          const: step_down
+        - type: string
+          const: step_over
+        - type: string
+          const: step_up
+        - type: string
+          const: stiff_legged_deadlift
+        - type: string
+          const: stomach_vacuum
+        - type: string
+          const: straight_arm_pulldown
+        - type: string
+          const: stretch
+        - type: string
+          const: superman
+        - type: string
+          const: swim
+        - type: string
+          const: swimmer
+        - type: string
+          const: swing
+        - type: string
+          const: t_raise
+        - type: string
+          const: throw
+        - type: string
+          const: thruster
+        - type: string
+          const: tibialis_raise
+        - type: string
+          const: tire_flip
+        - type: string
+          const: toe_tap
+        - type: string
+          const: toe_walk
+        - type: string
+          const: tricep_extension
+        - type: string
+          const: trunk_lateral_flexion
+        - type: string
+          const: trunk_rotation
+        - type: string
+          const: turkish_get_up
+        - type: string
+          const: upright_row
+        - type: string
+          const: v_sit
+        - type: string
+          const: v_up
+        - type: string
+          const: w_raise
+        - type: string
+          const: walk
+        - type: string
+          const: walkout
+        - type: string
+          const: windmill
+        - type: string
+          const: windshield_wiper
+        - type: string
+          const: wood_chop
+        - type: string
+          const: wrist_curl
+        - type: string
+          const: y_raise
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - ab_rollout
+      description: The joint action an exercise performs, stripped of implement, grip, stance, tempo and position. Terra's own vocabulary, not the source's wording. Open enum — handle unknown values gracefully.
+    StrengthTarget:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: abs
+        - type: string
+          const: adductors
+        - type: string
+          const: ankle
+        - type: string
+          const: back
+        - type: string
+          const: calves
+        - type: string
+          const: chest
+        - type: string
+          const: forearms
+        - type: string
+          const: glutes
+        - type: string
+          const: hamstrings
+        - type: string
+          const: hip
+        - type: string
+          const: hip_abductor
+        - type: string
+          const: hip_adductor
+        - type: string
+          const: hip_flexor
+        - type: string
+          const: lat
+        - type: string
+          const: lower_back
+        - type: string
+          const: neck
+        - type: string
+          const: obliques
+        - type: string
+          const: quadriceps
+        - type: string
+          const: shoulders
+        - type: string
+          const: spine
+        - type: string
+          const: thoracic_spine
+        - type: string
+          const: triceps
+        - type: string
+          const: upper_back
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - abs
+      description: The body part a stretch or mobility drill acts on. For a stretch the body part IS the exercise, which is why it is reported separately from the muscles worked. Open enum — handle unknown values gracefully.
+    StrengthImplement:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: band
+        - type: string
+          const: barbell
+        - type: string
+          const: battle_rope
+        - type: string
+          const: belt
+        - type: string
+          const: bodyweight
+        - type: string
+          const: cable
+        - type: string
+          const: dumbbell
+        - type: string
+          const: ez_bar
+        - type: string
+          const: handle_band
+        - type: string
+          const: kettlebell
+        - type: string
+          const: landmine
+        - type: string
+          const: loop_band
+        - type: string
+          const: machine
+        - type: string
+          const: machine_assisted
+        - type: string
+          const: medicine_ball
+        - type: string
+          const: mini_band
+        - type: string
+          const: partner
+        - type: string
+          const: pvc
+        - type: string
+          const: sled
+        - type: string
+          const: smith_machine
+        - type: string
+          const: suspension
+        - type: string
+          const: trap_bar
+        - type: string
+          const: weight_plate
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - band
+      description: What provides the load. Open enum — handle unknown values gracefully.
+    StrengthSurface:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: bench
+        - type: string
+          const: bosu
+        - type: string
+          const: box
+        - type: string
+          const: floor
+        - type: string
+          const: foam_roller
+        - type: string
+          const: glute_ham_machine
+        - type: string
+          const: preacher_bench
+        - type: string
+          const: swiss_ball
+        - type: string
+          const: treadmill
+        - type: string
+          const: wall
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - bench
+      description: What the body is supported on, when it is not the floor. Open enum — handle unknown values gracefully.
+    StrengthGripWidth:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: close
+        - type: string
+          const: wide
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - close
+      description: How far apart the hands are. Open enum — handle unknown values gracefully.
+    StrengthGripOrientation:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: bottoms_up
+        - type: string
+          const: mixed
+        - type: string
+          const: neutral
+        - type: string
+          const: overhand
+        - type: string
+          const: pinch
+        - type: string
+          const: reverse
+        - type: string
+          const: underhand
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - bottoms_up
+      description: Which way the hands face. Separate from grip_width because the two combine. Open enum — handle unknown values gracefully.
+    StrengthLaterality:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: alternating
+        - type: string
+          const: bilateral
+        - type: string
+          const: unilateral
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - alternating
+      description: Whether both limbs work together, alternately, or one at a time. Open enum — handle unknown values gracefully.
+    StrengthStance:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: crossover
+        - type: string
+          const: curtsy
+        - type: string
+          const: split
+        - type: string
+          const: sumo
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - crossover
+      description: Foot arrangement. Open enum — handle unknown values gracefully.
+    StrengthPosition:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: bent_over
+        - type: string
+          const: decline
+        - type: string
+          const: elevated
+        - type: string
+          const: flat
+        - type: string
+          const: forearm
+        - type: string
+          const: half_kneeling
+        - type: string
+          const: hanging
+        - type: string
+          const: incline
+        - type: string
+          const: inverted
+        - type: string
+          const: kneeling
+        - type: string
+          const: lying
+        - type: string
+          const: pike
+        - type: string
+          const: prone
+        - type: string
+          const: quadruped
+        - type: string
+          const: seated
+        - type: string
+          const: side_lying
+        - type: string
+          const: standing
+        - type: string
+          const: supine
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - bent_over
+      description: Orientation of the body or bench. Open enum — handle unknown values gracefully.
+    StrengthBarPosition:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: behind_back
+        - type: string
+          const: behind_neck
+        - type: string
+          const: front_rack
+        - type: string
+          const: goblet
+        - type: string
+          const: overhead
+        - type: string
+          const: zercher
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - behind_back
+      description: Where the implement is carried. Open enum — handle unknown values gracefully.
+    StrengthTempo:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: eccentric
+        - type: string
+          const: explosive
+        - type: string
+          const: isometric
+        - type: string
+          const: kipping
+        - type: string
+          const: paused
+        - type: string
+          const: pulse
+        - type: string
+          const: tempo_slow
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - eccentric
+      description: How the repetition is paced. Open enum — handle unknown values gracefully.
+    StrengthRangeOfMotion:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: deficit
+        - type: string
+          const: from_blocks
+        - type: string
+          const: from_hang
+        - type: string
+          const: full
+        - type: string
+          const: partial
+        - type: string
+          const: to_bench
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - deficit
+      description: How much of the movement is performed, or where it starts. Open enum — handle unknown values gracefully.
+    StrengthProgramme:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: pregnancy
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - pregnancy
+      description: A programme or population the variant belongs to. Descriptive only — it changes neither the movement nor the load. Open enum — handle unknown values gracefully.
+    StrengthExerciseModifiers:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        implement:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthImplement'
+            - type: 'null'
+          examples:
+            - barbell
+          description: What provides the load. Open enum — handle unknown values gracefully; the published vocabulary lists the values in use, and a value outside it must pass through rather than be rejected.
+        surface:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthSurface'
+            - type: 'null'
+          description: What the body is supported on, when it is not the floor. Open enum.
+        grip_width:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthGripWidth'
+            - type: 'null'
+          examples:
+            - close
+          description: How far apart the hands are. Open enum.
+        grip_orientation:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthGripOrientation'
+            - type: 'null'
+          description: Which way the hands face. Open enum. Separate from grip_width because the two combine — a close-grip underhand pulldown needs both.
+        laterality:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthLaterality'
+            - type: 'null'
+          description: Whether both limbs work together, alternately, or one at a time. Open enum.
+        stance:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthStance'
+            - type: 'null'
+          description: Foot arrangement. Open enum.
+        position:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthPosition'
+            - type: 'null'
+          examples:
+            - incline
+          description: Orientation of the body or bench. Open enum.
+        bar_position:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthBarPosition'
+            - type: 'null'
+          description: Where the implement is carried. Open enum.
+        tempo:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthTempo'
+            - type: 'null'
+          description: How the repetition is paced. Open enum.
+        rom:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthRangeOfMotion'
+            - type: 'null'
+          description: How much of the movement is performed, or where it starts. Open enum.
+        accommodating_resistance:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Bands or chains added to another implement — not a second implement. The reported weight_kg is the bar alone, since band tension is not expressed in kg, so this also signals that the recorded load understates the real resistance. Open enum.
+        assistance:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: 'What makes the movement easier and how: machine, band, partner, balance_support. Names the source of assistance, not the fact of it. Open enum.'
+        programme:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthProgramme'
+            - type: 'null'
+          description: A programme or population the variant belongs to. Describes context, not a different movement, so it does not distinguish one exercise from another. Open enum.
+    StrengthMuscle:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: abductors
+        - type: string
+          const: abs
+        - type: string
+          const: adductors
+        - type: string
+          const: back
+        - type: string
+          const: biceps
+        - type: string
+          const: calves
+        - type: string
+          const: chest
+        - type: string
+          const: forearms
+        - type: string
+          const: glutes
+        - type: string
+          const: hamstrings
+        - type: string
+          const: lower_back
+        - type: string
+          const: neck
+        - type: string
+          const: quadriceps
+        - type: string
+          const: shoulders
+        - type: string
+          const: trapezius
+        - type: string
+          const: triceps
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - abductors
+      description: A muscle group an exercise works, used by both primary_muscles and secondary_muscles. Open enum — handle unknown values gracefully.
+    StrengthSource:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: user_logged
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - user_logged
+      description: How the exercise came to be recorded. Open enum — handle unknown values gracefully.
+    StrengthLoadType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: assisted
+        - type: string
+          const: bodyweight
+        - type: string
+          const: bodyweight_plus
+        - type: string
+          const: external
+        - type: string
+          const: unknown
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - assisted
+      description: How to read weight_kg for this set. Open enum — handle unknown values gracefully.
+    StrengthSetType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: amrap
+        - type: string
+          const: normal
+        - type: string
+          const: warmup
+        - type: string
+          const: unknown
+          description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
+        - type: string
+          description: A value Terra has added since this schema was published.
+      examples:
+        - amrap
+      description: What kind of set this was. Open enum — handle unknown values gracefully.
+    StrengthSet:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        distance_meters:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: Distance covered, for loaded carries.
+        duration_seconds:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: Duration of the set, for timed holds and carries.
+        end_time:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: End of the set, ISO 8601. Null when the source does not timestamp sets.
+        load_type:
+          $ref: '#/components/schemas/StrengthLoadType'
+          examples:
+            - external
+          description: 'How to read weight_kg. Always present: every set that happened was loaded somehow, so a set Terra could not classify reports `unknown` rather than omitting the field. Open enum — handle unknown values gracefully. Only external means weight_kg is load added to an otherwise unloaded body, so compute volume from external sets alone. Test for external rather than testing against the other values: a load type you do not recognise must be treated as unknown, because counting it as external overstates the load.'
+        notes:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: The user's note on this specific set.
+        reps:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          examples:
+            - 5
+          description: Repetitions performed, exactly as the source recorded them. For unilateral movements this is per side.
+        rest_after_seconds:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          examples:
+            - 120
+          description: Rest taken after this set, within its exercise. Rest between exercises is not represented.
+        rir:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: Reps in reserve. Never converted to or from rpe.
+        rpe:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 8.5
+          description: Rate of perceived exertion, on a 0-10 scale.
+        set_type:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthSetType'
+            - type: 'null'
+          examples:
+            - normal
+          description: The type of set as reported by the source, such as normal, warmup, dropset or failure. Open enum — handle unknown values gracefully. unknown when the source does not classify the set.
+        start_time:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Start of the set, ISO 8601. Null when the source does not timestamp sets.
+        weight_kg:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 100
+          description: 'Load as the source logged it: a barbell''s total, or one dumbbell. Never negative. Null when load_type is unknown, and may also be null for a load_type you do not recognise.'
+      required:
+        - load_type
+    StrengthExercise:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        exercise_name:
+          anyOf:
+            - type: string
+            - type: 'null'
+          examples:
+            - Close Grip Bench Press
+          description: The source's own label for the exercise, passed through verbatim. Present whenever the source names the exercise, whether or not it resolved to a movement. Intended for display.
+        movements:
+          anyOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/StrengthMovement'
+            - type: 'null'
+          description: 'The joint actions performed, in the order one repetition performs them, with implement, grip, stance, tempo and position all carried in modifiers. Usually one; a clean and jerk is [clean, jerk]. This is the rollup axis, and membership is what to test: a clean and jerk belongs in both clean volume and jerk volume, so ask whether movements contains the value rather than equals it. Open enum — handle unknown values gracefully. Empty when the exercise could not be resolved, in which case exercise_name still says what the source called it.'
+        target:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthTarget'
+            - type: 'null'
+          description: The body part a stretch or mobility drill targets.
+        modifiers:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthExerciseModifiers'
+            - type: 'null'
+          description: 'The axes that qualify the exercise. An axis that is absent was not reported by the source — it does NOT mean a default applies, so a squat with no implement is not the same as a bodyweight squat. Axes describe the exercise as performed rather than each movement separately: in a step up to a deficit reverse lunge only the lunge is at a deficit, but the axis describes the whole exercise and exercise_name carries the detail.'
+        primary_muscles:
+          anyOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/StrengthMuscle'
+            - type: 'null'
+          description: 'The muscles the exercise primarily works, as reported by the source. A list because providers differ: some name exactly one, some name several for the same exercise, and some name none. Empty means the source did not say, not that no muscle is worked. Open enum — handle unknown values gracefully.'
+        secondary_muscles:
+          anyOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/StrengthMuscle'
+            - type: 'null'
+          description: The muscles the exercise works without being the focus, as reported by the source. Kept apart from primary_muscles because the distinction drives recovery and volume-per-muscle, which merging the two would lose. Empty means the source did not say. Open enum — handle unknown values gracefully.
+        group_id:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          examples:
+            - 1
+          description: Exercises sharing a value were performed together, as a superset or circuit. Unique within this activity only.
+        notes:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: The user's note on the exercise.
+        rpe:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 8.5
+          description: Effort for the exercise as a whole, on a 0-10 scale, when the source records it once per exercise rather than per set.
+        source:
+          anyOf:
+            - $ref: '#/components/schemas/StrengthSource'
+            - type: 'null'
+          description: 'Where the exercise came from. Open enum — handle unknown values gracefully; the values in use today are user_logged, device_detected and unknown. Only user_logged is user-confirmed. Test for user_logged rather than testing against device_detected, so that a value added later is not trusted by default: anything that is not user_logged may have been inferred by a wearable and may be wrong, rep counts included.'
+        sets:
+          anyOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/StrengthSet'
+            - type: 'null'
+          description: The performed sets, in order.
+    ActivityStrengthData:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        body_weight_kg:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 78.2
+          description: The user's bodyweight at the time of the workout, when the source records it. Needed to value bodyweight-based sets, and frequently absent.
+        exercises:
+          anyOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/StrengthExercise'
+            - type: 'null'
+          description: The exercises performed, in the order they were started.
     PowerSample:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
