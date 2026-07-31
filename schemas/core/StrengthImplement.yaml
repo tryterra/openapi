@@ -37,6 +37,8 @@ anyOf:
   - type: string
     const: pvc
   - type: string
+    const: safety_bar
+  - type: string
     const: sled
   - type: string
     const: smith_machine

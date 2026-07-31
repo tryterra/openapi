@@ -21,9 +21,13 @@ anyOf:
   - type: string
     const: hamstrings
   - type: string
+    const: hip_flexor
+  - type: string
     const: lower_back
   - type: string
     const: neck
+  - type: string
+    const: obliques
   - type: string
     const: quadriceps
   - type: string

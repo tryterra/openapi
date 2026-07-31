@@ -9,6 +9,8 @@ anyOf:
   - type: string
     const: back
   - type: string
+    const: biceps
+  - type: string
     const: calves
   - type: string
     const: chest

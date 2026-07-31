@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.07.30
+  version: 2026.07.31
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -5786,6 +5786,8 @@ components:
         - type: string
           const: back
         - type: string
+          const: biceps
+        - type: string
           const: calves
         - type: string
           const: chest
@@ -5870,6 +5872,8 @@ components:
           const: partner
         - type: string
           const: pvc
+        - type: string
+          const: safety_bar
         - type: string
           const: sled
         - type: string
@@ -6225,9 +6229,13 @@ components:
         - type: string
           const: hamstrings
         - type: string
+          const: hip_flexor
+        - type: string
           const: lower_back
         - type: string
           const: neck
+        - type: string
+          const: obliques
         - type: string
           const: quadriceps
         - type: string
@@ -6247,6 +6255,8 @@ components:
     StrengthSource:
       $schema: https://json-schema.org/draft/2020-12/schema
       anyOf:
+        - type: string
+          const: device_detected
         - type: string
           const: user_logged
         - type: string
@@ -6280,6 +6290,12 @@ components:
       anyOf:
         - type: string
           const: amrap
+        - type: string
+          const: cooldown
+        - type: string
+          const: dropset
+        - type: string
+          const: failure
         - type: string
           const: normal
         - type: string

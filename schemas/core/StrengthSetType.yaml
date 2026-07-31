@@ -3,6 +3,12 @@ anyOf:
   - type: string
     const: amrap
   - type: string
+    const: cooldown
+  - type: string
+    const: dropset
+  - type: string
+    const: failure
+  - type: string
     const: normal
   - type: string
     const: warmup

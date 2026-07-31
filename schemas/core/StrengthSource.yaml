@@ -1,6 +1,8 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 anyOf:
   - type: string
+    const: device_detected
+  - type: string
     const: user_logged
   - type: string
     const: unknown
