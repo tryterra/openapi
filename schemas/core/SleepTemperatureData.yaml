@@ -8,3 +8,10 @@ properties:
     examples:
       - 0.5
     description: Variation in user's skin temperature from their baseline.
+  avg_skin_temperature_celsius:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 33.7
+    description: Mean absolute skin temperature in degrees Celsius over the sleep window. Null for providers that only report a baseline deviation.

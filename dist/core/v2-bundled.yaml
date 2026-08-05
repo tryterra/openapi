@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.07.31
+  version: 2026.08.05
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -9199,6 +9199,13 @@ components:
           examples:
             - 0.5
           description: Variation in user's skin temperature from their baseline.
+        avg_skin_temperature_celsius:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 33.7
+          description: Mean absolute skin temperature in degrees Celsius over the sleep window. Null for providers that only report a baseline deviation.
     WorkoutSport:
       $schema: https://json-schema.org/draft/2020-12/schema
       anyOf:
