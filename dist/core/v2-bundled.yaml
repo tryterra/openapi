@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.08.05
+  version: 2026.08.07
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -53,6 +53,12 @@ paths:
                   type: string
                 auth_failure_redirect_url:
                   type: string
+                sdk_app:
+                  type: string
+                  enum:
+                    - avengers
+                    - grip
+                  description: Which Terra reference app an APPLE_HEALTH authentication link hands the end user to. Omit to use Terra Avengers. Sending this for any other resource has no effect.
         required: false
       responses:
         '200':
