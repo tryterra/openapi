@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Terra Widget API
   description: Endpoint for generating an authentication-widget session, used to redirect an end user into the Terra Authentication Widget so they can connect a data provider.
-  version: 2026.07.06
+  version: 2026.08.10
   license:
     name: Proprietary
 servers:
@@ -41,7 +41,7 @@ paths:
               $ref: '#/components/schemas/WidgetSessionParams'
         required: true
       responses:
-        '200':
+        '201':
           description: Returned when authentication link could be successfully generated
           content:
             application/json:
@@ -66,7 +66,7 @@ paths:
                   expires_in:
                     type: number
                     description: a number in seconds depicting how long the url is valid for
-                    example: 900
+                    example: 86400
         '400':
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
@@ -99,6 +99,27 @@ paths:
                       - success
                       - error
                     description: indicates that an error happened (value is error)
+        '404':
+          description: Returned when one or more of the user IDs passed in connected_uids do not exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    description: a detailed message describing the error
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - success
+                      - error
+                    description: indicates that an error happened (value is error)
+                  invalid_user_ids:
+                    type: array
+                    description: the user IDs from connected_uids that could not be found
+                    items:
+                      type: string
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -122,6 +143,23 @@ components:
         language:
           type: string
           description: Display language of the widget
+          enum:
+            - en
+            - es
+            - ar
+            - it
+            - fi
+            - pt
+            - sv
+            - nl
+            - de
+            - tr
+            - vi
+            - zh
+            - fr
+            - ja
+            - zh_cn
+            - zh_hk
           example: en
         reference_id:
           type: string
@@ -129,9 +167,36 @@ components:
           example: user123@email.com
         auth_success_redirect_url:
           type: string
-          description: URL the user is redirected to upon successful authentication
+          description: URL the user is redirected to upon successful authentication. The special value "multi-auth" keeps the user on the widget after each connection so they can connect several providers in one session
           example: https://myapp.com/success
         auth_failure_redirect_url:
           type: string
           description: URL the user is redirected to upon unsuccessful authentication
           example: https://myapp.com/failure
+        use_terra_avengers_app:
+          type: boolean
+          description: Allow Apple Health connections through the Terra mobile app
+          example: false
+        connected_uids:
+          type: array
+          description: Terra user IDs already connected for this end user; their providers show as connected with a disconnect option
+          items:
+            type: string
+        show_disconnect:
+          type: boolean
+          description: Show disconnect buttons for providers already connected under reference_id
+          example: false
+        multi_auth:
+          type: boolean
+          description: Keep the user on the widget after each successful connection so they can connect several providers in one session
+          example: false
+        bypass_feedback:
+          type: boolean
+          description: When false, the user stays on the widget's own result screen instead of being redirected immediately
+          example: true
+        apple_app_url:
+          type: string
+          description: URL of your own iOS app to hand Apple Health connections to, instead of the Terra mobile app
+        samsung_app_url:
+          type: string
+          description: URL of your own Android app to hand Samsung Health connections to
