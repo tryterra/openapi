@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Terra Widget API
   description: Endpoint for generating an authentication-widget session, used to redirect an end user into the Terra Authentication Widget so they can connect a data provider.
-  version: 2026.08.10.1
+  version: 2026.08.10.2
   license:
     name: Proprietary
 servers:
@@ -140,27 +140,6 @@ components:
           type: string
           description: Comma separated list of providers to display on the device selection page
           example: VALD,CATAPULT
-        language:
-          type: string
-          description: Display language of the widget
-          enum:
-            - en
-            - es
-            - ar
-            - it
-            - fi
-            - pt
-            - sv
-            - nl
-            - de
-            - tr
-            - vi
-            - zh
-            - fr
-            - ja
-            - zh_cn
-            - zh_hk
-          example: en
         reference_id:
           type: string
           description: Identifier of the end user on your system, such as a user ID or email associated with them
