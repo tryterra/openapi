@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Terra Widget API
   description: Endpoint for generating an authentication-widget session, used to redirect an end user into the Terra Authentication Widget so they can connect a data provider.
-  version: 2026.08.10.2
+  version: 2026.08.10.3
   license:
     name: Proprietary
 servers:
@@ -83,6 +83,11 @@ paths:
                       - success
                       - error
                     description: indicates that an error happened (value is error)
+                  invalid_user_ids:
+                    type: array
+                    description: present when one or more user IDs passed in connected_uids do not exist
+                    items:
+                      type: string
         '403':
           description: Returned when credentials (dev ID and API key) are invalid
           content:
@@ -99,27 +104,6 @@ paths:
                       - success
                       - error
                     description: indicates that an error happened (value is error)
-        '404':
-          description: Returned when one or more of the user IDs passed in connected_uids do not exist
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    description: a detailed message describing the error
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - success
-                      - error
-                    description: indicates that an error happened (value is error)
-                  invalid_user_ids:
-                    type: array
-                    description: the user IDs from connected_uids that could not be found
-                    items:
-                      type: string
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -146,7 +130,7 @@ components:
           example: user123@email.com
         auth_success_redirect_url:
           type: string
-          description: URL the user is redirected to upon successful authentication. The special value "multi-auth" keeps the user on the widget after each connection so they can connect several providers in one session
+          description: URL the user is redirected to upon successful authentication
           example: https://myapp.com/success
         auth_failure_redirect_url:
           type: string
