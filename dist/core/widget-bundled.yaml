@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Terra Widget API
   description: Endpoint for generating an authentication-widget session, used to redirect an end user into the Terra Authentication Widget so they can connect a data provider.
-  version: 2026.08.10
+  version: 2026.08.10.1
   license:
     name: Proprietary
 servers:
@@ -12,7 +12,7 @@ security:
   - ApiKeyAuth: []
     DevID: []
 paths:
-  /widget/api/session:
+  /widget/session:
     post:
       summary: Generate an authentication link, using the Terra Authentication Widget
       description: Generates a link to redirect an end user to for them to select an integration and log in with their fitness data provider
