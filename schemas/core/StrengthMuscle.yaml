@@ -8,6 +8,7 @@ anyOf:
     const: adductors
   - type: string
     const: back
+    description: The back without a part named. Where a source distinguishes the lats or the upper back, `lat` or `upper_back` is reported instead.
   - type: string
     const: biceps
   - type: string
@@ -22,6 +23,10 @@ anyOf:
     const: hamstrings
   - type: string
     const: hip_flexor
+    description: Iliopsoas and sartorius. Its own group — not part of the quadriceps.
+  - type: string
+    const: lat
+    description: "Latissimus dorsi. Reported separately from `back` and `upper_back`: a pulldown and a row are different work."
   - type: string
     const: lower_back
   - type: string
@@ -31,11 +36,20 @@ anyOf:
   - type: string
     const: quadriceps
   - type: string
+    const: serratus
+    description: Serratus anterior. Its own group — not part of the chest.
+  - type: string
     const: shoulders
+  - type: string
+    const: tibialis
+    description: Tibialis anterior. Its own group — not part of the calves, which it opposes.
   - type: string
     const: trapezius
   - type: string
     const: triceps
+  - type: string
+    const: upper_back
+    description: The upper back — rhomboids and mid traps — as distinct from the lats.
   - type: string
     const: unknown
     description: The source reported a value here but it could not be resolved. Distinct from the field being absent, which means the source reported nothing at all.
@@ -43,4 +57,13 @@ anyOf:
     description: A value Terra has added since this schema was published.
 examples:
   - abductors
-description: A muscle group an exercise works, used by both primary_muscles and secondary_muscles. Open enum — handle unknown values gracefully.
+description: |-
+  A muscle group an exercise works, used by both primary_muscles and secondary_muscles. Open enum — handle unknown values gracefully.
+
+  Members are training groups rather than anatomy: a source naming a specific head reports the group it belongs to, so the same exercise groups the same way whichever app recorded it.
+
+  Members are added over time, and a new one changes the total of the member it is most closely related to. If you aggregate per muscle, plan for that.
+
+  Some members are parts of a broader one and can be summed with it for a coarse view that stays stable: `lat` + `upper_back` + `back` covers the whole back, and `obliques` + `abs` the whole midsection.
+
+  Others are their own group and should not be folded into a neighbour — `serratus` is not part of the chest, `tibialis` is not part of the calves, and `hip_flexor` is not part of the quadriceps.
