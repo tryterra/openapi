@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.08.17
+  version: 2026.08.18
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -159,13 +159,21 @@ paths:
                     type: string
         '404':
           $ref: '#/components/responses/NotFound'
-  /auth/generateAuthToken:
+  /auth/tokens:
     post:
       tags:
         - Authentication
       summary: Generate a mobile SDK auth token
       description: Creates a token to be used with initConnection() functions in the Terra mobile SDKs in order to create a user record for Apple Health or Samsung Health (or equivalent)
-      operationId: Authentication_GenerateAuthToken
+      operationId: Authentication_CreateAuthToken
+      parameters:
+        - name: reference_id
+          in: query
+          description: Your identifier for the end user this token is being issued for. When supplied, the token is bound to it and redemption ignores the reference_id the SDK sends, so a token cannot be used to attach a device to a different user. Omit to keep the SDK-supplied value.
+          required: false
+          schema:
+            type: string
+          example: user-42
       responses:
         '200':
           description: '200'
@@ -192,7 +200,48 @@ paths:
                     default: 0
         '404':
           $ref: '#/components/responses/NotFound'
-      deprecated: false
+  /auth/generateAuthToken:
+    post:
+      tags:
+        - Authentication
+      summary: Generate a mobile SDK auth token (deprecated)
+      description: Deprecated spelling of POST /auth/tokens, which it is identical to. Kept indefinitely because shipped mobile SDK versions call this path; new integrations should use POST /auth/tokens.
+      operationId: Authentication_GenerateAuthToken
+      parameters:
+        - name: reference_id
+          in: query
+          description: Your identifier for the end user this token is being issued for. When supplied, the token is bound to it and redemption ignores the reference_id the SDK sends, so a token cannot be used to attach a device to a different user. Omit to keep the SDK-supplied value.
+          required: false
+          schema:
+            type: string
+          example: user-42
+      responses:
+        '200':
+          description: '200'
+          content:
+            application/json:
+              examples:
+                Result:
+                  value:
+                    status: success
+                    token: 250c68b9c21b78e40e7a3285a2d538d3bc24aabd3b4c76a782fb0a571ca4501d
+                    expires_in: 180
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  token:
+                    type: string
+                    example: 250c68b9c21b78e40e7a3285a2d538d3bc24aabd3b4c76a782fb0a571ca4501d
+                  expires_in:
+                    type: integer
+                    example: 180
+                    default: 0
+        '404':
+          $ref: '#/components/responses/NotFound'
+      deprecated: true
   /activity:
     get:
       summary: Retrieve activity data
