@@ -1,0 +1,5747 @@
+openapi: 3.1.0
+info:
+  title: Terra Admin API
+  version: 2026.08.24
+  description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
+servers:
+  - url: /api/v3/admin
+security:
+  - adminToken: []
+tags:
+  - name: auth
+  - name: tokens
+  - name: company
+  - name: team
+  - name: environments
+  - name: sources
+  - name: destinations
+  - name: dataconfig
+  - name: scores
+  - name: models
+    description: The catalog of generally-available models, and the per-environment history of model runs.
+  - name: webhookevents
+  - name: connections
+  - name: workouts
+  - name: entitlements
+  - name: billing
+paths:
+  /auth/device:
+    post:
+      operationId: startDeviceAuth
+      tags:
+        - auth
+      responses:
+        '200':
+          description: Device pairing started.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceStartResponse'
+              example:
+                device_code: kJ9…43-chars…Qw
+                user_code: TERRA-K7MP-4WX2
+                verification_uri: https://dashboard.tryterra.co/cli/verify
+                verification_uri_complete: https://dashboard.tryterra.co/cli/verify?code=TERRA-K7MP-4WX2
+                expires_in: 900
+                interval: 5
+        '400':
+          description: invalid_request | invalid_scope (RFC 6749 §5.2 envelope).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+              example:
+                error: invalid_request
+                error_description: client_id is required
+      summary: Begin device-pairing auth (RFC 8628)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeviceStartFormRequest'
+      description: 'Standard RFC 8628 §3.1 device authorization request: form-encoded body, JSON response (200), RFC 6749 §5.2 error envelope, Cache-Control: no-store. This endpoint speaks only the OAuth wire format.'
+  /auth/token:
+    post:
+      operationId: pollToken
+      tags:
+        - auth
+      responses:
+        '200':
+          description: Token minted (RFC 6749 §5.1).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthTokenResponse'
+              example:
+                access_token: terra_at_kJ9…shown-once…Qw
+                token_type: Bearer
+                expires_in: 2592000
+                scope: account:read providers:read events:read
+                token_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+        '400':
+          description: authorization_pending | slow_down | access_denied | expired_token | invalid_request | unsupported_grant_type | invalid_grant (RFC 8628 §3.5 / RFC 6749 §5.2 envelope).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+              example:
+                error: authorization_pending
+                error_description: authorization pending
+      summary: Poll for the minted token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenPollFormRequest'
+      description: 'Standard RFC 8628 §3.4 device access token request: form-encoded body with grant_type urn:ietf:params:oauth:grant-type:device_code, RFC 6749 §5.1 token response, §5.2/§3.5 error envelope, Cache-Control: no-store. This endpoint speaks only the OAuth wire format. No refresh tokens are issued — rotate via POST /tokens/self/rotate.'
+  /me:
+    get:
+      operationId: getMe
+      tags:
+        - tokens
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+              example:
+                token_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                kind: admin
+                customer_id: cus_9f3k2m
+                scopes:
+                  - account:read
+                  - providers:read
+                dev_ids:
+                  - prod-app-x81LmQ
+                name: terra-cli on alex-mbp
+                created_via: dashboard
+                expires_at: '2026-08-02T09:15:00Z'
+                grant_anchor_at: '2026-07-03T09:15:00Z'
+                last_used_at: '2026-07-03T09:15:00Z'
+                user:
+                  user_id: usr_8f2a1c
+                  email: alex@acme.example
+                  verified: true
+                  name: Alex Doe
+                  phone_number: '+15551234567'
+                  created_at: '2025-01-10T09:00:00Z'
+                  last_login: '2026-07-01T09:00:00Z'
+                  company_id: cus_9f3k2m
+                  role: admin
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Introspect the calling token
+      security:
+        - adminToken: []
+      description: 'Scope-free: any valid token may introspect what it holds. The user object is the exception and requires account:read — the token''s own properties are self-knowledge, but the minting user''s email/phone/role is the same PII that /me/metadata and /team/members/{user_id} gate. Without that scope, user is null.'
+    patch:
+      operationId: patchMe
+      tags:
+        - tokens
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/DashboardUser'
+                required:
+                  - user
+              example:
+                user:
+                  user_id: usr_8f2a1c
+                  email: alex@acme.example
+                  verified: true
+                  name: Alex Doe (she/her)
+                  phone_number: '+15551234567'
+                  created_at: '2025-01-10T09:00:00Z'
+                  last_login: '2026-07-01T09:00:00Z'
+                  company_id: cus_9f3k2m
+                  role: admin
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Update the calling principal's own dashboard user profile
+      description: The write is strictly self-scoped but carries account:write — a state change requires a write scope; account:write is in the default mint set, so only explicitly read-narrowed tokens lose self-edit. 404 not_found when the token has no resolvable own dashboard.users row (see DashboardUser).
+      security:
+        - adminToken:
+            - account:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchMeRequest'
+  /me/metadata:
+    get:
+      operationId: getMeMetadata
+      tags:
+        - tokens
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metadata:
+                    $ref: '#/components/schemas/MeMetadata'
+                required:
+                  - metadata
+              example:
+                metadata:
+                  analytics_layout:
+                    widgets:
+                      - sleep
+                      - recovery
+                  preferences:
+                    units: metric
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Get the calling principal's own analytics layout and preferences
+      security:
+        - adminToken:
+            - account:read
+    patch:
+      operationId: patchMeMetadata
+      tags:
+        - tokens
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metadata:
+                    $ref: '#/components/schemas/MeMetadata'
+                required:
+                  - metadata
+              example:
+                metadata:
+                  analytics_layout:
+                    widgets:
+                      - sleep
+                      - recovery
+                  preferences:
+                    units: metric
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Upsert the calling principal's own analytics layout and/or preferences
+      security:
+        - adminToken:
+            - account:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchMeMetadataRequest'
+  /tokens/self:
+    delete:
+      operationId: revokeSelf
+      tags:
+        - tokens
+      responses:
+        '204':
+          description: Revoked.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Revoke the calling token
+      security:
+        - adminToken: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+  /tokens/self/rotate:
+    post:
+      operationId: rotateSelf
+      tags:
+        - tokens
+      responses:
+        '201':
+          description: Rotated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              example:
+                token: terra_at_Nw2…shown-once…Rk
+                token_id: 1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                kind: admin
+                customer_id: cus_9f3k2m
+                scopes:
+                  - account:read
+                  - providers:read
+                dev_ids: null
+                expires_at: '2026-08-02T09:15:00Z'
+                name: terra-cli on alex-mbp
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Rotate the calling token within its grant window
+      security:
+        - adminToken: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+  /tokens:
+    get:
+      operationId: listTokens
+      tags:
+        - tokens
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TokenSummary'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - token_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                    kind: admin
+                    name: terra-cli on alex-mbp
+                    scopes:
+                      - account:read
+                    dev_ids: null
+                    created_by: alex@acme.com
+                    created_via: device_flow
+                    created_at: '2026-07-03T09:15:00Z'
+                    expires_at: '2026-08-02T09:15:00Z'
+                    last_used_at: '2026-07-03T09:15:00Z'
+                    revoked_at: null
+                  - token_id: 2b3c4d5e-6f70-4a81-92b3-c4d5e6f70a81
+                    kind: data
+                    name: sdk-auth-only
+                    scopes:
+                      - auth:write
+                    dev_ids:
+                      - prod-app-x81LmQ
+                    created_by: token:8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                    created_via: admin_api
+                    created_at: '2026-07-03T09:15:00Z'
+                    expires_at: '2028-07-03T09:15:00Z'
+                    last_used_at: null
+                    revoked_at: null
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: List the account's tokens
+      security:
+        - adminToken:
+            - tokens:admin
+  /tokens/{token_id}:
+    delete:
+      operationId: revokeToken
+      tags:
+        - tokens
+      responses:
+        '204':
+          description: Revoked.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Revoke a token by id
+      security:
+        - adminToken:
+            - tokens:admin
+      parameters:
+        - name: token_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+  /company:
+    get:
+      operationId: getCompany
+      tags:
+        - company
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSummary'
+              example:
+                customer_id: cus_9f3k2m
+                dev_id_count: 2
+                company:
+                  company_id: cus_9f3k2m
+                  name: Acme Fitness
+                  billing_email: billing@acme.example
+                  website_url: https://acme.example
+                  learn_about_us: search
+                  onboarded: true
+                  user_flow_done: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Account summary
+      security:
+        - adminToken:
+            - account:read
+    patch:
+      operationId: patchCompany
+      tags:
+        - company
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  company:
+                    $ref: '#/components/schemas/CompanyProfile'
+                required:
+                  - company
+              example:
+                company:
+                  company_id: cus_9f3k2m
+                  name: Acme Fitness (Inc.)
+                  billing_email: billing@acme.example
+                  onboarded: true
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Update company profile
+      security:
+        - adminToken:
+            - account:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchCompanyRequest'
+  /environments:
+    get:
+      operationId: listEnvironments
+      tags:
+        - environments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DevSummary'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - dev_id: prod-app-x81LmQ
+                    name: Production
+                    label: prod
+                    active: true
+                    billable: true
+                    profile:
+                      dev_id: prod-app-x81LmQ
+                      company_id: cus_9f3k2m
+                      name: Production
+                      billable: true
+                      widget_config_url: null
+                      widget_name: null
+                      app_logo: null
+                  - dev_id: staging-app-b52TnP
+                    name: Staging
+                    active: true
+                    billable: false
+                    profile: null
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: List the account's dev-ids
+      security:
+        - adminToken:
+            - account:read
+    post:
+      operationId: createEnvironmentProfile
+      tags:
+        - environments
+      responses:
+        '200':
+          description: OK — a profile already existed for this dev-id (idempotent get-or-create; the existing row is returned unchanged)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: '#/components/schemas/EnvironmentProfile'
+                required:
+                  - profile
+              example:
+                profile:
+                  dev_id: prod-app-x81LmQ
+                  company_id: cus_9f3k2m
+                  name: Production
+                  billable: true
+                  widget_config_url: null
+                  widget_name: null
+                  app_logo: null
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: '#/components/schemas/EnvironmentProfile'
+                required:
+                  - profile
+              example:
+                profile:
+                  dev_id: staging-app-b52TnP
+                  company_id: cus_9f3k2m
+                  name: Staging
+                  billable: false
+                  widget_config_url: null
+                  widget_name: null
+                  app_logo: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Create the environment profile for an existing dev-id
+      security:
+        - adminToken:
+            - account:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEnvironmentProfileRequest'
+  /entitlements:
+    get:
+      operationId: listEntitlements
+      tags:
+        - entitlements
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Entitlement'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - capability: streaming
+                    source: stripe_reconcile
+                  - capability: pass_connections
+                    source: manual
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: List feature entitlements
+      security:
+        - adminToken:
+            - entitlements:read
+  /billing/subscriptions:
+    get:
+      operationId: listSubscriptions
+      tags:
+        - billing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SubscriptionSummary'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - id: sub_1PXk9f2c
+                    status: active
+                    cancel_at_period_end: false
+                    collection_method: charge_automatically
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: List subscriptions
+      security:
+        - adminToken:
+            - billing:read
+    post:
+      operationId: subscribe
+      tags:
+        - billing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingState'
+              example:
+                state: ok
+        '202':
+          description: 'requires_action: finish at dashboard_url.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingState'
+              example:
+                state: requires_action
+                dashboard_url: https://dashboard.tryterra.co/dashboard/settings/payment
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Add/change a plan
+      security:
+        - adminToken:
+            - billing:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscribeRequest'
+  /billing/invoices:
+    get:
+      operationId: listInvoices
+      tags:
+        - billing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InvoiceSummary'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - id: in_1PXk9f2c
+                    status: paid
+                    amount_due: 49900
+                    currency: usd
+                    created_at: '2026-07-03T09:15:00Z'
+                    hosted_invoice_url: https://invoice.stripe.com/i/acct_x/in_1PXk9f2c
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: List invoices
+      security:
+        - adminToken:
+            - billing:read
+  /billing/invoices/upcoming:
+    get:
+      operationId: getUpcomingInvoice
+      tags:
+        - billing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceSummary'
+              example:
+                id: upcoming
+                status: draft
+                amount_due: 52300
+                currency: usd
+                created_at: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Upcoming (preview) invoice
+      security:
+        - adminToken:
+            - billing:read
+  /billing/payment-method:
+    get:
+      operationId: getPaymentMethod
+      tags:
+        - billing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethodSummary'
+              example:
+                has_card: true
+                brand: visa
+                exp_month: 11
+                exp_year: 2027
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Default payment method (masked)
+      security:
+        - adminToken:
+            - billing:read
+  /billing/usage:
+    get:
+      operationId: getUsage
+      tags:
+        - billing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageResponse'
+              example:
+                meter_id: mtr_61RQw
+                aggregated_value: 18234
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Metered usage totals
+      security:
+        - adminToken:
+            - billing:read
+      parameters:
+        - name: meter_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: end
+          in: query
+          required: true
+          schema:
+            type: integer
+  /billing/subscriptions/cancel-incomplete:
+    post:
+      operationId: cancelIncomplete
+      tags:
+        - billing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingState'
+              example:
+                state: ok
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Cancel incomplete (failed-3DS) subscriptions
+      security:
+        - adminToken:
+            - billing:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+  /environments/{dev_id}:
+    get:
+      operationId: getEnvironment
+      tags:
+        - environments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevDetail'
+              example:
+                dev_id: prod-app-x81LmQ
+                name: Production
+                active: true
+                billable: true
+                profile:
+                  dev_id: prod-app-x81LmQ
+                  company_id: cus_9f3k2m
+                  name: Production
+                  billable: true
+                  widget_config_url: null
+                  widget_name: null
+                  app_logo: null
+                api_key_masked: '****k2Qw'
+                signing_secret_masked: '****9xLm'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Dev-id detail (masked secrets)
+      security:
+        - adminToken:
+            - account:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+    patch:
+      operationId: patchEnvironmentProfile
+      tags:
+        - environments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: '#/components/schemas/EnvironmentProfile'
+                required:
+                  - profile
+              example:
+                profile:
+                  dev_id: prod-app-x81LmQ
+                  company_id: cus_9f3k2m
+                  name: Production (EU)
+                  billable: true
+                  widget_config_url: null
+                  widget_name: null
+                  app_logo: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Update the environment profile's display fields
+      security:
+        - adminToken:
+            - account:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchEnvironmentProfileRequest'
+  /environments/{dev_id}/unified-api/widget/config:
+    get:
+      operationId: getWidgetConfig
+      tags:
+        - environments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  widget:
+                    $ref: '#/components/schemas/WidgetConfig'
+                required:
+                  - widget
+              example:
+                widget:
+                  widget_config_url: https://widget.example/config.json
+                  widget_name: Acme Connect
+                  app_logo: https://cdn.tryterra.co/acme/logo.png
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Get the dev-id's widget config
+      security:
+        - adminToken:
+            - dataconfig:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+    put:
+      operationId: setWidgetConfig
+      tags:
+        - environments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  widget:
+                    $ref: '#/components/schemas/WidgetConfig'
+                required:
+                  - widget
+              example:
+                widget:
+                  widget_config_url: https://widget.example/config.json
+                  widget_name: Acme Connect
+                  app_logo: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Replace the dev-id's widget config (full replace)
+      security:
+        - adminToken:
+            - dataconfig:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WidgetConfig'
+  /environments/{dev_id}/api-key:
+    get:
+      operationId: getEnvironmentApiKey
+      tags:
+        - environments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevKeys'
+              example:
+                dev_id: prod-app-x81LmQ
+                api_key: 6f8c…full-secret…2a1b
+                signing_secret: e3d9…full-secret…77c4
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Full credential material (audited)
+      security:
+        - adminToken:
+            - keys:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+  /environments/{dev_id}/unified-api/sources:
+    get:
+      operationId: listSources
+      tags:
+        - sources
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProviderSummary'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                  meta:
+                    type: object
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - provider: garmin
+                    active: true
+                    auth_redirect_url: https://api.acme.com/terra/callback
+                  - provider: oura
+                    active: true
+                has_more: false
+                next_cursor: null
+                meta:
+                  warnings:
+                    - lab-reports provider state is not synced by this API; if this dev-id uses lab reports, toggle it in the dashboard
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: List enabled providers
+      security:
+        - adminToken:
+            - providers:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+  /environments/{dev_id}/unified-api/sources/{provider}:
+    put:
+      operationId: enableSource
+      tags:
+        - sources
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderEnabled'
+              example:
+                provider: garmin
+                active: true
+                meta:
+                  warnings:
+                    - lab-reports provider state is not synced by this API; if this dev-id uses lab reports, toggle it in the dashboard
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Enable a provider (idempotent)
+      security:
+        - adminToken:
+            - providers:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+    delete:
+      operationId: disableSource
+      tags:
+        - sources
+      responses:
+        '200':
+          description: Dry-run preview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: disable
+                preview:
+                  provider: garmin
+        '204':
+          description: Disabled.
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Disable a provider
+      security:
+        - adminToken:
+            - providers:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+  /environments/{dev_id}/unified-api/sources/{provider}/credentials:
+    get:
+      operationId: getSourceCredentials
+      tags:
+        - sources
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderCredentials'
+              example:
+                provider: garmin
+                has_credentials: true
+                terra_owned: false
+                credential:
+                  provider_client_id: acme-garmin-oauth
+                  provider_client_secret_masked: '****9876'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Provider OAuth credentials (masked)
+      security:
+        - adminToken:
+            - providers:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+    put:
+      operationId: setSourceCredentials
+      tags:
+        - sources
+      summary: Set custom provider OAuth credentials
+      description: Set the customer's own OAuth credentials (client_id/secret, optional redirect URL, verification secret, sandbox) so auth runs against their app. Idempotent; the secret is write-only and masked on read.
+      security:
+        - adminToken:
+            - providers:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderCredentialWrite'
+      responses:
+        '200':
+          description: The stored credential (secret masked).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderCredentials'
+              example:
+                provider: garmin
+                has_credentials: true
+                terra_owned: false
+                credential:
+                  provider_client_id: acme-garmin-oauth
+                  provider_client_secret_masked: '****4321'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/unified-api/sources/{provider}/scopes:
+    get:
+      operationId: getSourceScopes
+      tags:
+        - sources
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderScopes'
+              example:
+                provider: garmin
+                scopes:
+                  - read:activity
+                  - read:sleep
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Custom OAuth scopes
+      security:
+        - adminToken:
+            - providers:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+    put:
+      operationId: setSourceScopes
+      tags:
+        - sources
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderScopes'
+              example:
+                provider: garmin
+                scopes:
+                  - read:activity
+                  - read:sleep
+                  - read:body
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Set custom OAuth scopes
+      security:
+        - adminToken:
+            - providers:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScopesRequest'
+  /environments/{dev_id}/unified-api/destinations:
+    get:
+      operationId: listDestinations
+      tags:
+        - destinations
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DestinationSummary'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - id: '1937255512398764032'
+                    type: webhook
+                    url: https://api.acme.com/terra/webhook
+                    active: true
+                    event_types:
+                      - activity
+                      - sleep
+                      - daily
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: List destinations
+      security:
+        - adminToken:
+            - destinations:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+    post:
+      operationId: createDestination
+      tags:
+        - destinations
+      responses:
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DestinationSummary'
+              example:
+                id: '1937255512398764032'
+                type: webhook
+                url: https://api.acme.com/terra/webhook
+                active: true
+                event_types:
+                  - activity
+                  - sleep
+                signing_secret: a4f8…shown-once…c917
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Create a destination
+      security:
+        - adminToken:
+            - destinations:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDestinationRequest'
+  /environments/{dev_id}/unified-api/destinations/{destination_id}:
+    patch:
+      operationId: patchDestination
+      tags:
+        - destinations
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DestinationSummary'
+              example:
+                id: '1937255512398764032'
+                type: webhook
+                url: https://api.acme.com/terra/webhook
+                active: false
+                event_types:
+                  - activity
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Update a destination
+      security:
+        - adminToken:
+            - destinations:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: destination_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchDestinationRequest'
+    delete:
+      operationId: deleteDestination
+      tags:
+        - destinations
+      responses:
+        '200':
+          description: Dry-run preview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: delete
+                preview:
+                  id: '1937255512398764032'
+                  type: webhook
+                  url: https://api.acme.com/terra/webhook
+        '204':
+          description: Deleted.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Delete a destination
+      security:
+        - adminToken:
+            - destinations:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: destination_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+  /environments/{dev_id}/unified-api/destinations/supabase/oauth:
+    post:
+      operationId: startSupabaseOauth
+      tags:
+        - destinations
+      responses:
+        '201':
+          description: Started.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupabaseStartResponse'
+              example:
+                authorization_url: https://api.supabase.com/v1/oauth/authorize?client_id=…&state=…
+                oauth_session_id: 7f3a…64-hex…c2d1
+                expires_in: 900
+                interval: 5
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Start Supabase OAuth
+      security:
+        - adminToken:
+            - destinations:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+  /environments/{dev_id}/unified-api/destinations/supabase/oauth/{oauth_session_id}:
+    get:
+      operationId: pollSupabaseOauth
+      tags:
+        - destinations
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupabaseState'
+              example:
+                state: ready
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Poll Supabase OAuth state
+      security:
+        - adminToken:
+            - destinations:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: oauth_session_id
+          in: path
+          required: true
+          schema:
+            type: string
+  /environments/{dev_id}/unified-api/destinations/supabase/oauth/{oauth_session_id}/projects:
+    get:
+      operationId: listSupabaseProjects
+      tags:
+        - destinations
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                  meta:
+                    type: object
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - id: abcdefghijklmnop
+                    name: acme-prod
+                meta:
+                  organization: acme
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: List Supabase projects
+      security:
+        - adminToken:
+            - destinations:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: oauth_session_id
+          in: path
+          required: true
+          schema:
+            type: string
+  /environments/{dev_id}/unified-api/destinations/supabase/provision:
+    post:
+      operationId: provisionSupabase
+      tags:
+        - destinations
+      responses:
+        '201':
+          description: Provisioned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupabaseProvisioned'
+              example:
+                provisioned: true
+                project_ref: abcdefghijklmnop
+                destination_id: '1937255512398764033'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Provision the Supabase destination
+      security:
+        - adminToken:
+            - destinations:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupabaseProvisionRequest'
+  /environments/{dev_id}/unified-api/scopes:
+    get:
+      operationId: listUnifiedApiScopes
+      tags:
+        - dataconfig
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SelectedDataField'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - data_type: activity
+                    fields:
+                      - steps
+                      - distance_metres
+                      - calories
+                    samples_enabled: false
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Per-data-type field selection
+      security:
+        - adminToken:
+            - dataconfig:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+    patch:
+      operationId: patchUnifiedApiScopes
+      tags:
+        - dataconfig
+      responses:
+        '200':
+          description: Updated (or DryRunResult when ?dry_run=true).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SelectedDataField'
+              example:
+                data_type: activity
+                fields:
+                  - steps
+                  - distance_metres
+                samples_enabled: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Replace a data-type field selection
+      security:
+        - adminToken:
+            - dataconfig:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectedDataFieldsRequest'
+    put:
+      operationId: putUnifiedApiScopes
+      tags:
+        - dataconfig
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SelectedDataTypes'
+              example:
+                scopes:
+                  - ATHLETE
+                  - ACTIVITY
+                  - BODY
+                  - SLEEP
+                samples_enabled: true
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      summary: Replace which data types are selected
+      security:
+        - adminToken:
+            - dataconfig:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      description: 'Sets WHICH data types this environment collects, wholesale — the PATCH on this path sets the fields within one data type. Send the complete desired set: anything omitted is deselected, and nothing is read back first, so a concurrent edit is never silently reinstated. ATHLETE is always selected and need not be sent; SAMPLES is the per-row samples flag, not a data type; HEALTH_OBSERVATION is 403 access_denied unless the account holds the health_observation entitlement. Gated dataconfig:write rather than account:write so an environment''s data scopes stay editable by every role that can configure data.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplaceDataTypesRequest'
+  /environments/{dev_id}/unified-api/scores:
+    get:
+      operationId: listScores
+      tags:
+        - scores
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScoreConfig'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - score: sleep
+                    active: true
+                    weights:
+                      duration: 40
+                      efficiency: 30
+                      timing: 30
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Score configuration
+      security:
+        - adminToken:
+            - scores:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+  /environments/{dev_id}/unified-api/scores/{score}:
+    get:
+      operationId: getScore
+      tags:
+        - scores
+      summary: A score's full config (type, active, weights)
+      security:
+        - adminToken:
+            - scores:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: score
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreResult'
+              example:
+                score: sleep
+                active: true
+                weights:
+                  duration: 40
+                  efficiency: 30
+                  timing: 30
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    patch:
+      operationId: patchScore
+      tags:
+        - scores
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreResult'
+              example:
+                score: sleep
+                active: true
+                weights:
+                  duration: 50
+                  efficiency: 25
+                  timing: 25
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Update a score's config (active and/or weights)
+      security:
+        - adminToken:
+            - scores:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: score
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchScoreRequest'
+  /environments/{dev_id}/unified-api/scores/history:
+    get:
+      operationId: listScoresHistory
+      tags:
+        - scores
+      summary: Score history
+      description: A page of the environment's computed scores, newest first, from ClickHouse. Filter by score (type), user_id (the Terra user_id, resolved to its provider-side id via the connection service), provider_user_id (the stored provider-side id, matched directly), and the since/until window. Each row is annotated with the user_id its provider_user_id maps to (null if unmapped). Keyset cursor pagination.
+      security:
+        - adminToken:
+            - scores:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: score
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: provider_user_id
+          in: query
+          schema:
+            type: string
+        - name: since
+          in: query
+          schema:
+            type: string
+        - name: until
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A page of score records (keyset cursor).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScoreHistoryRecord'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - provider_user_id: a1b2c3d4
+                    user_id: 8f14e45f-ceea-467d-9f6a-3b1c2d4e5f6a
+                    provider: garmin
+                    score: sleep
+                    value: 82
+                    dimensions:
+                      - 80
+                      - 75
+                      - 90
+                      - -1
+                      - -1
+                      - -1
+                      - -1
+                      - -1
+                    start_time: '2026-07-15T22:00:00Z'
+                    end_time: '2026-07-16T07:00:00Z'
+                    inserted_at: '2026-07-16T08:14:02.113Z'
+                has_more: false
+                next_cursor: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/unified-api/scores/analytics:
+    get:
+      operationId: getScoresAnalytics
+      tags:
+        - scores
+      summary: Score analytics
+      description: 'Aggregate score stats for the environment over the since/until window: distinct users covered and total score updates.'
+      security:
+        - adminToken:
+            - scores:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: since
+          in: query
+          schema:
+            type: string
+        - name: until
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Aggregate score stats over the window.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreAnalytics'
+              example:
+                covered_users: 128
+                updates: 5140
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/webhook-events:
+    get:
+      operationId: listWebhookEvents
+      tags:
+        - webhookevents
+      responses:
+        '200':
+          description: A page of delivery events (keyset cursor).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventRecord'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - event_id: c9d0e1f2-3a4b-4c5d-8e9f-a0b1c2d3e4f5
+                    sent_at: '2026-07-02T18:04:11.532Z'
+                    data_type: activity
+                    provider: garmin
+                    destination_type: webhook
+                    http_status: 200
+                    response_time_ms: 184
+                    bytes: 15872
+                    connection_id: '1937251889234671616'
+                has_more: true
+                next_cursor: eyJzZW50X2F0IjoiMjAyNi0wNy0wMlQxODowNDoxMS41MzJaIiwiZXZlbnRfaWQiOiJjOWQwIn0
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Delivery-history debug surface
+      security:
+        - adminToken:
+            - events:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: since
+          in: query
+          schema:
+            type: string
+        - name: until
+          in: query
+          schema:
+            type: string
+        - name: outcome
+          in: query
+          schema:
+            type: string
+            enum:
+              - delivered
+              - failed
+        - name: provider
+          in: query
+          schema:
+            type: string
+        - name: data_type
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: reference_id
+          in: query
+          schema:
+            type: string
+        - name: event_id
+          in: query
+          schema:
+            type: string
+          description: Exact event id; defaults the window to the 14-day actionable range.
+  /environments/{dev_id}/webhook-events/resend:
+    post:
+      operationId: resendWebhookEvent
+      tags:
+        - webhookevents
+      responses:
+        '202':
+          description: Dispatched.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResendResult'
+              example:
+                event_id: c9d0e1f2-3a4b-4c5d-8e9f-a0b1c2d3e4f5
+                event_type: activity
+                dispatched: true
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Re-dispatch a stored event
+      security:
+        - adminToken:
+            - events:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendEventRequest'
+  /environments/{dev_id}/users:
+    get:
+      operationId: listUsers
+      tags:
+        - connections
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSummary'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                    reference_id: acme-user-4821
+                    provider: garmin
+                    active: true
+                    created_at: '2026-05-14T08:22:31Z'
+                    last_updated_at: '2026-07-03T09:15:00Z'
+                    most_recent_data_at: '2026-07-03T05:58:02Z'
+                  - user_id: 3e2d1c0b-9a8f-4e7d-6c5b-4a3928170605
+                    provider: oura
+                    active: false
+                    created_at: '2026-04-02T10:05:00Z'
+                    last_updated_at: null
+                    most_recent_data_at: null
+                has_more: false
+                next_cursor: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: List end-user connections
+      description: A page of the environment's end-user connections, newest first (created-time desc), with keyset cursor pagination. Filter by provider, active, user_id, reference_id and a created_since/created_until window.
+      security:
+        - adminToken:
+            - connections:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: provider
+          in: query
+          schema:
+            type: string
+        - name: active
+          in: query
+          schema:
+            type: boolean
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: reference_id
+          in: query
+          schema:
+            type: string
+        - name: created_since
+          in: query
+          description: Lower bound (inclusive, RFC3339) on connection creation time. This surface windows on creation time, so use created_since/created_until here, not since/until — the raw since/until params are rejected with a 400.
+          schema:
+            type: string
+            format: date-time
+        - name: created_until
+          in: query
+          description: Upper bound (inclusive, RFC3339) on connection creation time. Use created_since/created_until here, not since/until — the raw since/until params are rejected with a 400.
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: cursor
+          in: query
+          schema:
+            type: string
+  /environments/{dev_id}/users/stats:
+    get:
+      operationId: getUserStats
+      tags:
+        - connections
+      summary: User-overview statistics
+      description: 'The environment''s user-overview graphs over an optional since/until window (RFC3339; defaults to the trailing 3 months): cumulative payload and byte volume, per-provider connection counts, and the device / auth / deauth event time series.'
+      security:
+        - adminToken:
+            - connections:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: until
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: The user-overview graph series.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  devices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StatsPoint'
+                  deauth_events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StatsPoint'
+                  auth_events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StatsPoint'
+                  payloads:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StatsPoint'
+                  bytes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StatsPoint'
+                  providers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StatsPoint'
+                required:
+                  - devices
+                  - deauth_events
+                  - auth_events
+                  - payloads
+                  - bytes
+                  - providers
+              example:
+                devices:
+                  - x: 1748736000
+                    'y': 12
+                deauth_events:
+                  - x: 1748736000
+                    'y': 0
+                auth_events:
+                  - x: 1748736000
+                    'y': 3
+                payloads:
+                  - x: 1748736000
+                    'y': 240
+                bytes:
+                  - x: 1748736000
+                    'y': 1048576
+                providers:
+                  - x: garmin
+                    'y': 9
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/webhook-events/{event_id}:
+    get:
+      operationId: getWebhookEvent
+      tags:
+        - webhookevents
+      summary: Fetch a single delivery event
+      description: One delivery event's metadata by id, bounded to the 14-day actionable window.
+      security:
+        - adminToken:
+            - events:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The delivery event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRecord'
+              example:
+                event_id: c9d0e1f2-3a4b-4c5d-8e9f-a0b1c2d3e4f5
+                sent_at: '2026-07-02T18:04:11.532Z'
+                data_type: activity
+                provider: garmin
+                destination_type: webhook
+                http_status: 500
+                response_time_ms: 3011
+                bytes: 15872
+                connection_id: '1937251889234671616'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/webhook-events/{event_id}/payload:
+    get:
+      operationId: getWebhookEventPayload
+      tags:
+        - webhookevents
+      summary: Fetch a delivery event's stored payload
+      description: The delivered body (health data), content-addressed by event id. Separately retained (~14d) and gated by the stricter payloads:read scope.
+      security:
+        - adminToken:
+            - payloads:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The stored payload.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                user:
+                  user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                  provider: GARMIN
+                data:
+                  - metadata:
+                      start_time: '2026-07-02T06:31:04Z'
+                      end_time: '2026-07-02T07:12:40Z'
+                      type: 8
+                    distance_data:
+                      summary:
+                        distance_metres: 7250.4
+                        steps: 6812
+                type: activity
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/unified-api/processing:
+    get:
+      operationId: listProcessing
+      tags:
+        - dataconfig
+      summary: List processing types
+      description: Normalisation output formats with the dev-id's active selection (the second data-config axis).
+      security:
+        - adminToken:
+            - dataconfig:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+      responses:
+        '200':
+          description: The processing types.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProcessingType'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - type: fhir
+                    display_name: FHIR
+                    selected: false
+                  - type: fit
+                    display_name: FIT
+                    selected: false
+                  - type: json
+                    display_name: TERRA
+                    selected: true
+                has_more: false
+                next_cursor: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    patch:
+      operationId: setProcessing
+      tags:
+        - dataconfig
+      summary: Set the processing type
+      description: Switches the dev-id's normalisation output format. Supports ?dry_run=true. Returns the updated list.
+      security:
+        - adminToken:
+            - dataconfig:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: The updated processing types.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                data:
+                  - type: fhir
+                    display_name: FHIR
+                    selected: false
+                  - type: fit
+                    display_name: FIT
+                    selected: true
+                  - type: json
+                    display_name: TERRA
+                    selected: false
+                has_more: false
+                next_cursor: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetProcessingTypeRequest'
+  /environments/{dev_id}/tokens:
+    get:
+      operationId: listDataTokens
+      tags:
+        - tokens
+      summary: List a dev-id's data tokens
+      description: Data tokens (terra_dt_*) are the dev-scoped data-plane credential — the successor to the client_secret. Metadata only; re-showing a bearer is the separate keys:read-gated GET /tokens/{token_id}/secret.
+      security:
+        - adminToken:
+            - tokens:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+      responses:
+        '200':
+          description: The dev-id's data tokens.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DataToken'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - token_id: 2b3c4d5e-6f70-4a81-92b3-c4d5e6f70a81
+                    dev_id: prod-app-x81LmQ
+                    scopes:
+                      - auth:write
+                    name: sdk-auth-only
+                    created_at: '2026-07-03T09:15:00Z'
+                    expires_at: '2028-07-03T09:15:00Z'
+                    last_used_at: '2026-07-03T09:15:00Z'
+                    revoked_at: null
+                has_more: false
+                next_cursor: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    post:
+      operationId: mintDataToken
+      tags:
+        - tokens
+      summary: Mint a data token
+      description: Creates a dev-scoped, explicitly-scoped, long-lived data-plane token (e.g. auth:write only for SDK authentication). Multiple tokens coexist per dev-id, so rotation = mint new + revoke old — no shared-secret cutover. The bearer is returned at mint and retrievable later via the keys:read-gated /secret sub-resource (API-key DX parity).
+      security:
+        - adminToken:
+            - tokens:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MintDataTokenRequest'
+      responses:
+        '201':
+          description: The minted token (bearer shown once).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataToken'
+              example:
+                token: terra_dt_Xp4…shown-once…9zA
+                token_id: 2b3c4d5e-6f70-4a81-92b3-c4d5e6f70a81
+                dev_id: prod-app-x81LmQ
+                scopes:
+                  - auth:write
+                name: sdk-auth-only
+                created_at: '2026-07-03T09:15:00Z'
+                expires_at: '2028-07-03T09:15:00Z'
+                last_used_at: null
+                revoked_at: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /environments/{dev_id}/tokens/{token_id}:
+    delete:
+      operationId: revokeDataToken
+      tags:
+        - tokens
+      summary: Revoke a data token
+      description: Revocation is immediate (per-request validation).
+      security:
+        - adminToken:
+            - tokens:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: token_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204':
+          description: Revoked.
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /environments/{dev_id}/tokens/{token_id}/secret:
+    get:
+      operationId: revealDataToken
+      tags:
+        - tokens
+      summary: Re-show a token's bearer
+      description: 'Returns the token including its bearer. Deliberate API-key DX parity: the credential tokens succeed has always been retrievable, so tokens are too. Gated by keys:read (dangerous plaintext disclosure, same class as GET /api-key) and audited. Admin tokens are never retrievable (422).'
+      security:
+        - adminToken:
+            - keys:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: token_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The token with its bearer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataToken'
+              example:
+                token: terra_dt_Xp4…full-bearer…9zA
+                token_id: 2b3c4d5e-6f70-4a81-92b3-c4d5e6f70a81
+                dev_id: prod-app-x81LmQ
+                scopes:
+                  - auth:write
+                name: sdk-auth-only
+                created_at: '2026-07-03T09:15:00Z'
+                expires_at: null
+                last_used_at: '2026-07-15T08:00:00Z'
+                revoked_at: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /environments/{dev_id}/workouts/metadata:
+    get:
+      operationId: listWorkoutMetadata
+      tags:
+        - workouts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkoutMetadata'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - workout_id: wk_9f3k2m
+                    created_at: '2026-05-01T12:00:00Z'
+                    pace_units:
+                      running: min_per_km
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: List the dev-id's workout metadata
+      security:
+        - adminToken:
+            - dataconfig:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+  /environments/{dev_id}/workouts/{workout_id}/metadata:
+    get:
+      operationId: getWorkoutMetadata
+      tags:
+        - workouts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workout:
+                    $ref: '#/components/schemas/WorkoutMetadata'
+                required:
+                  - workout
+              example:
+                workout:
+                  workout_id: wk_9f3k2m
+                  created_at: '2026-05-01T12:00:00Z'
+                  pace_units:
+                    running: min_per_km
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Get one workout's metadata
+      security:
+        - adminToken:
+            - dataconfig:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+    put:
+      operationId: putWorkoutMetadata
+      tags:
+        - workouts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workout:
+                    $ref: '#/components/schemas/WorkoutMetadata'
+                required:
+                  - workout
+              example:
+                workout:
+                  workout_id: wk_9f3k2m
+                  created_at: '2026-05-01T12:00:00Z'
+                  pace_units:
+                    running: min_per_km
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Upsert a workout's metadata
+      security:
+        - adminToken:
+            - dataconfig:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutWorkoutMetadataRequest'
+    patch:
+      operationId: patchWorkoutMetadata
+      tags:
+        - workouts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workout:
+                    $ref: '#/components/schemas/WorkoutMetadata'
+                required:
+                  - workout
+              example:
+                workout:
+                  workout_id: wk_9f3k2m
+                  created_at: '2026-05-01T12:00:00Z'
+                  pace_units: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Overwrite a workout's pace_units
+      security:
+        - adminToken:
+            - dataconfig:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchWorkoutMetadataRequest'
+    delete:
+      operationId: deleteWorkoutMetadata
+      tags:
+        - workouts
+      summary: Delete a workout's metadata
+      security:
+        - adminToken:
+            - dataconfig:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204':
+          description: Deleted.
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /company/onboarding:
+    get:
+      operationId: getOnboarding
+      tags:
+        - company
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  onboarding:
+                    $ref: '#/components/schemas/OnboardingInfo'
+                required:
+                  - onboarding
+              example:
+                onboarding:
+                  company_id: cus_9f3k2m
+                  destination: s3
+                  scheme: https
+                  host: ingest.acme.example
+                  has_password: true
+                  providers:
+                    - GARMIN
+                    - FITBIT
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Get onboarding info
+      security:
+        - adminToken:
+            - account:read
+    patch:
+      operationId: patchOnboarding
+      tags:
+        - company
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  onboarding:
+                    $ref: '#/components/schemas/OnboardingInfo'
+                required:
+                  - onboarding
+              example:
+                onboarding:
+                  company_id: cus_9f3k2m
+                  destination: s3
+                  scheme: https
+                  host: ingest.acme.example
+                  has_password: true
+                  providers:
+                    - GARMIN
+                    - FITBIT
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Upsert onboarding info
+      security:
+        - adminToken:
+            - account:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchOnboardingRequest'
+  /company/terms:
+    post:
+      operationId: agreeToTerms
+      tags:
+        - company
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  terms_version:
+                    type: string
+                  agreed:
+                    type: boolean
+                required:
+                  - terms_version
+                  - agreed
+              example:
+                terms_version: '2026-05-01'
+                agreed: true
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Record terms acceptance
+      security:
+        - adminToken:
+            - account:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgreeToTermsRequest'
+  /company/terms/{version}:
+    get:
+      operationId: getAgreedToTerms
+      tags:
+        - company
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agreed:
+                    type: boolean
+                required:
+                  - agreed
+              example:
+                agreed: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Check terms acceptance
+      security:
+        - adminToken:
+            - account:read
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The terms_version to check.
+        - name: document
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - bundle
+              - tos
+              - dpa
+          description: Narrow the check to one document. Omitted means accepted under any document.
+  /company/feature-flags:
+    get:
+      operationId: listCompanyFeatureFlags
+      tags:
+        - company
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: string
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - flag-beta
+                  - flag-global
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: List enabled feature flags
+      security:
+        - adminToken:
+            - account:read
+      parameters:
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Narrow to the single flag with this name (empty data[] on no match, never 404).
+  /company/points/opt-in:
+    post:
+      operationId: optInToPoints
+      tags:
+        - company
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Opt the company in to the points programme
+      description: 'Enables the points feature for the calling token''s own company. There is no generic feature-flag write: the route is the flag, so no caller can name which flag it is setting. Idempotent.'
+      security:
+        - adminToken:
+            - account:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+  /company/referral-code:
+    get:
+      operationId: getReferralCode
+      tags:
+        - company
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  referral_code:
+                    type: string
+                required:
+                  - referral_code
+              example:
+                referral_code: ACME-REF-42
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Get referral code
+      security:
+        - adminToken:
+            - account:read
+    post:
+      operationId: ensureReferralCode
+      tags:
+        - company
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  referral_code:
+                    type: string
+                required:
+                  - referral_code
+              example:
+                referral_code: ACME-REF-42
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Get or create referral code
+      security:
+        - adminToken:
+            - account:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnsureReferralCodeRequest'
+      description: 'Get-or-create semantics: always 200, even when a code already existed — the store cannot distinguish create from exists at this layer.'
+  /company/referrals:
+    get:
+      operationId: getReferrals
+      tags:
+        - company
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rewarded_count:
+                    type: integer
+                required:
+                  - rewarded_count
+              example:
+                rewarded_count: 3
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Get referral reward count
+      security:
+        - adminToken:
+            - account:read
+  /team/members:
+    get:
+      operationId: listTeamMembers
+      tags:
+        - team
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TeamMemberSummary'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - user_id: usr_8f2a1c
+                    name: Alex Doe
+                    email: alex@acme.example
+                    role: admin
+                  - user_id: usr_3d9e77
+                    name: Sam Lee
+                    email: sam@acme.example
+                    role: viewer
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: List the company's team members
+      security:
+        - adminToken:
+            - team:read
+  /team/members/{user_id}:
+    get:
+      operationId: getTeamMember
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The team member's id, as returned by GET /team/members.
+      tags:
+        - team
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/DashboardUser'
+                required:
+                  - user
+              example:
+                user:
+                  user_id: usr_8f2a1c
+                  email: alex@acme.example
+                  verified: true
+                  name: Alex Doe
+                  phone_number: '+15551234567'
+                  created_at: '2025-01-10T09:00:00Z'
+                  last_login: '2026-07-01T09:00:00Z'
+                  company_id: cus_9f3k2m
+                  role: admin
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Get a team member
+      description: 404 not_found when user_id does not exist or belongs to a different company — identical either way (no existence oracle).
+      security:
+        - adminToken:
+            - team:read
+    patch:
+      operationId: patchTeamMember
+      tags:
+        - team
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/DashboardUser'
+                required:
+                  - user
+              example:
+                user:
+                  user_id: usr_8f2a1c
+                  email: alex@acme.example
+                  verified: true
+                  name: Alex Doe
+                  phone_number: '+15551234567'
+                  created_at: '2025-01-10T09:00:00Z'
+                  last_login: '2026-07-01T09:00:00Z'
+                  company_id: cus_9f3k2m
+                  role: editor
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Update a team member
+      description: 404 not_found when user_id does not exist or belongs to a different company — identical either way (no existence oracle).
+      security:
+        - adminToken:
+            - team:write
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The team member's id, as returned by GET /team/members.
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchTeamMemberRequest'
+    delete:
+      operationId: removeTeamMember
+      tags:
+        - team
+      responses:
+        '204':
+          description: Detached (or already not a member — idempotent).
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Remove a team member from the company
+      description: 'Detaches the user from the company (nulls company_id); never touches a row in another company. Idempotent: removing a user who is already not a member is not an error.'
+      security:
+        - adminToken:
+            - team:write
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The team member's id, as returned by GET /team/members.
+        - $ref: '#/components/parameters/IdempotencyKey'
+  /environments/{dev_id}/models/runs:
+    get:
+      operationId: listModelRuns
+      tags:
+        - models
+      summary: Model-run history
+      description: A page of the environment's model runs (one per GET /v2/models/run), newest first, from the 30-day run log. user_id filters the stored Terra user UUID directly; an unknown model yields an empty page. status filters by run outcome; run_id fetches a single run directly and widens the lookup to the full retained history so it is never cut off by the default window.
+      security:
+        - adminToken:
+            - models:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: model
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - success
+              - error
+        - name: run_id
+          in: query
+          schema:
+            type: string
+        - name: since
+          in: query
+          schema:
+            type: string
+        - name: until
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A page of model runs (keyset cursor).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModelRunRecord'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - run_id: 5f0b7d2e-9c1a-4e5b-8f3d-6a7b8c9d0e1f
+                    user_id: 00000000-0000-0000-0000-000000000101
+                    model: sleep-quality
+                    status: success
+                    latency_ms: 412
+                    start_time: '2026-07-09T00:00:00Z'
+                    end_time: '2026-07-16T00:00:00Z'
+                    submitted_at: '2026-07-16T09:14:02.113Z'
+                    output_truncated: false
+                    output:
+                      score: 82
+                has_more: false
+                next_cursor: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /models/catalog:
+    get:
+      operationId: getModelsCatalog
+      tags:
+        - models
+      summary: Models catalog
+      description: The static catalog of generally-available models the Models product exposes. Account-level and identical for every caller; running a model and its per-run history live on the data plane.
+      security:
+        - adminToken:
+            - models:read
+      responses:
+        '200':
+          description: The catalog of GA models.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModelCatalogEntry'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - id: health_terrain
+                    name: Health Terrain
+                    description: Maps how a user's body shifted over a week across 15 broad health areas, relative to their own recent baseline. A wellness indicator, not a medical diagnosis.
+                    data_type: daily
+                  - id: sleep_window
+                    name: Sleep Window
+                    description: Recommends a steady, personalised sleep schedule to help keep sleep and wake times consistent. A wellness indicator, not a medical tool.
+                    data_type: sleep
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /team/invitations:
+    post:
+      operationId: createTeamInvitation
+      tags:
+        - team
+      summary: Invite someone to the company
+      description: Records a pending membership for the caller's own company and returns the one-use invitation token. The company comes from the token's principal and cannot be named in the body. Only the token's digest is stored, so the value in this response is the only copy — a lost token must be replaced, not recovered. The invitee redeems it during dashboard sign-in, which is where the company and role are applied.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTeamInvitationRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamInvitationResponse'
+              example:
+                token: gJ7pR2mQx4Vd8sLwK1nZbT6yH0aCfEu3
+                expires_at: '2026-08-05T09:15:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      security:
+        - adminToken:
+            - team:write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+    get:
+      operationId: listTeamInvitations
+      tags:
+        - team
+      summary: List outstanding invitations
+      description: 'Returns the caller''s own company''s invitations that are still claimable — unclaimed and unexpired. Claimed and expired rows stay in the table as the record of what happened but are not listed. The token itself is never returned: only its digest is stored, so an invitation cannot be recovered, only revoked and reissued.'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TeamInvitation'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - id: 3f1c0a7e-9b52-4d61-8a3f-5c9e2d7b1a04
+                    company_id: cus_acme
+                    email: new.engineer@acme.test
+                    role: developer
+                    source: null
+                    invited_by_user_id: usr_admin_acme
+                    created_at: '2026-07-29T09:15:00Z'
+                    expires_at: '2026-08-05T09:15:00Z'
+                    claimed_at: null
+                    claimed_by_user_id: null
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      security:
+        - adminToken:
+            - team:read
+  /team/invitations/{invitation_id}:
+    delete:
+      operationId: revokeTeamInvitation
+      tags:
+        - team
+      summary: Revoke an outstanding invitation
+      description: 'Withdraws an unclaimed invitation. Tenancy is structural — the delete carries the caller''s own company — so an id belonging to another company matches nothing and answers 404 rather than confirming it exists. A claimed invitation is also a 404: that person is already a member, and removing them is DELETE /team/members/{user_id}.'
+      parameters:
+        - name: invitation_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The invitation's id, as returned by GET /team/invitations.
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      security:
+        - adminToken:
+            - team:write
+  /environments/{dev_id}/api-key/rotate:
+    post:
+      operationId: rotateEnvironmentApiKey
+      tags:
+        - environments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RotatedApiKey'
+              example:
+                dev_id: prod-app-x81LmQ
+                api_key: 6f8c…new-secret…2a1b
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      summary: Rotate the legacy client_secret
+      security:
+        - adminToken:
+            - account:write
+            - keys:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      description: Mints a new client_secret for this environment and returns it once. Requires BOTH account:write (it mutates credential config) and keys:read (it discloses plaintext). Prefer coexisting data tokens — mint new, revoke old — which need no atomic swap; this exists for the dashboard settings page's legacy key. The rotated-away secret stops working immediately.
+components:
+  securitySchemes:
+    adminToken:
+      type: oauth2
+      description: Terra access token (customer-scoped, kind=admin, `terra_at_*`). The ONLY grant is the RFC 8628 device-authorization flow (POST /auth/device, approve in the dashboard, poll POST /auth/token) or a dashboard mint — there is NO client_credentials token endpoint; the clientCredentials flow object below exists solely because OAS 3.1 has no first-class device-flow representation and this is where scopes are machine-readable (see x-grant-type). This surface accepts ONLY admin tokens; data tokens (kind=data, `terra_dt_*`, minted at POST /environments/{dev_id}/tokens) authenticate the data API only — the planes never cross. Each operation names its required scope; admin tokens may also carry an environment audience.
+      flows:
+        clientCredentials:
+          tokenUrl: /api/v3/admin/auth/token
+          scopes:
+            account:read: Read account and dev-id metadata.
+            keys:read: 'Read credential secret material — the legacy static API key (GET /api-key), a token''s bearer (GET /tokens/{id}/secret), or the data plane''s GET /v2/dashboard/developer. Dangerous: plaintext disclosure.'
+            keys:write: Reserved for legacy static-key mutations (dangerous). No admin-surface route uses it today; the dashboard rotate flow retains it.
+            providers:read: Read provider enablement, masked OAuth credentials, and custom scopes.
+            providers:write: Enable/disable providers and set custom OAuth credentials and scopes.
+            destinations:read: Read webhook and Supabase destinations.
+            destinations:write: Create, update, and delete destinations, and run Supabase provisioning.
+            events:read: Read delivery-history event metadata.
+            events:write: Re-dispatch (resend) a delivered event.
+            connections:read: List a dev-id's end-user connections.
+            payloads:read: Read stored delivered payload bodies (contains end-user health data).
+            dataconfig:read: Read per-data-type field selection.
+            dataconfig:write: Update per-data-type field selection.
+            scores:read: Read the score catalog and configuration.
+            scores:write: Activate and configure scores.
+            models:read: Read the model catalog (data plane) and per-environment model-run history (admin plane).
+            models:run: Run a model over a user's stored data.
+            workouts:read: Read workout templates and planned workouts.
+            workouts:write: Create workout templates and plan workouts for users.
+            labreports:read: Read lab reports.
+            labreports:write: Reprocess or delete lab reports.
+            testdata:write: Generate synthetic test data.
+            billing:read: 'Read billing: subscriptions, invoices, payment method, usage.'
+            billing:write: Manage subscriptions (subscribe, cancel-incomplete).
+            tokens:admin: List and revoke any admin token in the account.
+            entitlements:read: Read company feature entitlements.
+            auth:write: 'Data plane: create user authentication flows — widget sessions, auth tokens (in place of a client_secret).'
+            connections:write: 'Data plane: deauthenticate users and update connection attributes.'
+            data:read: 'Data plane: read stored end-user health data (activity, sleep, body, …).'
+            data:write: 'Data plane: push or delete end-user health data.'
+            routes:read: 'Data plane: read routes and pushed routes.'
+            routes:write: 'Data plane: create, update, push, and delete routes.'
+            datalinks:read: 'Data plane: read data links.'
+            datalinks:write: 'Data plane: create and delete data links.'
+            graphs:read: 'Data plane: read graph sessions.'
+            graphs:write: 'Data plane: create and manage graph sessions (public renders of health data).'
+            agents:read: 'Data plane: read agents, bundles, jobs, and schedules.'
+            agents:write: 'Data plane: create, update, and delete agents and their configuration.'
+            agents:run: 'Data plane: execute agents and bundles (incurs model spend).'
+            ai:run: 'Data plane: run AI-context queries and the MCP proxy.'
+            tokens:read: List token metadata for an environment (never re-shows a bearer).
+            tokens:write: 'Mint and revoke tokens for an environment — credential issuance (dangerous: transitively as broad as everything issuable).'
+            account:write: Update account/company profile, onboarding, terms and referral data.
+            team:read: Read the company's team member roster.
+            team:write: Update or remove a team member (name, phone, role; detach from the company).
+          x-not-a-real-flow: Scope registry only. Token issuance is the device flow (see scheme description); this tokenUrl does not accept client_credentials grants.
+      x-grant-type: urn:ietf:params:oauth:grant-type:device_code
+    sessionToken:
+      type: http
+      scheme: bearer
+      bearerFormat: terra_st_...
+      description: 'A dashboard session token, minted per login. Routes that record who a person is talking to accept ONLY this kind — a device-flow admin token carrying the same scopes is rejected. Scopes are enforced per operation and named in each description: an HTTP bearer scheme cannot carry an OAuth2 scope list, so the security requirement is necessarily empty.'
+  parameters:
+    DevId:
+      name: dev_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: The developer-id (the only tenant-targeting input).
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+      description: 'Stripe-style idempotency: same key + same body replays the stored response; same key + different body → 409. Mutations only.'
+    DryRun:
+      name: dry_run
+      in: query
+      required: false
+      schema:
+        type: boolean
+      description: When true, returns a DryRunResult preview without committing.
+  responses:
+    Unauthorized:
+      description: Missing/invalid/expired admin token.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: unauthorized
+            detail: unknown access token
+            instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin
+            code: unauthorized
+            remediation: Obtain a new one via the device flow or your dashboard.
+    Forbidden:
+      description: The token is missing the required scope.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: forbidden
+            detail: 'token is missing the required scope: providers:write'
+            instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin
+            code: scope_missing
+            remediation: Request a new token that includes providers:write (device flow or dashboard) and approve the additional scope.
+    NotFound:
+      description: Resource not found (or not owned — no existence oracle).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: not found
+            detail: dev-id not found
+            instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin
+            code: dev_id_not_found
+            remediation: Confirm the dev-id via `GET /environments`.
+    ValidationError:
+      description: Request validation failed (see errors[]).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: bad request
+            detail: approved scope was not requested
+            instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin
+            code: validation_failed
+            errors:
+              - 'scopes: at least one required'
+    RateLimited:
+      description: Per-token rate limit exceeded; see Retry-After.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: too many requests
+            detail: per-token rate limit exceeded
+            instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin
+            code: rate_limited
+            remediation: Back off and retry after the Retry-After interval.
+    Conflict:
+      description: Idempotency-Key reuse with a different body, or a precondition conflict.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: conflict
+            detail: the account has reached its active-token limit
+            instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin
+            code: token_limit_reached
+            remediation: Revoke unused tokens, then retry.
+    ServiceUnavailable:
+      description: A required subsystem is not available on this deployment.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: service unavailable
+            detail: billing is not available on this deployment
+            instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin
+            code: service_unavailable
+    InternalError:
+      description: Unexpected server-side failure while processing the request.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: internal server error
+            detail: an internal error occurred
+            instance: /api/v3/admin/company
+            code: internal_error
+    UnprocessableEntity:
+      description: The request is well-formed but the target resource can't perform it (e.g. provider disallows custom credentials).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: unprocessable entity
+            detail: this provider does not support custom credentials
+            instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin
+            code: unsupported_operation
+  schemas:
+    AccountSummary:
+      type: object
+      properties:
+        customer_id:
+          type: string
+        dev_id_count:
+          type: integer
+        company:
+          $ref: '#/components/schemas/CompanyProfile'
+    AgreeToTermsRequest:
+      type: object
+      properties:
+        terms_version:
+          type: string
+        document:
+          type: string
+          enum:
+            - bundle
+            - tos
+            - dpa
+          description: Which legal document this acceptance covers. Omitted means 'bundle' (the pre-split combined terms).
+        accepted_role:
+          type:
+            - string
+            - 'null'
+          description: Free-text role of the accepting user at acceptance time (e.g. admin, developer).
+      required:
+        - terms_version
+    BillingState:
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+            - ok
+            - requires_action
+        dashboard_url:
+          type: string
+          description: Where the human finishes 3DS / card entry. Present only with requires_action.
+      required:
+        - state
+    CompanyProfile:
+      type:
+        - object
+        - 'null'
+      description: dashboard.company_info row for the customer, joined with its dashboard.company_billing row, or null if no company_info row exists yet. The billing columns (stripe_customer_id, stripe_subscription_id, stripe_metering_type) are never included in the response.
+      additionalProperties: true
+    CreateDestinationRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          description: defaults to webhook
+        url:
+          type: string
+        event_types:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+        metadata:
+          type: string
+          description: advanced-type credential JSON
+      required:
+        - url
+    CreateEnvironmentProfileRequest:
+      type: object
+      description: dev_id is required and must already exist as a tesseract credential — this does not provision one. name defaults to dev_id; billable defaults to false.
+      properties:
+        dev_id:
+          type: string
+        name:
+          type: string
+        billable:
+          type: boolean
+      required:
+        - dev_id
+      additionalProperties: false
+    CreateTeamInvitationRequest:
+      type: object
+      description: 'A new invitation. There is deliberately no company_id and no source: the invited company is the caller''s own, read from the token''s principal, and source is provenance a customer-authenticated caller must not be able to set (it would let an invite grant a capability nobody sanctioned). Both are rejected, not ignored.'
+      properties:
+        email:
+          type: string
+          format: email
+          description: The address being invited. The claim only succeeds for a user signing in with this address.
+        role:
+          type: string
+          enum:
+            - admin
+            - developer
+          description: The role the invitee gets on joining. superadmin is not assignable, matching PATCH /team/members/{user_id}.
+      required:
+        - email
+        - role
+      additionalProperties: false
+    DashboardUser:
+      type:
+        - object
+        - 'null'
+      description: 'A dashboard.users row: user_id, email, verified, name, phone_number, created_at, last_login, company_id, role. No credential material — passwords live in dashboard.auth_keys, a separate table this surface never reads. null when the caller''s token has no resolvable own user (see PatchMeRequest''s description).'
+      additionalProperties: true
+    DataToken:
+      type: object
+      properties:
+        token:
+          type: string
+          description: The bearer (terra_dt_*). Shown once at mint.
+        token_id:
+          type: string
+        dev_id:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Expiry; null = never expires.
+        last_used_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        revoked_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+      required:
+        - token_id
+        - dev_id
+        - scopes
+        - name
+        - created_at
+        - expires_at
+    DestinationSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          description: string-encoded 64-bit id
+        type:
+          type: string
+        url:
+          type: string
+        active:
+          type: boolean
+        event_types:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - type
+        - url
+        - active
+    DevDetail:
+      type: object
+      properties:
+        dev_id:
+          type: string
+        name:
+          type: string
+        label:
+          type: string
+        active:
+          type: boolean
+        billable:
+          type: boolean
+        profile:
+          $ref: '#/components/schemas/EnvironmentProfile'
+        api_key_masked:
+          type: string
+        signing_secret_masked:
+          type: string
+        user_limit:
+          type: integer
+          format: int64
+    DevKeys:
+      type: object
+      properties:
+        dev_id:
+          type: string
+        api_key:
+          type: string
+          description: full client_secret — returned once, keys:read only
+        signing_secret:
+          type: string
+    DevSummary:
+      type: object
+      properties:
+        dev_id:
+          type: string
+        name:
+          type: string
+        label:
+          type: string
+        active:
+          type: boolean
+        billable:
+          type: boolean
+        profile:
+          $ref: '#/components/schemas/EnvironmentProfile'
+    DeviceStartFormRequest:
+      type: object
+      description: RFC 8628 §3.1 device authorization request (form-encoded wire mode).
+      properties:
+        client_id:
+          type: string
+          description: Public client identifier; recorded as the pairing session's client name.
+        scope:
+          type: string
+          description: Space-separated scopes; omitted = the default grantable set.
+        requested_dev_ids:
+          type: string
+          description: Optional space-separated audience dev-ids (Terra extension parameter). Omitted = the whole account. Account-level scopes cannot be combined with an audience.
+      required:
+        - client_id
+    DeviceStartResponse:
+      type: object
+      description: RFC 8628 §3.2 device authorization response. The four fields the RFC requires are required here; a client that cannot read device_code has no way to poll.
+      properties:
+        device_code:
+          type: string
+        user_code:
+          type: string
+        verification_uri:
+          type: string
+        expires_in:
+          type: integer
+        verification_uri_complete:
+          type: string
+        interval:
+          type: integer
+          description: 'Polling interval in seconds. RFC 8628 §3.2: absent means 5.'
+      required:
+        - device_code
+        - user_code
+        - verification_uri
+        - expires_in
+    DryRunResult:
+      type: object
+      description: Returned by any mutating endpoint invoked with ?dry_run=true.
+      properties:
+        dry_run:
+          type: boolean
+          enum:
+            - true
+        would:
+          type: string
+          description: the action that would be taken
+        preview:
+          type: object
+      required:
+        - dry_run
+        - would
+        - preview
+    EnsureReferralCodeRequest:
+      type: object
+      properties:
+        referral_code:
+          type: string
+      required:
+        - referral_code
+    Entitlement:
+      type: object
+      properties:
+        capability:
+          type: string
+        source:
+          type: string
+    EnvironmentProfile:
+      type:
+        - object
+        - 'null'
+      description: 'The dev-id''s environment profile, or null when no profile row exists yet (POST /environments creates one for an existing credential). Exactly one of widget_config_url / widget_config is served per deployment: widget_config_url (an S3 indirection) on legacy deployments, the inlined widget_config after the environments release.'
+      properties:
+        dev_id:
+          type: string
+        company_id:
+          type: string
+        name:
+          type: string
+        billable:
+          type:
+            - boolean
+            - 'null'
+        widget_config_url:
+          type:
+            - string
+            - 'null'
+          description: Legacy only — replaced by widget_config after the environments release.
+        widget_config:
+          type:
+            - object
+            - 'null'
+          description: The widget configuration document, served inline. Environments-release deployments only.
+          additionalProperties: true
+        widget_name:
+          type:
+            - string
+            - 'null'
+        app_logo:
+          type:
+            - string
+            - 'null'
+      additionalProperties: false
+    EventRecord:
+      type: object
+      properties:
+        event_id:
+          type: string
+        sent_at:
+          type: string
+          format: date-time
+        data_type:
+          type: string
+        provider:
+          type: string
+        destination_type:
+          type: string
+        http_status:
+          type: integer
+        response_time_ms:
+          type: integer
+          format: int64
+        bytes:
+          type: integer
+          format: int64
+        connection_id:
+          type: string
+          description: string-encoded 64-bit id
+    InvoiceSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        amount_due:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        created_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        hosted_invoice_url:
+          type: string
+        invoice_pdf:
+          type: string
+    MeMetadata:
+      type: object
+      description: 'The calling principal''s own dashboard.user_metadata, restricted to analytics_layout and preferences — debug_layout is internal and never exposed on this surface. Both values pass through as opaque JSON: the server does not interpret or validate their shape.'
+      properties:
+        analytics_layout:
+          type:
+            - object
+            - 'null'
+        preferences:
+          type:
+            - object
+            - 'null'
+    MeResponse:
+      type: object
+      properties:
+        token_id:
+          type: string
+        kind:
+          type: string
+          enum:
+            - admin
+            - session
+            - data
+          description: The credential class. `admin` and `session` authenticate the admin API, `data` the data API; the planes are walled, so an admin token never authenticates the data API and vice versa. `session` is a short-lived per-login dashboard credential and never appears in token lists.
+        customer_id:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        dev_ids:
+          type:
+            - array
+            - 'null'
+          description: 'Audience: the dev-ids this token may act on. null = every dev of the account.'
+          items:
+            type: string
+        name:
+          type: string
+        created_via:
+          type: string
+        expires_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Expiry; null = never expires.
+        grant_anchor_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        user:
+          $ref: '#/components/schemas/DashboardUser'
+        staff:
+          type: boolean
+          description: Terra-staff signal read from the staff grant table for the resolved user; false whenever user is null. Gate staff-only UI on this, never on an email suffix.
+    MintDataTokenRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        scopes:
+          type: array
+          description: Data-plane scopes only (e.g. ["auth:write"] for an SDK-authentication-only token).
+          items:
+            type: string
+        expires_in_days:
+          type: integer
+          description: Default 365 (restricted-key shape), max 1825. Mutually exclusive with never_expires.
+          minimum: 1
+          maximum: 1825
+        never_expires:
+          type: boolean
+          description: Mint a non-expiring credential (the primary 'API key' shape). Mutually exclusive with expires_in_days. Safe because tokens — unlike the legacy secret — are revocable, coexisting, and per-credential observable.
+      required:
+        - name
+        - scopes
+    ModelCatalogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        data_type:
+          type: string
+    ModelRunRecord:
+      type: object
+      properties:
+        run_id:
+          type: string
+        user_id:
+          type: string
+        model:
+          type: string
+        status:
+          type: string
+        error:
+          type: string
+        latency_ms:
+          type: integer
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        submitted_at:
+          type: string
+          format: date-time
+        output_truncated:
+          type: boolean
+        output:
+          description: The run's JSON output; a JSON string when output_truncated is true.
+      required:
+        - run_id
+        - user_id
+        - model
+        - status
+        - latency_ms
+        - start_time
+        - end_time
+        - submitted_at
+        - output_truncated
+        - output
+    OAuthError:
+      type: object
+      description: RFC 6749 §5.2 error envelope, returned to form-encoded (RFC 8628 wire mode) requests.
+      properties:
+        error:
+          type: string
+          enum:
+            - invalid_request
+            - invalid_scope
+            - invalid_grant
+            - unsupported_grant_type
+            - authorization_pending
+            - slow_down
+            - access_denied
+            - expired_token
+            - server_error
+        error_description:
+          type: string
+      required:
+        - error
+    OAuthTokenResponse:
+      type: object
+      description: RFC 6749 §5.1 token response, returned to form-encoded (RFC 8628 wire mode) polls. No refresh tokens are issued — rotate via POST /tokens/self/rotate instead.
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum:
+            - Bearer
+        expires_in:
+          type: integer
+          description: Seconds until the access token expires. Omitted when the token never expires.
+        scope:
+          type: string
+          description: Space-separated granted scopes.
+        token_id:
+          type: string
+          format: uuid
+      required:
+        - access_token
+        - token_type
+        - scope
+        - token_id
+    OnboardingInfo:
+      type: object
+      description: dashboard.onboarding_info row for the customer. password is never returned; has_password reports whether one is set.
+      additionalProperties: true
+    PatchCompanyRequest:
+      type: object
+      description: Partial update of dashboard.company_info. Every property is optional; unknown fields, created_at, and the billing columns (stripe_customer_id, stripe_subscription_id, stripe_metering_type — they live in dashboard.company_billing, which this route does not write) are rejected with 400.
+      properties:
+        name:
+          type: string
+        billing_email:
+          type: string
+        website_url:
+          type: string
+        learn_about_us:
+          type: string
+        onboarded:
+          type: boolean
+        app_logo:
+          type:
+            - string
+            - 'null'
+        description:
+          type:
+            - string
+            - 'null'
+        org_name:
+          type:
+            - string
+            - 'null'
+        tos_url:
+          type:
+            - string
+            - 'null'
+        privacy_policy_url:
+          type:
+            - string
+            - 'null'
+        data_usage_description:
+          type:
+            - string
+            - 'null'
+        widget_name:
+          type:
+            - string
+            - 'null'
+        user_flow_done:
+          type: boolean
+        agreed_to_terms_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+      additionalProperties: false
+      minProperties: 1
+    PatchDestinationRequest:
+      type: object
+      properties:
+        active:
+          type: boolean
+        event_types:
+          type: array
+          items:
+            type: string
+    PatchEnvironmentProfileRequest:
+      type: object
+      description: 'Display fields only; the widget columns and the data-type selection have their own PUT surfaces. `active` is deliberately absent: writing it means round-tripping the credential''s whole data-type set, so a second writer here would silently lose a concurrent data-type change. It stays on the v2 route until a field-level RPC exists. Every field is optional and an omitted one is left unchanged; at least one is required.'
+      properties:
+        name:
+          type: string
+        billable:
+          type: boolean
+      additionalProperties: false
+      minProperties: 1
+    PatchMeMetadataRequest:
+      type: object
+      description: Partial upsert of the calling principal's own user_metadata. Every property is optional; at least one is required. analytics_layout/preferences replace the stored value wholesale; preferences_merge shallow-merges its top-level keys into the stored preferences atomically (concurrent writers cannot erase each other's keys) and is mutually exclusive with preferences. Values pass through as opaque JSON otherwise.
+      properties:
+        analytics_layout:
+          type: object
+        preferences:
+          type: object
+        preferences_merge:
+          type: object
+      minProperties: 1
+    PatchMeRequest:
+      type: object
+      description: Partial update of the calling principal's own dashboard.users row. Every property is optional; at least one is required. Gated on account:write (in the default mint set); the write is strictly self-scoped. Requires the token to resolve to an own user (see DashboardUser) — otherwise 404 not_found.
+      properties:
+        name:
+          type: string
+        phone_number:
+          type:
+            - string
+            - 'null'
+      minProperties: 1
+    PatchOnboardingRequest:
+      type: object
+      description: 'Partial update of dashboard.onboarding_info. Upserts: the row is created first if it does not exist yet, then these fields are applied.'
+      properties:
+        destination:
+          type:
+            - string
+            - 'null'
+        scheme:
+          type:
+            - string
+            - 'null'
+        host:
+          type:
+            - string
+            - 'null'
+        port:
+          type:
+            - string
+            - 'null'
+        username:
+          type:
+            - string
+            - 'null'
+        password:
+          type:
+            - string
+            - 'null'
+        path:
+          type:
+            - string
+            - 'null'
+        providers:
+          type:
+            - array
+            - 'null'
+          items:
+            type: string
+      additionalProperties: false
+    PatchScoreRequest:
+      type: object
+      description: At least one of active/weights required.
+      properties:
+        active:
+          type: boolean
+        weights:
+          type: object
+          additionalProperties:
+            type: integer
+      minProperties: 1
+    PatchTeamMemberRequest:
+      type: object
+      description: Partial update of a teammate's dashboard.users row. Every property is optional; at least one is required. Email, company_id and the rest of the row are not reassignable here.
+      properties:
+        name:
+          type: string
+        phone_number:
+          type:
+            - string
+            - 'null'
+        role:
+          type:
+            - string
+            - 'null'
+          enum:
+            - admin
+            - developer
+            - null
+          description: The member's dashboard role. superadmin is recognised by the dashboard but is not assignable here — the dashboard's own team editor never offers it.
+      minProperties: 1
+    PatchWorkoutMetadataRequest:
+      type: object
+      description: pace_units is required (object or null); unlike PUT this overwrites unconditionally — a null clears the column.
+      properties:
+        pace_units:
+          type:
+            - object
+            - 'null'
+          additionalProperties: true
+      required:
+        - pace_units
+      additionalProperties: false
+    PaymentMethodSummary:
+      type: object
+      properties:
+        brand:
+          type: string
+        last4:
+          type: string
+        exp_month:
+          type: integer
+          format: int64
+        exp_year:
+          type: integer
+          format: int64
+        has_card:
+          type: boolean
+    Problem:
+      allOf:
+        - $ref: '#/components/schemas/schemas-Problem'
+        - $ref: '#/components/schemas/ProblemExtensions'
+    ProblemExtensions:
+      type: object
+      description: 'The admin surface''s additions to the shared RFC 9457 Problem in specs/components/common.yaml, which contributes type/title/instance/detail. Composed with it via allOf in apis/admin.yaml rather than restated, so the two cannot drift. No `status`: httptools.Problem.MarshalJSON never writes it — the response line is authoritative.'
+      properties:
+        code:
+          type: string
+          enum:
+            - access_denied
+            - audience_restricted
+            - authorization_pending
+            - billing_unavailable
+            - conflict
+            - dependency_failed
+            - dev_id_not_found
+            - device_code_expired
+            - idempotency_key_reuse
+            - internal_error
+            - not_claimable
+            - not_found
+            - not_ready
+            - rate_limited
+            - rotation_conflict
+            - rotation_expired
+            - scope_missing
+            - service_unavailable
+            - slow_down
+            - token_expired
+            - token_limit_reached
+            - token_not_found
+            - unauthorized
+            - unsupported_operation
+            - validation_failed
+          description: Stable error code — branch on this, not on prose.
+        remediation:
+          type: string
+          description: How an agent can recover.
+        errors:
+          type: array
+          description: 'Field-level validation errors ("field: message").'
+          items:
+            type: string
+      required:
+        - code
+    ProcessingType:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - json
+            - fit
+            - fhir
+        display_name:
+          type: string
+        selected:
+          type: boolean
+      required:
+        - type
+        - display_name
+        - selected
+    ProviderCredentialMaterial:
+      type: object
+      properties:
+        provider_client_id:
+          type: string
+        provider_client_secret_masked:
+          type: string
+    ProviderCredentialWrite:
+      type: object
+      properties:
+        client_id:
+          type: string
+          description: The customer's OAuth client id for this provider.
+        client_secret:
+          type: string
+          description: The customer's OAuth client secret (write-only; reads are masked).
+        redirect_url:
+          type: string
+          description: Override the OAuth redirect URL (defaults to the provider default).
+        verification_secret:
+          type: string
+          description: Optional webhook verification secret.
+        sandbox:
+          type: boolean
+          description: Use the provider's sandbox environment.
+      required:
+        - client_id
+        - client_secret
+    ProviderCredentials:
+      type: object
+      properties:
+        provider:
+          type: string
+        has_credentials:
+          type: boolean
+        terra_owned:
+          type: boolean
+        credential:
+          oneOf:
+            - $ref: '#/components/schemas/ProviderCredentialMaterial'
+            - type: 'null'
+      required:
+        - provider
+        - has_credentials
+    ProviderEnabled:
+      type: object
+      properties:
+        provider:
+          type: string
+        active:
+          type: boolean
+        meta:
+          type: object
+      required:
+        - provider
+        - active
+    ProviderScopes:
+      type: object
+      properties:
+        provider:
+          type: string
+        scopes:
+          type: array
+          description: Empty when the provider has no custom scopes — never null.
+          items:
+            type: string
+      required:
+        - provider
+        - scopes
+    ProviderSummary:
+      type: object
+      properties:
+        provider:
+          type: string
+        active:
+          type: boolean
+        auth_redirect_url:
+          type: string
+    PutWorkoutMetadataRequest:
+      type: object
+      description: 'Upsert semantics: an absent or null pace_units preserves whatever is already stored (COALESCE); created_at is only applied on first insert.'
+      properties:
+        pace_units:
+          type:
+            - object
+            - 'null'
+          additionalProperties: true
+        created_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+    ReplaceDataTypesRequest:
+      type: object
+      description: The complete desired data-type selection. Upper-case data-type tokens; ATHLETE is implicit and need not be sent; SAMPLES sets the per-row samples flag rather than selecting a data type; blank entries are skipped; an unrecognised token is a 400. An empty array clears the selection down to ATHLETE.
+      properties:
+        scopes:
+          type: array
+          items:
+            type: string
+      required:
+        - scopes
+      additionalProperties: false
+    ResendEventRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+        event_id:
+          type: string
+        event_type:
+          type: string
+      required:
+        - user_id
+        - event_id
+        - event_type
+    ResendResult:
+      type: object
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+        dispatched:
+          type: boolean
+    RotatedApiKey:
+      type: object
+      properties:
+        dev_id:
+          type: string
+        api_key:
+          type: string
+          description: The new client_secret, shown once. The signing secret is per-destination and is not rotated with it.
+      required:
+        - dev_id
+        - api_key
+    ScopesRequest:
+      type: object
+      properties:
+        scopes:
+          type: array
+          description: Empty clears the provider's custom scopes.
+          items:
+            type: string
+      required:
+        - scopes
+    ScoreAnalytics:
+      type: object
+      properties:
+        covered_users:
+          type: integer
+          description: Distinct provider_user_ids with a score in the window.
+        updates:
+          type: integer
+          description: Score rows written in the window.
+      required:
+        - covered_users
+        - updates
+    ScoreConfig:
+      type: object
+      properties:
+        type:
+          type: string
+        active:
+          type: boolean
+    ScoreHistoryRecord:
+      type: object
+      properties:
+        provider_user_id:
+          type: string
+          description: The provider-side user id the score was computed for.
+        user_id:
+          type:
+            - string
+            - 'null'
+          description: The Terra user_id this provider_user_id maps to for this environment, or null if the connection could not be resolved.
+        provider:
+          type: string
+          description: Source data provider (clean name, e.g. "garmin").
+        score:
+          type: string
+          description: Score type (clean name, e.g. "sleep").
+        value:
+          type: number
+          description: The computed score value.
+        dimensions:
+          type: array
+          description: The score's contributor dimensions (fixed length 8; -1 where unused).
+          items:
+            type: number
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        inserted_at:
+          type: string
+          format: date-time
+          description: When the score row was written.
+      required:
+        - provider_user_id
+        - user_id
+        - provider
+        - score
+        - value
+        - dimensions
+        - start_time
+        - end_time
+        - inserted_at
+    ScoreResult:
+      type: object
+      properties:
+        score:
+          type: string
+        active:
+          type: boolean
+        weights:
+          type: object
+          additionalProperties:
+            type: integer
+    SelectedDataField:
+      type: object
+      properties:
+        data_type:
+          type: string
+        fields:
+          type: array
+          items:
+            type: string
+        samples_enabled:
+          type: boolean
+    SelectedDataFieldsRequest:
+      type: object
+      properties:
+        data_type:
+          type: string
+        fields:
+          type: array
+          items:
+            type: string
+      required:
+        - data_type
+    SelectedDataTypes:
+      type: object
+      description: The data-type selection actually persisted, including the implicit ATHLETE.
+      properties:
+        scopes:
+          type: array
+          items:
+            type: string
+        samples_enabled:
+          type: boolean
+      required:
+        - scopes
+        - samples_enabled
+    SetProcessingTypeRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - json
+            - fit
+            - fhir
+      required:
+        - type
+    StatsPoint:
+      type: object
+      description: One (x, y) graph sample. x is a unix-second timestamp for the time series and a provider name for the provider breakdown.
+      properties:
+        x:
+          oneOf:
+            - type: integer
+            - type: string
+        'y':
+          type: integer
+      required:
+        - x
+        - 'y'
+    SubscribeRequest:
+      type: object
+      properties:
+        scope:
+          type: string
+        schedule:
+          type: string
+        promo_code:
+          type: string
+      required:
+        - scope
+    SubscriptionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+        cancel_at_period_end:
+          type: boolean
+        collection_method:
+          type: string
+    SupabaseProvisionRequest:
+      type: object
+      properties:
+        oauth_session_id:
+          type: string
+        project_ref:
+          type: string
+        project_name:
+          type: string
+          description: Display only; defaults to project_ref.
+      required:
+        - oauth_session_id
+        - project_ref
+    SupabaseProvisioned:
+      type: object
+      properties:
+        provisioned:
+          type: boolean
+        project_ref:
+          type: string
+        destination_id:
+          type: string
+          description: Id of the created Supabase data destination (string-encoded). Manage it via the destinations CRUD.
+    SupabaseStartResponse:
+      type: object
+      properties:
+        authorization_url:
+          type: string
+        oauth_session_id:
+          type: string
+        expires_in:
+          type: integer
+        interval:
+          type: integer
+    SupabaseState:
+      type: object
+      properties:
+        state:
+          type: string
+          description: pending | ready | failed
+    TeamInvitation:
+      type: object
+      properties:
+        id:
+          type: string
+        company_id:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - admin
+            - developer
+        source:
+          description: Signup-path marker; null for an ordinary team invite.
+          oneOf:
+            - type: string
+            - type: 'null'
+        invited_by_user_id:
+          oneOf:
+            - type: string
+            - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        claimed_at:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        claimed_by_user_id:
+          oneOf:
+            - type: string
+            - type: 'null'
+      required:
+        - id
+        - company_id
+        - email
+        - role
+        - created_at
+        - expires_at
+    TeamInvitationResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: The one-use invitation token. Returned only here; only its digest is stored.
+        expires_at:
+          type: string
+          format: date-time
+          description: When the invitation stops being claimable (7 days after issue).
+      required:
+        - token
+        - expires_at
+    TeamMemberSummary:
+      type: object
+      description: 'One row of GET /team/members: a lean projection, not the full dashboard.users row.'
+      properties:
+        user_id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type:
+            - string
+            - 'null'
+          description: 'null only on the legacy path, whose role column is nullable. Not an enum: the role vocabulary is not frozen until accounts.customer_member gains its CHECK.'
+      required:
+        - user_id
+        - name
+        - email
+        - role
+    TokenPollFormRequest:
+      type: object
+      description: RFC 8628 §3.4 device access token request (form-encoded wire mode).
+      properties:
+        grant_type:
+          type: string
+          enum:
+            - urn:ietf:params:oauth:grant-type:device_code
+        device_code:
+          type: string
+        client_id:
+          type: string
+          description: Must match the client_id the device_code was issued to; a mismatch is invalid_grant.
+      required:
+        - grant_type
+        - device_code
+        - client_id
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        token_id:
+          type: string
+        kind:
+          type: string
+          enum:
+            - admin
+            - session
+            - data
+          description: The credential class. `admin` and `session` authenticate the admin API, `data` the data API; the planes are walled, so an admin token never authenticates the data API and vice versa. `session` is a short-lived per-login dashboard credential and never appears in token lists.
+        customer_id:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        dev_ids:
+          type:
+            - array
+            - 'null'
+          description: 'Audience: the dev-ids this token may act on. null = every dev of the account.'
+          items:
+            type: string
+        expires_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Expiry; null = never expires.
+        name:
+          type: string
+    TokenSummary:
+      type: object
+      properties:
+        token_id:
+          type: string
+        kind:
+          type: string
+          enum:
+            - admin
+            - session
+            - data
+          description: The credential class. `admin` and `session` authenticate the admin API, `data` the data API; the planes are walled, so an admin token never authenticates the data API and vice versa. `session` is a short-lived per-login dashboard credential and never appears in token lists.
+        name:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        dev_ids:
+          type:
+            - array
+            - 'null'
+          description: 'Audience: the dev-ids this token may act on. null = every dev of the account.'
+          items:
+            type: string
+        created_by:
+          type: string
+        created_via:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Expiry; null = never expires.
+        last_used_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        revoked_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+    UsageResponse:
+      type: object
+      properties:
+        meter_id:
+          type: string
+        start:
+          type: integer
+          format: int64
+        end:
+          type: integer
+          format: int64
+        total_usage:
+          type: number
+        summaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsageSummary'
+    UsageSummary:
+      type: object
+      properties:
+        meter_id:
+          type: string
+        aggregated_value:
+          type: number
+    UserSummary:
+      type: object
+      properties:
+        user_id:
+          type: string
+        reference_id:
+          type: string
+        provider:
+          type: string
+        active:
+          type: boolean
+        created_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        last_updated_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        most_recent_data_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+    WidgetConfig:
+      type: object
+      description: 'Widget branding + config for a dev-id. Exactly one of widget_config_url / widget_config is served (and accepted on PUT) per deployment: widget_config_url (an S3 indirection) on legacy deployments, the inlined widget_config document after the environments release.'
+      properties:
+        widget_config_url:
+          type:
+            - string
+            - 'null'
+          description: Legacy only — replaced by widget_config after the environments release.
+        widget_config:
+          type:
+            - object
+            - 'null'
+          description: The widget configuration document, served inline. Environments-release deployments only.
+          additionalProperties: true
+        widget_name:
+          type:
+            - string
+            - 'null'
+        app_logo:
+          type:
+            - string
+            - 'null'
+    WorkoutMetadata:
+      type: object
+      properties:
+        workout_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        pace_units:
+          type:
+            - object
+            - 'null'
+          additionalProperties: true
+    schemas-Problem:
+      type: object
+      description: |
+        An error response, following RFC 9457 (Problem Details for HTTP APIs, which obsoletes RFC 7807). Returned with `Content-Type: application/problem+json` on every 4xx/5xx response. The HTTP status line carries the status code; it is intentionally not repeated in the body. `type`, `title` and `instance` are always present; `detail` is included when a specific explanation is available.
+      properties:
+        type:
+          type: string
+          description: A URI reference identifying the problem type. Defaults to `about:blank`.
+          example: about:blank
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type (the lowercased HTTP status text).
+          example: unauthorized
+        instance:
+          type: string
+          description: The request path, including any query string, that produced this problem.
+          example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+          example: dev-id or x-api-key headers are missing
+      required:
+        - type
+        - title
+        - instance
