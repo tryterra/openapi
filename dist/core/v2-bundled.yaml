@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.08.18
+  version: 2026.08.25
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -1122,30 +1122,30 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - type: object
-                    properties:
-                      users:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/TerraUser'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          next:
-                            type:
-                              - integer
-                              - 'null'
-                            description: The next page number, or null if there is no next page
-                          max_page:
-                            type: integer
-                            description: The maximum page index
-                          results:
-                            type: array
-                            items:
-                              $ref: '#/components/schemas/TerraUser'
+                type: object
+                description: If `page` is omitted, `users` contains every user. If `page` is provided, `results`, `max_page`, and `next` contain the paginated response.
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                    default: success
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TerraUser'
+                  next:
+                    type:
+                      - integer
+                      - 'null'
+                    description: The next page number, or null if there is no next page
+                  max_page:
+                    type: integer
+                    description: Total number of pages available for the requested page size
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TerraUser'
         '400':
           $ref: '#/components/responses/BadRequest'
   /bulkUserInfo:
