@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.08.25
+  version: 2026.08.28
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -761,18 +761,18 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
   /workouts/{workout_id}:
-    parameters:
-      - name: workout_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
     get:
       tags:
         - Workouts
       summary: Get a workout template
       operationId: Workouts_GetWorkout
+      parameters:
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         '200':
           description: The stored template
@@ -791,6 +791,13 @@ paths:
       description: |
         Deletes the template and cascades deletion of every planned workout created from it, including removal from connected providers.
       operationId: Workouts_DeleteWorkout
+      parameters:
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         '204':
           description: Template and all planned instances deleted
@@ -947,18 +954,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
   /plannedWorkouts/{planned_workout_id}:
-    parameters:
-      - name: planned_workout_id
-        in: path
-        required: true
-        schema:
-          type: integer
-          format: int64
-      - name: user_id
-        in: query
-        required: true
-        schema:
-          type: string
     get:
       tags:
         - Workouts
@@ -966,6 +961,18 @@ paths:
       description: |
         Returns a planned workout created through Terra. Provider-created (external) workouts are not addressable by id — they are returned by the list endpoint with their full body under `details`.
       operationId: Workouts_GetPlannedWorkout
+      parameters:
+        - name: planned_workout_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: The planned workout
@@ -982,6 +989,18 @@ paths:
         - Workouts
       summary: Reschedule a planned workout
       operationId: Workouts_UpdatePlannedWorkout
+      parameters:
+        - name: planned_workout_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -1020,6 +1039,18 @@ paths:
       summary: Delete a planned workout
       description: Removes the planned workout from the user's calendar and from the connected provider.
       operationId: Workouts_DeletePlannedWorkout
+      parameters:
+        - name: planned_workout_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
       responses:
         '204':
           description: Planned workout deleted
