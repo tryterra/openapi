@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.08.24
+  version: 2026.09.02
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
 servers:
   - url: /api/v3/admin
@@ -24,6 +24,8 @@ tags:
   - name: workouts
   - name: entitlements
   - name: billing
+  - name: docs
+    description: Natural-language search over Terra's published documentation.
 paths:
   /auth/device:
     post:
@@ -98,6 +100,48 @@ paths:
             schema:
               $ref: '#/components/schemas/TokenPollFormRequest'
       description: 'Standard RFC 8628 §3.4 device access token request: form-encoded body with grant_type urn:ietf:params:oauth:grant-type:device_code, RFC 6749 §5.1 token response, §5.2/§3.5 error envelope, Cache-Control: no-store. This endpoint speaks only the OAuth wire format. No refresh tokens are issued — rotate via POST /tokens/self/rotate.'
+  /docs/ask:
+    post:
+      operationId: askDocs
+      tags:
+        - docs
+      summary: Ask a question about Terra and get an answer from the documentation
+      description: 'Scope-free: the search reads no account data, so any valid token may ask. The answer is generated from the published documentation and cites the pages it drew on. An answer with an empty sources array was not grounded in the documentation, which is a 200 rather than an error.'
+      security:
+        - adminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocsAskRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocsAskResponse'
+              example:
+                answer: Call generateWidgetSession and open the URL it returns [1].
+                confidence: high
+                sources:
+                  - label: '1'
+                    title: Generate a widget session
+                    description: Create a session and redirect the user to the widget.
+                    url: https://docs.tryterra.co/widget
+                    type: documentation
+                    breadcrumbs:
+                      - Docs
+                      - Authentication
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /me:
     get:
       operationId: getMe
@@ -4680,6 +4724,61 @@ components:
           type: string
         invoice_pdf:
           type: string
+    DocsAskRequest:
+      type: object
+      properties:
+        question:
+          type: string
+          description: The question, in natural language.
+          maxLength: 4000
+      required:
+        - question
+    DocsAskResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+          description: The answer as markdown, with footnote markers referring to sources. Empty when nothing was found.
+        confidence:
+          type: string
+          enum:
+            - high
+            - medium
+            - low
+            - unknown
+          description: How sure the search is of the answer. `unknown` means it returned no rating.
+        sources:
+          type: array
+          description: The pages the answer came from. Empty when there are none.
+          items:
+            $ref: '#/components/schemas/DocsSource'
+      required:
+        - answer
+        - confidence
+        - sources
+    DocsSource:
+      type: object
+      description: One documentation page the answer drew on.
+      properties:
+        label:
+          type: string
+          description: The footnote marker the answer refers to, e.g. "1".
+        title:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+        type:
+          type: string
+          description: What kind of record the source is, such as documentation.
+        breadcrumbs:
+          type: array
+          description: Where the page sits in the documentation navigation.
+          items:
+            type: string
+      required:
+        - url
     MeMetadata:
       type: object
       description: 'The calling principal''s own dashboard.user_metadata, restricted to analytics_layout and preferences — debug_layout is internal and never exposed on this surface. Both values pass through as opaque JSON: the server does not interpret or validate their shape.'
