@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.04.1
+  version: 2026.09.04.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
 servers:
   - url: /api/v3/admin
@@ -4169,7 +4169,7 @@ components:
           scopes:
             account:read: Read account and dev-id metadata.
             keys:read: 'Both planes: read credential secret material — the legacy static API key (GET /api-key), a token''s bearer (GET /tokens/{id}/secret), or the data plane''s GET /v2/dashboard/developer. Dangerous: plaintext disclosure.'
-            keys:write: Reserved for legacy static-key mutations (dangerous). No admin-surface route uses it today; the dashboard rotate flow retains it.
+            keys:write: 'Reserved for legacy static-key mutations. No admin-surface route uses it today; the dashboard rotate flow retains it. Dangerous: rotates the account''s legacy credential.'
             providers:read: 'Both planes: read provider enablement, masked OAuth credentials, and custom scopes.'
             providers:write: 'Both planes: enable/disable providers and set custom OAuth credentials and scopes.'
             destinations:read: Read webhook and Supabase destinations.
@@ -4190,8 +4190,8 @@ components:
             labreports:write: 'Data plane: reprocess or delete lab reports.'
             testdata:write: 'Data plane: generate synthetic test data.'
             billing:read: 'Read billing: subscriptions, invoices, payment method, usage.'
-            billing:write: Manage subscriptions (subscribe, cancel-incomplete).
-            tokens:admin: List and revoke any admin token in the account.
+            billing:write: 'Manage subscriptions (subscribe, cancel-incomplete). Dangerous: spends money.'
+            tokens:admin: 'List and revoke any admin token in the account. Dangerous: can revoke every other credential the account holds.'
             entitlements:read: Read company feature entitlements.
             auth:write: 'Data plane: create user authentication flows — widget sessions, auth tokens (in place of a client_secret).'
             connections:write: 'Data plane: deauthenticate users and update connection attributes.'
@@ -4208,10 +4208,10 @@ components:
             agents:run: 'Data plane: execute agents and bundles (incurs model spend).'
             ai:run: 'Data plane: run AI-context queries and the MCP proxy.'
             tokens:read: List token metadata for an environment (never re-shows a bearer).
-            tokens:write: 'Mint and revoke tokens for an environment — credential issuance (dangerous: transitively as broad as everything issuable).'
+            tokens:write: 'Mint and revoke tokens for an environment — credential issuance. Dangerous: transitively as broad as everything issuable.'
             account:write: Update account/company profile, onboarding, terms and referral data.
             team:read: Read the company's team member roster.
-            team:write: Update or remove a team member (name, phone, role; detach from the company).
+            team:write: 'Update or remove a team member (name, phone, role; detach from the company). Dangerous: can revoke another human''s access.'
           x-scope-planes:
             account:read: admin
             keys:read: both
@@ -4258,6 +4258,13 @@ components:
             account:write: admin
             team:read: admin
             team:write: admin
+          x-scope-dangerous:
+            - billing:write
+            - keys:read
+            - keys:write
+            - team:write
+            - tokens:admin
+            - tokens:write
           x-not-a-real-flow: Scope registry only. Token issuance is the device flow (see scheme description); this tokenUrl does not accept client_credentials grants.
       x-grant-type: urn:ietf:params:oauth:grant-type:device_code
     sessionToken:
@@ -4626,7 +4633,8 @@ components:
           description: Public client identifier; recorded as the pairing session's client name.
         scope:
           type: string
-          description: Space-separated scopes; omitted = the default grantable set.
+          description: Space-separated scopes; omitted = the default grantable set. The device flow issues an admin token, so the grantable names are the ones the adminToken scope registry marks `admin` or `both` in x-scope-planes. Data-plane names are rejected with 400 invalid_scope.
+          x-scope-plane: admin
         requested_dev_ids:
           type: string
           description: Optional space-separated audience dev-ids (Terra extension parameter). Omitted = the whole account. Account-level scopes cannot be combined with an audience.
@@ -4892,6 +4900,7 @@ components:
           description: Data-plane scopes only (e.g. ["auth:write"] for an SDK-authentication-only token) — the names the adminToken scope registry marks `data` or `both` in x-scope-planes. Admin-plane names are rejected with 400 validation_failed.
           items:
             type: string
+          x-scope-plane: data
         expires_in_days:
           type: integer
           description: Default 365 (restricted-key shape), max 1825. Mutually exclusive with never_expires.
