@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.08.28
+  version: 2026.09.04
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -129,6 +129,12 @@ paths:
                     example: 900
         '400':
           $ref: '#/components/responses/BadRequest'
+        '410':
+          description: Returned for Terra accounts created after the widget relaunch (2026-09-03) — this endpoint is deprecated for them. Create widget sessions with POST https://access.tryterra.co/api/widget/session instead. The response carries Deprecation and Link (rel="deprecation") headers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /auth/deauthenticateUser:
     delete:
       summary: Deauthenticate a user
