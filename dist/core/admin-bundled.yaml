@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.04
+  version: 2026.09.04.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
 servers:
   - url: /api/v3/admin
@@ -4162,33 +4162,33 @@ components:
   securitySchemes:
     adminToken:
       type: oauth2
-      description: Terra access token (customer-scoped, kind=admin, `terra_at_*`). The ONLY grant is the RFC 8628 device-authorization flow (POST /auth/device, approve in the dashboard, poll POST /auth/token) or a dashboard mint — there is NO client_credentials token endpoint; the clientCredentials flow object below exists solely because OAS 3.1 has no first-class device-flow representation and this is where scopes are machine-readable (see x-grant-type). This surface accepts ONLY admin tokens; data tokens (kind=data, `terra_dt_*`, minted at POST /environments/{dev_id}/tokens) authenticate the data API only — the planes never cross. Each operation names its required scope; admin tokens may also carry an environment audience.
+      description: Terra access token (customer-scoped, kind=admin, `terra_at_*`). The ONLY grant is the RFC 8628 device-authorization flow (POST /auth/device, approve in the dashboard, poll POST /auth/token) or a dashboard mint — there is NO client_credentials token endpoint; the clientCredentials flow object below exists solely because OAS 3.1 has no first-class device-flow representation and this is where scopes are machine-readable (see x-grant-type). This surface accepts ONLY admin tokens; data tokens (kind=data, `terra_dt_*`, minted at POST /environments/{dev_id}/tokens) authenticate the data API only — the planes never cross. Each operation names its required scope; admin tokens may also carry an environment audience. The scopes map below is the whole closed vocabulary — BOTH planes. POST /auth/device grants only the admin-plane names and rejects the rest with 400 invalid_scope, so check the plane before choosing a set — x-scope-planes is the machine-readable answer, and each description opens with `Data plane:` or `Both planes:` when the name is not admin-only.
       flows:
         clientCredentials:
           tokenUrl: /api/v3/admin/auth/token
           scopes:
             account:read: Read account and dev-id metadata.
-            keys:read: 'Read credential secret material — the legacy static API key (GET /api-key), a token''s bearer (GET /tokens/{id}/secret), or the data plane''s GET /v2/dashboard/developer. Dangerous: plaintext disclosure.'
+            keys:read: 'Both planes: read credential secret material — the legacy static API key (GET /api-key), a token''s bearer (GET /tokens/{id}/secret), or the data plane''s GET /v2/dashboard/developer. Dangerous: plaintext disclosure.'
             keys:write: Reserved for legacy static-key mutations (dangerous). No admin-surface route uses it today; the dashboard rotate flow retains it.
-            providers:read: Read provider enablement, masked OAuth credentials, and custom scopes.
-            providers:write: Enable/disable providers and set custom OAuth credentials and scopes.
+            providers:read: 'Both planes: read provider enablement, masked OAuth credentials, and custom scopes.'
+            providers:write: 'Both planes: enable/disable providers and set custom OAuth credentials and scopes.'
             destinations:read: Read webhook and Supabase destinations.
             destinations:write: Create, update, and delete destinations, and run Supabase provisioning.
             events:read: Read delivery-history event metadata.
-            events:write: Re-dispatch (resend) a delivered event.
-            connections:read: List a dev-id's end-user connections.
+            events:write: 'Both planes: re-dispatch (resend) a delivered event.'
+            connections:read: 'Both planes: list a dev-id''s end-user connections.'
             payloads:read: Read stored delivered payload bodies (contains end-user health data).
             dataconfig:read: Read per-data-type field selection.
             dataconfig:write: Update per-data-type field selection.
             scores:read: Read the score catalog and configuration.
             scores:write: Activate and configure scores.
-            models:read: Read the model catalog (data plane) and per-environment model-run history (admin plane).
-            models:run: Run a model over a user's stored data.
-            workouts:read: Read workout templates and planned workouts.
-            workouts:write: Create workout templates and plan workouts for users.
-            labreports:read: Read lab reports.
-            labreports:write: Reprocess or delete lab reports.
-            testdata:write: Generate synthetic test data.
+            models:read: 'Both planes: read the model catalog (data plane) and per-environment model-run history (admin plane).'
+            models:run: 'Data plane: run a model over a user''s stored data.'
+            workouts:read: 'Data plane: read workout templates and planned workouts.'
+            workouts:write: 'Data plane: create workout templates and plan workouts for users.'
+            labreports:read: 'Data plane: read lab reports.'
+            labreports:write: 'Data plane: reprocess or delete lab reports.'
+            testdata:write: 'Data plane: generate synthetic test data.'
             billing:read: 'Read billing: subscriptions, invoices, payment method, usage.'
             billing:write: Manage subscriptions (subscribe, cancel-incomplete).
             tokens:admin: List and revoke any admin token in the account.
@@ -4212,6 +4212,52 @@ components:
             account:write: Update account/company profile, onboarding, terms and referral data.
             team:read: Read the company's team member roster.
             team:write: Update or remove a team member (name, phone, role; detach from the company).
+          x-scope-planes:
+            account:read: admin
+            keys:read: both
+            keys:write: admin
+            providers:read: both
+            providers:write: both
+            destinations:read: admin
+            destinations:write: admin
+            events:read: admin
+            events:write: both
+            connections:read: both
+            payloads:read: admin
+            dataconfig:read: admin
+            dataconfig:write: admin
+            scores:read: admin
+            scores:write: admin
+            models:read: both
+            models:run: data
+            workouts:read: data
+            workouts:write: data
+            labreports:read: data
+            labreports:write: data
+            testdata:write: data
+            billing:read: admin
+            billing:write: admin
+            tokens:admin: admin
+            entitlements:read: admin
+            auth:write: data
+            connections:write: data
+            data:read: data
+            data:write: data
+            routes:read: data
+            routes:write: data
+            datalinks:read: data
+            datalinks:write: data
+            graphs:read: data
+            graphs:write: data
+            agents:read: data
+            agents:write: data
+            agents:run: data
+            ai:run: data
+            tokens:read: admin
+            tokens:write: admin
+            account:write: admin
+            team:read: admin
+            team:write: admin
           x-not-a-real-flow: Scope registry only. Token issuance is the device flow (see scheme description); this tokenUrl does not accept client_credentials grants.
       x-grant-type: urn:ietf:params:oauth:grant-type:device_code
     sessionToken:
@@ -4843,7 +4889,7 @@ components:
           type: string
         scopes:
           type: array
-          description: Data-plane scopes only (e.g. ["auth:write"] for an SDK-authentication-only token).
+          description: Data-plane scopes only (e.g. ["auth:write"] for an SDK-authentication-only token) — the names the adminToken scope registry marks `data` or `both` in x-scope-planes. Admin-plane names are rejected with 400 validation_failed.
           items:
             type: string
         expires_in_days:
