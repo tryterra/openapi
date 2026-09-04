@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.02
+  version: 2026.09.04
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
 servers:
   - url: /api/v3/admin
@@ -1250,6 +1250,11 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Terra-Notice:
+              description: An advisory note that is not part of the resource, surfaced to the user rather than treated as data. Repeated when there is more than one. Here it records that the list covers unified-api providers only and omits LAB_REPORTS, which the dashboard shows separately.
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -1265,8 +1270,6 @@ paths:
                     type:
                       - string
                       - 'null'
-                  meta:
-                    type: object
                 required:
                   - data
                   - has_more
@@ -1280,9 +1283,6 @@ paths:
                     active: true
                 has_more: false
                 next_cursor: null
-                meta:
-                  warnings:
-                    - lab-reports provider state is not synced by this API; if this dev-id uses lab reports, toggle it in the dashboard
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1312,9 +1312,6 @@ paths:
               example:
                 provider: garmin
                 active: true
-                meta:
-                  warnings:
-                    - lab-reports provider state is not synced by this API; if this dev-id uses lab reports, toggle it in the dashboard
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -5262,8 +5259,6 @@ components:
           type: string
         active:
           type: boolean
-        meta:
-          type: object
       required:
         - provider
         - active
