@@ -22,4 +22,16 @@ anyOf:
     const: hr_less_than
   - type: string
     const: hr_greater_than
+  - type: string
+    const: hr_percentage_less_than
+  - type: string
+    const: hr_percentage_greater_than
+  - type: string
+    const: power_less_than
+  - type: string
+    const: power_greater_than
+  - type: string
+    const: power_percentage_less_than
+  - type: string
+    const: power_percentage_greater_than
 description: How a step or block is considered complete

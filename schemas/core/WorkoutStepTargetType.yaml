@@ -22,4 +22,20 @@ anyOf:
     const: heart_rate_threshold_percentage
   - type: string
     const: heart_rate_max_percentage
+  - type: string
+    const: speed_percentage
+  - type: string
+    const: power_percentage
+  - type: string
+    const: repetition
+  - type: string
+    const: tss
+  - type: string
+    const: if
+  - type: string
+    const: rpe
+  - type: string
+    const: heart_rate_zone
+  - type: string
+    const: power_zone
 description: Quantity an intensity target constrains

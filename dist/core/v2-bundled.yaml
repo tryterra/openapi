@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.09.04.1
+  version: 2026.09.04.2
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -9478,6 +9478,18 @@ components:
           const: hr_less_than
         - type: string
           const: hr_greater_than
+        - type: string
+          const: hr_percentage_less_than
+        - type: string
+          const: hr_percentage_greater_than
+        - type: string
+          const: power_less_than
+        - type: string
+          const: power_greater_than
+        - type: string
+          const: power_percentage_less_than
+        - type: string
+          const: power_percentage_greater_than
       description: How a step or block is considered complete
     CompletionCondition:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -9528,6 +9540,22 @@ components:
           const: heart_rate_threshold_percentage
         - type: string
           const: heart_rate_max_percentage
+        - type: string
+          const: speed_percentage
+        - type: string
+          const: power_percentage
+        - type: string
+          const: repetition
+        - type: string
+          const: tss
+        - type: string
+          const: if
+        - type: string
+          const: rpe
+        - type: string
+          const: heart_rate_zone
+        - type: string
+          const: power_zone
       description: Quantity an intensity target constrains
     IntensityTarget:
       $schema: https://json-schema.org/draft/2020-12/schema
