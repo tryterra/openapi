@@ -1,0 +1,13 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  path:
+    type: string
+    description: JSON path within the workout template of the element that could not be represented exactly
+  message:
+    type: string
+    description: What was changed or dropped, and why
+required:
+  - path
+  - message
+description: A non-fatal adjustment made while converting a workout between Terra's template model and a provider's

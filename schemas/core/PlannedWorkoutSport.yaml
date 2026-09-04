@@ -1,0 +1,6 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - $ref: WorkoutSport.yaml
+  - type: string
+    const: unspecified
+description: "Sport of a provider-created workout: a WorkoutSport, or `unspecified` when the provider's sport has no Terra equivalent (rejected on create)."

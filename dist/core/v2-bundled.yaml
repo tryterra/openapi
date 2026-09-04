@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.09.04
+  version: 2026.09.04.1
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -896,7 +896,13 @@ paths:
                     description: Identifier assigned by the provider. Absent for SDK-delivered plans.
                   coercion_warnings:
                     type: string
-                    description: Set when the template could not be represented exactly on the provider.
+                    deprecated: true
+                    description: Deprecated; use warnings. Set when the template could not be represented exactly on the provider.
+                  warnings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CoercionWarning'
+                    description: Adjustments made when the template could not be represented exactly on the provider. Empty when the push was exact.
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -921,7 +927,7 @@ paths:
         - Workouts
       summary: List planned workouts
       description: |
-        Returns the user's planned workouts, including workouts created on the provider side (is_external true) where the provider exposes them. External workouts carry their full body (title, description, planned metrics, structured steps) under `details`; they are fetched live from the provider and are not stored by Terra. Note that providers may limit how far ahead planned workouts are visible.
+        Returns the user's planned workouts, including workouts created on the provider side (is_external true) where the provider exposes them. Every item carries its workout body under `template`, in the same shape for Terra-created and external workouts. External workouts are fetched live from the provider and are not stored by Terra; a workout pushed through Terra that the provider echoes back is listed once, as the Terra row. When the provider could not be read, or a template could not be loaded, the response is still 200 with the rows Terra has and carries the `X-Terra-Provider-Data-Truncated: true` header. Note that providers may limit how far ahead planned workouts are visible.
       operationId: Workouts_ListPlannedWorkouts
       parameters:
         - name: user_id
@@ -947,6 +953,25 @@ paths:
       responses:
         '200':
           description: Planned workouts for the connection
+          headers:
+            X-Terra-Provider-Data-Truncated:
+              schema:
+                type: string
+                enum:
+                  - 'true'
+              description: Present when provider-side workouts could not be included; X-Terra-Provider-Fetch says why.
+            X-Terra-Provider-Fetch:
+              schema:
+                type: string
+                enum:
+                  - ok
+                  - skipped
+                  - rate_limited
+                  - unauthorized
+                  - unavailable
+                  - timeout
+                  - failed
+              description: Outcome of the live provider read. `skipped` means the provider does not expose planned workouts or the add-on is not enabled.
           content:
             application/json:
               schema:
@@ -2129,8 +2154,6 @@ components:
             - type: string
             - type: 'null'
           description: Description of the workout
-        sport:
-          $ref: '#/components/schemas/WorkoutSport'
         environment:
           anyOf:
             - $ref: '#/components/schemas/EnvironmentType'
@@ -2159,15 +2182,27 @@ components:
             - type: number
             - type: 'null'
           description: Estimated calories burned
+        estimated_tss:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: 'Planned training stress score, where the provider or author supplies one. Read-only today: accepted on create but not forwarded to providers.'
+        estimated_intensity_factor:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: 'Planned intensity factor, where the provider or author supplies one. Read-only today: accepted on create but not forwarded to providers.'
         workout_id:
           anyOf:
             - type: string
             - type: 'null'
           description: Terra identifier of the stored template. Set by Terra in responses; ignored on create.
+        sport:
+          $ref: '#/components/schemas/WorkoutSport'
       required:
         - name
-        - sport
         - step_blocks
+        - sport
       description: A reusable workout template, created once and planned onto user calendars
     PlannedWorkoutItem:
       $ref: '#/components/schemas/PlannedWorkout'
@@ -2192,7 +2227,94 @@ components:
           description: Identifier assigned by the provider, once pushed.
         coercion_warnings:
           type: string
-          description: Set when the template could not be represented exactly on the provider.
+          deprecated: true
+          description: Deprecated; use warnings. Set when the template could not be represented exactly on the provider.
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoercionWarning'
+          description: Adjustments made when the template could not be represented exactly on the provider. Empty when the push was exact.
+        workout:
+          anyOf:
+            - $ref: '#/components/schemas/PlannedWorkoutBody'
+            - type: 'null'
+          description: The workout body, as on the list. Null when the planned workout has no stored template or it could not be loaded.
+    CoercionWarning:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        path:
+          type: string
+          description: JSON path within the workout template of the element that could not be represented exactly
+        message:
+          type: string
+          description: What was changed or dropped, and why
+      required:
+        - path
+        - message
+      description: A non-fatal adjustment made while converting a workout between Terra's template model and a provider's
+    PlannedWorkoutBody:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the workout
+        description:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Description of the workout
+        environment:
+          anyOf:
+            - $ref: '#/components/schemas/EnvironmentType'
+            - type: 'null'
+        pool_length_meters:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: Pool length in meters, for swim workouts
+        step_blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/StepBlock'
+        estimated_duration_seconds:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: Estimated total duration in seconds
+        estimated_distance_meters:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: Estimated total distance in meters
+        estimated_calories:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: Estimated calories burned
+        estimated_tss:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: 'Planned training stress score, where the provider or author supplies one. Read-only today: accepted on create but not forwarded to providers.'
+        estimated_intensity_factor:
+          anyOf:
+            - type: number
+            - type: 'null'
+          description: 'Planned intensity factor, where the provider or author supplies one. Read-only today: accepted on create but not forwarded to providers.'
+        workout_id:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Terra identifier of the stored template. Set by Terra in responses; ignored on create.
+        sport:
+          $ref: '#/components/schemas/PlannedWorkoutSport'
+      required:
+        - name
+        - step_blocks
+        - sport
+      description: 'The body of a planned workout: a WorkoutTemplate whose sport may be `unspecified` when it was created on the provider side'
     Problem:
       type: object
       description: |
@@ -9321,40 +9443,6 @@ components:
           examples:
             - 33.7
           description: Mean absolute skin temperature in degrees Celsius over the sleep window. Null for providers that only report a baseline deviation.
-    WorkoutSport:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      anyOf:
-        - type: string
-          const: running
-        - type: string
-          const: cycling
-        - type: string
-          const: swimming
-        - type: string
-          const: strength
-        - type: string
-          const: rowing
-        - type: string
-          const: yoga
-        - type: string
-          const: pilates
-        - type: string
-          const: cardio
-        - type: string
-          const: trail_running
-        - type: string
-          const: mountain_biking
-        - type: string
-          const: backcountry_skiing
-        - type: string
-          const: hiking
-        - type: string
-          const: walking
-        - type: string
-          const: elliptical
-        - type: string
-          const: stair_climbing
-      description: Sport a workout template targets. Indoor/outdoor is expressed separately via environment.
     EnvironmentType:
       $schema: https://json-schema.org/draft/2020-12/schema
       anyOf:
@@ -9650,6 +9738,40 @@ components:
         - completion_condition
         - steps
       description: A block of steps, repeated until its completion condition is met
+    WorkoutSport:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: running
+        - type: string
+          const: cycling
+        - type: string
+          const: swimming
+        - type: string
+          const: strength
+        - type: string
+          const: rowing
+        - type: string
+          const: yoga
+        - type: string
+          const: pilates
+        - type: string
+          const: cardio
+        - type: string
+          const: trail_running
+        - type: string
+          const: mountain_biking
+        - type: string
+          const: backcountry_skiing
+        - type: string
+          const: hiking
+        - type: string
+          const: walking
+        - type: string
+          const: elliptical
+        - type: string
+          const: stair_climbing
+      description: Sport a workout template targets. Indoor/outdoor is expressed separately via environment.
     AthleteMetrics:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -9680,6 +9802,13 @@ components:
             - type: 'null'
           description: Pool length in meters (overrides the template value)
       description: Athlete-specific metrics used to personalise workout targets for one planned workout
+    PlannedWorkoutSport:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - $ref: '#/components/schemas/WorkoutSport'
+        - type: string
+          const: unspecified
+      description: 'Sport of a provider-created workout: a WorkoutSport, or `unspecified` when the provider''s sport has no Terra equivalent (rejected on create).'
     PlannedWorkoutDetailsMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -10016,52 +10145,75 @@ components:
           anyOf:
             - type: string
             - type: 'null'
-          description: Terra identifier of the planned workout
+          description: Terra identifier of the planned workout. Null for workouts created on the provider side.
         workout_id:
           anyOf:
             - type: string
             - type: 'null'
-          description: Identifier of the workout template this was planned from. Absent for workouts created on the provider side.
+          description: Identifier of the workout template this was planned from. Null for workouts created on the provider side; a non-null value means the workout is managed through Terra and can be rescheduled or deleted.
         planned_date:
           anyOf:
             - type: string
             - type: 'null'
-          description: Scheduled date (YYYY-MM-DD)
+          description: Scheduled date (YYYY-MM-DD). Null for provider entries that are not attached to a date, such as a routine library.
         provider_workout_id:
           anyOf:
             - type: string
             - type: 'null'
-          description: Identifier of the workout on the provider's side, once pushed
+          description: Identifier of the workout on the provider's side, in the form the provider's own API uses for it
         coercion_warnings:
           anyOf:
             - type: string
             - type: 'null'
-          description: Warnings emitted when the template could not be represented exactly on the provider
+          description: 'Deprecated: the stored JSON text of the adjustments made when the template was pushed to the provider; use `warnings`. Null when there were none or the workout was created on the provider side.'
+          deprecated: true
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoercionWarning'
+          description: Adjustments made while converting between Terra's template and the provider's format. On Terra-created workouts these come from the push to the provider; on external workouts, from reading the provider's workout into a template. Empty when the conversion was exact.
         created_at:
           anyOf:
             - type: string
             - type: 'null'
-          description: Creation time (RFC 3339)
+          description: Creation time (RFC 3339). Null for external workouts.
         last_updated_at:
           anyOf:
             - type: string
             - type: 'null'
-          description: Last update time (RFC 3339)
+          description: Last update time (RFC 3339). Null for external workouts.
         is_external:
-          anyOf:
-            - type: boolean
-            - type: 'null'
+          type: boolean
           description: True when the workout was created on the provider side rather than through Terra
         athlete_metrics:
           anyOf:
             - $ref: '#/components/schemas/AthleteMetrics'
             - type: 'null'
+        workout:
+          anyOf:
+            - $ref: '#/components/schemas/PlannedWorkoutBody'
+            - type: 'null'
+          description: The workout body, in the same shape for Terra-created and external workouts. Null when a Terra-created workout's body could not be loaded (a warning at path `workout` says why); for an external workout whose steps could not be fetched from the provider, the header fields are present, `step_blocks` is empty and a warning at path `step_blocks` says why.
         details:
           anyOf:
             - $ref: '#/components/schemas/PlannedWorkoutDetails'
             - type: 'null'
-          description: Full workout body (title, description, planned metrics, structured steps) fetched live from the provider. Present only for external workouts (is_external true).
-      description: A workout template scheduled onto a user's calendar
+          description: Deprecated. The provider body of an external workout in its pre-template shape; use `workout`. Null on Terra-created workouts. Removed in the next major SDK release.
+          deprecated: true
+      required:
+        - planned_workout_id
+        - workout_id
+        - planned_date
+        - provider_workout_id
+        - coercion_warnings
+        - warnings
+        - created_at
+        - last_updated_at
+        - is_external
+        - athlete_metrics
+        - workout
+        - details
+      description: A workout scheduled onto a user's calendar, whether created through Terra or on the provider side
     WebhookEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object

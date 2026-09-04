@@ -53,9 +53,9 @@ properties:
       - type: "null"
     description: Terra identifier of the stored template. Set by Terra in responses; ignored on create.
   sport:
-    $ref: WorkoutSport.yaml
+    $ref: PlannedWorkoutSport.yaml
 required:
   - name
   - step_blocks
   - sport
-description: A reusable workout template, created once and planned onto user calendars
+description: "The body of a planned workout: a WorkoutTemplate whose sport may be `unspecified` when it was created on the provider side"

@@ -5,49 +5,72 @@ properties:
     anyOf:
       - type: string
       - type: "null"
-    description: Terra identifier of the planned workout
+    description: Terra identifier of the planned workout. Null for workouts created on the provider side.
   workout_id:
     anyOf:
       - type: string
       - type: "null"
-    description: Identifier of the workout template this was planned from. Absent for workouts created on the provider side.
+    description: Identifier of the workout template this was planned from. Null for workouts created on the provider side; a non-null value means the workout is managed through Terra and can be rescheduled or deleted.
   planned_date:
     anyOf:
       - type: string
       - type: "null"
-    description: Scheduled date (YYYY-MM-DD)
+    description: Scheduled date (YYYY-MM-DD). Null for provider entries that are not attached to a date, such as a routine library.
   provider_workout_id:
     anyOf:
       - type: string
       - type: "null"
-    description: Identifier of the workout on the provider's side, once pushed
+    description: Identifier of the workout on the provider's side, in the form the provider's own API uses for it
   coercion_warnings:
     anyOf:
       - type: string
       - type: "null"
-    description: Warnings emitted when the template could not be represented exactly on the provider
+    description: "Deprecated: the stored JSON text of the adjustments made when the template was pushed to the provider; use `warnings`. Null when there were none or the workout was created on the provider side."
+    deprecated: true
+  warnings:
+    type: array
+    items:
+      $ref: CoercionWarning.yaml
+    description: Adjustments made while converting between Terra's template and the provider's format. On Terra-created workouts these come from the push to the provider; on external workouts, from reading the provider's workout into a template. Empty when the conversion was exact.
   created_at:
     anyOf:
       - type: string
       - type: "null"
-    description: Creation time (RFC 3339)
+    description: Creation time (RFC 3339). Null for external workouts.
   last_updated_at:
     anyOf:
       - type: string
       - type: "null"
-    description: Last update time (RFC 3339)
+    description: Last update time (RFC 3339). Null for external workouts.
   is_external:
-    anyOf:
-      - type: boolean
-      - type: "null"
+    type: boolean
     description: True when the workout was created on the provider side rather than through Terra
   athlete_metrics:
     anyOf:
       - $ref: AthleteMetrics.yaml
       - type: "null"
+  workout:
+    anyOf:
+      - $ref: PlannedWorkoutBody.yaml
+      - type: "null"
+    description: The workout body, in the same shape for Terra-created and external workouts. Null when a Terra-created workout's body could not be loaded (a warning at path `workout` says why); for an external workout whose steps could not be fetched from the provider, the header fields are present, `step_blocks` is empty and a warning at path `step_blocks` says why.
   details:
     anyOf:
       - $ref: PlannedWorkoutDetails.yaml
       - type: "null"
-    description: Full workout body (title, description, planned metrics, structured steps) fetched live from the provider. Present only for external workouts (is_external true).
-description: A workout template scheduled onto a user's calendar
+    description: Deprecated. The provider body of an external workout in its pre-template shape; use `workout`. Null on Terra-created workouts. Removed in the next major SDK release.
+    deprecated: true
+required:
+  - planned_workout_id
+  - workout_id
+  - planned_date
+  - provider_workout_id
+  - coercion_warnings
+  - warnings
+  - created_at
+  - last_updated_at
+  - is_external
+  - athlete_metrics
+  - workout
+  - details
+description: A workout scheduled onto a user's calendar, whether created through Terra or on the provider side
