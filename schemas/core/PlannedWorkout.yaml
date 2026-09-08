@@ -12,10 +12,8 @@ properties:
       - type: "null"
     description: Identifier of the workout template this was planned from. Null for workouts created on the provider side; a non-null value means the workout is managed through Terra and can be rescheduled or deleted.
   planned_date:
-    anyOf:
-      - type: string
-      - type: "null"
-    description: Scheduled date (YYYY-MM-DD). Null for provider entries that are not attached to a date, such as a routine library.
+    type: string
+    description: Scheduled date (YYYY-MM-DD)
   provider_workout_id:
     anyOf:
       - type: string

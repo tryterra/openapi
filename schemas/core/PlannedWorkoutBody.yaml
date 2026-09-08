@@ -41,12 +41,12 @@ properties:
     anyOf:
       - type: number
       - type: "null"
-    description: "Planned training stress score, where the provider or author supplies one. Read-only today: accepted on create but not forwarded to providers."
+    description: Planned training stress score (0-9999), where the provider or author supplies one. Forwarded to TrainingPeaks, which ignores it when any step target is not RPE and derives it from the structure instead.
   estimated_intensity_factor:
     anyOf:
       - type: number
       - type: "null"
-    description: "Planned intensity factor, where the provider or author supplies one. Read-only today: accepted on create but not forwarded to providers."
+    description: Planned intensity factor (0-5), where the provider or author supplies one. Forwarded to TrainingPeaks, which ignores it when any step target is not RPE and derives it from the structure instead.
   workout_id:
     anyOf:
       - type: string

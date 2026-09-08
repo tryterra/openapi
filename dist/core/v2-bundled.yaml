@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.09.04.2
+  version: 2026.09.08
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -2186,12 +2186,12 @@ components:
           anyOf:
             - type: number
             - type: 'null'
-          description: 'Planned training stress score, where the provider or author supplies one. Read-only today: accepted on create but not forwarded to providers.'
+          description: Planned training stress score (0-9999), where the provider or author supplies one. Forwarded to TrainingPeaks, which ignores it when any step target is not RPE and derives it from the structure instead.
         estimated_intensity_factor:
           anyOf:
             - type: number
             - type: 'null'
-          description: 'Planned intensity factor, where the provider or author supplies one. Read-only today: accepted on create but not forwarded to providers.'
+          description: Planned intensity factor (0-5), where the provider or author supplies one. Forwarded to TrainingPeaks, which ignores it when any step target is not RPE and derives it from the structure instead.
         workout_id:
           anyOf:
             - type: string
@@ -2297,12 +2297,12 @@ components:
           anyOf:
             - type: number
             - type: 'null'
-          description: 'Planned training stress score, where the provider or author supplies one. Read-only today: accepted on create but not forwarded to providers.'
+          description: Planned training stress score (0-9999), where the provider or author supplies one. Forwarded to TrainingPeaks, which ignores it when any step target is not RPE and derives it from the structure instead.
         estimated_intensity_factor:
           anyOf:
             - type: number
             - type: 'null'
-          description: 'Planned intensity factor, where the provider or author supplies one. Read-only today: accepted on create but not forwarded to providers.'
+          description: Planned intensity factor (0-5), where the provider or author supplies one. Forwarded to TrainingPeaks, which ignores it when any step target is not RPE and derives it from the structure instead.
         workout_id:
           anyOf:
             - type: string
@@ -10180,10 +10180,8 @@ components:
             - type: 'null'
           description: Identifier of the workout template this was planned from. Null for workouts created on the provider side; a non-null value means the workout is managed through Terra and can be rescheduled or deleted.
         planned_date:
-          anyOf:
-            - type: string
-            - type: 'null'
-          description: Scheduled date (YYYY-MM-DD). Null for provider entries that are not attached to a date, such as a routine library.
+          type: string
+          description: Scheduled date (YYYY-MM-DD)
         provider_workout_id:
           anyOf:
             - type: string
