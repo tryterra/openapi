@@ -7,4 +7,4 @@ required:
   - source
 allOf:
   - $ref: LabReportResult.yaml
-description: "One layered webhook result: the retrieve result, but its source additionally carries the specimen collection date/time."
+description: One layered webhook result. Byte-identical to the retrieve result — same source, biomarker, measurement, interpretation and reference_ranges.

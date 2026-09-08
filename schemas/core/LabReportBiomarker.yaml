@@ -10,7 +10,7 @@ properties:
     type: string
   loinc_code:
     type: string
-    description: LOINC code; omitted when the matched biomarker has no LOINC mapping.
+    description: "LOINC code; omitted when the matched biomarker has no LOINC mapping. On a site-scoped (DXA) result the code identifies the (measure, site) pair rather than the measure alone, because LOINC's DXA terms are pre-coordinated — the site is baked into the term. Read it off each result; do not cache it against biomarker.key. Coverage is partial on scans: per-site body-fat percentage and the mass/lean/BMC measures have no LOINC term and omit the field."
   panel_id:
     type: integer
     description: References panels[].id on the enclosing session.
@@ -18,6 +18,11 @@ properties:
     type: string
   specimen:
     type: string
+  region:
+    $ref: AnatomicalRegion.yaml
+    examples:
+      - l1_l4
+    description: Canonical anatomical site key for site-scoped (DXA) reports, drawn from a closed vocabulary of ~70 members (arms, arm_left, trunk, android, gynoid, vat, l1_l4, spine_lumbar, femur_neck_left, forearm_total_right, ...). Treated as an open enum on the wire so new sites do not break existing consumers; the full list is published in the Lab Reports documentation. Together with biomarker.key it forms the identity of a scan result — the same measure appears once per site, so key alone is not unique. Omitted for lab results, which are scoped by specimen instead.
 required:
   - key
 description: The normalized identity layer.

@@ -14,4 +14,3 @@ properties:
 required:
   - upload_id
   - current_status
-description: Returned by the upload endpoint. A single upload may fan out to multiple sessions.

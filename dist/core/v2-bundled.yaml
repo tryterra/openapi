@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.09.08
+  version: 2026.09.08.1
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -1297,8 +1297,8 @@ paths:
       security: []
   /lab-reports:
     post:
-      summary: Upload a lab report
-      description: Upload a single lab report file (PDF, PNG, JPEG, GIF, or WebP) as multipart form data. Returns an `upload_id`; a single upload may fan out to multiple sessions, so learn the `session_id`(s) from the webhook events or from `GET /lab-reports?upload_id=...`.
+      summary: Upload a report
+      description: Upload a single report file (PDF, PNG, JPEG, GIF, or WebP) as multipart form data. Both clinical lab reports and DXA body-composition/bone-density scans go to this endpoint — Terra identifies which it is from the file, so there is no parameter to declare the type; read `report_type` off the session or the webhook. Returns an `upload_id`; a single upload may fan out to multiple sessions, so learn the `session_id`(s) from the webhook events or from `GET /lab-reports?upload_id=...`.
       tags:
         - LabReports
       operationId: LabReports_Upload
@@ -1339,8 +1339,8 @@ paths:
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
     get:
-      summary: List lab report sessions
-      description: List lab report sessions for your account, with optional reference, upload, and inclusive date-range filters. Use the date filters to narrow large result sets.
+      summary: List report sessions
+      description: List report sessions for your account — both lab reports and scans — with optional reference, upload, and inclusive date-range filters. Use the date filters to narrow large result sets, and read `report_type` on each session to tell a lab panel from a scan.
       tags:
         - LabReports
       operationId: LabReports_List
@@ -1351,6 +1351,16 @@ paths:
           description: Filter by your external reference ID.
           schema:
             type: string
+        - name: report_type
+          in: query
+          required: false
+          description: Return only sessions of this kind. Omit for both.
+          schema:
+            type: string
+            enum:
+              - lab
+              - dexa
+          example: dexa
         - name: upload_id
           in: query
           required: false
@@ -2024,7 +2034,7 @@ webhooks:
           description: Successful body response
   lab_report:
     post:
-      description: 'lab_report data event: sent when a lab report finishes processing. The envelope type is lab_report.completed (normalised results delivered under data) or lab_report.failed (a terminal failure, with a structured reason). Both share the lab_report destination event type; branch on the envelope type. Unlike wearable events these are report-scoped, so they carry no user or version.'
+      description: 'lab_report data event: sent when a report finishes processing. The same event carries both clinical lab reports and DXA body-composition/bone-density scans - branch on data.report_type, which is always present. The envelope type is lab_report.completed (normalised results delivered under data) or lab_report.failed (a terminal failure, with a structured reason). Both share the lab_report destination event type; branch on the envelope type. Unlike wearable events these are report-scoped, so they carry no user or version.'
       summary: Lab report event
       operationId: Webhooks_LabReport
       tags:
@@ -2045,6 +2055,7 @@ webhooks:
                   data:
                     session_id: '297405620317847552'
                     reference_id: your-patient-123
+                    report_type: lab
                     report_date: '2026-06-30'
                     report_locale: en-GB
                     results_count: 1
@@ -2066,6 +2077,80 @@ webhooks:
                         interpretation:
                           flag: normal
                           source: report
+                    panels: []
+              completed_scan:
+                summary: DXA scan processed successfully
+                value:
+                  type: lab_report.completed
+                  event_id: evt_1b7d3e40-8a55-4f21-9c33-2e08b6d4a915
+                  occurred_at: '2026-07-02T14:05:11Z'
+                  upload_id: upl_2e08b6d4a915
+                  data:
+                    session_id: '297405620317847553'
+                    reference_id: your-patient-123
+                    report_type: dexa
+                    report_date: '2026-07-02'
+                    report_locale: en-US
+                    results_count: 4
+                    results:
+                      - source:
+                          name: BMD
+                          region_name: L1-L4
+                          value: '1.024'
+                          units: g/cm2
+                        biomarker:
+                          key: bmd
+                          display_name: Bone Mineral Density
+                          region: l1_l4
+                          loinc_code: 24966-4
+                        measurement:
+                          type: numeric
+                          numeric: 1.024
+                          units: g/cm2
+                          ucum_code: g/cm2
+                      - source:
+                          name: T-score
+                          region_name: L1-L4
+                          value: '-1.4'
+                          flag: Osteopenia
+                        biomarker:
+                          key: t_score
+                          display_name: T-score
+                          region: l1_l4
+                        measurement:
+                          type: numeric
+                          numeric: -1.4
+                          ucum_code: '{SD}'
+                        interpretation:
+                          flag: low
+                          flag_raw: Osteopenia
+                          source: report
+                      - source:
+                          name: Fat Mass
+                          region_name: Android
+                          value: '2431'
+                          units: g
+                        biomarker:
+                          key: fat_mass
+                          display_name: Fat Mass
+                          region: android
+                        measurement:
+                          type: numeric
+                          numeric: 2431
+                          units: g
+                          ucum_code: g
+                      - source:
+                          name: Weight
+                          value: '78.4'
+                          units: kg
+                        biomarker:
+                          key: weight
+                          display_name: Weight
+                        measurement:
+                          type: numeric
+                          numeric: 78.4
+                          units: kg
+                          ucum_code: kg
                     panels: []
               failed:
                 summary: Report terminally failed
@@ -3075,7 +3160,6 @@ components:
       required:
         - upload_id
         - current_status
-      description: Returned by the upload endpoint. A single upload may fan out to multiple sessions.
     LabReportReprocessResponse:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -3115,10 +3199,10 @@ components:
           type: string
           description: Your external reference; omitted if not set.
         report_type:
-          type: string
+          $ref: '#/components/schemas/ReportType'
           examples:
             - lab
-          description: Report type as a clean lowercase string (open enum — handle unknown values gracefully).
+          description: 'What kind of report this is, as a clean lowercase string (open enum — handle unknown values gracefully). "lab" for a clinical lab report, "dexa" for a DXA body-composition or bone-density scan, "unspecified" while the report is still being classified. Switch on this before reading results: dexa results are scoped by biomarker.region, lab results by biomarker.specimen.'
         current_status:
           type: string
           examples:
@@ -3138,10 +3222,10 @@ components:
           description: Time printed on the report (HH:MM, 24-hour); omitted if not extracted.
         collection_date:
           type: string
-          description: Specimen collection date (YYYY-MM-DD); omitted if not extracted.
+          description: Date the sample was collected or the scan was taken (YYYY-MM-DD); omitted if not extracted.
         collection_time:
           type: string
-          description: Specimen collection time (HH:MM, 24-hour); omitted if not extracted.
+          description: Time the sample was collected or the scan was taken (HH:MM, 24-hour); omitted if not extracted.
         report_locale:
           type: string
           examples:
@@ -3258,6 +3342,15 @@ components:
           type: string
         reference_text:
           type: string
+        region_name:
+          type: string
+          description: Anatomical site label exactly as printed on the report, in the original language. Present whenever the report shows a site, including when no canonical region key matched.
+        collection_date:
+          type: string
+          description: Date this specific measurement was taken (YYYY-MM-DD). Distinguishes a prior scan in a trend table from the current one; omitted if not shown per result.
+        collection_time:
+          type: string
+          description: Time this specific measurement was taken (HH:MM, 24-hour); omitted if not shown per result.
       description: The verbatim provenance layer — what the report literally printed.
     LabReportBiomarker:
       $schema: https://json-schema.org/draft/2020-12/schema
@@ -3272,7 +3365,7 @@ components:
           type: string
         loinc_code:
           type: string
-          description: LOINC code; omitted when the matched biomarker has no LOINC mapping.
+          description: 'LOINC code; omitted when the matched biomarker has no LOINC mapping. On a site-scoped (DXA) result the code identifies the (measure, site) pair rather than the measure alone, because LOINC''s DXA terms are pre-coordinated — the site is baked into the term. Read it off each result; do not cache it against biomarker.key. Coverage is partial on scans: per-site body-fat percentage and the mass/lean/BMC measures have no LOINC term and omit the field.'
         panel_id:
           type: integer
           description: References panels[].id on the enclosing session.
@@ -3280,6 +3373,11 @@ components:
           type: string
         specimen:
           type: string
+        region:
+          $ref: '#/components/schemas/AnatomicalRegion'
+          examples:
+            - l1_l4
+          description: Canonical anatomical site key for site-scoped (DXA) reports, drawn from a closed vocabulary of ~70 members (arms, arm_left, trunk, android, gynoid, vat, l1_l4, spine_lumbar, femur_neck_left, forearm_total_right, ...). Treated as an open enum on the wire so new sites do not break existing consumers; the full list is published in the Lab Reports documentation. Together with biomarker.key it forms the identity of a scan result — the same measure appears once per site, so key alone is not unique. Omitted for lab results, which are scoped by specimen instead.
       required:
         - key
       description: The normalized identity layer.
@@ -10240,6 +10338,82 @@ components:
         - workout
         - details
       description: A workout scheduled onto a user's calendar, whether created through Terra or on the provider side
+    ReportType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: string
+      enum:
+        - lab
+        - dexa
+        - unspecified
+      description: Returned by the upload endpoint. A single upload may fan out to multiple sessions.
+    AnatomicalRegion:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: string
+      enum:
+        - head
+        - arms
+        - arm_left
+        - arm_right
+        - legs
+        - leg_left
+        - leg_right
+        - trunk
+        - trunk_left
+        - trunk_right
+        - android
+        - gynoid
+        - vat
+        - ribs
+        - ribs_left
+        - ribs_right
+        - spine
+        - spine_thoracic
+        - spine_lumbar
+        - pelvis
+        - subtotal
+        - total
+        - total_left
+        - total_right
+        - whole_body
+        - l1
+        - l2
+        - l3
+        - l4
+        - l1_l2
+        - l1_l3
+        - l1_l4
+        - l2_l3
+        - l2_l4
+        - l3_l4
+        - femur_neck
+        - femur_neck_left
+        - femur_neck_right
+        - femur_trochanter
+        - femur_trochanter_left
+        - femur_trochanter_right
+        - femur_intertrochanter
+        - femur_intertrochanter_left
+        - femur_intertrochanter_right
+        - femur_wards
+        - femur_wards_left
+        - femur_wards_right
+        - femur_total
+        - femur_total_left
+        - femur_total_right
+        - femur_dual_total
+        - radius_ultradistal
+        - radius_ultradistal_left
+        - radius_ultradistal_right
+        - radius_mid
+        - radius_mid_left
+        - radius_mid_right
+        - radius_33
+        - radius_33_left
+        - radius_33_right
+        - forearm_total
+        - forearm_total_left
+        - forearm_total_right
+      description: 'Canonical anatomical site keys for site-scoped (DXA) results. Closed vocabulary: the extractor may only emit a member of this set, and anything else is discarded before storage. Ordered anatomy-first, laterality-last, so a prefix match ("femur_neck") is a valid family query.'
     WebhookEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -10735,16 +10909,10 @@ components:
     LabReportEventResultSource:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
-      properties:
-        collection_date:
-          type: string
-          description: Specimen collection date (YYYY-MM-DD); omitted if not extracted.
-        collection_time:
-          type: string
-          description: Specimen collection time (HH:MM, 24-hour); omitted if not extracted.
+      properties: {}
       allOf:
         - $ref: '#/components/schemas/LabReportResultSource'
-      description: The retrieve source layer plus the specimen collection date/time (the retrieve carries these on the session, which a webhook consumer does not separately fetch).
+      description: The webhook source layer. Identical to the retrieve source layer — per-result collection date/time and region_name moved onto the shared base type, so the two cannot drift. Retained as a named type because it is published in the SDK.
     LabReportEventResult:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -10755,7 +10923,7 @@ components:
         - source
       allOf:
         - $ref: '#/components/schemas/LabReportResult'
-      description: 'One layered webhook result: the retrieve result, but its source additionally carries the specimen collection date/time.'
+      description: One layered webhook result. Byte-identical to the retrieve result — same source, biomarker, measurement, interpretation and reference_ranges.
     LabReportEventData:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -10767,6 +10935,11 @@ components:
         reference_id:
           type: string
           description: Your external reference; omitted if not set.
+        report_type:
+          $ref: '#/components/schemas/ReportType'
+          examples:
+            - dexa
+          description: 'What kind of report this is, as a clean lowercase string (open enum — handle unknown values gracefully). "lab" for a clinical lab report, "dexa" for a DXA body-composition or bone-density scan. Switch on this to know the result shape: dexa results carry biomarker.region and source.region_name, lab results carry biomarker.specimen. Always present on a delivered event; optional in the schema only so consumers that validate strictly against the previous contract do not reject the addition.'
         report_date:
           type: string
           description: Date printed on the report (YYYY-MM-DD); omitted if not extracted.

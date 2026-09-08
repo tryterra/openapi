@@ -1,0 +1,7 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: string
+enum:
+  - lab
+  - dexa
+  - unspecified
+description: Returned by the upload endpoint. A single upload may fan out to multiple sessions.

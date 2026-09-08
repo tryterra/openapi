@@ -8,6 +8,11 @@ properties:
   reference_id:
     type: string
     description: Your external reference; omitted if not set.
+  report_type:
+    $ref: ReportType.yaml
+    examples:
+      - dexa
+    description: 'What kind of report this is, as a clean lowercase string (open enum — handle unknown values gracefully). "lab" for a clinical lab report, "dexa" for a DXA body-composition or bone-density scan. Switch on this to know the result shape: dexa results carry biomarker.region and source.region_name, lab results carry biomarker.specimen. Always present on a delivered event; optional in the schema only so consumers that validate strictly against the previous contract do not reject the addition.'
   report_date:
     type: string
     description: Date printed on the report (YYYY-MM-DD); omitted if not extracted.

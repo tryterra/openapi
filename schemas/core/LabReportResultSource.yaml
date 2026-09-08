@@ -19,4 +19,13 @@ properties:
     type: string
   reference_text:
     type: string
+  region_name:
+    type: string
+    description: Anatomical site label exactly as printed on the report, in the original language. Present whenever the report shows a site, including when no canonical region key matched.
+  collection_date:
+    type: string
+    description: Date this specific measurement was taken (YYYY-MM-DD). Distinguishes a prior scan in a trend table from the current one; omitted if not shown per result.
+  collection_time:
+    type: string
+    description: Time this specific measurement was taken (HH:MM, 24-hour); omitted if not shown per result.
 description: The verbatim provenance layer — what the report literally printed.
