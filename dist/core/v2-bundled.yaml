@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.09.08.1
+  version: 2026.09.08.2
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -3469,6 +3469,10 @@ components:
           type: number
         type:
           type: string
+          description: 'Coded range type (open enum: normal, low, high, borderline_low, borderline_high, critical_low, critical_high, abnormal, therapeutic, subtherapeutic, toxic). A lossy coding of `label`, judged from the report''s wording and where the band sits among the result''s ranges — a prediabetes band between the no-diabetes and diabetes bands is borderline_high. Omitted when nothing in the vocabulary fits.'
+        label:
+          type: string
+          description: The range's classification exactly as the report printed it — "Optimal", "Moderate", "Consistent with increased risk for diabetes (prediabetes)". When a result carries several ranges they are bands, not one normal interval; this is the field that says what each band means.
         context:
           $ref: '#/components/schemas/LabReportRangeContext'
       description: One reference range. type describes the range, not a verdict on the result.
