@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.09.1
+  version: 2026.09.09.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
   x-terra-audience: cli
 servers:
@@ -4538,6 +4538,7 @@ components:
         - method_name: retrieve-referrals
           operation: get
           path: /company/referrals
+      x-terra-summary: Manage the company record and onboarding
       x-terra-resource: company
     AgreeToTermsRequest:
       type: object
@@ -4749,6 +4750,12 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/tokens
+          columns:
+            - token_id
+            - name
+            - scopes
+            - expires_at
+            - last_used_at
         - method_name: create
           operation: post
           path: /environments/{dev_id}/tokens
@@ -4758,6 +4765,7 @@ components:
         - method_name: retrieve-secret
           operation: get
           path: /environments/{dev_id}/tokens/{token_id}/secret
+      x-terra-summary: Manage data-plane tokens for an environment
       x-terra-resource: data-tokens
     DestinationSummary:
       type: object
@@ -4784,6 +4792,11 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/unified-api/destinations
+          columns:
+            - id
+            - type
+            - active
+            - url
         - method_name: create
           operation: post
           path: /environments/{dev_id}/unified-api/destinations
@@ -4793,6 +4806,7 @@ components:
         - method_name: delete
           operation: delete
           path: /environments/{dev_id}/unified-api/destinations/{destination_id}
+      x-terra-summary: Manage data destinations
       x-terra-resource: unified-api.destinations
     DevDetail:
       type: object
@@ -4820,6 +4834,11 @@ components:
         - method_name: list
           operation: get
           path: /environments
+          columns:
+            - dev_id
+            - name
+            - active
+            - billable
         - method_name: create
           operation: post
           path: /environments
@@ -4835,6 +4854,7 @@ components:
         - method_name: rotate-api-key
           operation: post
           path: /environments/{dev_id}/api-key/rotate
+      x-terra-summary: Manage environments (dev-ids) and their credentials
       x-terra-resource: environments
     DevKeys:
       type: object
@@ -4935,6 +4955,10 @@ components:
         - method_name: list
           operation: get
           path: /entitlements
+          columns:
+            - capability
+            - source
+      x-terra-summary: Manage account capabilities
       x-terra-resource: entitlements
     EnvironmentProfile:
       type:
@@ -5001,6 +5025,12 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/webhook-events
+          columns:
+            - event_id
+            - data_type
+            - provider
+            - http_status
+            - sent_at
         - method_name: retrieve
           operation: get
           path: /environments/{dev_id}/webhook-events/{event_id}
@@ -5010,6 +5040,7 @@ components:
         - method_name: retrieve-payload
           operation: get
           path: /environments/{dev_id}/webhook-events/{event_id}/payload
+      x-terra-summary: Inspect and resend webhook events
       x-terra-resource: events
     InvoiceSummary:
       type: object
@@ -5039,6 +5070,7 @@ components:
         - method_name: upcoming
           operation: get
           path: /billing/invoices/upcoming
+      x-terra-summary: Past and upcoming invoices
       x-terra-resource: billing.invoices
     DocsAskRequest:
       type: object
@@ -5076,6 +5108,8 @@ components:
         - method_name: ask
           operation: post
           path: /docs/ask
+          slow: true
+      x-terra-summary: Search Terra's documentation
       x-terra-resource: docs
     DocsSource:
       type: object
@@ -5173,6 +5207,7 @@ components:
         - method_name: update-metadata
           operation: patch
           path: /me/metadata
+      x-terra-summary: Inspect and update the token's own account record
       x-terra-resource: account
     MintDataTokenRequest:
       type: object
@@ -5211,6 +5246,7 @@ components:
         - method_name: list
           operation: get
           path: /models/catalog
+      x-terra-summary: Models available to this account
       x-terra-resource: models.catalog
     ModelRunRecord:
       type: object
@@ -5255,6 +5291,7 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/models/runs
+      x-terra-summary: Executions of a model
       x-terra-resource: models.runs
     OAuthError:
       type: object
@@ -5498,6 +5535,7 @@ components:
         - method_name: retrieve
           operation: get
           path: /billing/payment-method
+      x-terra-summary: The card or bank account charged for this account
       x-terra-resource: billing.payment-method
     Problem:
       allOf:
@@ -5570,6 +5608,7 @@ components:
         - method_name: update
           operation: patch
           path: /environments/{dev_id}/unified-api/processing
+      x-terra-summary: How Terra normalizes and derives each data type
       x-terra-resource: unified-api.data.processing
     ProviderCredentialMaterial:
       type: object
@@ -5625,6 +5664,7 @@ components:
         - method_name: replace
           operation: put
           path: /environments/{dev_id}/unified-api/sources/{provider}/credentials
+      x-terra-summary: Your own OAuth credentials for a provider, used instead of Terra's
       x-terra-resource: unified-api.sources.credentials
     ProviderEnabled:
       type: object
@@ -5656,6 +5696,7 @@ components:
         - method_name: replace
           operation: put
           path: /environments/{dev_id}/unified-api/sources/{provider}/scopes
+      x-terra-summary: Which data types a provider is asked for
       x-terra-resource: unified-api.sources.scopes
     ProviderSummary:
       type: object
@@ -5670,12 +5711,17 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/unified-api/sources
+          columns:
+            - provider
+            - active
+            - auth_redirect_url
         - method_name: enable
           operation: put
           path: /environments/{dev_id}/unified-api/sources/{provider}
         - method_name: disable
           operation: delete
           path: /environments/{dev_id}/unified-api/sources/{provider}
+      x-terra-summary: Enable and configure wearable providers
       x-terra-resource: unified-api.sources
     PutWorkoutMetadataRequest:
       type: object
@@ -5761,6 +5807,7 @@ components:
         - method_name: retrieve
           operation: get
           path: /environments/{dev_id}/unified-api/scores/analytics
+      x-terra-summary: Aggregate score results across an environment
       x-terra-resource: unified-api.scores.analytics
     ScoreConfig:
       type: object
@@ -5779,6 +5826,7 @@ components:
         - method_name: update
           operation: patch
           path: /environments/{dev_id}/unified-api/scores/{score}
+      x-terra-summary: Configure and inspect scores
       x-terra-resource: unified-api.scores
     ScoreHistoryRecord:
       type: object
@@ -5829,6 +5877,7 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/unified-api/scores/history
+      x-terra-summary: Score results over time for one user
       x-terra-resource: unified-api.scores.history
     ScoreResult:
       type: object
@@ -5862,6 +5911,7 @@ components:
         - method_name: replace
           operation: put
           path: /environments/{dev_id}/unified-api/scopes
+      x-terra-summary: Which fields Terra collects per data type
       x-terra-resource: unified-api.data.scopes
     SelectedDataFieldsRequest:
       type: object
@@ -5943,6 +5993,7 @@ components:
         - method_name: cancel-incomplete
           operation: post
           path: /billing/subscriptions/cancel-incomplete
+      x-terra-summary: Plans this account is subscribed to
       x-terra-resource: billing.subscriptions
     SupabaseProvisionRequest:
       type: object
@@ -5997,6 +6048,9 @@ components:
         - method_name: provision
           operation: post
           path: /environments/{dev_id}/unified-api/destinations/supabase/provision
+          timeout: 10m
+          slow: true
+      x-terra-summary: Supabase as a data destination
       x-terra-resource: unified-api.destinations.supabase
     TeamInvitation:
       type: object
@@ -6051,9 +6105,16 @@ components:
         - method_name: list
           operation: get
           path: /team/invitations
+          columns:
+            - id
+            - email
+            - role
+            - expires_at
+            - claimed_at
         - method_name: delete
           operation: delete
           path: /team/invitations/{invitation_id}
+      x-terra-summary: Outstanding invitations to join this account
       x-terra-resource: team.invitations
     TeamInvitationResponse:
       type: object
@@ -6093,6 +6154,10 @@ components:
         - method_name: list
           operation: get
           path: /team/members
+          columns:
+            - user_id
+            - email
+            - role
         - method_name: retrieve
           operation: get
           path: /team/members/{user_id}
@@ -6102,6 +6167,7 @@ components:
         - method_name: delete
           operation: delete
           path: /team/members/{user_id}
+      x-terra-summary: People with access to this account
       x-terra-resource: team.members
     TokenPollFormRequest:
       type: object
@@ -6208,12 +6274,20 @@ components:
         - method_name: list
           operation: get
           path: /tokens
+          columns:
+            - token_id
+            - name
+            - kind
+            - scopes
+            - expires_at
+            - last_used_at
         - method_name: delete
           operation: delete
           path: /tokens/{token_id}
         - method_name: rotate
           operation: post
           path: /tokens/self/rotate
+      x-terra-summary: Manage admin tokens for this account
       x-terra-resource: tokens
     UsageResponse:
       type: object
@@ -6236,6 +6310,7 @@ components:
         - method_name: retrieve
           operation: get
           path: /billing/usage
+      x-terra-summary: Metered usage for the current period
       x-terra-resource: billing.usage
     UsageSummary:
       type: object
@@ -6274,9 +6349,16 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/users
+          columns:
+            - user_id
+            - provider
+            - reference_id
+            - active
+            - created_at
         - method_name: stats
           operation: get
           path: /environments/{dev_id}/users/stats
+      x-terra-summary: Inspect end-user connections
       x-terra-resource: users
     WidgetConfig:
       type: object
@@ -6308,6 +6390,7 @@ components:
         - method_name: update
           operation: put
           path: /environments/{dev_id}/unified-api/widget/config
+      x-terra-summary: Configure the Terra widget
       x-terra-resource: unified-api.widget
     WorkoutMetadata:
       type: object
@@ -6338,6 +6421,7 @@ components:
         - method_name: delete
           operation: delete
           path: /environments/{dev_id}/workouts/{workout_id}/metadata
+      x-terra-summary: Custom fields attached to a workout
       x-terra-resource: workouts.metadata
     schemas-Problem:
       type: object
@@ -6364,3 +6448,10 @@ components:
         - type
         - title
         - instance
+x-terra-nodes:
+  billing: Subscriptions, invoices, payment method and usage
+  models: The catalog of generally-available models, and the per-environment history of model runs
+  team: Manage team members and invitations
+  unified-api: The Unified API product and the products built on it
+  unified-api.data: Configure which data Terra collects and how it is processed
+  workouts: Manage workout metadata
