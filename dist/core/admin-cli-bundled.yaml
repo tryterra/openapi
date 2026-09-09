@@ -3,6 +3,7 @@ info:
   title: Terra Admin API
   version: 2026.09.09
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
+  x-terra-audience: cli
 servers:
   - url: /api/v3/admin
 security:
@@ -4508,6 +4509,41 @@ components:
           type: integer
         company:
           $ref: '#/components/schemas/CompanyProfile'
+      x-terra-operations:
+        - method_name: retrieve
+          operation: get
+          path: /company
+        - method_name: update
+          operation: patch
+          path: /company
+        - method_name: retrieve-onboarding
+          operation: get
+          path: /company/onboarding
+        - method_name: update-onboarding
+          operation: patch
+          path: /company/onboarding
+        - method_name: agree-terms
+          operation: post
+          path: /company/terms
+        - method_name: retrieve-terms
+          operation: get
+          path: /company/terms/{version}
+        - method_name: list-feature-flags
+          operation: get
+          path: /company/feature-flags
+        - method_name: opt-in-points
+          operation: post
+          path: /company/points/opt-in
+        - method_name: retrieve-referral-code
+          operation: get
+          path: /company/referral-code
+        - method_name: ensure-referral-code
+          operation: post
+          path: /company/referral-code
+        - method_name: retrieve-referrals
+          operation: get
+          path: /company/referrals
+      x-terra-resource: company
     AgreeToTermsRequest:
       type: object
       properties:
@@ -4565,6 +4601,10 @@ components:
           description: advanced-type credential JSON
       required:
         - url
+      x-terra-most-common:
+        - type
+        - event_types
+        - active
     CreateEnvironmentProfileRequest:
       type: object
       description: dev_id is required and must already exist as a tesseract credential — this does not provision one. name defaults to dev_id; billable defaults to false.
@@ -4710,6 +4750,20 @@ components:
         - name
         - created_at
         - expires_at
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments/{dev_id}/tokens
+        - method_name: create
+          operation: post
+          path: /environments/{dev_id}/tokens
+        - method_name: delete
+          operation: delete
+          path: /environments/{dev_id}/tokens/{token_id}
+        - method_name: retrieve-secret
+          operation: get
+          path: /environments/{dev_id}/tokens/{token_id}/secret
+      x-terra-resource: data-tokens
     DestinationSummary:
       type: object
       properties:
@@ -4731,6 +4785,20 @@ components:
         - type
         - url
         - active
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments/{dev_id}/unified-api/destinations
+        - method_name: create
+          operation: post
+          path: /environments/{dev_id}/unified-api/destinations
+        - method_name: update
+          operation: patch
+          path: /environments/{dev_id}/unified-api/destinations/{destination_id}
+        - method_name: delete
+          operation: delete
+          path: /environments/{dev_id}/unified-api/destinations/{destination_id}
+      x-terra-resource: unified-api.destinations
     DevDetail:
       type: object
       properties:
@@ -4753,6 +4821,26 @@ components:
         user_limit:
           type: integer
           format: int64
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments
+        - method_name: create
+          operation: post
+          path: /environments
+        - method_name: retrieve
+          operation: get
+          path: /environments/{dev_id}
+        - method_name: update
+          operation: patch
+          path: /environments/{dev_id}
+        - method_name: retrieve-api-key
+          operation: get
+          path: /environments/{dev_id}/api-key
+        - method_name: rotate-api-key
+          operation: post
+          path: /environments/{dev_id}/api-key/rotate
+      x-terra-resource: environments
     DevKeys:
       type: object
       properties:
@@ -4848,6 +4936,11 @@ components:
           type: string
         source:
           type: string
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /entitlements
+      x-terra-resource: entitlements
     EnvironmentProfile:
       type:
         - object
@@ -4909,6 +5002,20 @@ components:
         connection_id:
           type: string
           description: string-encoded 64-bit id
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments/{dev_id}/webhook-events
+        - method_name: retrieve
+          operation: get
+          path: /environments/{dev_id}/webhook-events/{event_id}
+        - method_name: resend
+          operation: post
+          path: /environments/{dev_id}/webhook-events/resend
+        - method_name: retrieve-payload
+          operation: get
+          path: /environments/{dev_id}/webhook-events/{event_id}/payload
+      x-terra-resource: events
     InvoiceSummary:
       type: object
       properties:
@@ -4930,6 +5037,14 @@ components:
           type: string
         invoice_pdf:
           type: string
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /billing/invoices
+        - method_name: upcoming
+          operation: get
+          path: /billing/invoices/upcoming
+      x-terra-resource: billing.invoices
     DocsAskRequest:
       type: object
       properties:
@@ -4962,6 +5077,11 @@ components:
         - answer
         - confidence
         - sources
+      x-terra-operations:
+        - method_name: ask
+          operation: post
+          path: /docs/ask
+      x-terra-resource: docs
     DocsSource:
       type: object
       description: One documentation page the answer drew on.
@@ -5045,6 +5165,20 @@ components:
         staff:
           type: boolean
           description: Terra-staff signal read from the staff grant table for the resolved user; false whenever user is null. Gate staff-only UI on this, never on an email suffix.
+      x-terra-operations:
+        - method_name: retrieve
+          operation: get
+          path: /me
+        - method_name: update
+          operation: patch
+          path: /me
+        - method_name: retrieve-metadata
+          operation: get
+          path: /me/metadata
+        - method_name: update-metadata
+          operation: patch
+          path: /me/metadata
+      x-terra-resource: account
     MintDataTokenRequest:
       type: object
       properties:
@@ -5078,6 +5212,11 @@ components:
           type: string
         data_type:
           type: string
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /models/catalog
+      x-terra-resource: models.catalog
     ModelRunRecord:
       type: object
       properties:
@@ -5117,6 +5256,11 @@ components:
         - submitted_at
         - output_truncated
         - output
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments/{dev_id}/models/runs
+      x-terra-resource: models.runs
     OAuthError:
       type: object
       description: RFC 6749 §5.2 error envelope, returned to form-encoded (RFC 8628 wire mode) requests.
@@ -5355,6 +5499,11 @@ components:
           format: int64
         has_card:
           type: boolean
+      x-terra-operations:
+        - method_name: retrieve
+          operation: get
+          path: /billing/payment-method
+      x-terra-resource: billing.payment-method
     Problem:
       allOf:
         - $ref: '#/components/schemas/schemas-Problem'
@@ -5419,6 +5568,14 @@ components:
         - type
         - display_name
         - selected
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments/{dev_id}/unified-api/processing
+        - method_name: update
+          operation: patch
+          path: /environments/{dev_id}/unified-api/processing
+      x-terra-resource: unified-api.data.processing
     ProviderCredentialMaterial:
       type: object
       properties:
@@ -5447,6 +5604,9 @@ components:
       required:
         - client_id
         - client_secret
+      x-terra-most-common:
+        - redirect_url
+        - sandbox
     ProviderCredentials:
       type: object
       properties:
@@ -5463,6 +5623,14 @@ components:
       required:
         - provider
         - has_credentials
+      x-terra-operations:
+        - method_name: retrieve
+          operation: get
+          path: /environments/{dev_id}/unified-api/sources/{provider}/credentials
+        - method_name: replace
+          operation: put
+          path: /environments/{dev_id}/unified-api/sources/{provider}/credentials
+      x-terra-resource: unified-api.sources.credentials
     ProviderEnabled:
       type: object
       properties:
@@ -5486,6 +5654,14 @@ components:
       required:
         - provider
         - scopes
+      x-terra-operations:
+        - method_name: retrieve
+          operation: get
+          path: /environments/{dev_id}/unified-api/sources/{provider}/scopes
+        - method_name: replace
+          operation: put
+          path: /environments/{dev_id}/unified-api/sources/{provider}/scopes
+      x-terra-resource: unified-api.sources.scopes
     ProviderSummary:
       type: object
       properties:
@@ -5495,6 +5671,17 @@ components:
           type: boolean
         auth_redirect_url:
           type: string
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments/{dev_id}/unified-api/sources
+        - method_name: enable
+          operation: put
+          path: /environments/{dev_id}/unified-api/sources/{provider}
+        - method_name: disable
+          operation: delete
+          path: /environments/{dev_id}/unified-api/sources/{provider}
+      x-terra-resource: unified-api.sources
     PutWorkoutMetadataRequest:
       type: object
       description: 'Upsert semantics: an absent or null pace_units preserves whatever is already stored (COALESCE); created_at is only applied on first insert.'
@@ -5575,6 +5762,11 @@ components:
       required:
         - covered_users
         - updates
+      x-terra-operations:
+        - method_name: retrieve
+          operation: get
+          path: /environments/{dev_id}/unified-api/scores/analytics
+      x-terra-resource: unified-api.scores.analytics
     ScoreConfig:
       type: object
       properties:
@@ -5582,6 +5774,17 @@ components:
           type: string
         active:
           type: boolean
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments/{dev_id}/unified-api/scores
+        - method_name: retrieve
+          operation: get
+          path: /environments/{dev_id}/unified-api/scores/{score}
+        - method_name: update
+          operation: patch
+          path: /environments/{dev_id}/unified-api/scores/{score}
+      x-terra-resource: unified-api.scores
     ScoreHistoryRecord:
       type: object
       properties:
@@ -5627,6 +5830,11 @@ components:
         - start_time
         - end_time
         - inserted_at
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments/{dev_id}/unified-api/scores/history
+      x-terra-resource: unified-api.scores.history
     ScoreResult:
       type: object
       properties:
@@ -5649,6 +5857,17 @@ components:
             type: string
         samples_enabled:
           type: boolean
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments/{dev_id}/unified-api/scopes
+        - method_name: update
+          operation: patch
+          path: /environments/{dev_id}/unified-api/scopes
+        - method_name: replace
+          operation: put
+          path: /environments/{dev_id}/unified-api/scopes
+      x-terra-resource: unified-api.data.scopes
     SelectedDataFieldsRequest:
       type: object
       properties:
@@ -5719,6 +5938,17 @@ components:
           type: boolean
         collection_method:
           type: string
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /billing/subscriptions
+        - method_name: create
+          operation: post
+          path: /billing/subscriptions
+        - method_name: cancel-incomplete
+          operation: post
+          path: /billing/subscriptions/cancel-incomplete
+      x-terra-resource: billing.subscriptions
     SupabaseProvisionRequest:
       type: object
       properties:
@@ -5759,6 +5989,20 @@ components:
         state:
           type: string
           description: pending | ready | failed
+      x-terra-operations:
+        - method_name: start-oauth
+          operation: post
+          path: /environments/{dev_id}/unified-api/destinations/supabase/oauth
+        - method_name: poll-oauth
+          operation: get
+          path: /environments/{dev_id}/unified-api/destinations/supabase/oauth/{oauth_session_id}
+        - method_name: list-projects
+          operation: get
+          path: /environments/{dev_id}/unified-api/destinations/supabase/oauth/{oauth_session_id}/projects
+        - method_name: provision
+          operation: post
+          path: /environments/{dev_id}/unified-api/destinations/supabase/provision
+      x-terra-resource: unified-api.destinations.supabase
     TeamInvitation:
       type: object
       properties:
@@ -5805,6 +6049,17 @@ components:
         - role
         - created_at
         - expires_at
+      x-terra-operations:
+        - method_name: create
+          operation: post
+          path: /team/invitations
+        - method_name: list
+          operation: get
+          path: /team/invitations
+        - method_name: delete
+          operation: delete
+          path: /team/invitations/{invitation_id}
+      x-terra-resource: team.invitations
     TeamInvitationResponse:
       type: object
       properties:
@@ -5839,6 +6094,20 @@ components:
         - name
         - email
         - role
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /team/members
+        - method_name: retrieve
+          operation: get
+          path: /team/members/{user_id}
+        - method_name: update
+          operation: patch
+          path: /team/members/{user_id}
+        - method_name: delete
+          operation: delete
+          path: /team/members/{user_id}
+      x-terra-resource: team.members
     TokenPollFormRequest:
       type: object
       description: RFC 8628 §3.4 device access token request (form-encoded wire mode).
@@ -5940,6 +6209,17 @@ components:
             - string
             - 'null'
           format: date-time
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /tokens
+        - method_name: delete
+          operation: delete
+          path: /tokens/{token_id}
+        - method_name: rotate
+          operation: post
+          path: /tokens/self/rotate
+      x-terra-resource: tokens
     UsageResponse:
       type: object
       properties:
@@ -5957,6 +6237,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/UsageSummary'
+      x-terra-operations:
+        - method_name: retrieve
+          operation: get
+          path: /billing/usage
+      x-terra-resource: billing.usage
     UsageSummary:
       type: object
       properties:
@@ -5990,6 +6275,14 @@ components:
             - string
             - 'null'
           format: date-time
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments/{dev_id}/users
+        - method_name: stats
+          operation: get
+          path: /environments/{dev_id}/users/stats
+      x-terra-resource: users
     WidgetConfig:
       type: object
       description: 'Widget branding + config for a dev-id. Exactly one of widget_config_url / widget_config is served (and accepted on PUT) per deployment: widget_config_url (an S3 indirection) on legacy deployments, the inlined widget_config document after the environments release.'
@@ -6013,6 +6306,14 @@ components:
           type:
             - string
             - 'null'
+      x-terra-operations:
+        - method_name: retrieve
+          operation: get
+          path: /environments/{dev_id}/unified-api/widget/config
+        - method_name: update
+          operation: put
+          path: /environments/{dev_id}/unified-api/widget/config
+      x-terra-resource: unified-api.widget
     WorkoutMetadata:
       type: object
       properties:
@@ -6026,6 +6327,23 @@ components:
             - object
             - 'null'
           additionalProperties: true
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments/{dev_id}/workouts/metadata
+        - method_name: retrieve
+          operation: get
+          path: /environments/{dev_id}/workouts/{workout_id}/metadata
+        - method_name: replace
+          operation: put
+          path: /environments/{dev_id}/workouts/{workout_id}/metadata
+        - method_name: update
+          operation: patch
+          path: /environments/{dev_id}/workouts/{workout_id}/metadata
+        - method_name: delete
+          operation: delete
+          path: /environments/{dev_id}/workouts/{workout_id}/metadata
+      x-terra-resource: workouts.metadata
     schemas-Problem:
       type: object
       description: |
