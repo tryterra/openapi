@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   description: The Terra API (v2 surface, served at access.tryterra.co/api/v2).
   title: TerraAPI
-  version: 2026.09.08.2
+  version: 2026.09.09
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -1295,8 +1295,227 @@ paths:
               schema:
                 $ref: '#/components/schemas/IntegrationsResponse'
       security: []
+  /reports:
+    post:
+      summary: Upload a report
+      description: Upload a single report file (PDF, PNG, JPEG, GIF, or WebP) as multipart form data. Both clinical lab reports and DXA body-composition/bone-density scans go to this endpoint — Terra identifies which it is from the file, so there is no parameter to declare the type; read `report_type` off the session or the webhook. Returns an `upload_id`; a single upload may fan out to multiple sessions, so learn the `session_id`(s) from the webhook events or from `GET /reports?upload_id=...`.
+      tags:
+        - LabReports
+      operationId: Reports_Upload
+      parameters:
+        - name: reference_id
+          in: query
+          required: false
+          description: Your external identifier for this report or patient.
+          schema:
+            type: string
+          example: patient_456
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The lab report file (PDF, PNG, JPEG, GIF, or WebP; max 20 MB).
+      responses:
+        '202':
+          description: Upload accepted for processing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabReportUploadResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+    get:
+      summary: List report sessions
+      description: List report sessions for your account — both lab reports and scans — with optional reference, upload, and inclusive date-range filters. Use the date filters to narrow large result sets, and read `report_type` on each session to tell a lab panel from a scan.
+      tags:
+        - LabReports
+      operationId: Reports_List
+      parameters:
+        - name: reference_id
+          in: query
+          required: false
+          description: Filter by your external reference ID.
+          schema:
+            type: string
+        - name: report_type
+          in: query
+          required: false
+          description: Return only sessions of this kind. Omit for both.
+          schema:
+            type: string
+            enum:
+              - lab
+              - dexa
+          example: dexa
+        - name: upload_id
+          in: query
+          required: false
+          description: Filter by upload handle — returns every report from that upload.
+          schema:
+            type: string
+        - name: report_date_from
+          in: query
+          required: false
+          description: Lab report date lower bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          schema:
+            type: string
+            format: date
+        - name: report_date_to
+          in: query
+          required: false
+          description: Lab report date upper bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          schema:
+            type: string
+            format: date
+        - name: uploaded_at_from
+          in: query
+          required: false
+          description: Upload date lower bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          schema:
+            type: string
+            format: date
+        - name: uploaded_at_to
+          in: query
+          required: false
+          description: Upload date upper bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: A list of lab report sessions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabReportListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /reports/{session_id}:
+    get:
+      summary: Retrieve a lab report session
+      description: Retrieve a report's metadata, results, reference ranges, and status history. Immutable and cacheable — presigned file URLs and mutable per-destination delivery state live on the `/files` and `/deliveries` sub-resources.
+      tags:
+        - LabReports
+      operationId: Reports_Get
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          description: The session's snowflake ID.
+          schema:
+            type: string
+          example: '297405620317847552'
+      responses:
+        '200':
+          description: The lab report session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabReportSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Delete a lab report session
+      description: Soft-delete a session. It is marked deleted immediately; associated storage is cleaned up by a background process.
+      tags:
+        - LabReports
+      operationId: Reports_Delete
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          description: The session's snowflake ID.
+          schema:
+            type: string
+          example: '297405620317847552'
+      responses:
+        '204':
+          description: The session was deleted.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /reports/{session_id}/deliveries:
+    get:
+      summary: List delivery outcomes
+      description: The per-destination delivery state for a report. Each opted-in destination is tracked independently, so one failure never hides delivery to the others (and is why a session can be `partially_sent`).
+      tags:
+        - LabReports
+      operationId: Reports_ListDeliveries
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          description: The session's snowflake ID.
+          schema:
+            type: string
+          example: '297405620317847552'
+      responses:
+        '200':
+          description: Per-destination delivery outcomes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabReportDeliveriesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /reports/{session_id}/files:
+    get:
+      summary: List input files
+      description: The uploaded input files and report thumbnail, with freshly minted presigned download URLs. URLs expire; fetch again to mint new ones.
+      tags:
+        - LabReports
+      operationId: Reports_ListFiles
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          description: The session's snowflake ID.
+          schema:
+            type: string
+          example: '297405620317847552'
+      responses:
+        '200':
+          description: Input files and thumbnail with presigned URLs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabReportFilesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /lab-reports:
     post:
+      deprecated: true
       summary: Upload a report
       description: Upload a single report file (PDF, PNG, JPEG, GIF, or WebP) as multipart form data. Both clinical lab reports and DXA body-composition/bone-density scans go to this endpoint — Terra identifies which it is from the file, so there is no parameter to declare the type; read `report_type` off the session or the webhook. Returns an `upload_id`; a single upload may fan out to multiple sessions, so learn the `session_id`(s) from the webhook events or from `GET /lab-reports?upload_id=...`.
       tags:
@@ -1339,6 +1558,7 @@ paths:
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
     get:
+      deprecated: true
       summary: List report sessions
       description: List report sessions for your account — both lab reports and scans — with optional reference, upload, and inclusive date-range filters. Use the date filters to narrow large result sets, and read `report_type` on each session to tell a lab panel from a scan.
       tags:
@@ -1408,6 +1628,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
   /lab-reports/{session_id}:
     get:
+      deprecated: true
       summary: Retrieve a lab report session
       description: Retrieve a report's metadata, results, reference ranges, and status history. Immutable and cacheable — presigned file URLs and mutable per-destination delivery state live on the `/files` and `/deliveries` sub-resources.
       tags:
@@ -1435,6 +1656,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
     delete:
+      deprecated: true
       summary: Delete a lab report session
       description: Soft-delete a session. It is marked deleted immediately; associated storage is cleaned up by a background process.
       tags:
@@ -1459,6 +1681,7 @@ paths:
           $ref: '#/components/responses/NotFound'
   /lab-reports/{session_id}/deliveries:
     get:
+      deprecated: true
       summary: List delivery outcomes
       description: The per-destination delivery state for a report. Each opted-in destination is tracked independently, so one failure never hides delivery to the others (and is why a session can be `partially_sent`).
       tags:
@@ -1487,6 +1710,7 @@ paths:
           $ref: '#/components/responses/NotFound'
   /lab-reports/{session_id}/files:
     get:
+      deprecated: true
       summary: List input files
       description: The uploaded input files and report thumbnail, with freshly minted presigned download URLs. URLs expire; fetch again to mint new ones.
       tags:
