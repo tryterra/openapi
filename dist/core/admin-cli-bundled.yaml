@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.10
+  version: 2026.09.10.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
   x-terra-audience: cli
 servers:
@@ -755,8 +755,10 @@ paths:
                   - next_cursor
               example:
                 data:
+                  - capability: vantage
+                    source: stripe_entitlement
                   - capability: streaming
-                    source: stripe_reconcile
+                    source: stripe_entitlement
                   - capability: pass_connections
                     source: manual
                 has_more: false
