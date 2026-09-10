@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.09.3
+  version: 2026.09.10
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
   x-terra-audience: cli
 servers:
@@ -4765,6 +4765,7 @@ components:
         - method_name: delete
           operation: delete
           path: /environments/{dev_id}/tokens/{token_id}
+          destructive: Any service still presenting this token loses access to the data API at once.
         - method_name: retrieve-secret
           operation: get
           path: /environments/{dev_id}/tokens/{token_id}/secret
@@ -4809,6 +4810,7 @@ components:
         - method_name: delete
           operation: delete
           path: /environments/{dev_id}/unified-api/destinations/{destination_id}
+          destructive: Deliveries to this endpoint stop at once, and events arriving afterward are not held for a replacement.
       x-terra-summary: Manage data destinations
       x-terra-resource: unified-api.destinations
     DevDetail:
@@ -4857,6 +4859,7 @@ components:
         - method_name: rotate-api-key
           operation: post
           path: /environments/{dev_id}/api-key/rotate
+          destructive: The current client_secret stops working immediately, breaking every integration still holding it.
       x-terra-summary: Manage environments (dev-ids) and their credentials
       x-terra-resource: environments
     DevKeys:
@@ -5667,6 +5670,7 @@ components:
         - method_name: replace
           operation: put
           path: /environments/{dev_id}/unified-api/sources/{provider}/credentials
+          destructive: Replaces the provider's live OAuth credentials; end-user authorization fails until the new ones are correct.
       x-terra-summary: Your own OAuth credentials for a provider, used instead of Terra's
       x-terra-resource: unified-api.sources.credentials
     ProviderEnabled:
@@ -5699,6 +5703,7 @@ components:
         - method_name: replace
           operation: put
           path: /environments/{dev_id}/unified-api/sources/{provider}/scopes
+          destructive: Whatever is not in the body is removed, and an empty list restores the provider's defaults.
       x-terra-summary: Which data types a provider is asked for
       x-terra-resource: unified-api.sources.scopes
     ProviderSummary:
@@ -5724,6 +5729,7 @@ components:
         - method_name: disable
           operation: delete
           path: /environments/{dev_id}/unified-api/sources/{provider}
+          destructive: End users can no longer authorize this provider, and existing connections stop syncing.
       x-terra-summary: Enable and configure wearable providers
       x-terra-resource: unified-api.sources
     PutWorkoutMetadataRequest:
@@ -5911,9 +5917,11 @@ components:
         - method_name: update
           operation: patch
           path: /environments/{dev_id}/unified-api/scopes
+          destructive: Any field left out of `fields` is deselected for the named data type.
         - method_name: replace
           operation: put
           path: /environments/{dev_id}/unified-api/scopes
+          destructive: Any data type left out of the body is deselected, so this environment stops collecting it.
       x-terra-summary: Which fields Terra collects per data type
       x-terra-resource: unified-api.data.scopes
     SelectedDataFieldsRequest:
@@ -5993,9 +6001,11 @@ components:
         - method_name: create
           operation: post
           path: /billing/subscriptions
+          destructive: Charges the payment method on file.
         - method_name: cancel-incomplete
           operation: post
           path: /billing/subscriptions/cancel-incomplete
+          destructive: Cancels every incomplete subscription on the account; nothing here names one.
       x-terra-summary: Plans this account is subscribed to
       x-terra-resource: billing.subscriptions
     SupabaseProvisionRequest:
@@ -6117,6 +6127,7 @@ components:
         - method_name: delete
           operation: delete
           path: /team/invitations/{invitation_id}
+          destructive: The invitation link stops working, and joining requires a new invitation.
       x-terra-summary: Outstanding invitations to join this account
       x-terra-resource: team.invitations
     TeamInvitationResponse:
@@ -6170,6 +6181,7 @@ components:
         - method_name: delete
           operation: delete
           path: /team/members/{user_id}
+          destructive: Revokes this person's access to the account immediately.
       x-terra-summary: People with access to this account
       x-terra-resource: team.members
     TokenPollFormRequest:
@@ -6287,9 +6299,11 @@ components:
         - method_name: delete
           operation: delete
           path: /tokens/{token_id}
+          destructive: The token stops authenticating immediately, so anything still using it starts failing.
         - method_name: rotate
           operation: post
           path: /tokens/self/rotate
+          destructive: Invalidates the token you are signed in with, and returns its replacement only once.
       x-terra-summary: Manage admin tokens for this account
       x-terra-resource: tokens
     UsageResponse:
@@ -6393,6 +6407,7 @@ components:
         - method_name: update
           operation: put
           path: /environments/{dev_id}/unified-api/widget/config
+          destructive: Any field left out of the body is cleared, so read the current config first and send it back with the edit applied.
       x-terra-summary: Configure the Terra widget
       x-terra-resource: unified-api.widget
     WorkoutMetadata:
@@ -6424,6 +6439,7 @@ components:
         - method_name: delete
           operation: delete
           path: /environments/{dev_id}/workouts/{workout_id}/metadata
+          destructive: Clears every stored metadata field for this workout.
       x-terra-summary: Custom fields attached to a workout
       x-terra-resource: workouts.metadata
     schemas-Problem:
