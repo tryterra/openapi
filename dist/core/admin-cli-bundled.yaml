@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.10.1
+  version: 2026.09.11
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
   x-terra-audience: cli
 servers:
@@ -508,6 +508,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The token to act on, by the id its creation returned. The token value itself is never accepted here.
         - $ref: '#/components/parameters/IdempotencyKey'
   /company:
     get:
@@ -1031,16 +1032,19 @@ paths:
           required: true
           schema:
             type: string
+          description: The billing meter to total. One of the meters configured for your account; an unknown one is a 404.
         - name: start
           in: query
           required: true
           schema:
             type: integer
+          description: Start of the window, as a positive unix-second timestamp. Must be minute-aligned (a multiple of 60), which is the billing provider's own rule, and before end.
         - name: end
           in: query
           required: true
           schema:
             type: integer
+          description: End of the window, as a positive unix-second timestamp. Minute-aligned like start. Usage is eventually consistent, so a window ending at now may still be filling in.
   /billing/subscriptions/cancel-incomplete:
     post:
       operationId: cancelIncomplete
@@ -1378,6 +1382,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is a 400.
         - $ref: '#/components/parameters/IdempotencyKey'
     delete:
       operationId: disableSource
@@ -1419,6 +1424,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is a 400.
         - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
   /environments/{dev_id}/unified-api/sources/{provider}/credentials:
@@ -1462,6 +1468,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is a 400.
     put:
       operationId: setSourceCredentials
       tags:
@@ -1478,6 +1485,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is a 400.
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -1552,6 +1560,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is a 400.
     put:
       operationId: setSourceScopes
       tags:
@@ -1591,6 +1600,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is a 400.
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -1737,6 +1747,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The destination to act on, by the id its creation returned.
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -1784,6 +1795,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The destination to act on, by the id its creation returned.
         - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
   /environments/{dev_id}/unified-api/destinations/supabase/oauth:
@@ -1857,6 +1869,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The session handle the start step returned. It expires, so a stale handle is a 404 rather than an error naming the session.
   /environments/{dev_id}/unified-api/destinations/supabase/oauth/{oauth_session_id}/projects:
     get:
       operationId: listSupabaseProjects
@@ -1916,6 +1929,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The session handle the start step returned. It expires, so a stale handle is a 404 rather than an error naming the session.
   /environments/{dev_id}/unified-api/destinations/supabase/provision:
     post:
       operationId: provisionSupabase
@@ -2167,6 +2181,9 @@ paths:
           required: true
           schema:
             type: string
+          description: |-
+            The score to act on, named however you have it: the score name, an alias, the enum
+                      name, or the numeric enum value. An unrecognised score is a 400.
       responses:
         '200':
           description: OK
@@ -2231,6 +2248,9 @@ paths:
           required: true
           schema:
             type: string
+          description: |-
+            The score to act on, named however you have it: the score name, an alias, the enum
+                      name, or the numeric enum value. An unrecognised score is a 400.
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -2254,31 +2274,38 @@ paths:
           in: query
           schema:
             type: string
+          description: 'One score, named however you have it: the score name, an alias, the enum name, or the numeric enum value. An unrecognised score is a 400.'
         - name: user_id
           in: query
           schema:
             type: string
             format: uuid
+          description: Terra user id, resolved to that user's provider_user_id(s) before the history is read, since the stored rows carry only the provider's id. A user with no connection is an empty page, so a paging caller can tell "no rows" from a broken request. Intersects with provider_user_id when both are sent.
         - name: provider_user_id
           in: query
           schema:
             type: string
+          description: The provider's own id for a user, matched exactly as stored. No resolution, so this is the filter to reach for when the Terra user id is not to hand.
         - name: since
           in: query
           schema:
             type: string
+          description: Oldest insert_timestamp to return, inclusive, as RFC3339. Windows on when the score was computed, not on the period it covers. Defaults to 7 days before until.
         - name: until
           in: query
           schema:
             type: string
+          description: Newest insert_timestamp to return, inclusive, as RFC3339. Defaults to now.
         - name: limit
           in: query
           schema:
             type: integer
+          description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
         - name: cursor
           in: query
           schema:
             type: string
+          description: The previous page's next_cursor. It carries the window the first page resolved, so since and until are ignored while it is set.
       responses:
         '200':
           description: A page of score records (keyset cursor).
@@ -2348,10 +2375,12 @@ paths:
           in: query
           schema:
             type: string
+          description: Oldest insert_timestamp to count, inclusive, as RFC3339. Windows on when a score was computed, not on the period it covers. Defaults to 7 days before until.
         - name: until
           in: query
           schema:
             type: string
+          description: Newest insert_timestamp to count, inclusive, as RFC3339. Defaults to now.
       responses:
         '200':
           description: Aggregate score stats over the window.
@@ -2425,7 +2454,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Delivery-history debug surface
-      description: 'Delivery metadata, not payloads: each row is one dispatch with its HTTP status, latency and size, while the body that was sent is a separate payloads:read-gated sub-resource. Keyset cursor pagination, and the window is the actionable 14 days, so anything older is not queryable here. Filter by outcome (delivered or failed), provider, data_type, user_id, reference_id, a since/until window, or event_id for one exact event.'
+      description: 'Delivery metadata, not payloads: each row is one dispatch with its HTTP status, latency and size, while the body that was sent is a separate payloads:read-gated sub-resource. Keyset cursor pagination over a bounded window: the default is the trailing 7 days, since and until move it, and nothing older than the 14 days a payload is retained for is worth querying. Filter by outcome (delivered or failed), provider, data_type, user_id, reference_id, or event_id for one exact event.'
       security:
         - adminToken:
             - events:read
@@ -2435,18 +2464,22 @@ paths:
           in: query
           schema:
             type: integer
+          description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
         - name: cursor
           in: query
           schema:
             type: string
+          description: The previous page's next_cursor. It carries the window the first page resolved, so since and until are ignored while it is set.
         - name: since
           in: query
           schema:
             type: string
+          description: Oldest sent_at to return, inclusive, as RFC3339. Defaults to 7 days before until, or 14 days before it when event_id is given.
         - name: until
           in: query
           schema:
             type: string
+          description: Newest sent_at to return, inclusive, as RFC3339. Defaults to now.
         - name: outcome
           in: query
           schema:
@@ -2454,27 +2487,54 @@ paths:
             enum:
               - delivered
               - failed
+          description: 'Delivery outcome, from the HTTP status the destination returned: delivered is 299 or below, failed is above it.'
         - name: provider
           in: query
           schema:
-            type: string
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+          description: Provider slugs, matched case-insensitively, e.g. garmin. Repeat the parameter to widen the filter; an event matching any of them is returned.
         - name: data_type
           in: query
           schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+          description: Payload types, matched case-insensitively, e.g. activity, sleep or body. Repeat the parameter to widen the filter; an event matching any of them is returned.
+        - name: destination_type
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+          description: Destination kinds the payload was delivered to, matched case-insensitively, e.g. webhook, s3 or kafka. Repeat the parameter to widen the filter; an event matching any of them is returned.
+        - name: summary_id
+          in: query
+          schema:
             type: string
+          description: A summary id carried by the payload, matched exactly. An event is returned when any of the records it delivered carries it. Payloads written before summary ids were recorded carry none and never match.
         - name: user_id
           in: query
           schema:
             type: string
+          description: Terra user id, a UUID, resolved to that user's connection before the history is read. A user this environment does not own is a 404, not an empty page. Combines with reference_id rather than overriding it.
         - name: reference_id
           in: query
           schema:
             type: string
+          description: Your own id for a user, matched exactly and resolved to every connection under it. No match is a 404, not an empty page. Given with user_id it narrows further, so a user that is not under the reference matches no events.
         - name: event_id
           in: query
           schema:
             type: string
-          description: Exact event id; defaults the window to the 14-day actionable range.
+          description: Exact event id. An id is identity-keyed rather than time-keyed, so it widens the default window from 7 days to the 14 days a payload is retained for.
   /environments/{dev_id}/webhook-events/resend:
     post:
       operationId: resendWebhookEvent
@@ -2582,19 +2642,23 @@ paths:
           in: query
           schema:
             type: string
+          description: One provider slug, e.g. garmin. Validated against the providers this API knows, so an unrecognised one is a 400 rather than a silently empty page.
         - name: active
           in: query
           schema:
             type: boolean
+          description: Whether the connection is still authorized. Omit for both.
         - name: user_id
           in: query
           schema:
             type: string
             format: uuid
+          description: Terra user id, matched exactly. One connection at most, so this is a lookup rather than a filter.
         - name: reference_id
           in: query
           schema:
             type: string
+          description: Your own id for a user, matched exactly. One user can hold several connections, so this can return more than one row.
         - name: created_since
           in: query
           description: Lower bound (inclusive, RFC3339) on connection creation time. This surface windows on creation time rather than on the data's own timestamps. `since` is accepted as a synonym, and every occurrence of either spelling must carry the same value — a disagreeing value is a 400, whether it arrives under `since` or as a repeat of this parameter.
@@ -2623,10 +2687,12 @@ paths:
           in: query
           schema:
             type: integer
+          description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
         - name: cursor
           in: query
           schema:
             type: string
+          description: The previous page's next_cursor. It carries the window the first page resolved, so the creation-time bounds are ignored while it is set.
   /environments/{dev_id}/users/stats:
     get:
       operationId: getUserStats
@@ -2644,11 +2710,13 @@ paths:
           schema:
             type: string
             format: date-time
+          description: Start of the window the series and totals cover, inclusive. Defaults to 3 months before until.
         - name: until
           in: query
           schema:
             type: string
             format: date-time
+          description: End of the window the series and totals cover, inclusive. Defaults to now.
       responses:
         '200':
           description: The user-overview graph series.
@@ -2734,6 +2802,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The delivery event to read, by the id events list returns. Bounded to the 14 days a payload is retained for.
       responses:
         '200':
           description: The delivery event.
@@ -2780,6 +2849,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The delivery event to read, by the id events list returns. Bounded to the 14 days a payload is retained for.
       responses:
         '200':
           description: The stored payload.
@@ -3044,6 +3114,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The token to act on, by the id its creation returned. The token value itself is never accepted here.
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '204':
@@ -3075,6 +3146,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The token to act on, by the id its creation returned. The token value itself is never accepted here.
       responses:
         '200':
           description: The token with its bearer.
@@ -3206,6 +3278,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The workout whose metadata this addresses. This surface annotates a workout, it never creates one.
     put:
       operationId: putWorkoutMetadata
       tags:
@@ -3254,6 +3327,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The workout whose metadata this addresses. This surface annotates a workout, it never creates one.
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -3308,6 +3382,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The workout whose metadata this addresses. This surface annotates a workout, it never creates one.
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -3331,6 +3406,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The workout whose metadata this addresses. This surface annotates a workout, it never creates one.
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '204':
@@ -3953,10 +4029,12 @@ paths:
           schema:
             type: string
             format: uuid
+          description: Terra user id whose runs to return, matched against the id stored on the run itself.
         - name: model
           in: query
           schema:
             type: string
+          description: One model name, matched exactly. An unrecognised name is an empty page rather than a 400, since this plane does not carry the model catalog.
         - name: status
           in: query
           schema:
@@ -3964,26 +4042,32 @@ paths:
             enum:
               - success
               - error
+          description: Outcome of the run.
         - name: run_id
           in: query
           schema:
             type: string
+          description: Exact run id. An id is identity-keyed rather than time-keyed, so it searches the whole 30 days of retained history rather than the default window.
         - name: since
           in: query
           schema:
             type: string
+          description: Oldest submitted_at to return, inclusive, as RFC3339. Defaults to 30 days before until, which is the whole retained history.
         - name: until
           in: query
           schema:
             type: string
+          description: Newest submitted_at to return, inclusive, as RFC3339. Defaults to now.
         - name: limit
           in: query
           schema:
             type: integer
+          description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
         - name: cursor
           in: query
           schema:
             type: string
+          description: The previous page's next_cursor. It carries the window the first page resolved, so since and until are ignored while it is set.
       responses:
         '200':
           description: A page of model runs (keyset cursor).
@@ -4550,6 +4634,7 @@ components:
       properties:
         terms_version:
           type: string
+          description: The version of the terms being accepted, as your own identifier for it. Required. Recorded as sent; this API does not maintain a list of versions.
         document:
           type: string
           enum:
@@ -4588,18 +4673,21 @@ components:
       properties:
         type:
           type: string
-          description: defaults to webhook
+          description: Where data is delivered, e.g. webhook, s3, gcs. Omitted defaults to webhook, which is the common case; an unrecognised type is a 400.
         url:
           type: string
+          description: Where deliveries are sent. Required. For a webhook this is the HTTPS endpoint; for the storage and database types it is the location that type addresses.
         event_types:
           type: array
+          description: Which events to deliver here, as a list of event-type names. Omitted delivers the default set for the type, and an unrecognised name is a 400 naming it.
           items:
             type: string
         active:
           type: boolean
+          description: Whether to start delivering immediately. Omitted defaults to true.
         metadata:
           type: string
-          description: advanced-type credential JSON
+          description: Credential JSON for a destination type that needs one, e.g. s3 or a database. For a webhook it must be a JSON object, which the API adds its generated signing secret to and returns that secret once.
       required:
         - url
       x-terra-most-common:
@@ -4612,10 +4700,13 @@ components:
       properties:
         dev_id:
           type: string
+          description: 'The dev-id to create the profile for. Required. The credential must already exist and belong to you: this creates the profile row, it does not provision a dev-id.'
         name:
           type: string
+          description: Display name for the environment. Omitting it defaults to the dev-id in legacy deployments and leaves the credential's name unchanged in accounts deployments. Ignored when a profile already exists, since the create is get-or-create.
         billable:
           type: boolean
+          description: Whether usage on this environment is billable. Omitting it defaults to false in legacy deployments and leaves the credential's billable status unchanged in accounts deployments. Ignored when a profile already exists.
       required:
         - dev_id
       additionalProperties: false
@@ -4950,6 +5041,7 @@ components:
       properties:
         referral_code:
           type: string
+          description: 'The code to claim. Required. Get-or-create: if the company already has a code, that one is returned and this value is ignored, so the response is what to read rather than the request.'
       required:
         - referral_code
     Entitlement:
@@ -5037,6 +5129,7 @@ components:
             - event_id
             - data_type
             - provider
+            - destination_type
             - http_status
             - sent_at
         - method_name: retrieve
@@ -5222,6 +5315,7 @@ components:
       properties:
         name:
           type: string
+          description: What this token is for, shown wherever tokens are listed. Required, so a credential is identifiable when it needs revoking.
         scopes:
           type: array
           description: Data-plane scopes only (e.g. ["auth:write"] for an SDK-authentication-only token) — the names the adminToken scope registry marks `data` or `both` in x-scope-planes. Admin-plane names are rejected with 400 validation_failed.
@@ -5356,49 +5450,63 @@ components:
       properties:
         name:
           type: string
+          description: 'The company''s name. Cannot be cleared: null is rejected.'
         billing_email:
           type: string
+          description: 'Where invoices and billing notices are sent. Cannot be cleared: null is rejected.'
         website_url:
           type: string
+          description: 'The company''s website. Cannot be cleared: null is rejected.'
         learn_about_us:
           type: string
+          description: 'How you first heard about Terra, as free text. Cannot be cleared: null is rejected.'
         onboarded:
           type: boolean
+          description: Whether the company has finished onboarding.
         app_logo:
           type:
             - string
             - 'null'
+          description: Logo shown in the connection widget, as a URL. null clears it. Not accepted after the accounts release, where it moves to the environment and is set per dev-id instead.
         description:
           type:
             - string
             - 'null'
+          description: Free-text description of the company. null clears it.
         org_name:
           type:
             - string
             - 'null'
+          description: Legal or trading name, where it differs from name. null clears it.
         tos_url:
           type:
             - string
             - 'null'
+          description: Link to your own terms of service, shown to end users in the connection widget. null clears it.
         privacy_policy_url:
           type:
             - string
             - 'null'
+          description: Link to your own privacy policy, shown to end users in the connection widget. null clears it.
         data_usage_description:
           type:
             - string
             - 'null'
+          description: What you tell end users their data is used for, shown in the connection widget. null clears it.
         widget_name:
           type:
             - string
             - 'null'
+          description: Name shown in the connection widget. null clears it. Not accepted after the accounts release, where it moves to the environment and is set per dev-id instead.
         user_flow_done:
           type: boolean
+          description: Whether the company has finished the guided setup flow.
         agreed_to_terms_at:
           type:
             - string
             - 'null'
           format: date-time
+          description: 'When the company accepted the terms, as RFC3339. null clears it. Legacy only: after the accounts release acceptances are an append-only log written by POST /company/terms, and this field is no longer accepted.'
       additionalProperties: false
       minProperties: 1
     PatchDestinationRequest:
@@ -5406,8 +5514,10 @@ components:
       properties:
         active:
           type: boolean
+          description: Whether the destination is delivering. Omitted leaves it as it is.
         event_types:
           type: array
+          description: Which events to deliver here, replaced wholesale, so send the full list rather than the additions. Omitted leaves the current set alone; an unrecognised name is a 400 naming it.
           items:
             type: string
     PatchEnvironmentProfileRequest:
@@ -5416,8 +5526,10 @@ components:
       properties:
         name:
           type: string
+          description: 'Display name for the environment. Cannot be cleared: null is rejected.'
         billable:
           type: boolean
+          description: Whether usage on this environment is billable.
       additionalProperties: false
       minProperties: 1
     PatchMeMetadataRequest:
@@ -5426,10 +5538,13 @@ components:
       properties:
         analytics_layout:
           type: object
+          description: Your saved dashboard analytics layout, replaced wholesale. Opaque JSON to this API.
         preferences:
           type: object
+          description: Your saved preferences, replaced wholesale. Opaque JSON to this API, and mutually exclusive with preferences_merge.
         preferences_merge:
           type: object
+          description: Top-level keys to merge into the stored preferences, leaving the rest in place. Atomic, so two concurrent writers cannot erase each other's keys. Mutually exclusive with preferences.
       minProperties: 1
     PatchMeRequest:
       type: object
@@ -5437,10 +5552,12 @@ components:
       properties:
         name:
           type: string
+          description: 'Your display name. Cannot be cleared: null is rejected.'
         phone_number:
           type:
             - string
             - 'null'
+          description: Your phone number, as free text. null clears it.
       minProperties: 1
     PatchOnboardingRequest:
       type: object
@@ -5450,34 +5567,42 @@ components:
           type:
             - string
             - 'null'
+          description: The delivery destination you are setting up, e.g. webhook or sftp. null clears it.
         scheme:
           type:
             - string
             - 'null'
+          description: Scheme for the destination, e.g. https or sftp. null clears it.
         host:
           type:
             - string
             - 'null'
+          description: Host the destination delivers to. null clears it.
         port:
           type:
             - string
             - 'null'
+          description: Port the destination delivers to, as text. null clears it.
         username:
           type:
             - string
             - 'null'
+          description: Username the destination authenticates with. null clears it.
         password:
           type:
             - string
             - 'null'
+          description: 'Password the destination authenticates with. Write-only: reads report has_password instead, never the value. null clears it.'
         path:
           type:
             - string
             - 'null'
+          description: Path on the destination, e.g. the endpoint or upload directory. null clears it.
         providers:
           type:
             - array
             - 'null'
+          description: Providers you intend to integrate, as a list of slugs. Replaced wholesale, so send the full list; null clears it.
           items:
             type: string
       additionalProperties: false
@@ -5487,10 +5612,14 @@ components:
       properties:
         active:
           type: boolean
+          description: Whether Terra computes this score for the environment. Omitted leaves it as it is.
         weights:
           type: object
+          description: How much each contributor counts toward the score, as contributor name to weight. Each weight is 0 to 200; replaced wholesale, so send every contributor rather than the ones being changed, and an empty object is a 400.
           additionalProperties:
             type: integer
+            minimum: 0
+            maximum: 200
       minProperties: 1
     PatchTeamMemberRequest:
       type: object
@@ -5498,10 +5627,12 @@ components:
       properties:
         name:
           type: string
+          description: 'The member''s display name. Cannot be cleared: null is rejected.'
         phone_number:
           type:
             - string
             - 'null'
+          description: The member's phone number, as free text. null clears it.
         role:
           type:
             - string
@@ -5520,6 +5651,7 @@ components:
           type:
             - object
             - 'null'
+          description: 'Pace units for the workout, as an object. Required: unlike PUT this overwrites unconditionally, so null clears the value rather than preserving it.'
           additionalProperties: true
       required:
         - pace_units
@@ -5742,18 +5874,21 @@ components:
           type:
             - object
             - 'null'
+          description: Pace units for the workout, as an object. Absent or null preserves what is stored, which is how this differs from PATCH.
           additionalProperties: true
         created_at:
           type:
             - string
             - 'null'
           format: date-time
+          description: When the workout was created, as RFC3339. Applied only when the metadata row is first inserted, so it cannot be corrected by re-sending it.
     ReplaceDataTypesRequest:
       type: object
       description: The complete desired data-type selection. Upper-case data-type tokens; ATHLETE is implicit and need not be sent; SAMPLES sets the per-row samples flag rather than selecting a data type; blank entries are skipped; an unrecognised token is a 400. An empty array clears the selection down to ATHLETE.
       properties:
         scopes:
           type: array
+          description: The complete data-type selection to persist, replacing what is stored. Required; send the full list, since anything left out is deselected.
           items:
             type: string
       required:
@@ -5764,10 +5899,13 @@ components:
       properties:
         user_id:
           type: string
+          description: The Terra user the event belongs to, as a UUID. Required. A deauthenticated user still resolves, so a historical event can be replayed.
         event_id:
           type: string
+          description: The event to re-dispatch. Required. All three fields come off the row that events list returns; an id whose stored payload is gone is a 404.
         event_type:
           type: string
+          description: The event's type, e.g. activity or sleep. Required, and taken from the same row as event_id.
       required:
         - user_id
         - event_id
@@ -5931,8 +6069,10 @@ components:
       properties:
         data_type:
           type: string
+          description: The data type whose field selection to replace, e.g. activity or sleep. Required; an unrecognised type is a 400.
         fields:
           type: array
+          description: The fields to keep for that data type, replaced wholesale, so send the full list rather than the additions. Omitted or empty selects no fields.
           items:
             type: string
       required:
@@ -5959,6 +6099,7 @@ components:
             - json
             - fit
             - fhir
+          description: The normalization output format to switch to. Required. Applies to the whole environment, not to one data type.
       required:
         - type
     StatsPoint:
@@ -5979,10 +6120,13 @@ components:
       properties:
         scope:
           type: string
+          description: The plan or add-on to move to. Required. Relayed to the billing system, which owns the plan vocabulary and rejects an unknown value.
         schedule:
           type: string
+          description: Billing cadence for the change, e.g. monthly or yearly. Omitted leaves the cadence to the billing system's default for the scope.
         promo_code:
           type: string
+          description: A promotional code to apply. Omitted applies none; an invalid one is rejected by the billing system rather than ignored.
       required:
         - scope
     SubscriptionSummary:
@@ -6015,8 +6159,10 @@ components:
       properties:
         oauth_session_id:
           type: string
+          description: The session handle the start step returned. Required. It must have reached the ready state, or this is a 409; the Supabase access token stays server-side and is never sent here.
         project_ref:
           type: string
+          description: The Supabase project to provision into, by its reference. Required. Read it from the projects step.
         project_name:
           type: string
           description: Display only; defaults to project_ref.
@@ -6398,10 +6544,12 @@ components:
           type:
             - string
             - 'null'
+          description: Name shown to end users in the widget. null clears it.
         app_logo:
           type:
             - string
             - 'null'
+          description: Logo shown to end users in the widget, as a URL. null clears it.
       x-terra-operations:
         - method_name: retrieve
           operation: get
