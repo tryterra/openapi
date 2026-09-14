@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.11
+  version: 2026.09.14
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
   x-terra-audience: cli
 servers:
@@ -4597,36 +4597,82 @@ components:
         - method_name: retrieve
           operation: get
           path: /company
+          examples:
+            - summary: View your company profile
+              args: []
         - method_name: update
           operation: patch
           path: /company
+          examples:
+            - summary: Set your company name
+              args:
+                - '--name'
+                - Acme Health
         - method_name: retrieve-onboarding
           operation: get
           path: /company/onboarding
+          examples:
+            - summary: View your onboarding settings
+              args: []
         - method_name: update-onboarding
           operation: patch
           path: /company/onboarding
+          examples:
+            - summary: Set your onboarding providers
+              args:
+                - '--providers'
+                - GARMIN
+                - '--providers'
+                - FITBIT
         - method_name: agree-terms
           operation: post
           path: /company/terms
+          examples:
+            - summary: Accept a terms version
+              args:
+                - '--terms-version'
+                - <terms-version>
+                - '--document'
+                - bundle
         - method_name: retrieve-terms
           operation: get
           path: /company/terms/{version}
+          examples:
+            - summary: Check whether a terms version was accepted
+              args:
+                - <terms-version>
         - method_name: list-feature-flags
           operation: get
           path: /company/feature-flags
+          examples:
+            - summary: List your enabled features
+              args: []
         - method_name: opt-in-points
           operation: post
           path: /company/points/opt-in
+          examples:
+            - summary: Join the points program
+              args: []
         - method_name: retrieve-referral-code
           operation: get
           path: /company/referral-code
+          examples:
+            - summary: View your referral code
+              args: []
         - method_name: ensure-referral-code
           operation: post
           path: /company/referral-code
+          examples:
+            - summary: Create a referral code if missing
+              args:
+                - '--referral-code'
+                - <referral-code>
         - method_name: retrieve-referrals
           operation: get
           path: /company/referrals
+          examples:
+            - summary: View your referral rewards
+              args: []
       x-terra-summary: Manage the company record and onboarding
       x-terra-resource: company
     AgreeToTermsRequest:
@@ -4852,16 +4898,44 @@ components:
             - scopes
             - expires_at
             - last_used_at
+          examples:
+            - summary: List data tokens in an environment
+              args:
+                - '--env'
+                - <dev-id>
         - method_name: create
           operation: post
           path: /environments/{dev_id}/tokens
+          examples:
+            - summary: Create a data reader token for 30 days
+              args:
+                - '--env'
+                - <dev-id>
+                - '--name'
+                - Data reader
+                - '--scopes'
+                - data:read
+                - '--expires-in-days'
+                - '30'
         - method_name: delete
           operation: delete
           path: /environments/{dev_id}/tokens/{token_id}
           destructive: Any service still presenting this token loses access to the data API at once.
+          examples:
+            - summary: Revoke a data token
+              args:
+                - '--env'
+                - <dev-id>
+                - <token-id>
         - method_name: retrieve-secret
           operation: get
           path: /environments/{dev_id}/tokens/{token_id}/secret
+          examples:
+            - summary: Reveal a data token bearer
+              args:
+                - '--env'
+                - <dev-id>
+                - <token-id>
       x-terra-summary: Manage data-plane tokens for an environment
       x-terra-resource: data-tokens
     DestinationSummary:
@@ -4894,16 +4968,43 @@ components:
             - type
             - active
             - url
+          examples:
+            - summary: List delivery destinations
+              args:
+                - '--env'
+                - <dev-id>
         - method_name: create
           operation: post
           path: /environments/{dev_id}/unified-api/destinations
+          examples:
+            - summary: Add a webhook destination
+              args:
+                - '--env'
+                - <dev-id>
+                - '--type'
+                - webhook
+                - '--url'
+                - https://example.com/terra/webhook
         - method_name: update
           operation: patch
           path: /environments/{dev_id}/unified-api/destinations/{destination_id}
+          examples:
+            - summary: Pause a destination
+              args:
+                - '--env'
+                - <dev-id>
+                - <destination-id>
+                - '--active=false'
         - method_name: delete
           operation: delete
           path: /environments/{dev_id}/unified-api/destinations/{destination_id}
           destructive: Deliveries to this endpoint stop at once, and events arriving afterward are not held for a replacement.
+          examples:
+            - summary: Delete a destination
+              args:
+                - '--env'
+                - <dev-id>
+                - <destination-id>
       x-terra-summary: Manage data destinations
       x-terra-resource: unified-api.destinations
     DevDetail:
@@ -4937,22 +5038,54 @@ components:
             - name
             - active
             - billable
+          examples:
+            - summary: List your environments
+              args: []
         - method_name: create
           operation: post
           path: /environments
+          examples:
+            - summary: Create a profile for an existing dev-id
+              args:
+                - '--dev-id'
+                - <dev-id>
+                - '--name'
+                - Staging
         - method_name: retrieve
           operation: get
           path: /environments/{dev_id}
+          examples:
+            - summary: View an environment
+              args:
+                - '--env'
+                - <dev-id>
         - method_name: update
           operation: patch
           path: /environments/{dev_id}
+          examples:
+            - summary: Rename an environment
+              args:
+                - '--env'
+                - <dev-id>
+                - '--name'
+                - Staging
         - method_name: retrieve-api-key
           operation: get
           path: /environments/{dev_id}/api-key
+          examples:
+            - summary: Reveal an environment API key
+              args:
+                - '--env'
+                - <dev-id>
         - method_name: rotate-api-key
           operation: post
           path: /environments/{dev_id}/api-key/rotate
           destructive: The current client_secret stops working immediately, breaking every integration still holding it.
+          examples:
+            - summary: Rotate an environment API key
+              args:
+                - '--env'
+                - <dev-id>
       x-terra-summary: Manage environments (dev-ids) and their credentials
       x-terra-resource: environments
     DevKeys:
@@ -5058,6 +5191,9 @@ components:
           columns:
             - capability
             - source
+          examples:
+            - summary: List your account capabilities
+              args: []
       x-terra-summary: Manage account capabilities
       x-terra-resource: entitlements
     EnvironmentProfile:
@@ -5132,15 +5268,74 @@ components:
             - destination_type
             - http_status
             - sent_at
+          examples:
+            - summary: Find failed deliveries
+              args:
+                - '--env'
+                - <dev-id>
+                - '--outcome'
+                - failed
+            - summary: Filter providers and destinations
+              args:
+                - '--env'
+                - <dev-id>
+                - '--provider'
+                - GARMIN
+                - '--provider'
+                - FITBIT
+                - '--destination-type'
+                - webhook
+                - '--destination-type'
+                - s3
+            - summary: Find deliveries in a time window (replace the sample dates)
+              args:
+                - '--env'
+                - <dev-id>
+                - '--since'
+                - '2026-09-01T00:00:00Z'
+                - '--until'
+                - '2026-09-02T00:00:00Z'
+            - summary: Fetch up to 2 pages of 25 deliveries each
+              args:
+                - '--env'
+                - <dev-id>
+                - '--limit'
+                - '25'
+                - '--paginate'
+                - '--max-pages'
+                - '2'
         - method_name: retrieve
           operation: get
           path: /environments/{dev_id}/webhook-events/{event_id}
+          examples:
+            - summary: Inspect a delivery
+              args:
+                - '--env'
+                - <dev-id>
+                - <event-id>
         - method_name: resend
           operation: post
           path: /environments/{dev_id}/webhook-events/resend
+          examples:
+            - summary: Resend an event using its user ID, event ID and data type
+              args:
+                - '--env'
+                - <dev-id>
+                - '--user-id'
+                - <user-id>
+                - '--event-id'
+                - <event-id>
+                - '--event-type'
+                - <event-type>
         - method_name: retrieve-payload
           operation: get
           path: /environments/{dev_id}/webhook-events/{event_id}/payload
+          examples:
+            - summary: Read a delivery payload
+              args:
+                - '--env'
+                - <dev-id>
+                - <event-id>
       x-terra-summary: Inspect and resend webhook events
       x-terra-resource: events
     InvoiceSummary:
@@ -5168,9 +5363,15 @@ components:
         - method_name: list
           operation: get
           path: /billing/invoices
+          examples:
+            - summary: List your invoices
+              args: []
         - method_name: upcoming
           operation: get
           path: /billing/invoices/upcoming
+          examples:
+            - summary: Preview your next invoice
+              args: []
       x-terra-summary: Past and upcoming invoices
       x-terra-resource: billing.invoices
     DocsAskRequest:
@@ -5210,6 +5411,11 @@ components:
           operation: post
           path: /docs/ask
           slow: true
+          examples:
+            - summary: Find out how to connect a provider
+              args:
+                - '--question'
+                - How do I connect a Garmin user?
       x-terra-summary: Search Terra's documentation
       x-terra-resource: docs
     DocsSource:
@@ -5299,15 +5505,31 @@ components:
         - method_name: retrieve
           operation: get
           path: /me
+          examples:
+            - summary: Check your identity and token grants
+              args: []
         - method_name: update
           operation: patch
           path: /me
+          examples:
+            - summary: Set your display name
+              args:
+                - '--name'
+                - Alex Smith
         - method_name: retrieve-metadata
           operation: get
           path: /me/metadata
+          examples:
+            - summary: View your saved dashboard preferences
+              args: []
         - method_name: update-metadata
           operation: patch
           path: /me/metadata
+          examples:
+            - summary: Replace your dashboard preferences
+              args:
+                - '--preferences'
+                - '{"theme":"dark"}'
       x-terra-summary: Inspect and update the token's own account record
       x-terra-resource: account
     MintDataTokenRequest:
@@ -5348,6 +5570,9 @@ components:
         - method_name: list
           operation: get
           path: /models/catalog
+          examples:
+            - summary: List available models
+              args: []
       x-terra-summary: Models available to this account
       x-terra-resource: models.catalog
     ModelRunRecord:
@@ -5393,6 +5618,13 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/models/runs
+          examples:
+            - summary: Find model runs for a user
+              args:
+                - '--env'
+                - <dev-id>
+                - '--user-id'
+                - <user-id>
       x-terra-summary: Executions of a model
       x-terra-resource: models.runs
     OAuthError:
@@ -5675,6 +5907,9 @@ components:
         - method_name: retrieve
           operation: get
           path: /billing/payment-method
+          examples:
+            - summary: View your default payment method
+              args: []
       x-terra-summary: The card or bank account charged for this account
       x-terra-resource: billing.payment-method
     Problem:
@@ -5745,9 +5980,21 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/unified-api/processing
+          examples:
+            - summary: List processing formats
+              args:
+                - '--env'
+                - <dev-id>
         - method_name: update
           operation: patch
           path: /environments/{dev_id}/unified-api/processing
+          examples:
+            - summary: Use JSON processing
+              args:
+                - '--env'
+                - <dev-id>
+                - '--type'
+                - json
       x-terra-summary: How Terra normalizes and derives each data type
       x-terra-resource: unified-api.data.processing
     ProviderCredentialMaterial:
@@ -5801,10 +6048,26 @@ components:
         - method_name: retrieve
           operation: get
           path: /environments/{dev_id}/unified-api/sources/{provider}/credentials
+          examples:
+            - summary: Inspect provider credentials
+              args:
+                - '--env'
+                - <dev-id>
+                - <provider>
         - method_name: replace
           operation: put
           path: /environments/{dev_id}/unified-api/sources/{provider}/credentials
           destructive: Replaces the provider's live OAuth credentials; end-user authorization fails until the new ones are correct.
+          examples:
+            - summary: Set custom OAuth credentials for an enabled provider
+              args:
+                - '--env'
+                - <dev-id>
+                - <provider>
+                - '--client-id'
+                - <client-id>
+                - '--client-secret'
+                - <client-secret>
       x-terra-summary: Your own OAuth credentials for a provider, used instead of Terra's
       x-terra-resource: unified-api.sources.credentials
     ProviderEnabled:
@@ -5834,10 +6097,24 @@ components:
         - method_name: retrieve
           operation: get
           path: /environments/{dev_id}/unified-api/sources/{provider}/scopes
+          examples:
+            - summary: View provider OAuth scopes
+              args:
+                - '--env'
+                - <dev-id>
+                - <provider>
         - method_name: replace
           operation: put
           path: /environments/{dev_id}/unified-api/sources/{provider}/scopes
           destructive: Whatever is not in the body is removed, and an empty list restores the provider's defaults.
+          examples:
+            - summary: Replace OAuth scopes for an enabled provider
+              args:
+                - '--env'
+                - <dev-id>
+                - <provider>
+                - '--scopes'
+                - <provider-scope>
       x-terra-summary: Which data types a provider is asked for
       x-terra-resource: unified-api.sources.scopes
     ProviderSummary:
@@ -5857,13 +6134,30 @@ components:
             - provider
             - active
             - auth_redirect_url
+          examples:
+            - summary: List enabled providers
+              args:
+                - '--env'
+                - <dev-id>
         - method_name: enable
           operation: put
           path: /environments/{dev_id}/unified-api/sources/{provider}
+          examples:
+            - summary: Enable a provider
+              args:
+                - '--env'
+                - <dev-id>
+                - <provider>
         - method_name: disable
           operation: delete
           path: /environments/{dev_id}/unified-api/sources/{provider}
           destructive: End users can no longer authorize this provider, and existing connections stop syncing.
+          examples:
+            - summary: Disable a provider
+              args:
+                - '--env'
+                - <dev-id>
+                - <provider>
       x-terra-summary: Enable and configure wearable providers
       x-terra-resource: unified-api.sources
     PutWorkoutMetadataRequest:
@@ -5956,6 +6250,11 @@ components:
         - method_name: retrieve
           operation: get
           path: /environments/{dev_id}/unified-api/scores/analytics
+          examples:
+            - summary: View score analytics
+              args:
+                - '--env'
+                - <dev-id>
       x-terra-summary: Aggregate score results across an environment
       x-terra-resource: unified-api.scores.analytics
     ScoreConfig:
@@ -5969,12 +6268,30 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/unified-api/scores
+          examples:
+            - summary: List configured scores
+              args:
+                - '--env'
+                - <dev-id>
         - method_name: retrieve
           operation: get
           path: /environments/{dev_id}/unified-api/scores/{score}
+          examples:
+            - summary: Inspect a score configuration
+              args:
+                - '--env'
+                - <dev-id>
+                - <score>
         - method_name: update
           operation: patch
           path: /environments/{dev_id}/unified-api/scores/{score}
+          examples:
+            - summary: Enable a score
+              args:
+                - '--env'
+                - <dev-id>
+                - <score>
+                - '--active'
       x-terra-summary: Configure and inspect scores
       x-terra-resource: unified-api.scores
     ScoreHistoryRecord:
@@ -6026,6 +6343,13 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/unified-api/scores/history
+          examples:
+            - summary: View score history for a user
+              args:
+                - '--env'
+                - <dev-id>
+                - '--user-id'
+                - <user-id>
       x-terra-summary: Score results over time for one user
       x-terra-resource: unified-api.scores.history
     ScoreResult:
@@ -6054,14 +6378,35 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/unified-api/scopes
+          examples:
+            - summary: View selected data fields
+              args:
+                - '--env'
+                - <dev-id>
         - method_name: update
           operation: patch
           path: /environments/{dev_id}/unified-api/scopes
           destructive: Any field left out of `fields` is deselected for the named data type.
+          examples:
+            - summary: Clear the activity field selection
+              args:
+                - '--env'
+                - <dev-id>
+                - '--body'
+                - '{"data_type":"activity","fields":[]}'
         - method_name: replace
           operation: put
           path: /environments/{dev_id}/unified-api/scopes
           destructive: Any data type left out of the body is deselected, so this environment stops collecting it.
+          examples:
+            - summary: Collect activity and sleep data
+              args:
+                - '--env'
+                - <dev-id>
+                - '--scopes'
+                - ACTIVITY
+                - '--scopes'
+                - SLEEP
       x-terra-summary: Which fields Terra collects per data type
       x-terra-resource: unified-api.data.scopes
     SelectedDataFieldsRequest:
@@ -6144,14 +6489,27 @@ components:
         - method_name: list
           operation: get
           path: /billing/subscriptions
+          examples:
+            - summary: List your subscriptions
+              args: []
         - method_name: create
           operation: post
           path: /billing/subscriptions
           destructive: Charges the payment method on file.
+          examples:
+            - summary: Subscribe to a plan
+              args:
+                - '--scope'
+                - <plan-scope>
+                - '--schedule'
+                - monthly
         - method_name: cancel-incomplete
           operation: post
           path: /billing/subscriptions/cancel-incomplete
           destructive: Cancels every incomplete subscription on the account; nothing here names one.
+          examples:
+            - summary: Cancel incomplete subscriptions
+              args: []
       x-terra-summary: Plans this account is subscribed to
       x-terra-resource: billing.subscriptions
     SupabaseProvisionRequest:
@@ -6200,17 +6558,43 @@ components:
         - method_name: start-oauth
           operation: post
           path: /environments/{dev_id}/unified-api/destinations/supabase/oauth
+          examples:
+            - summary: Start connecting Supabase
+              args:
+                - '--env'
+                - <dev-id>
         - method_name: poll-oauth
           operation: get
           path: /environments/{dev_id}/unified-api/destinations/supabase/oauth/{oauth_session_id}
+          examples:
+            - summary: Check a Supabase session after browser authorization
+              args:
+                - '--env'
+                - <dev-id>
+                - <oauth-session-id>
         - method_name: list-projects
           operation: get
           path: /environments/{dev_id}/unified-api/destinations/supabase/oauth/{oauth_session_id}/projects
+          examples:
+            - summary: List Supabase projects after browser authorization
+              args:
+                - '--env'
+                - <dev-id>
+                - <oauth-session-id>
         - method_name: provision
           operation: post
           path: /environments/{dev_id}/unified-api/destinations/supabase/provision
           timeout: 10m
           slow: true
+          examples:
+            - summary: Connect a Supabase project
+              args:
+                - '--env'
+                - <dev-id>
+                - '--oauth-session-id'
+                - <oauth-session-id>
+                - '--project-ref'
+                - <project-ref>
       x-terra-summary: Supabase as a data destination
       x-terra-resource: unified-api.destinations.supabase
     TeamInvitation:
@@ -6263,6 +6647,13 @@ components:
         - method_name: create
           operation: post
           path: /team/invitations
+          examples:
+            - summary: Invite a developer
+              args:
+                - '--email'
+                - alex@example.com
+                - '--role'
+                - developer
         - method_name: list
           operation: get
           path: /team/invitations
@@ -6272,10 +6663,17 @@ components:
             - role
             - expires_at
             - claimed_at
+          examples:
+            - summary: List pending invitations
+              args: []
         - method_name: delete
           operation: delete
           path: /team/invitations/{invitation_id}
           destructive: The invitation link stops working, and joining requires a new invitation.
+          examples:
+            - summary: Revoke an invitation
+              args:
+                - <invitation-id>
       x-terra-summary: Outstanding invitations to join this account
       x-terra-resource: team.invitations
     TeamInvitationResponse:
@@ -6320,16 +6718,33 @@ components:
             - user_id
             - email
             - role
+          examples:
+            - summary: List your team
+              args: []
         - method_name: retrieve
           operation: get
           path: /team/members/{user_id}
+          examples:
+            - summary: View a team member
+              args:
+                - <user-id>
         - method_name: update
           operation: patch
           path: /team/members/{user_id}
+          examples:
+            - summary: Make a team member a developer
+              args:
+                - <user-id>
+                - '--role'
+                - developer
         - method_name: delete
           operation: delete
           path: /team/members/{user_id}
           destructive: Revokes this person's access to the account immediately.
+          examples:
+            - summary: Remove a team member
+              args:
+                - <user-id>
       x-terra-summary: People with access to this account
       x-terra-resource: team.members
     TokenPollFormRequest:
@@ -6444,14 +6859,24 @@ components:
             - scopes
             - expires_at
             - last_used_at
+          examples:
+            - summary: List account tokens
+              args: []
         - method_name: delete
           operation: delete
           path: /tokens/{token_id}
           destructive: The token stops authenticating immediately, so anything still using it starts failing.
+          examples:
+            - summary: Revoke an account token
+              args:
+                - <token-id>
         - method_name: rotate
           operation: post
           path: /tokens/self/rotate
           destructive: Invalidates the token you are signed in with, and returns its replacement only once.
+          examples:
+            - summary: Rotate your current token
+              args: []
       x-terra-summary: Manage admin tokens for this account
       x-terra-resource: tokens
     UsageResponse:
@@ -6475,6 +6900,15 @@ components:
         - method_name: retrieve
           operation: get
           path: /billing/usage
+          examples:
+            - summary: Measure usage over a billing window
+              args:
+                - '--meter-id'
+                - <meter-id>
+                - '--start'
+                - '1788220800'
+                - '--end'
+                - '1788307200'
       x-terra-summary: Metered usage for the current period
       x-terra-resource: billing.usage
     UsageSummary:
@@ -6520,9 +6954,22 @@ components:
             - reference_id
             - active
             - created_at
+          examples:
+            - summary: Find active Garmin connections
+              args:
+                - '--env'
+                - <dev-id>
+                - '--provider'
+                - GARMIN
+                - '--active'
         - method_name: stats
           operation: get
           path: /environments/{dev_id}/users/stats
+          examples:
+            - summary: View connection statistics
+              args:
+                - '--env'
+                - <dev-id>
       x-terra-summary: Inspect end-user connections
       x-terra-resource: users
     WidgetConfig:
@@ -6554,10 +7001,22 @@ components:
         - method_name: retrieve
           operation: get
           path: /environments/{dev_id}/unified-api/widget/config
+          examples:
+            - summary: View your widget settings
+              args:
+                - '--env'
+                - <dev-id>
         - method_name: update
           operation: put
           path: /environments/{dev_id}/unified-api/widget/config
           destructive: Any field left out of the body is cleared, so read the current config first and send it back with the edit applied.
+          examples:
+            - summary: Apply a full widget config file, including existing branding
+              args:
+                - '--env'
+                - <dev-id>
+                - '--body-file'
+                - <widget-config-file>
       x-terra-summary: Configure the Terra widget
       x-terra-resource: unified-api.widget
     WorkoutMetadata:
@@ -6577,19 +7036,52 @@ components:
         - method_name: list
           operation: get
           path: /environments/{dev_id}/workouts/metadata
+          examples:
+            - summary: List workout metadata
+              args:
+                - '--env'
+                - <dev-id>
         - method_name: retrieve
           operation: get
           path: /environments/{dev_id}/workouts/{workout_id}/metadata
+          examples:
+            - summary: View a workout metadata record
+              args:
+                - '--env'
+                - <dev-id>
+                - <workout-id>
         - method_name: replace
           operation: put
           path: /environments/{dev_id}/workouts/{workout_id}/metadata
+          examples:
+            - summary: Set the creation time on a new workout metadata record
+              args:
+                - '--env'
+                - <dev-id>
+                - <workout-id>
+                - '--created-at'
+                - '2026-09-01T08:00:00Z'
         - method_name: update
           operation: patch
           path: /environments/{dev_id}/workouts/{workout_id}/metadata
+          examples:
+            - summary: Clear a workout pace-units value
+              args:
+                - '--env'
+                - <dev-id>
+                - <workout-id>
+                - '--body'
+                - '{"pace_units":null}'
         - method_name: delete
           operation: delete
           path: /environments/{dev_id}/workouts/{workout_id}/metadata
           destructive: Clears every stored metadata field for this workout.
+          examples:
+            - summary: Delete a workout metadata record
+              args:
+                - '--env'
+                - <dev-id>
+                - <workout-id>
       x-terra-summary: Custom fields attached to a workout
       x-terra-resource: workouts.metadata
     schemas-Problem:
