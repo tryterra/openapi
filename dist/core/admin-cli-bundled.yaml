@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.14
+  version: 2026.09.14.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
   x-terra-audience: cli
 servers:
@@ -120,6 +120,7 @@ paths:
   /docs/ask:
     post:
       operationId: askDocs
+      x-terra-help: Ask a question about Terra using the published docs. An empty sources array means the answer was not grounded in docs.
       tags:
         - docs
       summary: Ask a question about Terra and get an answer from the documentation
@@ -162,6 +163,7 @@ paths:
   /me:
     get:
       operationId: getMe
+      x-terra-help: Inspect the current token. User details require account:read; otherwise user is null.
       tags:
         - tokens
       responses:
@@ -207,6 +209,7 @@ paths:
       description: 'Scope-free: any valid token may introspect what it holds. The user object is the exception and requires account:read — the token''s own properties are self-knowledge, but the minting user''s email/phone/role is the same PII that /me/metadata and /team/members/{user_id} gate. Without that scope, user is null.'
     patch:
       operationId: patchMe
+      x-terra-help: Update your dashboard profile. Returns 404 if the token has no dashboard user.
       tags:
         - tokens
       responses:
@@ -264,6 +267,7 @@ paths:
   /me/metadata:
     get:
       operationId: getMeMetadata
+      x-terra-help: Get your analytics layout and preferences. Returns 404 if the token has no dashboard user.
       tags:
         - tokens
       responses:
@@ -305,6 +309,7 @@ paths:
             - account:read
     patch:
       operationId: patchMeMetadata
+      x-terra-help: Update your layout or preferences. Send at least one field; use --preferences-merge to preserve omitted preference keys.
       tags:
         - tokens
       responses:
@@ -380,6 +385,7 @@ paths:
   /tokens/self/rotate:
     post:
       operationId: rotateSelf
+      x-terra-help: Rotate the current token within its grant window. Save the new bearer now; check its expiry, scopes and environments.
       tags:
         - tokens
       responses:
@@ -417,6 +423,7 @@ paths:
   /tokens:
     get:
       operationId: listTokens
+      x-terra-help: List admin and data token metadata, including revoked tokens. Excludes session tokens and bearer values.
       tags:
         - tokens
       responses:
@@ -484,6 +491,7 @@ paths:
   /tokens/{token_id}:
     delete:
       operationId: revokeToken
+      x-terra-help: Revoke a token immediately, including your current token. An unknown token or one outside your account returns 404.
       tags:
         - tokens
       responses:
@@ -504,15 +512,18 @@ paths:
             - tokens:admin
       parameters:
         - name: token_id
+          x-terra-help: Token UUID returned by creation. The bearer value is not accepted.
           in: path
           required: true
           schema:
             type: string
+            format: uuid
           description: The token to act on, by the id its creation returned. The token value itself is never accepted here.
         - $ref: '#/components/parameters/IdempotencyKey'
   /company:
     get:
       operationId: getCompany
+      x-terra-help: Get your account summary and company profile. Company is null if no profile exists; billing fields are excluded.
       tags:
         - company
       responses:
@@ -546,6 +557,7 @@ paths:
             - account:read
     patch:
       operationId: patchCompany
+      x-terra-help: Update your company profile. Send at least one field; omitted fields stay unchanged. Unknown and billing fields are rejected.
       tags:
         - company
       responses:
@@ -596,6 +608,7 @@ paths:
   /environments:
     get:
       operationId: listEnvironments
+      x-terra-help: List account environments with their profiles. A missing profile is null; credentials are excluded.
       tags:
         - environments
       responses:
@@ -655,6 +668,7 @@ paths:
             - account:read
     post:
       operationId: createEnvironmentProfile
+      x-terra-help: Create a profile for an existing environment. Existing profiles are returned unchanged; this does not create credentials.
       tags:
         - environments
       responses:
@@ -730,6 +744,7 @@ paths:
   /entitlements:
     get:
       operationId: listEntitlements
+      x-terra-help: List granted account capabilities and their sources. Unavailable capabilities are omitted.
       tags:
         - entitlements
       responses:
@@ -778,6 +793,7 @@ paths:
   /billing/subscriptions:
     get:
       operationId: listSubscriptions
+      x-terra-help: List subscriptions. Check cancel_at_period_end to identify active plans scheduled to end.
       tags:
         - billing
       responses:
@@ -827,6 +843,7 @@ paths:
             - billing:read
     post:
       operationId: subscribe
+      x-terra-help: Add or change a plan. A requires_action response needs a card challenge at dashboard_url before the change takes effect.
       tags:
         - billing
       responses:
@@ -875,6 +892,7 @@ paths:
   /billing/invoices:
     get:
       operationId: listInvoices
+      x-terra-help: List issued invoices. Invoice fields and hosted or PDF links may be absent.
       tags:
         - billing
       responses:
@@ -927,6 +945,7 @@ paths:
   /billing/invoices/upcoming:
     get:
       operationId: getUpcomingInvoice
+      x-terra-help: Preview the upcoming invoice. Its ID is upcoming and created_at is null; it has not been issued.
       tags:
         - billing
       responses:
@@ -960,6 +979,7 @@ paths:
   /billing/payment-method:
     get:
       operationId: getPaymentMethod
+      x-terra-help: Get the default card with masked details. When has_card is false, card details are absent.
       tags:
         - billing
       responses:
@@ -992,6 +1012,7 @@ paths:
   /billing/usage:
     get:
       operationId: getUsage
+      x-terra-help: Get metered usage totals. Requires a meter and a minute-aligned Unix-second start/end window; usage is eventually consistent.
       tags:
         - billing
       responses:
@@ -1028,26 +1049,34 @@ paths:
             - billing:read
       parameters:
         - name: meter_id
+          x-terra-help: Billing meter configured for your account. An unknown meter returns 404.
           in: query
           required: true
           schema:
             type: string
           description: The billing meter to total. One of the meters configured for your account; an unknown one is a 404.
         - name: start
+          x-terra-help: Positive Unix-second window start, a multiple of 60 and before --end. Required; no default.
           in: query
           required: true
           schema:
             type: integer
+            minimum: 1
+            multipleOf: 60
           description: Start of the window, as a positive unix-second timestamp. Must be minute-aligned (a multiple of 60), which is the billing provider's own rule, and before end.
         - name: end
+          x-terra-help: Positive Unix-second window end, a multiple of 60 and after --start. Recent usage may still be arriving.
           in: query
           required: true
           schema:
             type: integer
+            minimum: 1
+            multipleOf: 60
           description: End of the window, as a positive unix-second timestamp. Minute-aligned like start. Usage is eventually consistent, so a window ending at now may still be filling in.
   /billing/subscriptions/cancel-incomplete:
     post:
       operationId: cancelIncomplete
+      x-terra-help: Cancel all subscriptions with unfinished payment challenges. List subscriptions again to see which remain.
       tags:
         - billing
       responses:
@@ -1079,6 +1108,7 @@ paths:
   /environments/{dev_id}:
     get:
       operationId: getEnvironment
+      x-terra-help: Get environment details with masked secrets. Profile is null if no profile row exists.
       tags:
         - environments
       responses:
@@ -1120,6 +1150,7 @@ paths:
         - $ref: '#/components/parameters/DevId'
     patch:
       operationId: patchEnvironmentProfile
+      x-terra-help: Update the environment name or billable flag. Send at least one; omitted fields stay unchanged.
       tags:
         - environments
       responses:
@@ -1176,6 +1207,7 @@ paths:
   /environments/{dev_id}/unified-api/widget/config:
     get:
       operationId: getWidgetConfig
+      x-terra-help: Get connect-widget branding and configuration. Read whichever of widget_config_url or widget_config is non-null.
       tags:
         - environments
       responses:
@@ -1216,6 +1248,7 @@ paths:
         - $ref: '#/components/parameters/DevId'
     put:
       operationId: setWidgetConfig
+      x-terra-help: Replace the whole widget configuration; omitted fields are cleared. Read it first and send the form this deployment serves.
       tags:
         - environments
       responses:
@@ -1266,6 +1299,7 @@ paths:
   /environments/{dev_id}/api-key:
     get:
       operationId: getEnvironmentApiKey
+      x-terra-help: Reveal the environment API key and webhook signing secret in plaintext. Requires keys:read and is audited.
       tags:
         - environments
       responses:
@@ -1297,6 +1331,7 @@ paths:
   /environments/{dev_id}/unified-api/sources:
     get:
       operationId: listSources
+      x-terra-help: List unified API providers with active state and auth redirect URLs. Credentials and custom scopes are separate.
       tags:
         - sources
       responses:
@@ -1348,6 +1383,7 @@ paths:
   /environments/{dev_id}/unified-api/sources/{provider}:
     put:
       operationId: enableSource
+      x-terra-help: Enable a provider. Uses Terra OAuth credentials until custom credentials are set; repeated calls are safe.
       tags:
         - sources
       responses:
@@ -1378,6 +1414,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: provider
+          x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
           in: path
           required: true
           schema:
@@ -1386,6 +1423,7 @@ paths:
         - $ref: '#/components/parameters/IdempotencyKey'
     delete:
       operationId: disableSource
+      x-terra-help: Disable a provider and stop collection. Re-enabling does not backfill the gap. Use --dry-run to preview.
       tags:
         - sources
       responses:
@@ -1420,6 +1458,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: provider
+          x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
           in: path
           required: true
           schema:
@@ -1430,6 +1469,7 @@ paths:
   /environments/{dev_id}/unified-api/sources/{provider}/credentials:
     get:
       operationId: getSourceCredentials
+      x-terra-help: Get custom provider OAuth credentials with the secret masked. Credential is null when unset; the secret is write-only.
       tags:
         - sources
       responses:
@@ -1464,6 +1504,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: provider
+          x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
           in: path
           required: true
           schema:
@@ -1471,6 +1512,7 @@ paths:
           description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is a 400.
     put:
       operationId: setSourceCredentials
+      x-terra-help: Set custom provider OAuth credentials. Repeated calls are safe; the secret is write-only and masked on read.
       tags:
         - sources
       summary: Set custom provider OAuth credentials
@@ -1481,6 +1523,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: provider
+          x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
           in: path
           required: true
           schema:
@@ -1524,6 +1567,7 @@ paths:
   /environments/{dev_id}/unified-api/sources/{provider}/scopes:
     get:
       operationId: getSourceScopes
+      x-terra-help: Get custom provider OAuth scopes. An empty array means provider defaults are in use.
       tags:
         - sources
       responses:
@@ -1556,6 +1600,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: provider
+          x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
           in: path
           required: true
           schema:
@@ -1563,6 +1608,7 @@ paths:
           description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is a 400.
     put:
       operationId: setSourceScopes
+      x-terra-help: Replace all custom provider OAuth scopes. An empty array restores provider defaults.
       tags:
         - sources
       responses:
@@ -1596,6 +1642,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: provider
+          x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
           in: path
           required: true
           schema:
@@ -1611,6 +1658,7 @@ paths:
   /environments/{dev_id}/unified-api/destinations:
     get:
       operationId: listDestinations
+      x-terra-help: List destinations, including inactive ones. Signing secrets and credential metadata are excluded.
       tags:
         - destinations
       responses:
@@ -1664,6 +1712,7 @@ paths:
         - $ref: '#/components/parameters/DevId'
     post:
       operationId: createDestination
+      x-terra-help: Create a destination. Save the signing_secret now; it is returned only once. Type defaults to webhook.
       tags:
         - destinations
       responses:
@@ -1709,6 +1758,7 @@ paths:
   /environments/{dev_id}/unified-api/destinations/{destination_id}:
     patch:
       operationId: patchDestination
+      x-terra-help: Update destination active state or event types. URL and type cannot change; the signing secret is not returned.
       tags:
         - destinations
       responses:
@@ -1743,6 +1793,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: destination_id
+          x-terra-help: Destination ID returned by creation.
           in: path
           required: true
           schema:
@@ -1757,6 +1808,7 @@ paths:
               $ref: '#/components/schemas/PatchDestinationRequest'
     delete:
       operationId: deleteDestination
+      x-terra-help: Permanently delete a destination and its signing secret. Recreating the URL creates a new secret. Use --dry-run to preview.
       tags:
         - destinations
       responses:
@@ -1791,6 +1843,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: destination_id
+          x-terra-help: Destination ID returned by creation.
           in: path
           required: true
           schema:
@@ -1801,6 +1854,7 @@ paths:
   /environments/{dev_id}/unified-api/destinations/supabase/oauth:
     post:
       operationId: startSupabaseOauth
+      x-terra-help: Start Supabase authorization. Open authorization_url, then poll at interval until ready or expires_in elapses.
       tags:
         - destinations
       responses:
@@ -1836,6 +1890,7 @@ paths:
   /environments/{dev_id}/unified-api/destinations/supabase/oauth/{oauth_session_id}:
     get:
       operationId: pollSupabaseOauth
+      x-terra-help: 'Check Supabase authorization: pending, ready or failed. Poll at the supplied interval until expiry; failure is a state.'
       tags:
         - destinations
       responses:
@@ -1865,6 +1920,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: oauth_session_id
+          x-terra-help: Session handle returned by OAuth start. Expired handles return 404.
           in: path
           required: true
           schema:
@@ -1873,6 +1929,7 @@ paths:
   /environments/{dev_id}/unified-api/destinations/supabase/oauth/{oauth_session_id}/projects:
     get:
       operationId: listSupabaseProjects
+      x-terra-help: List projects for a ready Supabase OAuth session; otherwise returns 409. Use a returned project_ref to provision.
       tags:
         - destinations
       responses:
@@ -1925,6 +1982,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: oauth_session_id
+          x-terra-help: Session handle returned by OAuth start. Expired handles return 404.
           in: path
           required: true
           schema:
@@ -1933,6 +1991,7 @@ paths:
   /environments/{dev_id}/unified-api/destinations/supabase/provision:
     post:
       operationId: provisionSupabase
+      x-terra-help: Provision a Supabase project and data destination. Requires a ready OAuth session and project reference; may take minutes.
       tags:
         - destinations
       responses:
@@ -1977,6 +2036,7 @@ paths:
   /environments/{dev_id}/unified-api/scopes:
     get:
       operationId: listUnifiedApiScopes
+      x-terra-help: List field selections and sample flags for selected data types. Unselected types are omitted.
       tags:
         - dataconfig
       responses:
@@ -2028,6 +2088,7 @@ paths:
         - $ref: '#/components/parameters/DevId'
     patch:
       operationId: patchUnifiedApiScopes
+      x-terra-help: Replace selected fields for one data type; omitted fields are deselected. Cannot set samples_enabled. Use --dry-run to preview.
       tags:
         - dataconfig
       responses:
@@ -2070,6 +2131,7 @@ paths:
               $ref: '#/components/schemas/SelectedDataFieldsRequest'
     put:
       operationId: putUnifiedApiScopes
+      x-terra-help: Replace selected data types; omitted types are deselected. ATHLETE stays selected; HEALTH_OBSERVATION needs its entitlement. SAMPLES controls sample flags.
       tags:
         - dataconfig
       responses:
@@ -2115,6 +2177,7 @@ paths:
   /environments/{dev_id}/unified-api/scores:
     get:
       operationId: listScores
+      x-terra-help: List score configurations and active states. Read a single score for weights; computed results are in score history.
       tags:
         - scores
       responses:
@@ -2167,6 +2230,7 @@ paths:
   /environments/{dev_id}/unified-api/scores/{score}:
     get:
       operationId: getScore
+      x-terra-help: Get a score configuration, including weights. Computed results are in score history and analytics.
       tags:
         - scores
       summary: A score's full config (type, active, weights)
@@ -2177,6 +2241,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: score
+          x-terra-help: Score name, alias, enum name or numeric enum value. Unknown scores return 400.
           in: path
           required: true
           schema:
@@ -2210,6 +2275,7 @@ paths:
           $ref: '#/components/responses/RateLimited'
     patch:
       operationId: patchScore
+      x-terra-help: Update an existing score configuration. Send active, weights or both; returns the full updated configuration.
       tags:
         - scores
       responses:
@@ -2244,6 +2310,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: score
+          x-terra-help: Score name, alias, enum name or numeric enum value. Unknown scores return 400.
           in: path
           required: true
           schema:
@@ -2261,6 +2328,7 @@ paths:
   /environments/{dev_id}/unified-api/scores/history:
     get:
       operationId: listScoresHistory
+      x-terra-help: List computed scores, newest first. Defaults to the last 7 days; user_id is null when a provider user is unmapped.
       tags:
         - scores
       summary: Score history
@@ -2271,37 +2339,48 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: score
+          x-terra-help: Score name, alias, enum name or numeric enum value. Unknown scores return 400.
           in: query
           schema:
             type: string
           description: 'One score, named however you have it: the score name, an alias, the enum name, or the numeric enum value. An unrecognised score is a 400.'
         - name: user_id
+          x-terra-help: Terra user UUID, resolved to provider IDs. No connection returns an empty page; intersects with --provider-user-id.
           in: query
           schema:
             type: string
             format: uuid
           description: Terra user id, resolved to that user's provider_user_id(s) before the history is read, since the stored rows carry only the provider's id. A user with no connection is an empty page, so a paging caller can tell "no rows" from a broken request. Intersects with provider_user_id when both are sent.
         - name: provider_user_id
+          x-terra-help: Exact provider-side user ID. Intersects with --user-id when both are set.
           in: query
           schema:
             type: string
           description: The provider's own id for a user, matched exactly as stored. No resolution, so this is the filter to reach for when the Terra user id is not to hand.
         - name: since
+          x-terra-help: 'Inclusive score computation start (RFC3339). Default: 7 days before --until.'
           in: query
           schema:
             type: string
+            format: date-time
           description: Oldest insert_timestamp to return, inclusive, as RFC3339. Windows on when the score was computed, not on the period it covers. Defaults to 7 days before until.
         - name: until
+          x-terra-help: 'Inclusive score computation end (RFC3339). Default: now.'
           in: query
           schema:
             type: string
+            format: date-time
           description: Newest insert_timestamp to return, inclusive, as RFC3339. Defaults to now.
         - name: limit
+          x-terra-help: 'Rows per page: default 50, clamped to 200. Use --paginate for multiple pages; --max-pages caps page count.'
           in: query
           schema:
             type: integer
+            default: 50
+            minimum: 1
           description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
         - name: cursor
+          x-terra-help: Previous next_cursor. Its window overrides time bounds; supplied times must still be valid RFC3339.
           in: query
           schema:
             type: string
@@ -2362,6 +2441,7 @@ paths:
   /environments/{dev_id}/unified-api/scores/analytics:
     get:
       operationId: getScoresAnalytics
+      x-terra-help: Get distinct-user and score-update totals. Defaults to the last 7 days, measured by computation time.
       tags:
         - scores
       summary: Score analytics
@@ -2372,14 +2452,18 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: since
+          x-terra-help: 'Inclusive score computation start (RFC3339). Default: 7 days before --until.'
           in: query
           schema:
             type: string
+            format: date-time
           description: Oldest insert_timestamp to count, inclusive, as RFC3339. Windows on when a score was computed, not on the period it covers. Defaults to 7 days before until.
         - name: until
+          x-terra-help: 'Inclusive score computation end (RFC3339). Default: now.'
           in: query
           schema:
             type: string
+            format: date-time
           description: Newest insert_timestamp to count, inclusive, as RFC3339. Defaults to now.
       responses:
         '200':
@@ -2404,6 +2488,7 @@ paths:
   /environments/{dev_id}/webhook-events:
     get:
       operationId: listWebhookEvents
+      x-terra-help: List delivery metadata in the selected environment (events:read). Defaults to the last 7 days, or 14 with --event-id. Payloads are separate.
       tags:
         - webhookevents
       responses:
@@ -2454,33 +2539,42 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Delivery-history debug surface
-      description: 'Delivery metadata, not payloads: each row is one dispatch with its HTTP status, latency and size, while the body that was sent is a separate payloads:read-gated sub-resource. Keyset cursor pagination over a bounded window: the default is the trailing 7 days, since and until move it, and nothing older than the 14 days a payload is retained for is worth querying. Filter by outcome (delivered or failed), provider, data_type, user_id, reference_id, or event_id for one exact event.'
+      description: 'Delivery metadata, not payloads: each row is one dispatch with its HTTP status, latency and size, while the body that was sent is a separate payloads:read-gated sub-resource. Keyset cursor pagination over a bounded window: the default is the trailing 7 days, since and until move it, and nothing older than the 14 days a payload is retained for is worth querying. Filter by outcome (delivered or failed), provider, data_type, destination_type, summary_id, user_id, reference_id, or event_id for one exact event. An event_id widens the default window to 14 days. No matching deliveries returns an empty page; an unknown user_id or reference_id returns 404.'
       security:
         - adminToken:
             - events:read
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: limit
+          x-terra-help: 'Positive rows per page: default 50, clamped to 200. --paginate fetches pages; --max-pages caps page count.'
           in: query
           schema:
             type: integer
+            minimum: 1
+            default: 50
           description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
         - name: cursor
+          x-terra-help: Previous next_cursor; its window overrides --since/--until (supplied times must still be RFC3339).
           in: query
           schema:
             type: string
-          description: The previous page's next_cursor. It carries the window the first page resolved, so since and until are ignored while it is set.
+          description: The previous page's next_cursor. It carries the window the first page resolved, so since and until are ignored while it is set, but supplied values must still be valid RFC3339.
         - name: since
+          x-terra-help: 'Inclusive oldest sent_at (RFC3339). Default: 7 days before until, or 14 with --event-id.'
           in: query
           schema:
             type: string
+            format: date-time
           description: Oldest sent_at to return, inclusive, as RFC3339. Defaults to 7 days before until, or 14 days before it when event_id is given.
         - name: until
+          x-terra-help: 'Inclusive newest sent_at (RFC3339). Default: now.'
           in: query
           schema:
             type: string
+            format: date-time
           description: Newest sent_at to return, inclusive, as RFC3339. Defaults to now.
         - name: outcome
+          x-terra-help: 'HTTP outcome: delivered is status <=299; failed is status >299.'
           in: query
           schema:
             type: string
@@ -2489,6 +2583,7 @@ paths:
               - failed
           description: 'Delivery outcome, from the HTTP status the destination returned: delivered is 299 or below, failed is above it.'
         - name: provider
+          x-terra-help: Case-insensitive provider slugs (e.g. garmin). Repeat to match any provider.
           in: query
           schema:
             type: array
@@ -2498,6 +2593,7 @@ paths:
           explode: false
           description: Provider slugs, matched case-insensitively, e.g. garmin. Repeat the parameter to widen the filter; an event matching any of them is returned.
         - name: data_type
+          x-terra-help: Case-insensitive payload types (e.g. activity, sleep, body). Repeat to match any type.
           in: query
           schema:
             type: array
@@ -2507,6 +2603,7 @@ paths:
           explode: false
           description: Payload types, matched case-insensitively, e.g. activity, sleep or body. Repeat the parameter to widen the filter; an event matching any of them is returned.
         - name: destination_type
+          x-terra-help: Case-insensitive destination kinds (e.g. webhook, s3, kafka). Repeat to match any kind.
           in: query
           schema:
             type: array
@@ -2516,21 +2613,26 @@ paths:
           explode: false
           description: Destination kinds the payload was delivered to, matched case-insensitively, e.g. webhook, s3 or kafka. Repeat the parameter to widen the filter; an event matching any of them is returned.
         - name: summary_id
+          x-terra-help: Exact summary ID in any delivered record. Older payloads without recorded IDs never match.
           in: query
           schema:
             type: string
           description: A summary id carried by the payload, matched exactly. An event is returned when any of the records it delivered carries it. Payloads written before summary ids were recorded carry none and never match.
         - name: user_id
+          x-terra-help: Terra user UUID; unknown users return 404. Intersects with --reference-id.
           in: query
           schema:
             type: string
-          description: Terra user id, a UUID, resolved to that user's connection before the history is read. A user this environment does not own is a 404, not an empty page. Combines with reference_id rather than overriding it.
+            format: uuid
+          description: Terra user id, a UUID, resolved to that user's connection before the history is read. An unknown user returns 404; a user with no deliveries in this environment returns an empty page. Combines with reference_id rather than overriding it.
         - name: reference_id
+          x-terra-help: Exact user reference across connections; unknown reference returns 404. Empty intersection with --user-id returns no events.
           in: query
           schema:
             type: string
           description: Your own id for a user, matched exactly and resolved to every connection under it. No match is a 404, not an empty page. Given with user_id it narrows further, so a user that is not under the reference matches no events.
         - name: event_id
+          x-terra-help: Exact event ID; default window widens to 14 days. Override with --since/--until; no matching delivery returns an empty page.
           in: query
           schema:
             type: string
@@ -2538,6 +2640,7 @@ paths:
   /environments/{dev_id}/webhook-events/resend:
     post:
       operationId: resendWebhookEvent
+      x-terra-help: Re-send a stored payload in the selected environment (events:write). Acceptance is asynchronous; the destination may receive the event twice.
       tags:
         - webhookevents
       responses:
@@ -2580,6 +2683,7 @@ paths:
   /environments/{dev_id}/users:
     get:
       operationId: listUsers
+      x-terra-help: List end-user connections, newest first. Time filters apply to connection creation, not health-data timestamps.
       tags:
         - connections
       responses:
@@ -2639,56 +2743,68 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: provider
+          x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
           in: query
           schema:
             type: string
           description: One provider slug, e.g. garmin. Validated against the providers this API knows, so an unrecognised one is a 400 rather than a silently empty page.
         - name: active
+          x-terra-help: Filter by whether the connection is authorized. Omit for both states.
           in: query
           schema:
             type: boolean
           description: Whether the connection is still authorized. Omit for both.
         - name: user_id
+          x-terra-help: Exact Terra user UUID; matches at most one connection.
           in: query
           schema:
             type: string
             format: uuid
           description: Terra user id, matched exactly. One connection at most, so this is a lookup rather than a filter.
         - name: reference_id
+          x-terra-help: Exact user reference. May match multiple connections.
           in: query
           schema:
             type: string
           description: Your own id for a user, matched exactly. One user can hold several connections, so this can return more than one row.
         - name: created_since
+          x-terra-help: Inclusive connection creation start (RFC3339). All occurrences and --since must agree, or returns 400.
           in: query
           description: Lower bound (inclusive, RFC3339) on connection creation time. This surface windows on creation time rather than on the data's own timestamps. `since` is accepted as a synonym, and every occurrence of either spelling must carry the same value — a disagreeing value is a 400, whether it arrives under `since` or as a repeat of this parameter.
           schema:
             type: string
             format: date-time
         - name: since
+          x-terra-help: Synonym for --created-since (RFC3339). Every occurrence of either spelling must agree, or returns 400.
           in: query
           description: Synonym for created_since, accepted so the shorter name a caller reaches for first is not rejected. Every occurrence of either spelling must carry the same value — a disagreeing value is a 400, whether it arrives under `created_since` or as a repeat of this parameter.
           schema:
             type: string
             format: date-time
         - name: created_until
+          x-terra-help: Inclusive connection creation end (RFC3339). All occurrences and --until must agree, or returns 400.
           in: query
           description: Upper bound (inclusive, RFC3339) on connection creation time. `until` is accepted as a synonym, and every occurrence of either spelling must carry the same value — a disagreeing value is a 400, whether it arrives under `until` or as a repeat of this parameter.
           schema:
             type: string
             format: date-time
         - name: until
+          x-terra-help: Synonym for --created-until (RFC3339). Every occurrence of either spelling must agree, or returns 400.
           in: query
           description: Synonym for created_until, accepted so the shorter name a caller reaches for first is not rejected. Every occurrence of either spelling must carry the same value — a disagreeing value is a 400, whether it arrives under `created_until` or as a repeat of this parameter.
           schema:
             type: string
             format: date-time
         - name: limit
+          x-terra-help: 'Rows per page: default 50, clamped to 200. Use --paginate for multiple pages; --max-pages caps page count.'
           in: query
           schema:
             type: integer
+            default: 50
+            minimum: 1
           description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
         - name: cursor
+          x-terra-help: Previous next_cursor. Its window overrides time bounds; supplied times must still be valid RFC3339.
           in: query
           schema:
             type: string
@@ -2696,6 +2812,7 @@ paths:
   /environments/{dev_id}/users/stats:
     get:
       operationId: getUserStats
+      x-terra-help: 'Get user-overview graphs: payload volume, bytes, provider connections and auth events. Defaults to the last 3 months.'
       tags:
         - connections
       summary: User-overview statistics
@@ -2706,12 +2823,14 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: since
+          x-terra-help: 'Inclusive statistics start (RFC3339). Default: 3 months before --until.'
           in: query
           schema:
             type: string
             format: date-time
           description: Start of the window the series and totals cover, inclusive. Defaults to 3 months before until.
         - name: until
+          x-terra-help: 'Inclusive statistics end (RFC3339). Default: now.'
           in: query
           schema:
             type: string
@@ -2788,6 +2907,7 @@ paths:
   /environments/{dev_id}/webhook-events/{event_id}:
     get:
       operationId: getWebhookEvent
+      x-terra-help: Read delivery metadata by ID within 14 days in the selected environment (events:read). Not found returns 404; payloads are separate.
       tags:
         - webhookevents
       summary: Fetch a single delivery event
@@ -2798,6 +2918,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: event_id
+          x-terra-help: Delivery event ID from events list; no matching event in the last 14 days returns 404.
           in: path
           required: true
           schema:
@@ -2835,6 +2956,7 @@ paths:
   /environments/{dev_id}/webhook-events/{event_id}/payload:
     get:
       operationId: getWebhookEventPayload
+      x-terra-help: Read a stored delivery body (health data) in the selected environment (payloads:read). Retained for about 14 days; missing payloads return 404.
       tags:
         - webhookevents
       summary: Fetch a delivery event's stored payload
@@ -2845,6 +2967,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: event_id
+          x-terra-help: Delivery event ID from events list; a missing or expired payload returns 404.
           in: path
           required: true
           schema:
@@ -2886,6 +3009,7 @@ paths:
   /environments/{dev_id}/unified-api/processing:
     get:
       operationId: listProcessing
+      x-terra-help: List normalization output formats and the environment's active selection.
       tags:
         - dataconfig
       summary: List processing types
@@ -2944,6 +3068,7 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
     patch:
       operationId: setProcessing
+      x-terra-help: Set the normalization output format and return the updated list. Use --dry-run to preview.
       tags:
         - dataconfig
       summary: Set the processing type
@@ -2995,6 +3120,7 @@ paths:
   /environments/{dev_id}/tokens:
     get:
       operationId: listDataTokens
+      x-terra-help: List environment data token metadata. Bearer values require the separate keys:read-gated secret read.
       tags:
         - tokens
       summary: List a dev-id's data tokens
@@ -3051,6 +3177,7 @@ paths:
           $ref: '#/components/responses/RateLimited'
     post:
       operationId: mintDataToken
+      x-terra-help: Mint a scoped, long-lived data token. Returns the bearer, also retrievable with keys:read. Rotate by minting a replacement and revoking the old token.
       tags:
         - tokens
       summary: Mint a data token
@@ -3100,6 +3227,7 @@ paths:
   /environments/{dev_id}/tokens/{token_id}:
     delete:
       operationId: revokeDataToken
+      x-terra-help: Revoke an environment data token immediately.
       tags:
         - tokens
       summary: Revoke a data token
@@ -3110,10 +3238,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: token_id
+          x-terra-help: Token UUID returned by creation. The bearer value is not accepted.
           in: path
           required: true
           schema:
             type: string
+            format: uuid
           description: The token to act on, by the id its creation returned. The token value itself is never accepted here.
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
@@ -3132,20 +3262,23 @@ paths:
   /environments/{dev_id}/tokens/{token_id}/secret:
     get:
       operationId: revealDataToken
+      x-terra-help: Reveal a data token bearer in plaintext (keys:read, audited). Tokens without a stored secret return 422.
       tags:
         - tokens
       summary: Re-show a token's bearer
-      description: 'Returns the token including its bearer. Deliberate API-key DX parity: the credential tokens succeed has always been retrievable, so tokens are too. Gated by keys:read (dangerous plaintext disclosure, same class as GET /api-key) and audited. Admin tokens are never retrievable (422).'
+      description: 'Returns the token including its bearer. Deliberate API-key DX parity: the credential tokens succeed has always been retrievable, so tokens are too. Gated by keys:read (dangerous plaintext disclosure, same class as GET /api-key) and audited. An owned data token with no recoverable secret returns 422. Admin tokens and tokens outside this environment return 404.'
       security:
         - adminToken:
             - keys:read
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: token_id
+          x-terra-help: Token UUID returned by creation. The bearer value is not accepted.
           in: path
           required: true
           schema:
             type: string
+            format: uuid
           description: The token to act on, by the id its creation returned. The token value itself is never accepted here.
       responses:
         '200':
@@ -3180,6 +3313,7 @@ paths:
   /environments/{dev_id}/workouts/metadata:
     get:
       operationId: listWorkoutMetadata
+      x-terra-help: List workout metadata rows. Workouts without metadata are omitted; no rows returns an empty page.
       tags:
         - workouts
       responses:
@@ -3232,6 +3366,7 @@ paths:
   /environments/{dev_id}/workouts/{workout_id}/metadata:
     get:
       operationId: getWorkoutMetadata
+      x-terra-help: Get a workout's pace units and metadata creation time. Missing metadata returns 404 even if the workout exists.
       tags:
         - workouts
       responses:
@@ -3274,6 +3409,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: workout_id
+          x-terra-help: Workout ID whose metadata to manage; this does not create a workout.
           in: path
           required: true
           schema:
@@ -3281,6 +3417,7 @@ paths:
           description: The workout whose metadata this addresses. This surface annotates a workout, it never creates one.
     put:
       operationId: putWorkoutMetadata
+      x-terra-help: Create or update workout metadata. Omitted or null --pace-units preserves the value; --created-at applies only on creation.
       tags:
         - workouts
       responses:
@@ -3323,6 +3460,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: workout_id
+          x-terra-help: Workout ID whose metadata to manage; this does not create a workout.
           in: path
           required: true
           schema:
@@ -3337,6 +3475,7 @@ paths:
               $ref: '#/components/schemas/PutWorkoutMetadataRequest'
     patch:
       operationId: patchWorkoutMetadata
+      x-terra-help: Overwrite workout pace units. --pace-units is required; null clears the stored value.
       tags:
         - workouts
       responses:
@@ -3378,6 +3517,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: workout_id
+          x-terra-help: Workout ID whose metadata to manage; this does not create a workout.
           in: path
           required: true
           schema:
@@ -3392,6 +3532,7 @@ paths:
               $ref: '#/components/schemas/PatchWorkoutMetadataRequest'
     delete:
       operationId: deleteWorkoutMetadata
+      x-terra-help: Delete workout metadata without deleting the workout or its data. No dry-run is available.
       tags:
         - workouts
       summary: Delete a workout's metadata
@@ -3402,6 +3543,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: workout_id
+          x-terra-help: Workout ID whose metadata to manage; this does not create a workout.
           in: path
           required: true
           schema:
@@ -3428,6 +3570,7 @@ paths:
   /company/onboarding:
     get:
       operationId: getOnboarding
+      x-terra-help: Get onboarding destination and providers. Missing onboarding returns 404; has_password indicates a write-only password.
       tags:
         - company
       responses:
@@ -3471,6 +3614,7 @@ paths:
             - account:read
     patch:
       operationId: patchOnboarding
+      x-terra-help: Create or update onboarding settings. Omitted fields stay unchanged; the password is write-only.
       tags:
         - company
       responses:
@@ -3525,6 +3669,7 @@ paths:
   /company/terms:
     post:
       operationId: agreeToTerms
+      x-terra-help: Record terms acceptance for a document, default bundle. Bundle acceptance is separate from accepting tos and dpa individually.
       tags:
         - company
       responses:
@@ -3573,6 +3718,7 @@ paths:
   /company/terms/{version}:
     get:
       operationId: getAgreedToTerms
+      x-terra-help: 'Check terms acceptance for a version. Never accepted returns agreed: false; omit document to match any document.'
       tags:
         - company
       responses:
@@ -3606,12 +3752,14 @@ paths:
             - account:read
       parameters:
         - name: version
+          x-terra-help: Terms version to check.
           in: path
           required: true
           schema:
             type: string
           description: The terms_version to check.
         - name: document
+          x-terra-help: 'Document to check: bundle, tos or dpa. Omit to match acceptance under any document.'
           in: query
           required: false
           schema:
@@ -3624,6 +3772,7 @@ paths:
   /company/feature-flags:
     get:
       operationId: listCompanyFeatureFlags
+      x-terra-help: List enabled feature flags. Disabled, unknown or unmatched flags return an empty data array.
       tags:
         - company
       responses:
@@ -3671,6 +3820,7 @@ paths:
             - account:read
       parameters:
         - name: name
+          x-terra-help: Filter by exact feature flag name. No match returns an empty data array.
           in: query
           required: false
           schema:
@@ -3679,6 +3829,7 @@ paths:
   /company/points/opt-in:
     post:
       operationId: optInToPoints
+      x-terra-help: Enable points for your company. Repeated calls are safe.
       tags:
         - company
       responses:
@@ -3704,6 +3855,7 @@ paths:
   /company/referral-code:
     get:
       operationId: getReferralCode
+      x-terra-help: Get your company referral code. Returns 404 if none exists; the get-or-create operation can create one.
       tags:
         - company
       responses:
@@ -3739,6 +3891,7 @@ paths:
             - account:read
     post:
       operationId: ensureReferralCode
+      x-terra-help: Get or create your company referral code. Returns 200 whether the code is new or already exists.
       tags:
         - company
       responses:
@@ -3783,6 +3936,7 @@ paths:
   /company/referrals:
     get:
       operationId: getReferrals
+      x-terra-help: Get the number of rewarded referrals. Pending rewards and individual referrals are excluded.
       tags:
         - company
       responses:
@@ -3817,6 +3971,7 @@ paths:
   /team/members:
     get:
       operationId: listTeamMembers
+      x-terra-help: List team members with name, email and role. Roles are open-ended and may be null.
       tags:
         - team
       responses:
@@ -3871,8 +4026,10 @@ paths:
   /team/members/{user_id}:
     get:
       operationId: getTeamMember
+      x-terra-help: Get a team member. Missing users and users outside your company both return 404.
       parameters:
         - name: user_id
+          x-terra-help: Team member ID from the members list.
           in: path
           required: true
           schema:
@@ -3922,6 +4079,7 @@ paths:
             - team:read
     patch:
       operationId: patchTeamMember
+      x-terra-help: Update a team member. Missing users and users outside your company both return 404.
       tags:
         - team
       responses:
@@ -3970,6 +4128,7 @@ paths:
             - team:write
       parameters:
         - name: user_id
+          x-terra-help: Team member ID from the members list.
           in: path
           required: true
           schema:
@@ -3984,6 +4143,7 @@ paths:
               $ref: '#/components/schemas/PatchTeamMemberRequest'
     delete:
       operationId: removeTeamMember
+      x-terra-help: Remove a user from your company. Already-removed users are accepted; other companies are unaffected.
       tags:
         - team
       responses:
@@ -4006,6 +4166,7 @@ paths:
             - team:write
       parameters:
         - name: user_id
+          x-terra-help: Team member ID from the members list.
           in: path
           required: true
           schema:
@@ -4015,27 +4176,31 @@ paths:
   /environments/{dev_id}/models/runs:
     get:
       operationId: listModelRuns
+      x-terra-help: List model runs, newest first, from the last 30 days by default. Unknown models return an empty page.
       tags:
         - models
       summary: Model-run history
-      description: A page of the environment's model runs (one per GET /v2/models/run), newest first, from the 30-day run log. user_id filters the stored Terra user UUID directly; an unknown model yields an empty page. status filters by run outcome; run_id fetches a single run directly and widens the lookup to the full retained history so it is never cut off by the default window.
+      description: A page of the environment's model runs (one per GET /v2/models/run), newest first, from the 30-day run log. user_id filters the stored Terra user UUID directly; an unknown model yields an empty page. status filters by run outcome; run_id matches an exact run within the selected window. Both browsing and run_id lookups default to the last 30 days; since, until and cursor still apply.
       security:
         - adminToken:
             - models:read
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: user_id
+          x-terra-help: Terra user UUID stored on the run.
           in: query
           schema:
             type: string
             format: uuid
           description: Terra user id whose runs to return, matched against the id stored on the run itself.
         - name: model
+          x-terra-help: Exact model name. Unknown names return an empty page.
           in: query
           schema:
             type: string
           description: One model name, matched exactly. An unrecognised name is an empty page rather than a 400, since this plane does not carry the model catalog.
         - name: status
+          x-terra-help: 'Filter by run outcome: success or error.'
           in: query
           schema:
             type: string
@@ -4044,26 +4209,35 @@ paths:
               - error
           description: Outcome of the run.
         - name: run_id
+          x-terra-help: 'Exact run ID within the selected window (default: last 30 days).'
           in: query
           schema:
             type: string
-          description: Exact run id. An id is identity-keyed rather than time-keyed, so it searches the whole 30 days of retained history rather than the default window.
+          description: Exact run id within the selected window. Defaults to the last 30 days, as browsing does; since, until and cursor still apply.
         - name: since
+          x-terra-help: 'Inclusive run submission start (RFC3339). Default: 30 days before --until.'
           in: query
           schema:
             type: string
+            format: date-time
           description: Oldest submitted_at to return, inclusive, as RFC3339. Defaults to 30 days before until, which is the whole retained history.
         - name: until
+          x-terra-help: 'Inclusive run submission end (RFC3339). Default: now.'
           in: query
           schema:
             type: string
+            format: date-time
           description: Newest submitted_at to return, inclusive, as RFC3339. Defaults to now.
         - name: limit
+          x-terra-help: 'Rows per page: default 50, clamped to 200. Use --paginate for multiple pages; --max-pages caps page count.'
           in: query
           schema:
             type: integer
+            default: 50
+            minimum: 1
           description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
         - name: cursor
+          x-terra-help: Previous next_cursor. Its window overrides time bounds; supplied times must still be valid RFC3339.
           in: query
           schema:
             type: string
@@ -4118,6 +4292,7 @@ paths:
   /models/catalog:
     get:
       operationId: getModelsCatalog
+      x-terra-help: List generally available models. The catalog is the same for every account.
       tags:
         - models
       summary: Models catalog
@@ -4168,6 +4343,7 @@ paths:
   /team/invitations:
     post:
       operationId: createTeamInvitation
+      x-terra-help: Invite a team member. Save the one-use token now; lost tokens must be replaced. Membership starts at dashboard sign-in.
       tags:
         - team
       summary: Invite someone to the company
@@ -4209,6 +4385,7 @@ paths:
         - $ref: '#/components/parameters/IdempotencyKey'
     get:
       operationId: listTeamInvitations
+      x-terra-help: List unclaimed, unexpired team invitations. Invitation tokens are not recoverable; revoke and reissue if lost.
       tags:
         - team
       summary: List outstanding invitations
@@ -4265,12 +4442,14 @@ paths:
   /team/invitations/{invitation_id}:
     delete:
       operationId: revokeTeamInvitation
+      x-terra-help: Revoke an unclaimed invitation. Missing, claimed and other-company invitations return 404.
       tags:
         - team
       summary: Revoke an outstanding invitation
       description: 'Withdraws an unclaimed invitation. Tenancy is structural — the delete carries the caller''s own company — so an id belonging to another company matches nothing and answers 404 rather than confirming it exists. A claimed invitation is also a 404: that person is already a member, and removing them is DELETE /team/members/{user_id}.'
       parameters:
         - name: invitation_id
+          x-terra-help: Invitation ID from the invitations list.
           in: path
           required: true
           schema:
@@ -4300,6 +4479,7 @@ paths:
   /environments/{dev_id}/api-key/rotate:
     post:
       operationId: rotateEnvironmentApiKey
+      x-terra-help: Rotate the legacy API key and return its replacement. The old key stops working immediately; requires account:write and keys:read.
       tags:
         - environments
       responses:
@@ -4330,7 +4510,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - $ref: '#/components/parameters/IdempotencyKey'
-      description: Mints a new client_secret for this environment and returns it once. Requires BOTH account:write (it mutates credential config) and keys:read (it discloses plaintext). Prefer coexisting data tokens — mint new, revoke old — which need no atomic swap; this exists for the dashboard settings page's legacy key. The rotated-away secret stops working immediately.
+      description: Mints a new client_secret for this environment and returns it. Requires BOTH account:write (it mutates credential config) and keys:read (it discloses plaintext). Prefer coexisting data tokens — mint new, revoke old — which need no atomic swap; this exists for the dashboard settings page's legacy key. The rotated-away secret stops working immediately.
 components:
   securitySchemes:
     adminToken:
@@ -4448,6 +4628,7 @@ components:
   parameters:
     DevId:
       name: dev_id
+      x-terra-help: Environment developer ID, selected with --env.
       in: path
       required: true
       schema:
@@ -4462,6 +4643,7 @@ components:
       description: 'Stripe-style idempotency: same key + same body replays the stored response; same key + different body → 409. Mutations only.'
     DryRun:
       name: dry_run
+      x-terra-help: Preview the change without committing it.
       in: query
       required: false
       schema:
@@ -4681,6 +4863,7 @@ components:
         terms_version:
           type: string
           description: The version of the terms being accepted, as your own identifier for it. Required. Recorded as sent; this API does not maintain a list of versions.
+          x-terra-help: Terms version to accept, recorded as sent.
         document:
           type: string
           enum:
@@ -4688,11 +4871,14 @@ components:
             - tos
             - dpa
           description: Which legal document this acceptance covers. Omitted means 'bundle' (the pre-split combined terms).
+          default: bundle
+          x-terra-help: 'Legal document to accept (default: bundle).'
         accepted_role:
           type:
             - string
             - 'null'
           description: Free-text role of the accepting user at acceptance time (e.g. admin, developer).
+          x-terra-help: Your role when accepting, as free text (e.g. admin or developer).
       required:
         - terms_version
     BillingState:
@@ -4720,20 +4906,27 @@ components:
         type:
           type: string
           description: Where data is delivered, e.g. webhook, s3, gcs. Omitted defaults to webhook, which is the common case; an unrecognised type is a 400.
+          default: webhook
+          x-terra-help: 'Destination type, e.g. webhook, s3 or gcs (default: webhook).'
         url:
           type: string
           description: Where deliveries are sent. Required. For a webhook this is the HTTPS endpoint; for the storage and database types it is the location that type addresses.
+          x-terra-help: Delivery endpoint or storage/database location; use an HTTPS endpoint for webhooks.
         event_types:
           type: array
           description: Which events to deliver here, as a list of event-type names. Omitted delivers the default set for the type, and an unrecognised name is a 400 naming it.
           items:
             type: string
+          x-terra-help: Events to deliver; repeat for each type. Omitted uses the destination type defaults; unknown names are rejected.
         active:
           type: boolean
           description: Whether to start delivering immediately. Omitted defaults to true.
+          default: true
+          x-terra-help: 'Start delivering immediately (default: true).'
         metadata:
           type: string
           description: Credential JSON for a destination type that needs one, e.g. s3 or a database. For a webhook it must be a JSON object, which the API adds its generated signing secret to and returns that secret once.
+          x-terra-help: Credential JSON for the destination. Webhooks require an object; their generated signing secret is returned once.
       required:
         - url
       x-terra-most-common:
@@ -4747,12 +4940,15 @@ components:
         dev_id:
           type: string
           description: 'The dev-id to create the profile for. Required. The credential must already exist and belong to you: this creates the profile row, it does not provision a dev-id.'
+          x-terra-help: Existing dev-id you own to create a profile for; does not provision credentials.
         name:
           type: string
           description: Display name for the environment. Omitting it defaults to the dev-id in legacy deployments and leaves the credential's name unchanged in accounts deployments. Ignored when a profile already exists, since the create is get-or-create.
+          x-terra-help: 'Display name. Omitted: dev-id on legacy, unchanged on accounts deployments. Ignored if a profile exists.'
         billable:
           type: boolean
           description: Whether usage on this environment is billable. Omitting it defaults to false in legacy deployments and leaves the credential's billable status unchanged in accounts deployments. Ignored when a profile already exists.
+          x-terra-help: 'Make usage billable. Omitted: false on legacy, unchanged on accounts deployments. Ignored if a profile exists.'
       required:
         - dev_id
       additionalProperties: false
@@ -4764,12 +4960,14 @@ components:
           type: string
           format: email
           description: The address being invited. The claim only succeeds for a user signing in with this address.
+          x-terra-help: Email address to invite; the user must sign in with this address to claim it.
         role:
           type: string
           enum:
             - admin
             - developer
           description: The role the invitee gets on joining. superadmin is not assignable, matching PATCH /team/members/{user_id}.
+          x-terra-help: 'Role granted on joining: admin or developer. Superadmin cannot be assigned here.'
       required:
         - email
         - role
@@ -5175,6 +5373,7 @@ components:
         referral_code:
           type: string
           description: 'The code to claim. Required. Get-or-create: if the company already has a code, that one is returned and this value is ignored, so the response is what to read rather than the request.'
+          x-terra-help: Code to claim. If a code already exists, returns that code and ignores this value.
       required:
         - referral_code
     Entitlement:
@@ -5381,6 +5580,7 @@ components:
           type: string
           description: The question, in natural language.
           maxLength: 4000
+          x-terra-help: Question about Terra, in natural language (up to 4000 characters).
       required:
         - question
     DocsAskResponse:
@@ -5538,20 +5738,26 @@ components:
         name:
           type: string
           description: What this token is for, shown wherever tokens are listed. Required, so a credential is identifiable when it needs revoking.
+          x-terra-help: Name identifying this token when listing or revoking it.
         scopes:
           type: array
           description: Data-plane scopes only (e.g. ["auth:write"] for an SDK-authentication-only token) — the names the adminToken scope registry marks `data` or `both` in x-scope-planes. Admin-plane names are rejected with 400 validation_failed.
           items:
             type: string
+          x-terra-help: Data-plane scopes to grant; repeat for each scope. At least one is required; admin-only scopes are rejected.
           x-scope-plane: data
         expires_in_days:
           type: integer
           description: Default 365 (restricted-key shape), max 1825. Mutually exclusive with never_expires.
           minimum: 1
           maximum: 1825
+          default: 365
+          x-terra-help: 'Token lifetime in days (1-1825; default: 365). Cannot combine with --never-expires.'
         never_expires:
           type: boolean
           description: Mint a non-expiring credential (the primary 'API key' shape). Mutually exclusive with expires_in_days. Safe because tokens — unlike the legacy secret — are revocable, coexisting, and per-credential observable.
+          default: false
+          x-terra-help: Mint a token valid until revoked. Requires a customer-owned token; cannot combine with --expires-in-days.
       required:
         - name
         - scopes
@@ -5683,62 +5889,76 @@ components:
         name:
           type: string
           description: 'The company''s name. Cannot be cleared: null is rejected.'
+          x-terra-help: Company name. Null is rejected.
         billing_email:
           type: string
           description: 'Where invoices and billing notices are sent. Cannot be cleared: null is rejected.'
+          x-terra-help: Email address for invoices and billing notices. Null is rejected.
         website_url:
           type: string
           description: 'The company''s website. Cannot be cleared: null is rejected.'
+          x-terra-help: Company website URL. Null is rejected.
         learn_about_us:
           type: string
           description: 'How you first heard about Terra, as free text. Cannot be cleared: null is rejected.'
+          x-terra-help: How you heard about Terra, as free text. Null is rejected.
         onboarded:
           type: boolean
           description: Whether the company has finished onboarding.
+          x-terra-help: Mark company onboarding complete.
         app_logo:
           type:
             - string
             - 'null'
           description: Logo shown in the connection widget, as a URL. null clears it. Not accepted after the accounts release, where it moves to the environment and is set per dev-id instead.
+          x-terra-help: Widget logo URL. Null clears it. Legacy deployments only; otherwise set it on the environment.
         description:
           type:
             - string
             - 'null'
           description: Free-text description of the company. null clears it.
+          x-terra-help: Company description. Null clears it.
         org_name:
           type:
             - string
             - 'null'
           description: Legal or trading name, where it differs from name. null clears it.
+          x-terra-help: Legal or trading name. Null clears it.
         tos_url:
           type:
             - string
             - 'null'
           description: Link to your own terms of service, shown to end users in the connection widget. null clears it.
+          x-terra-help: Terms of service URL shown in the widget. Null clears it.
         privacy_policy_url:
           type:
             - string
             - 'null'
           description: Link to your own privacy policy, shown to end users in the connection widget. null clears it.
+          x-terra-help: Privacy policy URL shown in the widget. Null clears it.
         data_usage_description:
           type:
             - string
             - 'null'
           description: What you tell end users their data is used for, shown in the connection widget. null clears it.
+          x-terra-help: Explain data usage to widget users. Null clears it.
         widget_name:
           type:
             - string
             - 'null'
           description: Name shown in the connection widget. null clears it. Not accepted after the accounts release, where it moves to the environment and is set per dev-id instead.
+          x-terra-help: Widget display name. Null clears it. Legacy deployments only; otherwise set it on the environment.
         user_flow_done:
           type: boolean
           description: Whether the company has finished the guided setup flow.
+          x-terra-help: Mark the guided setup complete.
         agreed_to_terms_at:
           type:
             - string
             - 'null'
           format: date-time
           description: 'When the company accepted the terms, as RFC3339. null clears it. Legacy only: after the accounts release acceptances are an append-only log written by POST /company/terms, and this field is no longer accepted.'
+          x-terra-help: Legacy terms acceptance time (RFC3339). Null clears it. Accounts deployments require company agree-terms.
       additionalProperties: false
       minProperties: 1
     PatchDestinationRequest:
@@ -5747,11 +5967,13 @@ components:
         active:
           type: boolean
           description: Whether the destination is delivering. Omitted leaves it as it is.
+          x-terra-help: Set whether delivery is enabled. Omitted leaves the current state unchanged.
         event_types:
           type: array
           description: Which events to deliver here, replaced wholesale, so send the full list rather than the additions. Omitted leaves the current set alone; an unrecognised name is a 400 naming it.
           items:
             type: string
+          x-terra-help: Replace the full event-type list; repeat for each type. Omitted preserves it; unknown names are rejected.
     PatchEnvironmentProfileRequest:
       type: object
       description: 'Display fields only; the widget columns and the data-type selection have their own PUT surfaces. `active` is deliberately absent: writing it means round-tripping the credential''s whole data-type set, so a second writer here would silently lose a concurrent data-type change. It stays on the v2 route until a field-level RPC exists. Every field is optional and an omitted one is left unchanged; at least one is required.'
@@ -5759,9 +5981,11 @@ components:
         name:
           type: string
           description: 'Display name for the environment. Cannot be cleared: null is rejected.'
+          x-terra-help: Environment display name. Null is rejected.
         billable:
           type: boolean
           description: Whether usage on this environment is billable.
+          x-terra-help: Make usage on this environment billable.
       additionalProperties: false
       minProperties: 1
     PatchMeMetadataRequest:
@@ -5771,12 +5995,15 @@ components:
         analytics_layout:
           type: object
           description: Your saved dashboard analytics layout, replaced wholesale. Opaque JSON to this API.
+          x-terra-help: Replace your saved analytics layout with this JSON object.
         preferences:
           type: object
           description: Your saved preferences, replaced wholesale. Opaque JSON to this API, and mutually exclusive with preferences_merge.
+          x-terra-help: Replace your saved preferences with this JSON object. Cannot combine with --preferences-merge.
         preferences_merge:
           type: object
           description: Top-level keys to merge into the stored preferences, leaving the rest in place. Atomic, so two concurrent writers cannot erase each other's keys. Mutually exclusive with preferences.
+          x-terra-help: Merge top-level preference keys atomically, preserving other keys. Cannot combine with --preferences.
       minProperties: 1
     PatchMeRequest:
       type: object
@@ -5785,11 +6012,13 @@ components:
         name:
           type: string
           description: 'Your display name. Cannot be cleared: null is rejected.'
+          x-terra-help: Your display name. Null is rejected.
         phone_number:
           type:
             - string
             - 'null'
           description: Your phone number, as free text. null clears it.
+          x-terra-help: Your phone number as free text. Null clears it.
       minProperties: 1
     PatchOnboardingRequest:
       type: object
@@ -5800,36 +6029,43 @@ components:
             - string
             - 'null'
           description: The delivery destination you are setting up, e.g. webhook or sftp. null clears it.
+          x-terra-help: Destination type being set up (e.g. webhook or sftp). Null clears it.
         scheme:
           type:
             - string
             - 'null'
           description: Scheme for the destination, e.g. https or sftp. null clears it.
+          x-terra-help: Destination scheme (e.g. https or sftp). Null clears it.
         host:
           type:
             - string
             - 'null'
           description: Host the destination delivers to. null clears it.
+          x-terra-help: Destination host. Null clears it.
         port:
           type:
             - string
             - 'null'
           description: Port the destination delivers to, as text. null clears it.
+          x-terra-help: Destination port, as text. Null clears it.
         username:
           type:
             - string
             - 'null'
           description: Username the destination authenticates with. null clears it.
+          x-terra-help: Destination username. Null clears it.
         password:
           type:
             - string
             - 'null'
           description: 'Password the destination authenticates with. Write-only: reads report has_password instead, never the value. null clears it.'
+          x-terra-help: Destination password (write-only). Null clears it; reads never return the value.
         path:
           type:
             - string
             - 'null'
           description: Path on the destination, e.g. the endpoint or upload directory. null clears it.
+          x-terra-help: Destination endpoint or upload directory. Null clears it.
         providers:
           type:
             - array
@@ -5837,6 +6073,7 @@ components:
           description: Providers you intend to integrate, as a list of slugs. Replaced wholesale, so send the full list; null clears it.
           items:
             type: string
+          x-terra-help: Replace the full provider slug list; repeat for each provider. Null clears it.
       additionalProperties: false
     PatchScoreRequest:
       type: object
@@ -5845,6 +6082,7 @@ components:
         active:
           type: boolean
           description: Whether Terra computes this score for the environment. Omitted leaves it as it is.
+          x-terra-help: Enable computation of this score. Omitted leaves the current state unchanged.
         weights:
           type: object
           description: How much each contributor counts toward the score, as contributor name to weight. Each weight is 0 to 200; replaced wholesale, so send every contributor rather than the ones being changed, and an empty object is a 400.
@@ -5852,6 +6090,7 @@ components:
             type: integer
             minimum: 0
             maximum: 200
+          x-terra-help: Replace all contributor weights as JSON (name to integer, 0-200). Include every contributor; empty is rejected.
       minProperties: 1
     PatchTeamMemberRequest:
       type: object
@@ -5860,11 +6099,13 @@ components:
         name:
           type: string
           description: 'The member''s display name. Cannot be cleared: null is rejected.'
+          x-terra-help: Member display name. Null is rejected.
         phone_number:
           type:
             - string
             - 'null'
           description: The member's phone number, as free text. null clears it.
+          x-terra-help: Member phone number, as free text. Null clears it.
         role:
           type:
             - string
@@ -5874,6 +6115,7 @@ components:
             - developer
             - null
           description: The member's dashboard role. superadmin is recognised by the dashboard but is not assignable here — the dashboard's own team editor never offers it.
+          x-terra-help: 'Member dashboard role: admin or developer. Null clears it; superadmin cannot be assigned here.'
       minProperties: 1
     PatchWorkoutMetadataRequest:
       type: object
@@ -5885,6 +6127,7 @@ components:
             - 'null'
           description: 'Pace units for the workout, as an object. Required: unlike PUT this overwrites unconditionally, so null clears the value rather than preserving it.'
           additionalProperties: true
+          x-terra-help: Replace pace units with this JSON object. Null clears the stored value.
       required:
         - pace_units
       additionalProperties: false
@@ -6010,18 +6253,23 @@ components:
         client_id:
           type: string
           description: The customer's OAuth client id for this provider.
+          x-terra-help: Your OAuth client ID for this provider.
         client_secret:
           type: string
           description: The customer's OAuth client secret (write-only; reads are masked).
+          x-terra-help: Your OAuth client secret (write-only; reads are masked).
         redirect_url:
           type: string
           description: Override the OAuth redirect URL (defaults to the provider default).
+          x-terra-help: 'Override the OAuth redirect URL (default: provider default).'
         verification_secret:
           type: string
           description: Optional webhook verification secret.
+          x-terra-help: Webhook verification secret.
         sandbox:
           type: boolean
           description: Use the provider's sandbox environment.
+          x-terra-help: Use the provider sandbox.
       required:
         - client_id
         - client_secret
@@ -6170,12 +6418,14 @@ components:
             - 'null'
           description: Pace units for the workout, as an object. Absent or null preserves what is stored, which is how this differs from PATCH.
           additionalProperties: true
+          x-terra-help: Pace units as a JSON object. Omitted or null preserves the stored value.
         created_at:
           type:
             - string
             - 'null'
           format: date-time
           description: When the workout was created, as RFC3339. Applied only when the metadata row is first inserted, so it cannot be corrected by re-sending it.
+          x-terra-help: Workout creation time (RFC3339). Applied only on first insert.
     ReplaceDataTypesRequest:
       type: object
       description: The complete desired data-type selection. Upper-case data-type tokens; ATHLETE is implicit and need not be sent; SAMPLES sets the per-row samples flag rather than selecting a data type; blank entries are skipped; an unrecognised token is a 400. An empty array clears the selection down to ATHLETE.
@@ -6185,6 +6435,7 @@ components:
           description: The complete data-type selection to persist, replacing what is stored. Required; send the full list, since anything left out is deselected.
           items:
             type: string
+          x-terra-help: Replace the full data-type selection; repeat for each type. Types left out are deselected.
       required:
         - scopes
       additionalProperties: false
@@ -6193,13 +6444,17 @@ components:
       properties:
         user_id:
           type: string
+          format: uuid
           description: The Terra user the event belongs to, as a UUID. Required. A deauthenticated user still resolves, so a historical event can be replayed.
+          x-terra-help: Terra user UUID for this event. Deauthenticated users still resolve for replay.
         event_id:
           type: string
           description: The event to re-dispatch. Required. All three fields come off the row that events list returns; an id whose stored payload is gone is a 404.
+          x-terra-help: Stored event ID to re-send. A missing or expired payload returns 404.
         event_type:
           type: string
           description: The event's type, e.g. activity or sleep. Required, and taken from the same row as event_id.
+          x-terra-help: Type from the same event as event_id (e.g. activity or sleep).
       required:
         - user_id
         - event_id
@@ -6232,6 +6487,7 @@ components:
           description: Empty clears the provider's custom scopes.
           items:
             type: string
+          x-terra-help: Replace the full provider scope list; repeat for each scope. Empty restores provider defaults.
       required:
         - scopes
     ScoreAnalytics:
@@ -6415,11 +6671,13 @@ components:
         data_type:
           type: string
           description: The data type whose field selection to replace, e.g. activity or sleep. Required; an unrecognised type is a 400.
+          x-terra-help: Data type to configure, e.g. activity or sleep. Unknown types are rejected.
         fields:
           type: array
           description: The fields to keep for that data type, replaced wholesale, so send the full list rather than the additions. Omitted or empty selects no fields.
           items:
             type: string
+          x-terra-help: Replace the full field selection; repeat for each field. Omitted or empty selects no fields.
       required:
         - data_type
     SelectedDataTypes:
@@ -6445,6 +6703,7 @@ components:
             - fit
             - fhir
           description: The normalization output format to switch to. Required. Applies to the whole environment, not to one data type.
+          x-terra-help: 'Normalization output format for the whole environment: json, fit or fhir.'
       required:
         - type
     StatsPoint:
@@ -6466,12 +6725,15 @@ components:
         scope:
           type: string
           description: The plan or add-on to move to. Required. Relayed to the billing system, which owns the plan vocabulary and rejects an unknown value.
+          x-terra-help: Plan or add-on to subscribe to. Unknown plans are rejected by billing.
         schedule:
           type: string
           description: Billing cadence for the change, e.g. monthly or yearly. Omitted leaves the cadence to the billing system's default for the scope.
+          x-terra-help: 'Billing cadence, e.g. monthly or yearly (default: plan default).'
         promo_code:
           type: string
           description: A promotional code to apply. Omitted applies none; an invalid one is rejected by the billing system rather than ignored.
+          x-terra-help: Promotional code to apply. Omitted applies none; invalid codes are rejected.
       required:
         - scope
     SubscriptionSummary:
@@ -6518,12 +6780,15 @@ components:
         oauth_session_id:
           type: string
           description: The session handle the start step returned. Required. It must have reached the ready state, or this is a 409; the Supabase access token stays server-side and is never sent here.
+          x-terra-help: Ready OAuth session ID from start-oauth. A pending session returns 409; tokens remain server-side.
         project_ref:
           type: string
           description: The Supabase project to provision into, by its reference. Required. Read it from the projects step.
+          x-terra-help: Supabase project reference from list-projects.
         project_name:
           type: string
           description: Display only; defaults to project_ref.
+          x-terra-help: 'Project display name (default: --project-ref value).'
       required:
         - oauth_session_id
         - project_ref
@@ -6981,22 +7246,26 @@ components:
             - string
             - 'null'
           description: Legacy only — replaced by widget_config after the environments release.
+          x-terra-help: Legacy widget config URL. Omitted or null clears it; environments-release deployments use --widget-config.
         widget_config:
           type:
             - object
             - 'null'
           description: The widget configuration document, served inline. Environments-release deployments only.
           additionalProperties: true
+          x-terra-help: Widget config JSON object for environments-release deployments. Omitted or null clears it.
         widget_name:
           type:
             - string
             - 'null'
           description: Name shown to end users in the widget. null clears it.
+          x-terra-help: Name shown in the widget. Omitted or null clears it.
         app_logo:
           type:
             - string
             - 'null'
           description: Logo shown to end users in the widget, as a URL. null clears it.
+          x-terra-help: Logo URL shown in the widget. Omitted or null clears it.
       x-terra-operations:
         - method_name: retrieve
           operation: get

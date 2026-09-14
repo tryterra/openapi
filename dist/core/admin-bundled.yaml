@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.11
+  version: 2026.09.14
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
 servers:
   - url: /api/v3/admin
@@ -504,6 +504,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
           description: The token to act on, by the id its creation returned. The token value itself is never accepted here.
         - $ref: '#/components/parameters/IdempotencyKey'
   /company:
@@ -1034,12 +1035,16 @@ paths:
           required: true
           schema:
             type: integer
+            minimum: 1
+            multipleOf: 60
           description: Start of the window, as a positive unix-second timestamp. Must be minute-aligned (a multiple of 60), which is the billing provider's own rule, and before end.
         - name: end
           in: query
           required: true
           schema:
             type: integer
+            minimum: 1
+            multipleOf: 60
           description: End of the window, as a positive unix-second timestamp. Minute-aligned like start. Usage is eventually consistent, so a window ending at now may still be filling in.
   /billing/subscriptions/cancel-incomplete:
     post:
@@ -2286,16 +2291,20 @@ paths:
           in: query
           schema:
             type: string
+            format: date-time
           description: Oldest insert_timestamp to return, inclusive, as RFC3339. Windows on when the score was computed, not on the period it covers. Defaults to 7 days before until.
         - name: until
           in: query
           schema:
             type: string
+            format: date-time
           description: Newest insert_timestamp to return, inclusive, as RFC3339. Defaults to now.
         - name: limit
           in: query
           schema:
             type: integer
+            default: 50
+            minimum: 1
           description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
         - name: cursor
           in: query
@@ -2371,11 +2380,13 @@ paths:
           in: query
           schema:
             type: string
+            format: date-time
           description: Oldest insert_timestamp to count, inclusive, as RFC3339. Windows on when a score was computed, not on the period it covers. Defaults to 7 days before until.
         - name: until
           in: query
           schema:
             type: string
+            format: date-time
           description: Newest insert_timestamp to count, inclusive, as RFC3339. Defaults to now.
       responses:
         '200':
@@ -2450,7 +2461,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Delivery-history debug surface
-      description: 'Delivery metadata, not payloads: each row is one dispatch with its HTTP status, latency and size, while the body that was sent is a separate payloads:read-gated sub-resource. Keyset cursor pagination over a bounded window: the default is the trailing 7 days, since and until move it, and nothing older than the 14 days a payload is retained for is worth querying. Filter by outcome (delivered or failed), provider, data_type, user_id, reference_id, or event_id for one exact event.'
+      description: 'Delivery metadata, not payloads: each row is one dispatch with its HTTP status, latency and size, while the body that was sent is a separate payloads:read-gated sub-resource. Keyset cursor pagination over a bounded window: the default is the trailing 7 days, since and until move it, and nothing older than the 14 days a payload is retained for is worth querying. Filter by outcome (delivered or failed), provider, data_type, destination_type, summary_id, user_id, reference_id, or event_id for one exact event. An event_id widens the default window to 14 days. No matching deliveries returns an empty page; an unknown user_id or reference_id returns 404.'
       security:
         - adminToken:
             - events:read
@@ -2460,21 +2471,25 @@ paths:
           in: query
           schema:
             type: integer
+            minimum: 1
+            default: 50
           description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
         - name: cursor
           in: query
           schema:
             type: string
-          description: The previous page's next_cursor. It carries the window the first page resolved, so since and until are ignored while it is set.
+          description: The previous page's next_cursor. It carries the window the first page resolved, so since and until are ignored while it is set, but supplied values must still be valid RFC3339.
         - name: since
           in: query
           schema:
             type: string
+            format: date-time
           description: Oldest sent_at to return, inclusive, as RFC3339. Defaults to 7 days before until, or 14 days before it when event_id is given.
         - name: until
           in: query
           schema:
             type: string
+            format: date-time
           description: Newest sent_at to return, inclusive, as RFC3339. Defaults to now.
         - name: outcome
           in: query
@@ -2520,7 +2535,8 @@ paths:
           in: query
           schema:
             type: string
-          description: Terra user id, a UUID, resolved to that user's connection before the history is read. A user this environment does not own is a 404, not an empty page. Combines with reference_id rather than overriding it.
+            format: uuid
+          description: Terra user id, a UUID, resolved to that user's connection before the history is read. An unknown user returns 404; a user with no deliveries in this environment returns an empty page. Combines with reference_id rather than overriding it.
         - name: reference_id
           in: query
           schema:
@@ -2683,6 +2699,8 @@ paths:
           in: query
           schema:
             type: integer
+            default: 50
+            minimum: 1
           description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
         - name: cursor
           in: query
@@ -3110,6 +3128,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
           description: The token to act on, by the id its creation returned. The token value itself is never accepted here.
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
@@ -3131,7 +3150,7 @@ paths:
       tags:
         - tokens
       summary: Re-show a token's bearer
-      description: 'Returns the token including its bearer. Deliberate API-key DX parity: the credential tokens succeed has always been retrievable, so tokens are too. Gated by keys:read (dangerous plaintext disclosure, same class as GET /api-key) and audited. Admin tokens are never retrievable (422).'
+      description: 'Returns the token including its bearer. Deliberate API-key DX parity: the credential tokens succeed has always been retrievable, so tokens are too. Gated by keys:read (dangerous plaintext disclosure, same class as GET /api-key) and audited. An owned data token with no recoverable secret returns 422. Admin tokens and tokens outside this environment return 404.'
       security:
         - adminToken:
             - keys:read
@@ -3142,6 +3161,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
           description: The token to act on, by the id its creation returned. The token value itself is never accepted here.
       responses:
         '200':
@@ -4014,7 +4034,7 @@ paths:
       tags:
         - models
       summary: Model-run history
-      description: A page of the environment's model runs (one per GET /v2/models/run), newest first, from the 30-day run log. user_id filters the stored Terra user UUID directly; an unknown model yields an empty page. status filters by run outcome; run_id fetches a single run directly and widens the lookup to the full retained history so it is never cut off by the default window.
+      description: A page of the environment's model runs (one per GET /v2/models/run), newest first, from the 30-day run log. user_id filters the stored Terra user UUID directly; an unknown model yields an empty page. status filters by run outcome; run_id matches an exact run within the selected window. Both browsing and run_id lookups default to the last 30 days; since, until and cursor still apply.
       security:
         - adminToken:
             - models:read
@@ -4043,21 +4063,25 @@ paths:
           in: query
           schema:
             type: string
-          description: Exact run id. An id is identity-keyed rather than time-keyed, so it searches the whole 30 days of retained history rather than the default window.
+          description: Exact run id within the selected window. Defaults to the last 30 days, as browsing does; since, until and cursor still apply.
         - name: since
           in: query
           schema:
             type: string
+            format: date-time
           description: Oldest submitted_at to return, inclusive, as RFC3339. Defaults to 30 days before until, which is the whole retained history.
         - name: until
           in: query
           schema:
             type: string
+            format: date-time
           description: Newest submitted_at to return, inclusive, as RFC3339. Defaults to now.
         - name: limit
           in: query
           schema:
             type: integer
+            default: 50
+            minimum: 1
           description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
         - name: cursor
           in: query
@@ -4326,7 +4350,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/DevId'
         - $ref: '#/components/parameters/IdempotencyKey'
-      description: Mints a new client_secret for this environment and returns it once. Requires BOTH account:write (it mutates credential config) and keys:read (it discloses plaintext). Prefer coexisting data tokens — mint new, revoke old — which need no atomic swap; this exists for the dashboard settings page's legacy key. The rotated-away secret stops working immediately.
+      description: Mints a new client_secret for this environment and returns it. Requires BOTH account:write (it mutates credential config) and keys:read (it discloses plaintext). Prefer coexisting data tokens — mint new, revoke old — which need no atomic swap; this exists for the dashboard settings page's legacy key. The rotated-away secret stops working immediately.
 components:
   securitySchemes:
     adminToken:
@@ -4602,6 +4626,7 @@ components:
             - tos
             - dpa
           description: Which legal document this acceptance covers. Omitted means 'bundle' (the pre-split combined terms).
+          default: bundle
         accepted_role:
           type:
             - string
@@ -4634,6 +4659,7 @@ components:
         type:
           type: string
           description: Where data is delivered, e.g. webhook, s3, gcs. Omitted defaults to webhook, which is the common case; an unrecognised type is a 400.
+          default: webhook
         url:
           type: string
           description: Where deliveries are sent. Required. For a webhook this is the HTTPS endpoint; for the storage and database types it is the location that type addresses.
@@ -4645,6 +4671,7 @@ components:
         active:
           type: boolean
           description: Whether to start delivering immediately. Omitted defaults to true.
+          default: true
         metadata:
           type: string
           description: Credential JSON for a destination type that needs one, e.g. s3 or a database. For a webhook it must be a JSON object, which the API adds its generated signing secret to and returns that secret once.
@@ -5151,9 +5178,11 @@ components:
           description: Default 365 (restricted-key shape), max 1825. Mutually exclusive with never_expires.
           minimum: 1
           maximum: 1825
+          default: 365
         never_expires:
           type: boolean
           description: Mint a non-expiring credential (the primary 'API key' shape). Mutually exclusive with expires_in_days. Safe because tokens — unlike the legacy secret — are revocable, coexisting, and per-credential observable.
+          default: false
       required:
         - name
         - scopes
@@ -5656,6 +5685,7 @@ components:
       properties:
         user_id:
           type: string
+          format: uuid
           description: The Terra user the event belongs to, as a UUID. Required. A deauthenticated user still resolves, so a historical event can be replayed.
         event_id:
           type: string
