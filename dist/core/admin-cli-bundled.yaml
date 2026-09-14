@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.14.1
+  version: 2026.09.14.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
   x-terra-audience: cli
 servers:
@@ -5456,6 +5456,13 @@ components:
         connection_id:
           type: string
           description: string-encoded 64-bit id
+        user_id:
+          type: string
+          format: uuid
+          description: The Terra user the delivery belongs to, as a UUID. Pass it to resend with the row's event_id and data_type. Absent on a row whose connection has since been deleted.
+        reference_id:
+          type: string
+          description: Your own id for that user, as it was set on the connection. Absent where none is set, or where the connection has since been deleted.
       x-terra-operations:
         - method_name: list
           operation: get
@@ -6445,16 +6452,16 @@ components:
         user_id:
           type: string
           format: uuid
-          description: The Terra user the event belongs to, as a UUID. Required. A deauthenticated user still resolves, so a historical event can be replayed.
-          x-terra-help: Terra user UUID for this event. Deauthenticated users still resolve for replay.
+          description: The Terra user the event belongs to, as a UUID. Required. Taken from the row's user_id. A deauthenticated user still resolves, so a historical event can be replayed.
+          x-terra-help: Terra user UUID from the event row's user_id. Deauthenticated users still resolve for replay.
         event_id:
           type: string
-          description: The event to re-dispatch. Required. All three fields come off the row that events list returns; an id whose stored payload is gone is a 404.
-          x-terra-help: Stored event ID to re-send. A missing or expired payload returns 404.
+          description: The event to re-dispatch. Required. Taken from the row's event_id; an id whose stored payload is gone is a 404.
+          x-terra-help: Stored event ID from the row's event_id. A missing or expired payload returns 404.
         event_type:
           type: string
-          description: The event's type, e.g. activity or sleep. Required, and taken from the same row as event_id.
-          x-terra-help: Type from the same event as event_id (e.g. activity or sleep).
+          description: The event's type, e.g. activity or sleep. Required. Taken from the row's data_type.
+          x-terra-help: Value from the event row's data_type (e.g. activity or sleep).
       required:
         - user_id
         - event_id
