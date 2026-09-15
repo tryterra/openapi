@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.14.2
+  version: 2026.09.15
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
   x-terra-audience: cli
 servers:
@@ -2812,88 +2812,302 @@ paths:
   /environments/{dev_id}/users/stats:
     get:
       operationId: getUserStats
-      x-terra-help: 'Get user-overview graphs: payload volume, bytes, provider connections and auth events. Defaults to the last 3 months.'
+      x-terra-help: Connection balances, delivery attempts and bytes (connections:read). Defaults to a flat basic summary for the trailing 3 months; --until is exclusive. Use --view full for daily buckets and current provider balances (at most 1500 buckets).
       tags:
         - connections
-      summary: User-overview statistics
-      description: 'The environment''s user-overview graphs over an optional since/until window (RFC3339; defaults to the trailing 3 months): cumulative payload and byte volume, per-provider connection counts, and the device / auth / deauth event time series.'
+      summary: Connection and delivery statistics
+      description: Connection and delivery analytics over [since, until), defaulting to the trailing 3 months. The default basic view returns only flat scalar summary metrics. Full keeps those metrics at the same top level and adds current provider balances and every UTC daily bucket, including inactive days. Activity counts are zero-filled and connection balances carry forward. delivery_attempts counts recorded outbound attempts, including retries and failures. net_connections is the all-time CREATE minus DELETE balance at the end of the interval, not a sum or distinct-user count. Current provider balances are independent of the requested window; observed_at is their read time, not an ingestion watermark or atomic snapshot. since and until support at most millisecond precision and must be within 1900-2299. Full is limited to 1500 intersecting daily buckets, including partial boundary buckets. Basic skips daily and provider aggregation and has no bucket limit.
       security:
         - adminToken:
             - connections:read
       parameters:
         - $ref: '#/components/parameters/DevId'
         - name: since
-          x-terra-help: 'Inclusive statistics start (RFC3339). Default: 3 months before --until.'
+          x-terra-help: 'Inclusive statistics start (RFC3339). Default: 3 months before --until. Millisecond precision.'
           in: query
           schema:
             type: string
             format: date-time
-          description: Start of the window the series and totals cover, inclusive. Defaults to 3 months before until.
+          description: Inclusive start of the event window. Defaults to 3 months before until.
+          example: '2026-06-01T00:00:00Z'
         - name: until
-          x-terra-help: 'Inclusive statistics end (RFC3339). Default: now.'
+          x-terra-help: 'Exclusive statistics end (RFC3339). Default: now. Must be after --since. Millisecond precision.'
           in: query
           schema:
             type: string
             format: date-time
-          description: End of the window the series and totals cover, inclusive. Defaults to now.
+          description: Exclusive end of the event window. Defaults to now. Must be after since.
+          example: '2026-06-03T00:00:00Z'
+        - name: view
+          in: query
+          description: Response detail level. Basic returns flat scalar summary fields. Full keeps the same summary fields and adds time series and resource-specific detail sections. Defaults to basic.
+          x-terra-help: 'Response detail: basic (default) or full. Full adds graph and breakdown data.'
+          schema:
+            type: string
+            enum:
+              - basic
+              - full
+            default: basic
+          example: full
       responses:
         '200':
-          description: The user-overview graph series.
+          description: Scalar summary metrics in both views; full adds documented detail sections.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  devices:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/StatsPoint'
-                  deauth_events:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/StatsPoint'
-                  auth_events:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/StatsPoint'
-                  payloads:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/StatsPoint'
-                  bytes:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/StatsPoint'
-                  providers:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/StatsPoint'
-                required:
-                  - devices
-                  - deauth_events
-                  - auth_events
-                  - payloads
-                  - bytes
-                  - providers
-              example:
-                devices:
-                  - x: 1748736000
-                    'y': 12
-                deauth_events:
-                  - x: 1748736000
-                    'y': 0
-                auth_events:
-                  - x: 1748736000
-                    'y': 3
-                payloads:
-                  - x: 1748736000
-                    'y': 240
-                bytes:
-                  - x: 1748736000
-                    'y': 1048576
-                providers:
-                  - x: garmin
-                    'y': 9
+                $ref: '#/components/schemas/UserStatsResponse'
+              examples:
+                basic:
+                  summary: Default flat summary
+                  value:
+                    since: '2026-06-01T00:00:00Z'
+                    until: '2026-06-03T00:00:00Z'
+                    view: basic
+                    net_connections: 10
+                    net_connection_change: 2
+                    connections_created: 3
+                    connections_deleted: 1
+                    delivery_attempts: 240
+                    bytes: 1048576
+                full:
+                  summary: Full analytics, including graph data
+                  value:
+                    since: '2026-06-01T00:00:00Z'
+                    until: '2026-06-03T00:00:00Z'
+                    view: full
+                    net_connections: 10
+                    net_connection_change: 2
+                    connections_created: 3
+                    connections_deleted: 1
+                    delivery_attempts: 240
+                    bytes: 1048576
+                    granularity: day
+                    current:
+                      observed_at: '2026-06-10T12:00:00Z'
+                      net_connections: 9
+                      providers:
+                        - provider: garmin
+                          net_connections: 9
+                    series:
+                      - bucket_start: '2026-06-01T00:00:00Z'
+                        net_connections: 10
+                        net_connection_change: 2
+                        connections_created: 2
+                        connections_deleted: 0
+                        delivery_attempts: 200
+                        bytes: 1000000
+                      - bucket_start: '2026-06-02T00:00:00Z'
+                        net_connections: 10
+                        net_connection_change: 0
+                        connections_created: 1
+                        connections_deleted: 1
+                        delivery_attempts: 40
+                        bytes: 48576
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/webhook-events/stats:
+    get:
+      operationId: getEventStats
+      x-terra-help: Summarize delivery attempts, outcomes, retries and response times (events:read). Defaults to a flat basic summary for the last 24 hours. Use --view full for graphs and breakdowns; add --compare previous_period for a preceding-window summary.
+      tags:
+        - webhookevents
+      summary: Delivery event statistics
+      description: 'Recorded outbound delivery attempt analytics over [since, until). Basic is the default: flat scalar counts, rates and latency percentiles, without bucket or breakdown aggregation. Full preserves those top-level metrics and adds every UTC time bucket, breakdowns and a response-time histogram. Full allows at most 1500 intersecting buckets; basic has no bucket limit. Status 200-299 is successful; every other status is failed. delivery_attempts includes retries; successful_attempts and failed_attempts partition that count. Latency samples must be finite and positive; units are milliseconds. Percentiles use TDigest over the whole window. Breakdown dimensions are event data type, provider, destination type and HTTP status. compare=previous_period requires view=full and adds a summary for the immediately preceding equal-duration window. This does not include synchronous API reads. Timestamps must be within 1900-2299 with at most millisecond precision.'
+      security:
+        - adminToken:
+            - events:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: since
+          in: query
+          x-terra-help: 'Inclusive start (RFC3339, millisecond precision). Default: 24 hours before --until.'
+          description: Inclusive start in RFC3339 with at most millisecond precision.
+          schema:
+            type: string
+            format: date-time
+          example: '2026-06-01T00:00:00Z'
+        - name: until
+          in: query
+          x-terra-help: 'Exclusive end (RFC3339, millisecond precision). Default: now.'
+          description: Exclusive end in RFC3339 with at most millisecond precision. Must be after since.
+          schema:
+            type: string
+            format: date-time
+          example: '2026-06-01T00:01:00Z'
+        - name: granularity
+          in: query
+          x-terra-help: 'Full view only. UTC bucket size: minute, hour, day. Default: minute up to 6h, hour up to 7d, otherwise day.'
+          description: Only affects view=full. UTC bucket size. Defaults to minute for windows up to 6 hours, hour for windows up to 7 days, and day otherwise. The full-view window must fit at most 1500 buckets, including partial boundary buckets.
+          schema:
+            type: string
+            enum:
+              - minute
+              - hour
+              - day
+          example: minute
+        - name: compare
+          in: query
+          x-terra-help: Requires --view full. Use previous_period for the preceding equal-length window.
+          description: Requires view=full. Adds a flat summary for the previous equal-duration period. Omit to avoid the additional aggregate query.
+          schema:
+            type: string
+            enum:
+              - previous_period
+          example: previous_period
+        - name: view
+          in: query
+          description: Response detail level. Basic returns flat scalar summary fields. Full keeps the same summary fields and adds time series and resource-specific detail sections. Defaults to basic.
+          x-terra-help: 'Response detail: basic (default) or full. Full adds graph and breakdown data.'
+          schema:
+            type: string
+            enum:
+              - basic
+              - full
+            default: basic
+          example: full
+      responses:
+        '200':
+          description: Scalar summary metrics in both views; full adds documented detail sections.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventStatsResponse'
+              examples:
+                basic:
+                  summary: Default flat summary
+                  value:
+                    since: '2026-06-01T00:00:00Z'
+                    until: '2026-06-01T00:01:00Z'
+                    view: basic
+                    bytes: 512
+                    delivery_attempts: 1
+                    successful_attempts: 1
+                    failed_attempts: 0
+                    retry_attempts: 0
+                    success_rate: 1
+                    response_time_samples: 1
+                    p50_response_time_ms: 125
+                    p95_response_time_ms: 125
+                    p99_response_time_ms: 125
+                full:
+                  summary: Full analytics, including graph data
+                  value:
+                    since: '2026-06-01T00:00:00Z'
+                    until: '2026-06-01T00:01:00Z'
+                    view: full
+                    bytes: 512
+                    delivery_attempts: 1
+                    successful_attempts: 1
+                    failed_attempts: 0
+                    retry_attempts: 0
+                    success_rate: 1
+                    response_time_samples: 1
+                    p50_response_time_ms: 125
+                    p95_response_time_ms: 125
+                    p99_response_time_ms: 125
+                    granularity: minute
+                    series:
+                      - bucket_start: '2026-06-01T00:00:00Z'
+                        bytes: 512
+                        delivery_attempts: 1
+                        successful_attempts: 1
+                        failed_attempts: 0
+                        retry_attempts: 0
+                        success_rate: 1
+                    breakdowns:
+                      data_type:
+                        - data_type: daily
+                          bytes: 512
+                          delivery_attempts: 1
+                          successful_attempts: 1
+                          failed_attempts: 0
+                          retry_attempts: 0
+                          success_rate: 1
+                      provider:
+                        - provider: garmin
+                          bytes: 512
+                          delivery_attempts: 1
+                          successful_attempts: 1
+                          failed_attempts: 0
+                          retry_attempts: 0
+                          success_rate: 1
+                      destination_type:
+                        - destination_type: webhook
+                          bytes: 512
+                          delivery_attempts: 1
+                          successful_attempts: 1
+                          failed_attempts: 0
+                          retry_attempts: 0
+                          success_rate: 1
+                      http_status:
+                        - http_status: 200
+                          bytes: 512
+                          delivery_attempts: 1
+                          successful_attempts: 1
+                          failed_attempts: 0
+                          retry_attempts: 0
+                          success_rate: 1
+                    response_time_histogram:
+                      - lower_bound_ms: 0
+                        upper_bound_ms: 100
+                        count: 0
+                      - lower_bound_ms: 100
+                        upper_bound_ms: 200
+                        count: 1
+                      - lower_bound_ms: 200
+                        upper_bound_ms: 300
+                        count: 0
+                      - lower_bound_ms: 300
+                        upper_bound_ms: 400
+                        count: 0
+                      - lower_bound_ms: 400
+                        upper_bound_ms: 500
+                        count: 0
+                      - lower_bound_ms: 500
+                        upper_bound_ms: 600
+                        count: 0
+                      - lower_bound_ms: 600
+                        upper_bound_ms: 700
+                        count: 0
+                      - lower_bound_ms: 700
+                        upper_bound_ms: 800
+                        count: 0
+                      - lower_bound_ms: 800
+                        upper_bound_ms: 900
+                        count: 0
+                      - lower_bound_ms: 900
+                        upper_bound_ms: 1000
+                        count: 0
+                      - lower_bound_ms: 1000
+                        upper_bound_ms: 2000
+                        count: 0
+                      - lower_bound_ms: 2000
+                        upper_bound_ms: 5000
+                        count: 0
+                      - lower_bound_ms: 5000
+                        upper_bound_ms: null
+                        count: 0
+                    comparison:
+                      since: '2026-05-31T23:59:00Z'
+                      until: '2026-06-01T00:00:00Z'
+                      bytes: 1024
+                      delivery_attempts: 2
+                      successful_attempts: 1
+                      failed_attempts: 1
+                      retry_attempts: 1
+                      success_rate: 0.5
+                      response_time_samples: 2
+                      p50_response_time_ms: 100
+                      p95_response_time_ms: 250
+                      p99_response_time_ms: 250
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -5431,6 +5645,470 @@ components:
             - string
             - 'null'
       additionalProperties: false
+    EventStatsCounts:
+      type: object
+      description: Counts of recorded outbound delivery attempts. Retries are separate observations.
+      properties:
+        delivery_attempts:
+          type: integer
+          description: Recorded outbound delivery attempts, including initial and retry attempts.
+        successful_attempts:
+          type: integer
+          description: Delivery attempts with HTTP status 200 through 299.
+        failed_attempts:
+          type: integer
+          description: Delivery attempts with any other HTTP status, including zero for a missing response.
+        retry_attempts:
+          type: integer
+          description: Delivery attempts whose recorded retries counter is greater than zero, not the sum of retry ordinals.
+        bytes:
+          type: integer
+          description: Sum of recorded outbound payload sizes in bytes, including retry attempts and failures.
+        success_rate:
+          type:
+            - number
+            - 'null'
+          description: successful_attempts / delivery_attempts, from 0 to 1. Null when delivery_attempts is zero.
+      required:
+        - delivery_attempts
+        - successful_attempts
+        - failed_attempts
+        - retry_attempts
+        - bytes
+        - success_rate
+    EventStatsTotals:
+      type: object
+      description: Whole-window delivery attempt counts and latency percentiles calculated from eligible observations.
+      properties:
+        delivery_attempts:
+          type: integer
+          description: Recorded outbound delivery attempts, including initial and retry attempts.
+        successful_attempts:
+          type: integer
+          description: Delivery attempts with HTTP status 200 through 299.
+        failed_attempts:
+          type: integer
+          description: Delivery attempts with any other HTTP status, including zero for a missing response.
+        retry_attempts:
+          type: integer
+          description: Delivery attempts whose recorded retries counter is greater than zero, not the sum of retry ordinals.
+        bytes:
+          type: integer
+          description: Sum of recorded outbound payload sizes in bytes, including retry attempts and failures.
+        success_rate:
+          type:
+            - number
+            - 'null'
+          description: successful_attempts / delivery_attempts, from 0 to 1. Null when delivery_attempts is zero.
+        response_time_samples:
+          type: integer
+          description: Delivery attempts with finite, positive response_time, regardless of outcome or destination. Missing or non-positive durations are excluded.
+        p50_response_time_ms:
+          type:
+            - number
+            - 'null'
+          description: Approximate TDigest median response time in milliseconds across eligible delivery attempts. Null without eligible observations.
+        p95_response_time_ms:
+          type:
+            - number
+            - 'null'
+          description: Approximate TDigest 95th-percentile response time in milliseconds across eligible delivery attempts. Null without eligible observations.
+        p99_response_time_ms:
+          type:
+            - number
+            - 'null'
+          description: Approximate TDigest 99th-percentile response time in milliseconds across eligible delivery attempts. Null without eligible observations.
+      required:
+        - delivery_attempts
+        - successful_attempts
+        - failed_attempts
+        - retry_attempts
+        - bytes
+        - success_rate
+        - response_time_samples
+        - p50_response_time_ms
+        - p95_response_time_ms
+        - p99_response_time_ms
+    EventStatsBucket:
+      type: object
+      description: Delivery attempt counts within a UTC bucket, clipped to the requested window.
+      properties:
+        bucket_start:
+          type: string
+          format: date-time
+          description: Inclusive bucket boundary in UTC. The first bucket may start before since.
+        delivery_attempts:
+          type: integer
+          description: Recorded outbound delivery attempts, including initial and retry attempts.
+        successful_attempts:
+          type: integer
+          description: Delivery attempts with HTTP status 200 through 299.
+        failed_attempts:
+          type: integer
+          description: Delivery attempts with any other HTTP status, including zero for a missing response.
+        retry_attempts:
+          type: integer
+          description: Delivery attempts whose recorded retries counter is greater than zero, not the sum of retry ordinals.
+        bytes:
+          type: integer
+          description: Sum of recorded outbound payload sizes in bytes, including retry attempts and failures.
+        success_rate:
+          type:
+            - number
+            - 'null'
+          description: successful_attempts / delivery_attempts, from 0 to 1. Null when delivery_attempts is zero.
+      required:
+        - bucket_start
+        - delivery_attempts
+        - successful_attempts
+        - failed_attempts
+        - retry_attempts
+        - bytes
+        - success_rate
+    EventStatsDataType:
+      type: object
+      description: Delivery attempt counts grouped by the recorded event data type.
+      properties:
+        data_type:
+          type: string
+          description: Event data type recorded on these delivery attempts.
+        delivery_attempts:
+          type: integer
+          description: Recorded outbound delivery attempts, including initial and retry attempts.
+        successful_attempts:
+          type: integer
+          description: Delivery attempts with HTTP status 200 through 299.
+        failed_attempts:
+          type: integer
+          description: Delivery attempts with any other HTTP status, including zero for a missing response.
+        retry_attempts:
+          type: integer
+          description: Delivery attempts whose recorded retries counter is greater than zero, not the sum of retry ordinals.
+        bytes:
+          type: integer
+          description: Sum of recorded outbound payload sizes in bytes, including retry attempts and failures.
+        success_rate:
+          type:
+            - number
+            - 'null'
+          description: successful_attempts / delivery_attempts, from 0 to 1. Null when delivery_attempts is zero.
+      required:
+        - data_type
+        - delivery_attempts
+        - successful_attempts
+        - failed_attempts
+        - retry_attempts
+        - bytes
+        - success_rate
+    EventStatsProvider:
+      type: object
+      description: Delivery attempt counts grouped by the recorded provider slug.
+      properties:
+        provider:
+          type: string
+          description: Provider slug recorded on these delivery attempts.
+        delivery_attempts:
+          type: integer
+          description: Recorded outbound delivery attempts, including initial and retry attempts.
+        successful_attempts:
+          type: integer
+          description: Delivery attempts with HTTP status 200 through 299.
+        failed_attempts:
+          type: integer
+          description: Delivery attempts with any other HTTP status, including zero for a missing response.
+        retry_attempts:
+          type: integer
+          description: Delivery attempts whose recorded retries counter is greater than zero, not the sum of retry ordinals.
+        bytes:
+          type: integer
+          description: Sum of recorded outbound payload sizes in bytes, including retry attempts and failures.
+        success_rate:
+          type:
+            - number
+            - 'null'
+          description: successful_attempts / delivery_attempts, from 0 to 1. Null when delivery_attempts is zero.
+      required:
+        - provider
+        - delivery_attempts
+        - successful_attempts
+        - failed_attempts
+        - retry_attempts
+        - bytes
+        - success_rate
+    EventStatsDestinationType:
+      type: object
+      description: Delivery attempt counts grouped by destination type.
+      properties:
+        destination_type:
+          type: string
+          description: Destination type recorded on these delivery attempts, such as webhook or s3.
+        delivery_attempts:
+          type: integer
+          description: Recorded outbound delivery attempts, including initial and retry attempts.
+        successful_attempts:
+          type: integer
+          description: Delivery attempts with HTTP status 200 through 299.
+        failed_attempts:
+          type: integer
+          description: Delivery attempts with any other HTTP status, including zero for a missing response.
+        retry_attempts:
+          type: integer
+          description: Delivery attempts whose recorded retries counter is greater than zero, not the sum of retry ordinals.
+        bytes:
+          type: integer
+          description: Sum of recorded outbound payload sizes in bytes, including retry attempts and failures.
+        success_rate:
+          type:
+            - number
+            - 'null'
+          description: successful_attempts / delivery_attempts, from 0 to 1. Null when delivery_attempts is zero.
+      required:
+        - destination_type
+        - delivery_attempts
+        - successful_attempts
+        - failed_attempts
+        - retry_attempts
+        - bytes
+        - success_rate
+    EventStatsHTTPStatus:
+      type: object
+      description: Delivery attempt counts grouped by recorded HTTP status.
+      properties:
+        http_status:
+          type: integer
+          description: Recorded HTTP status code; zero denotes a missing response.
+        delivery_attempts:
+          type: integer
+          description: Recorded outbound delivery attempts, including initial and retry attempts.
+        successful_attempts:
+          type: integer
+          description: Delivery attempts with HTTP status 200 through 299.
+        failed_attempts:
+          type: integer
+          description: Delivery attempts with any other HTTP status, including zero for a missing response.
+        retry_attempts:
+          type: integer
+          description: Delivery attempts whose recorded retries counter is greater than zero, not the sum of retry ordinals.
+        bytes:
+          type: integer
+          description: Sum of recorded outbound payload sizes in bytes, including retry attempts and failures.
+        success_rate:
+          type:
+            - number
+            - 'null'
+          description: successful_attempts / delivery_attempts, from 0 to 1. Null when delivery_attempts is zero.
+      required:
+        - http_status
+        - delivery_attempts
+        - successful_attempts
+        - failed_attempts
+        - retry_attempts
+        - bytes
+        - success_rate
+    EventStatsBreakdowns:
+      type: object
+      description: Whole-window breakdowns. Arrays are sorted by their dimension and empty without delivery attempts.
+      properties:
+        data_type:
+          type: array
+          description: Delivery attempt counts per event data type, sorted lexicographically by data_type.
+          items:
+            $ref: '#/components/schemas/EventStatsDataType'
+        provider:
+          type: array
+          description: Delivery attempt counts per recorded provider, sorted lexicographically by provider.
+          items:
+            $ref: '#/components/schemas/EventStatsProvider'
+        destination_type:
+          type: array
+          description: Delivery attempt counts per destination type, sorted lexicographically by destination_type.
+          items:
+            $ref: '#/components/schemas/EventStatsDestinationType'
+        http_status:
+          type: array
+          description: Delivery attempt counts per HTTP status code, sorted numerically by http_status.
+          items:
+            $ref: '#/components/schemas/EventStatsHTTPStatus'
+      required:
+        - data_type
+        - provider
+        - destination_type
+        - http_status
+    EventStatsHistogramBucket:
+      type: object
+      description: Number of eligible delivery attempt response times within a half-open millisecond range.
+      properties:
+        lower_bound_ms:
+          type: number
+          description: Inclusive response-time lower bound in milliseconds.
+        upper_bound_ms:
+          type:
+            - number
+            - 'null'
+          description: Exclusive response-time upper bound in milliseconds; null for the final open-ended bucket.
+        count:
+          type: integer
+          description: Delivery attempts with a finite, positive response time within this range.
+      required:
+        - lower_bound_ms
+        - upper_bound_ms
+        - count
+    EventStatsComparison:
+      type: object
+      description: Delivery attempt summary for the equal-duration window immediately preceding since.
+      properties:
+        since:
+          type: string
+          format: date-time
+          description: Inclusive start of the preceding window in UTC, with at most millisecond precision.
+        until:
+          type: string
+          format: date-time
+          description: Exclusive end of the preceding window in UTC, equal to the requested since.
+        delivery_attempts:
+          type: integer
+          description: Recorded outbound delivery attempts, including initial and retry attempts.
+        successful_attempts:
+          type: integer
+          description: Delivery attempts with HTTP status 200 through 299.
+        failed_attempts:
+          type: integer
+          description: Delivery attempts with any other HTTP status, including zero for a missing response.
+        retry_attempts:
+          type: integer
+          description: Delivery attempts whose recorded retries counter is greater than zero, not the sum of retry ordinals.
+        bytes:
+          type: integer
+          description: Sum of recorded outbound payload sizes in bytes, including retry attempts and failures.
+        success_rate:
+          type:
+            - number
+            - 'null'
+          description: successful_attempts / delivery_attempts, from 0 to 1. Null when delivery_attempts is zero.
+        response_time_samples:
+          type: integer
+          description: Delivery attempts with finite, positive response_time, regardless of outcome or destination. Missing or non-positive durations are excluded.
+        p50_response_time_ms:
+          type:
+            - number
+            - 'null'
+          description: Approximate TDigest median response time in milliseconds across eligible delivery attempts. Null without eligible observations.
+        p95_response_time_ms:
+          type:
+            - number
+            - 'null'
+          description: Approximate TDigest 95th-percentile response time in milliseconds across eligible delivery attempts. Null without eligible observations.
+        p99_response_time_ms:
+          type:
+            - number
+            - 'null'
+          description: Approximate TDigest 99th-percentile response time in milliseconds across eligible delivery attempts. Null without eligible observations.
+      required:
+        - since
+        - until
+        - delivery_attempts
+        - successful_attempts
+        - failed_attempts
+        - retry_attempts
+        - bytes
+        - success_rate
+        - response_time_samples
+        - p50_response_time_ms
+        - p95_response_time_ms
+        - p99_response_time_ms
+    EventStatsResponse:
+      type: object
+      description: Recorded outbound delivery attempt analytics for CLI output and dashboard charts.
+      properties:
+        since:
+          type: string
+          format: date-time
+          description: Inclusive requested start in UTC, with at most millisecond precision.
+        until:
+          type: string
+          format: date-time
+          description: Exclusive requested end in UTC, with at most millisecond precision.
+        view:
+          type: string
+          enum:
+            - basic
+            - full
+          description: Resolved response detail level. Defaults to basic.
+        granularity:
+          type: string
+          enum:
+            - minute
+            - hour
+            - day
+          description: Present only in the full view. UTC interval used to group series buckets, as requested or resolved from the window duration.
+        delivery_attempts:
+          type: integer
+          description: Recorded outbound delivery attempts, including initial and retry attempts.
+        successful_attempts:
+          type: integer
+          description: Delivery attempts with HTTP status 200 through 299.
+        failed_attempts:
+          type: integer
+          description: Delivery attempts with any other HTTP status, including zero for a missing response.
+        retry_attempts:
+          type: integer
+          description: Delivery attempts whose recorded retries counter is greater than zero, not the sum of retry ordinals.
+        bytes:
+          type: integer
+          description: Sum of recorded outbound payload sizes in bytes, including retry attempts and failures.
+        success_rate:
+          type:
+            - number
+            - 'null'
+          description: successful_attempts / delivery_attempts, from 0 to 1. Null when delivery_attempts is zero.
+        response_time_samples:
+          type: integer
+          description: Delivery attempts with finite, positive response_time, regardless of outcome or destination. Missing or non-positive durations are excluded.
+        p50_response_time_ms:
+          type:
+            - number
+            - 'null'
+          description: Approximate TDigest median response time in milliseconds across eligible delivery attempts. Null without eligible observations.
+        p95_response_time_ms:
+          type:
+            - number
+            - 'null'
+          description: Approximate TDigest 95th-percentile response time in milliseconds across eligible delivery attempts. Null without eligible observations.
+        p99_response_time_ms:
+          type:
+            - number
+            - 'null'
+          description: Approximate TDigest 99th-percentile response time in milliseconds across eligible delivery attempts. Null without eligible observations.
+        series:
+          type: array
+          description: Present only in the full view. Delivery attempt counts in ascending UTC buckets, including zero-count buckets. At most 1500 buckets.
+          items:
+            $ref: '#/components/schemas/EventStatsBucket'
+        breakdowns:
+          description: Present only in the full view. Whole-window delivery attempt counts grouped independently by each recorded dimension.
+          $ref: '#/components/schemas/EventStatsBreakdowns'
+        response_time_histogram:
+          type: array
+          description: 'Present only in the full view. Eligible response times in milliseconds: 100 ms buckets below 1 second, then 1-2 s, 2-5 s, and 5 s or more. Includes zero-count buckets.'
+          items:
+            $ref: '#/components/schemas/EventStatsHistogramBucket'
+        comparison:
+          description: Delivery attempt summary for the preceding window. Present only in the full view when compare=previous_period was requested.
+          $ref: '#/components/schemas/EventStatsComparison'
+      required:
+        - since
+        - until
+        - view
+        - delivery_attempts
+        - successful_attempts
+        - failed_attempts
+        - retry_attempts
+        - bytes
+        - success_rate
+        - response_time_samples
+        - p50_response_time_ms
+        - p95_response_time_ms
+        - p99_response_time_ms
     EventRecord:
       type: object
       properties:
@@ -5464,6 +6142,24 @@ components:
           type: string
           description: Your own id for that user, as it was set on the connection. Absent where none is set, or where the connection has since been deleted.
       x-terra-operations:
+        - method_name: stats
+          operation: get
+          path: /environments/{dev_id}/webhook-events/stats
+          examples:
+            - summary: Summarize delivery outcomes and response times
+              args:
+                - '--env'
+                - <dev-id>
+            - summary: Compare hourly delivery statistics with the previous period
+              args:
+                - '--env'
+                - <dev-id>
+                - '--view'
+                - full
+                - '--granularity'
+                - hour
+                - '--compare'
+                - previous_period
         - method_name: list
           operation: get
           path: /environments/{dev_id}/webhook-events
@@ -5542,7 +6238,7 @@ components:
                 - '--env'
                 - <dev-id>
                 - <event-id>
-      x-terra-summary: Inspect and resend webhook events
+      x-terra-summary: Inspect, summarize, and resend webhook events
       x-terra-resource: events
     InvoiceSummary:
       type: object
@@ -6713,19 +7409,6 @@ components:
           x-terra-help: 'Normalization output format for the whole environment: json, fit or fhir.'
       required:
         - type
-    StatsPoint:
-      type: object
-      description: One (x, y) graph sample. x is a unix-second timestamp for the time series and a provider name for the provider breakdown.
-      properties:
-        x:
-          oneOf:
-            - type: integer
-            - type: string
-        'y':
-          type: integer
-      required:
-        - x
-        - 'y'
     SubscribeRequest:
       type: object
       properties:
@@ -7190,6 +7873,161 @@ components:
           type: string
         aggregated_value:
           type: number
+    UserStatsCurrent:
+      type: object
+      description: Current log-derived balances, independent of the requested window.
+      properties:
+        observed_at:
+          type: string
+          format: date-time
+          description: UTC time the connection statistics were read. This is an observation time, not an ingestion watermark or an atomic snapshot across stores.
+        net_connections:
+          type: integer
+          description: Sum of provider net_connections. May differ from the number of active connections.
+        providers:
+          type: array
+          description: Providers with recorded connection events, sorted by slug. Zero balances are retained.
+          items:
+            $ref: '#/components/schemas/UserStatsProvider'
+      required:
+        - observed_at
+        - net_connections
+        - providers
+    UserStatsBucket:
+      type: object
+      description: Daily connection balances and activity counts within the requested window.
+      properties:
+        bucket_start:
+          type: string
+          format: date-time
+          description: Inclusive UTC bucket boundary. The first bucket may start before since; activity is clipped to the requested window.
+        net_connections:
+          type: integer
+          description: All-time CREATE minus DELETE balance at the end of this interval (exclusive), including quiet intervals. This is a closing balance, not a sum across buckets.
+        net_connection_change:
+          type: integer
+          description: Connections created minus connections deleted within the interval. May be negative.
+        connections_created:
+          type: integer
+          description: Connection CREATE events, not distinct people.
+        connections_deleted:
+          type: integer
+          description: Connection DELETE events, not distinct people.
+        delivery_attempts:
+          type: integer
+          description: Recorded outbound delivery attempts, including retries and failures.
+        bytes:
+          type: integer
+          description: Sum of outbound payload sizes in bytes, including retries and failed deliveries.
+      required:
+        - bucket_start
+        - net_connections
+        - net_connection_change
+        - connections_created
+        - connections_deleted
+        - delivery_attempts
+        - bytes
+    UserStatsProvider:
+      type: object
+      description: Current all-time connection balance for one provider, independent of since and until.
+      properties:
+        provider:
+          type: string
+          description: Clean provider slug, for example garmin.
+        net_connections:
+          type: integer
+          description: All recorded CREATE events minus DELETE events. Not a distinct-user or active-connection count.
+      required:
+        - provider
+        - net_connections
+    UserStatsResponse:
+      type: object
+      description: Connection and delivery analytics. Basic returns only scalar summary fields; full adds daily buckets and current provider balances.
+      properties:
+        since:
+          type: string
+          format: date-time
+          description: Inclusive start of the event window, normalized to UTC. At most millisecond precision.
+        until:
+          type: string
+          format: date-time
+          description: Exclusive end of the event window, normalized to UTC. At most millisecond precision. Must be after since.
+        view:
+          type: string
+          enum:
+            - basic
+            - full
+          description: Resolved response detail level. Defaults to basic.
+        net_connections:
+          type: integer
+          description: All-time CREATE minus DELETE balance at the end of this interval (exclusive), including quiet intervals. This is a closing balance, not a sum across buckets.
+        net_connection_change:
+          type: integer
+          description: Connections created minus connections deleted within the interval. May be negative.
+        connections_created:
+          type: integer
+          description: Connection CREATE events, not distinct people.
+        connections_deleted:
+          type: integer
+          description: Connection DELETE events, not distinct people.
+        delivery_attempts:
+          type: integer
+          description: Recorded outbound delivery attempts, including retries and failures.
+        bytes:
+          type: integer
+          description: Sum of outbound payload sizes in bytes, including retries and failed deliveries.
+        granularity:
+          type: string
+          enum:
+            - day
+          description: Present only in the full view. UTC calendar-day aggregation.
+        current:
+          description: Present only in the full view. Latest observed log-derived connection balances, independent of the requested window.
+          $ref: '#/components/schemas/UserStatsCurrent'
+        series:
+          type: array
+          description: Present only in the full view. Ascending UTC daily buckets, including inactive days. Activity counts are zero-filled and connection balances carry forward. At most 1500 buckets.
+          items:
+            $ref: '#/components/schemas/UserStatsBucket'
+      required:
+        - since
+        - until
+        - view
+        - net_connections
+        - net_connection_change
+        - connections_created
+        - connections_deleted
+        - delivery_attempts
+        - bytes
+    UserStatsTotals:
+      type: object
+      description: Window counts, closing connection balance, and net connection growth.
+      properties:
+        net_connections:
+          type: integer
+          description: All-time CREATE minus DELETE balance at the end of this interval (exclusive), including quiet intervals. This is a closing balance, not a sum across buckets.
+        net_connection_change:
+          type: integer
+          description: Connections created minus connections deleted within the interval. May be negative.
+        connections_created:
+          type: integer
+          description: Connection CREATE events, not distinct people.
+        connections_deleted:
+          type: integer
+          description: Connection DELETE events, not distinct people.
+        delivery_attempts:
+          type: integer
+          description: Recorded outbound delivery attempts, including retries and failures.
+        bytes:
+          type: integer
+          description: Sum of outbound payload sizes in bytes, including retries and failed deliveries.
+      required:
+        - net_connections
+        - net_connection_change
+        - connections_created
+        - connections_deleted
+        - delivery_attempts
+        - bytes
     UserSummary:
       type: object
       properties:
@@ -7238,10 +8076,20 @@ components:
           operation: get
           path: /environments/{dev_id}/users/stats
           examples:
-            - summary: View connection statistics
+            - summary: View connection and delivery summary metrics
               args:
                 - '--env'
                 - <dev-id>
+            - summary: Inspect daily statistics for a UTC window (replace the sample dates)
+              args:
+                - '--env'
+                - <dev-id>
+                - '--view'
+                - full
+                - '--since'
+                - '2026-06-01T00:00:00Z'
+                - '--until'
+                - '2026-06-08T00:00:00Z'
       x-terra-summary: Inspect end-user connections
       x-terra-resource: users
     WidgetConfig:
