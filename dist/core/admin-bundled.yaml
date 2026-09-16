@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.16.2
+  version: 2026.09.16.3
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -590,50 +590,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchCompanyRequest'
-  /environments/reconcile:
-    post:
-      operationId: reconcileEnvironments
-      summary: Reconcile standard environment setup
-      description: |
-        Reconciles the authenticated customer's standard environments using current server-owned
-        billing and staff records. No targeting, scope or billing fields are accepted. Repeated
-        calls reuse reserved IDs and completed steps. Existing settings, secrets and explicit
-        disables are preserved. A customer without an eligible tier returns not_required;
-        acknowledged collection pauses return collection_pause_hold. No product access is granted.
-        Available only when v6 provisioning ownership is enabled for the customer; unavailable
-        dependencies return 503 and must be retried without a legacy creation fallback.
-      tags:
-        - environments
-      security:
-        - adminToken:
-            - account:write
-      responses:
-        '200':
-          description: Reconciliation completed or explicitly skipped.
-          headers:
-            Terra-Environment-Provisioning:
-              description: Confirms the v6 provisioning contract was used.
-              schema:
-                type: string
-                const: v6
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EnvironmentReconcileResponse'
-              example:
-                outcome: complete
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
   /environments:
     get:
       operationId: listEnvironments
@@ -5187,20 +5143,6 @@ components:
         - type
         - url
         - active
-    EnvironmentReconcileResponse:
-      type: object
-      description: Result of reconciling missing standard environment setup. No credential material is returned.
-      properties:
-        outcome:
-          type: string
-          enum:
-            - complete
-            - policy_ready
-            - not_required
-            - collection_pause_hold
-      required:
-        - outcome
-      additionalProperties: false
     DevDetail:
       type: object
       properties:
