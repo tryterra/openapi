@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
   contact: {}
-  description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted).
+  description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted). Selected product enforcement requires a current Vantage grant for orders, results and lab work. Missing grants or disabled environments return 403 with code entitlement_required or environment_disabled; unavailable current authorization returns 503 with code authorization_unavailable. Configuration, catalogue and recovery remain authenticated.
   title: Terra Vantage API
-  version: 2026.07.23.2
+  version: 2026.09.16
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -96,8 +96,11 @@ paths:
       tags:
         - clients
       description: The currently registered webhook destination for this environment ("" when none).
+      x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       responses:
         '200':
           description: Current destination
@@ -107,6 +110,12 @@ paths:
                 $ref: '#/components/schemas/ClientResponse'
         '500':
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
               schema:
@@ -133,8 +142,11 @@ paths:
               $ref: '#/components/schemas/UpdateWebhookUrlRequest'
         description: Webhook URL update request
         required: true
+      x-required-token-scope: vantage:write
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       responses:
         '200':
           description: Webhook URL updated successfully
@@ -166,14 +178,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/orders:
     get:
       summary: List orders
       tags:
         - orders
       description: Keyset-paginated index of your orders, newest first. Pass the returned next_cursor to fetch the following page; absence of next_cursor means the last page.
+      x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       parameters:
         - name: limit
           in: query
@@ -243,13 +264,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
     post:
       summary: Create a new order
       tags:
         - orders
       description: Create a new blood, DNA, or device test order. Products that are disabled in your catalog cannot be ordered and are rejected with 403. Payment is authorized then captured as part of order creation; if authorization fails, nothing is created and a 402 is returned.
+      x-required-token-scope: vantage:write
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       parameters:
         - name: Idempotency-Key
           in: header
@@ -303,6 +333,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/orders/{orderID}:
     get:
       summary: Get order by order ID
@@ -317,8 +353,11 @@ paths:
           schema:
             type: integer
             minimum: 1
+      x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       responses:
         '200':
           description: Successfully retrieved order
@@ -350,14 +389,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/orders/{orderID}/simulate:
     post:
       summary: Simulate an order lifecycle event (Testing environment only)
       tags:
         - orders
       description: Drives one lifecycle event on your order exactly as a supplier update would — status history is recorded and the corresponding signed webhook is delivered to your registered destination. Only valid forward transitions are accepted. results_ready also stores a sample result so the download and acknowledge flows work end to end. The production environment refuses with 403.
+      x-required-token-scope: vantage:write
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       parameters:
         - name: orderID
           in: path
@@ -408,14 +456,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/products:
     get:
       summary: List all product types
       tags:
         - products
       description: Returns all available diagnostic test categories (e.g., Blood Tests, DNA Tests)
+      x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       responses:
         '200':
           description: Successfully retrieved product types
@@ -437,14 +494,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/products/selection:
     put:
       summary: Set catalog selection
       tags:
         - products
       description: 'Curate which products your own catalog reads return. Full-set write: listed products become enabled, every other product disabled. With no selection saved, everything is enabled; products added to the global catalog after your last save default to enabled until you save again. Disabled products are excluded from catalog reads and cannot be ordered (403).'
+      x-required-token-scope: vantage:write
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       requestBody:
         required: true
         content:
@@ -476,6 +542,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/products/{id}:
     get:
       summary: Get products by type ID
@@ -497,8 +569,11 @@ paths:
           schema:
             type: integer
             minimum: 1
+      x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       responses:
         '200':
           description: Successfully retrieved products. An existing product type with no available products returns an empty array.
@@ -554,6 +629,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/products/{id}/variants:
     get:
       summary: Get product variants by product ID
@@ -575,8 +656,11 @@ paths:
           schema:
             type: integer
             minimum: 1
+      x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       responses:
         '200':
           description: Successfully retrieved variants
@@ -632,14 +716,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/results:
     get:
       summary: List results
       tags:
         - results
       description: Keyset-paginated index of order items with result activity, newest first.
+      x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       parameters:
         - name: limit
           in: query
@@ -687,12 +780,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/results/{orderItemID}:
     get:
       summary: Get presigned URL for test results
       tags:
         - results
-      description: 'Returns a time-limited presigned URL to download normalized test results in FHIR format (JSON). The URL is valid for 15 minutes. Note: Every orderItemID can only be associated with maximum 1 panel, hence results can be uniquely identified by orderItemID.'
+      description: 'Returns a time-limited presigned URL to download normalized test results in FHIR format (JSON). The URL is valid for 15 minutes before credential validation is configured. Validated requests receive a URL bounded by token expiry and the original authorization deadline (at most 45 seconds), even when product policy is off; request a fresh URL when starting each download. Note: Every orderItemID can only be associated with maximum 1 panel, hence results can be uniquely identified by orderItemID.'
       parameters:
         - name: orderItemID
           in: path
@@ -708,8 +807,11 @@ paths:
           schema:
             type: integer
             minimum: 1
+      x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       responses:
         '200':
           description: Successfully generated download URL
@@ -741,6 +843,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/results/{orderItemID}/acknowledge:
     post:
       summary: Acknowledge results receipt
@@ -762,8 +870,11 @@ paths:
           schema:
             type: integer
             minimum: 1
+      x-required-token-scope: vantage:write
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       responses:
         '200':
           description: Results acknowledged successfully
@@ -795,14 +906,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/labs:
     get:
       summary: List nearby lab draw sites
       tags:
         - labs
       description: Returns nearby Patient Service Centers (lab draw sites) for a US zip code, used when placing a GO_TO_LAB order.
+      x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       parameters:
         - name: zip_code
           in: query
@@ -836,14 +956,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/overview:
     get:
       summary: Analytics overview
       tags:
         - analytics
       description: 'Client-scoped analytics summary for a time window: order totals with a by-status breakdown, results in vs. still missing, and webhook failures with a daily series.'
+      x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       parameters:
         - name: since
           in: query
@@ -884,14 +1013,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
   /api/v1/webhook-deliveries:
     get:
       summary: List webhook delivery outcomes
       tags:
         - analytics
       description: Client-scoped keyset list of terminal webhook delivery outcomes, newest first. Use outcome=failed to see only permanently-failed deliveries.
+      x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
+        - DataBearer: []
+          DevIDHeader: []
       parameters:
         - name: outcome
           in: query
@@ -946,6 +1084,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '503':
+          description: Current authorization is unavailable; retry after the dependency recovers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
 webhooks:
   order.status_changed:
     post:
@@ -985,6 +1129,16 @@ webhooks:
           description: Return any 2xx quickly to acknowledge receipt.
 components:
   securitySchemes:
+    DataBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: Terra data token
+      description: A data-plane token with vantage:read for reads or vantage:write for writes. Requires dev-id. Write includes read; data:read alone does not grant Vantage. Available after the API credential validator is configured.
+    DevIDHeader:
+      type: apiKey
+      in: header
+      name: dev-id
+      description: Environment owned by the data token's customer and within its audience.
     BasicAuth:
       type: http
       scheme: basic
@@ -994,7 +1148,10 @@ components:
         every other Terra API. The header pair `dev-id` + `x-api-key` is also
         accepted. Suspended credentials receive 403; accounts without the
         Vantage entitlement receive 403 once entitlement enforcement is
-        enabled.
+        enabled. Once the credential validator is configured, backfilled keys
+        also honor current token expiry, revocation, audience and Vantage scopes.
+        Invalid tokens receive 401, insufficient scopes 403 and an unavailable
+        validator 503. These checks remain active when product policy is off.
   schemas:
     ListOrdersResponse:
       type: object

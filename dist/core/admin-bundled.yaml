@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.16
-  description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
+  version: 2026.09.16.1
+  description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
 security:
@@ -590,6 +590,50 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchCompanyRequest'
+  /environments/reconcile:
+    post:
+      operationId: reconcileEnvironments
+      summary: Reconcile standard environment setup
+      description: |
+        Reconciles the authenticated customer's standard environments using current server-owned
+        billing and staff records. No targeting, scope or billing fields are accepted. Repeated
+        calls reuse reserved IDs and completed steps. Existing settings, secrets and explicit
+        disables are preserved. A customer without an eligible tier returns not_required;
+        acknowledged collection pauses return collection_pause_hold. No product access is granted.
+        Available only when v6 provisioning ownership is enabled for the customer; unavailable
+        dependencies return 503 and must be retried without a legacy creation fallback.
+      tags:
+        - environments
+      security:
+        - adminToken:
+            - account:write
+      responses:
+        '200':
+          description: Reconciliation completed or explicitly skipped.
+          headers:
+            Terra-Environment-Provisioning:
+              description: Confirms the v6 provisioning contract was used.
+              schema:
+                type: string
+                const: v6
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvironmentReconcileResponse'
+              example:
+                outcome: complete
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /environments:
     get:
       operationId: listEnvironments
@@ -732,6 +776,13 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Terra-Entitlements-View:
+              description: Present as effective when the selected rollout reads live staff grants and local capability sources; absent on the legacy raw view.
+              schema:
+                type: string
+                enum:
+                  - effective
           content:
             application/json:
               schema:
@@ -767,6 +818,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '429':
           $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
       summary: List feature entitlements
       description: 'Account-level and read-only: the capabilities this account holds, one row each, with `source` recording how each was granted (reconciled from the subscription, or set by hand). Only granted capabilities appear, so a locked feature is an absence rather than a row saying false.'
       security:
@@ -4602,6 +4655,8 @@ components:
             datalinks:write: 'Data plane: create and delete data links.'
             graphs:read: 'Data plane: read graph sessions.'
             graphs:write: 'Data plane: create and manage graph sessions (public renders of health data).'
+            vantage:read: 'Data plane: read Vantage orders, results, labs and configuration.'
+            vantage:write: 'Data plane: create Vantage orders, simulate orders and update configuration or result acknowledgments. Includes vantage:read.'
             agents:read: 'Data plane: read agents, bundles, jobs, and schedules.'
             agents:write: 'Data plane: create, update, and delete agents and their configuration.'
             agents:run: 'Data plane: execute agents and bundles (incurs model spend).'
@@ -4648,6 +4703,8 @@ components:
             datalinks:write: data
             graphs:read: data
             graphs:write: data
+            vantage:read: data
+            vantage:write: data
             agents:read: data
             agents:write: data
             agents:run: data
@@ -5130,6 +5187,20 @@ components:
         - type
         - url
         - active
+    EnvironmentReconcileResponse:
+      type: object
+      description: Result of reconciling missing standard environment setup. No credential material is returned.
+      properties:
+        outcome:
+          type: string
+          enum:
+            - complete
+            - policy_ready
+            - not_required
+            - collection_pause_hold
+      required:
+        - outcome
+      additionalProperties: false
     DevDetail:
       type: object
       properties:
@@ -6281,11 +6352,14 @@ components:
             - access_denied
             - audience_restricted
             - authorization_pending
+            - authorization_unavailable
             - billing_unavailable
             - conflict
             - dependency_failed
             - dev_id_not_found
             - device_code_expired
+            - entitlement_required
+            - environment_disabled
             - idempotency_key_reuse
             - internal_error
             - not_claimable
@@ -7114,6 +7188,12 @@ components:
           type: string
           description: The request path, including any query string, that produced this problem.
           example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
+        code:
+          type: string
+          description: Stable error classification. Product gates return entitlement_required (403), environment_disabled (403), or authorization_unavailable (503).
+        product:
+          type: string
+          description: The product checked by the authorization gate, when classified.
         detail:
           type: string
           description: A human-readable explanation specific to this occurrence of the problem.
