@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.16.1
+  version: 2026.09.16.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -4782,37 +4782,37 @@ components:
   securitySchemes:
     adminToken:
       type: oauth2
-      description: Terra access token (customer-scoped, kind=admin, `terra_at_*`). The ONLY grant is the RFC 8628 device-authorization flow (POST /auth/device, approve in the dashboard, poll POST /auth/token) or a dashboard mint — there is NO client_credentials token endpoint; the clientCredentials flow object below exists solely because OAS 3.1 has no first-class device-flow representation and this is where scopes are machine-readable (see x-grant-type). This surface accepts ONLY admin tokens; data tokens (kind=data, `terra_dt_*`, minted at POST /environments/{dev_id}/tokens) authenticate the data API only — the planes never cross. Each operation names its required scope; admin tokens may also carry an environment audience. The scopes map below is the whole closed vocabulary — BOTH planes. POST /auth/device grants only the admin-plane names and rejects the rest with 400 invalid_scope, so check the plane before choosing a set — x-scope-planes is the machine-readable answer, and each description opens with `Data plane:` or `Both planes:` when the name is not admin-only. Three more lists classify the admin-grantable scopes by rule. x-scope-dangerous is anything irreversible or about money, people, or credentials (spend, remove a person, issue or revoke credentials, rotate the key) — a default grant leaves it off and the approver must turn it on. x-scope-sensitive is disclosure of what the approver already sees in the dashboard (the environment key, stored payload bodies) — granted by default, labeled. x-scope-account-level is anything that acts on the customer as a whole rather than one environment — a token limited to environments cannot hold it. Everything else is reversible configuration, undone with the same token. x-scope-presets are the named grant sets the approval page offers, derived from those lists.
+      description: Terra access token (customer-scoped, kind=admin, `terra_at_*`). The ONLY grant is the RFC 8628 device-authorization flow (POST /auth/device, approve in the dashboard, poll POST /auth/token) or a dashboard mint — there is NO client_credentials token endpoint; the clientCredentials flow object below exists solely because OAS 3.1 has no first-class device-flow representation and this is where scopes are machine-readable (see x-grant-type). This surface accepts ONLY admin tokens; data tokens (kind=data, `terra_dt_*`, minted at POST /environments/{dev_id}/tokens) authenticate the data API only — the planes never cross. Each operation names its required scope; admin tokens may also carry an environment audience. The scopes map below is the whole closed vocabulary — BOTH planes. POST /auth/device grants only the admin-plane names and rejects the rest with 400 invalid_scope, so check the plane before choosing a set — x-scope-planes is the machine-readable answer, and a data-only description also opens with `Data plane:`. Every admin-grantable description is the sentence the approval page shows the person granting it, so it cites no routes and carries no plane, danger or sensitivity marker; the lists below are the only statement of those facts. Three more lists classify the admin-grantable scopes by rule. x-scope-dangerous is anything irreversible or about money, people, or credentials (spend, remove a person, issue or revoke credentials, rotate the key) — a default grant leaves it off and the approver must turn it on. x-scope-sensitive is disclosure of what the approver already sees in the dashboard (the environment key, stored payload bodies) — granted by default, labeled. x-scope-account-level is anything that acts on the customer as a whole rather than one environment — a token limited to environments cannot hold it. Everything else is reversible configuration, undone with the same token. x-scope-presets are the named grant sets the approval page offers, derived from those lists.
       flows:
         clientCredentials:
           tokenUrl: /api/v3/admin/auth/token
           scopes:
-            account:read: Read account and dev-id metadata.
-            keys:read: 'Both planes: read credential secret material — the legacy static API key (GET /api-key), a token''s bearer (GET /tokens/{id}/secret), or the data plane''s GET /v2/dashboard/developer. Sensitive: plaintext disclosure of what the dashboard already shows this user.'
-            keys:write: 'Rotate the legacy static API key (POST /environments/{dev_id}/api-key/rotate). Dangerous: rotates the account''s legacy credential, breaking every integration still holding the old one.'
-            providers:read: 'Both planes: read provider enablement, masked OAuth credentials, and custom scopes.'
-            providers:write: 'Both planes: enable/disable providers and set custom OAuth credentials and scopes.'
-            destinations:read: Read webhook and Supabase destinations.
-            destinations:write: Create, update, and delete destinations, and run Supabase provisioning.
-            events:read: Read delivery-history event metadata.
-            events:write: 'Both planes: re-dispatch (resend) a delivered event.'
-            connections:read: 'Both planes: list a dev-id''s end-user connections.'
-            payloads:read: 'Read stored delivered payload bodies. Sensitive: contains end-user health data the dashboard already shows this user.'
-            dataconfig:read: Read per-data-type field selection.
-            dataconfig:write: Update per-data-type field selection.
-            scores:read: Read the score catalog and configuration.
-            scores:write: Activate and configure scores.
-            models:read: 'Both planes: read the model catalog (data plane) and per-environment model-run history (admin plane).'
+            account:read: See your account details and environment IDs.
+            keys:read: Reveal API keys and token secrets in plain text.
+            keys:write: Rotate the API key. Anything still using the old key stops working.
+            providers:read: See which providers are enabled and how they are configured.
+            providers:write: Enable or disable providers and change their OAuth settings.
+            destinations:read: See where your data is delivered, such as webhooks and Supabase.
+            destinations:write: Add, change or remove delivery destinations.
+            events:read: See the history of delivered events.
+            events:write: Resend previously delivered events.
+            connections:read: See which users are connected in each environment.
+            payloads:read: Read the contents of delivered payloads, including user health data.
+            dataconfig:read: See which fields each data type returns.
+            dataconfig:write: Change which fields each data type returns.
+            scores:read: See which scores are enabled and how they are set up.
+            scores:write: Enable and configure scores.
+            models:read: See the model catalogue and past model runs.
             models:run: 'Data plane: run a model over a user''s stored data.'
             workouts:read: 'Data plane: read workout templates and planned workouts.'
             workouts:write: 'Data plane: create workout templates and plan workouts for users.'
             labreports:read: 'Data plane: read lab reports.'
             labreports:write: 'Data plane: reprocess or delete lab reports.'
             testdata:write: 'Data plane: generate synthetic test data.'
-            billing:read: 'Read billing: subscriptions, invoices, payment method, usage.'
-            billing:write: 'Manage subscriptions (subscribe, cancel-incomplete). Dangerous: spends money.'
-            tokens:admin: 'List and revoke any admin token in the account. Dangerous: can revoke every other credential the account holds.'
-            entitlements:read: Read company feature entitlements.
+            billing:read: See your plan, invoices, payment method and usage.
+            billing:write: Change your subscription. This can spend money.
+            tokens:admin: List and revoke any token in the account, including other people's.
+            entitlements:read: See which features your company has access to.
             auth:write: 'Data plane: create user authentication flows — widget sessions, auth tokens (in place of a client_secret).'
             connections:write: 'Data plane: deauthenticate users and update connection attributes.'
             data:read: 'Data plane: read stored end-user health data (activity, sleep, body, …).'
@@ -4829,11 +4829,11 @@ components:
             agents:write: 'Data plane: create, update, and delete agents and their configuration.'
             agents:run: 'Data plane: execute agents and bundles (incurs model spend).'
             ai:run: 'Data plane: run AI-context queries and the MCP proxy.'
-            tokens:read: List token metadata for an environment (never re-shows a bearer).
-            tokens:write: 'Mint and revoke tokens for an environment — credential issuance. Dangerous: transitively as broad as everything issuable.'
-            account:write: Update account/company profile, onboarding, terms and referral data.
-            team:read: Read the company's team member roster.
-            team:write: 'Update or remove a team member (name, phone, role; detach from the company). Dangerous: can revoke another human''s access.'
+            tokens:read: See the tokens issued for an environment, without their secrets.
+            tokens:write: Create and revoke tokens for an environment. A new token can do anything its scopes allow.
+            account:write: Change your company profile, onboarding and referral details.
+            team:read: See who is on your team.
+            team:write: Change or remove team members, including taking away their access.
           x-scope-planes:
             account:read: admin
             keys:read: both
