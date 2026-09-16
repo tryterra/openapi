@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.15
+  version: 2026.09.16
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers.
 servers:
   - url: /api/v3/admin
@@ -3357,7 +3357,7 @@ paths:
       tags:
         - tokens
       summary: Re-show a token's bearer
-      description: 'Returns the token including its bearer. Deliberate API-key DX parity: the credential tokens succeed has always been retrievable, so tokens are too. Gated by keys:read (dangerous plaintext disclosure, same class as GET /api-key) and audited. An owned data token with no recoverable secret returns 422. Admin tokens and tokens outside this environment return 404.'
+      description: 'Returns the token including its bearer. Deliberate API-key DX parity: the credential tokens succeed has always been retrievable, so tokens are too. Gated by keys:read (sensitive plaintext disclosure, same class as GET /api-key) and audited. An owned data token with no recoverable secret returns 422. Admin tokens and tokens outside this environment return 404.'
       security:
         - adminToken:
             - keys:read
@@ -4552,24 +4552,23 @@ paths:
       summary: Rotate the legacy client_secret
       security:
         - adminToken:
-            - account:write
-            - keys:read
+            - keys:write
       parameters:
         - $ref: '#/components/parameters/DevId'
         - $ref: '#/components/parameters/IdempotencyKey'
-      description: Mints a new client_secret for this environment and returns it. Requires BOTH account:write (it mutates credential config) and keys:read (it discloses plaintext). Prefer coexisting data tokens — mint new, revoke old — which need no atomic swap; this exists for the dashboard settings page's legacy key. The rotated-away secret stops working immediately.
+      description: Mints a new client_secret for this environment and returns it. Requires keys:write, the dangerous scope reserved for legacy-key mutation, which a default token does not hold; keys:read alone reveals but never rotates. Prefer coexisting data tokens — mint new, revoke old — which need no atomic swap; this exists for the dashboard settings page's legacy key. The rotated-away secret stops working immediately.
 components:
   securitySchemes:
     adminToken:
       type: oauth2
-      description: Terra access token (customer-scoped, kind=admin, `terra_at_*`). The ONLY grant is the RFC 8628 device-authorization flow (POST /auth/device, approve in the dashboard, poll POST /auth/token) or a dashboard mint — there is NO client_credentials token endpoint; the clientCredentials flow object below exists solely because OAS 3.1 has no first-class device-flow representation and this is where scopes are machine-readable (see x-grant-type). This surface accepts ONLY admin tokens; data tokens (kind=data, `terra_dt_*`, minted at POST /environments/{dev_id}/tokens) authenticate the data API only — the planes never cross. Each operation names its required scope; admin tokens may also carry an environment audience. The scopes map below is the whole closed vocabulary — BOTH planes. POST /auth/device grants only the admin-plane names and rejects the rest with 400 invalid_scope, so check the plane before choosing a set — x-scope-planes is the machine-readable answer, and each description opens with `Data plane:` or `Both planes:` when the name is not admin-only.
+      description: Terra access token (customer-scoped, kind=admin, `terra_at_*`). The ONLY grant is the RFC 8628 device-authorization flow (POST /auth/device, approve in the dashboard, poll POST /auth/token) or a dashboard mint — there is NO client_credentials token endpoint; the clientCredentials flow object below exists solely because OAS 3.1 has no first-class device-flow representation and this is where scopes are machine-readable (see x-grant-type). This surface accepts ONLY admin tokens; data tokens (kind=data, `terra_dt_*`, minted at POST /environments/{dev_id}/tokens) authenticate the data API only — the planes never cross. Each operation names its required scope; admin tokens may also carry an environment audience. The scopes map below is the whole closed vocabulary — BOTH planes. POST /auth/device grants only the admin-plane names and rejects the rest with 400 invalid_scope, so check the plane before choosing a set — x-scope-planes is the machine-readable answer, and each description opens with `Data plane:` or `Both planes:` when the name is not admin-only. Three more lists classify the admin-grantable scopes by rule. x-scope-dangerous is anything irreversible or about money, people, or credentials (spend, remove a person, issue or revoke credentials, rotate the key) — a default grant leaves it off and the approver must turn it on. x-scope-sensitive is disclosure of what the approver already sees in the dashboard (the environment key, stored payload bodies) — granted by default, labeled. x-scope-account-level is anything that acts on the customer as a whole rather than one environment — a token limited to environments cannot hold it. Everything else is reversible configuration, undone with the same token. x-scope-presets are the named grant sets the approval page offers, derived from those lists.
       flows:
         clientCredentials:
           tokenUrl: /api/v3/admin/auth/token
           scopes:
             account:read: Read account and dev-id metadata.
-            keys:read: 'Both planes: read credential secret material — the legacy static API key (GET /api-key), a token''s bearer (GET /tokens/{id}/secret), or the data plane''s GET /v2/dashboard/developer. Dangerous: plaintext disclosure.'
-            keys:write: 'Reserved for legacy static-key mutations. No admin-surface route uses it today; the dashboard rotate flow retains it. Dangerous: rotates the account''s legacy credential.'
+            keys:read: 'Both planes: read credential secret material — the legacy static API key (GET /api-key), a token''s bearer (GET /tokens/{id}/secret), or the data plane''s GET /v2/dashboard/developer. Sensitive: plaintext disclosure of what the dashboard already shows this user.'
+            keys:write: 'Rotate the legacy static API key (POST /environments/{dev_id}/api-key/rotate). Dangerous: rotates the account''s legacy credential, breaking every integration still holding the old one.'
             providers:read: 'Both planes: read provider enablement, masked OAuth credentials, and custom scopes.'
             providers:write: 'Both planes: enable/disable providers and set custom OAuth credentials and scopes.'
             destinations:read: Read webhook and Supabase destinations.
@@ -4577,7 +4576,7 @@ components:
             events:read: Read delivery-history event metadata.
             events:write: 'Both planes: re-dispatch (resend) a delivered event.'
             connections:read: 'Both planes: list a dev-id''s end-user connections.'
-            payloads:read: Read stored delivered payload bodies (contains end-user health data).
+            payloads:read: 'Read stored delivered payload bodies. Sensitive: contains end-user health data the dashboard already shows this user.'
             dataconfig:read: Read per-data-type field selection.
             dataconfig:write: Update per-data-type field selection.
             scores:read: Read the score catalog and configuration.
@@ -4660,11 +4659,89 @@ components:
             team:write: admin
           x-scope-dangerous:
             - billing:write
-            - keys:read
             - keys:write
             - team:write
             - tokens:admin
             - tokens:write
+          x-scope-sensitive:
+            - keys:read
+            - payloads:read
+          x-scope-account-level:
+            - account:read
+            - account:write
+            - billing:read
+            - billing:write
+            - entitlements:read
+            - team:read
+            - team:write
+            - tokens:admin
+          x-scope-presets:
+            - name: Coding agent
+              summary: A developer or their coding agent at the terminal. Reads everything, writes integration config, resends events. Cannot spend, remove people, issue credentials, or rotate the key.
+              scopes:
+                - account:read
+                - account:write
+                - billing:read
+                - connections:read
+                - dataconfig:read
+                - dataconfig:write
+                - destinations:read
+                - destinations:write
+                - entitlements:read
+                - events:read
+                - events:write
+                - keys:read
+                - models:read
+                - payloads:read
+                - providers:read
+                - providers:write
+                - scores:read
+                - scores:write
+                - team:read
+                - tokens:read
+            - name: Read only
+              summary: Auditing, onboarding a teammate, or a demo. Every read except credential material and payload bodies.
+              scopes:
+                - account:read
+                - billing:read
+                - connections:read
+                - dataconfig:read
+                - destinations:read
+                - entitlements:read
+                - events:read
+                - models:read
+                - providers:read
+                - scores:read
+                - team:read
+                - tokens:read
+            - name: Full access
+              summary: Every admin-grantable scope, dangerous ones included.
+              scopes:
+                - account:read
+                - account:write
+                - billing:read
+                - billing:write
+                - connections:read
+                - dataconfig:read
+                - dataconfig:write
+                - destinations:read
+                - destinations:write
+                - entitlements:read
+                - events:read
+                - events:write
+                - keys:read
+                - keys:write
+                - models:read
+                - payloads:read
+                - providers:read
+                - providers:write
+                - scores:read
+                - scores:write
+                - team:read
+                - team:write
+                - tokens:admin
+                - tokens:read
+                - tokens:write
           x-not-a-real-flow: Scope registry only. Token issuance is the device flow (see scheme description); this tokenUrl does not accept client_credentials grants.
       x-grant-type: urn:ietf:params:oauth:grant-type:device_code
     sessionToken:
