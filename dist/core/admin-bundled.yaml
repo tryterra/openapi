@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.16.3
+  version: 2026.09.17
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -29,7 +29,7 @@ tags:
   - name: models
     description: The catalog of generally-available models, and the per-environment history of model runs.
   - name: webhookevents
-    description: Inspect and resend webhook events
+    description: Inspect, resend and generate webhook events
   - name: connections
     description: Inspect end-user connections
   - name: workouts
@@ -2598,6 +2598,83 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ResendEventRequest'
+  /environments/{dev_id}/webhook-events/generate:
+    post:
+      operationId: generateWebhookEvent
+      tags:
+        - webhookevents
+      responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The preview is the GenerateEventResult that a real call would return, with dispatched false; nothing is stored or delivered, and the preview's event_id is not a real event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: dispatch
+                preview:
+                  event_id: 7d2f1c3a-9b4e-4f60-8a1d-2c3b4e5f6a7b
+                  type: sleep
+                  provider: null
+                  destination_id: null
+                  dispatched: false
+                  payload:
+                    type: sleep
+                    data: []
+        '202':
+          description: Generated and queued for delivery. Dispatch is asynchronous, so a 202 means the event was stored and accepted rather than delivered; it appears in the delivery history under event_id once sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateEventResult'
+              example:
+                event_id: 7d2f1c3a-9b4e-4f60-8a1d-2c3b4e5f6a7b
+                user_id: 3f8e2b1c-4d5a-4e6f-9a0b-1c2d3e4f5a6b
+                reference_id: qa-runner-17
+                type: daily
+                provider: garmin
+                destination_id: null
+                dispatched: true
+                payload:
+                  type: daily
+                  user:
+                    user_id: 3f8e2b1c-4d5a-4e6f-9a0b-1c2d3e4f5a6b
+                    provider: GARMIN
+                  data: []
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Generate a synthetic test event
+      description: Builds a realistic payload of the requested type for a made-up user, normalises it exactly as live provider data is, stores it, and queues it to every destination the dispatcher would deliver it to (active, deliverable type, event_types admit the type), or to the one named by destination_id. Register the receiver as a destination first; there is no ad-hoc URL, and having no eligible destination (or naming an inactive or non-accepting one) is a 422 on real and dry-run calls alike. The payload is returned in the response so the caller sees what the destination will receive. The event is marked synthetic end to end and never touches a real connection. Pass ?dry_run=true to get the payload without storing or delivering anything. Requires the environment to be entitled to the Unified API.
+      security:
+        - adminToken:
+            - events:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateEventRequest'
+            example:
+              type: daily
+              provider: garmin
+              destination_id: '4821'
   /environments/{dev_id}/users:
     get:
       operationId: listUsers
@@ -4583,7 +4660,7 @@ components:
             destinations:read: See where your data is delivered, such as webhooks and Supabase.
             destinations:write: Add, change or remove delivery destinations.
             events:read: See the history of delivered events.
-            events:write: Resend previously delivered events.
+            events:write: Resend previously delivered events and generate synthetic test events.
             connections:read: See which users are connected in each environment.
             payloads:read: Read the contents of delivered payloads, including user health data.
             dataconfig:read: See which fields each data type returns.
@@ -5381,6 +5458,64 @@ components:
         - p50_response_time_ms
         - p95_response_time_ms
         - p99_response_time_ms
+    GenerateEventRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          description: The data type to generate, e.g. daily, activity, sleep, body, nutrition or menstruation. Required.
+        provider:
+          type: string
+          description: The provider slug the event should appear to come from, e.g. garmin (case-insensitive). Omitted, the data is drawn from every field any provider reports for the type and the event carries no provider. A provider that does not support the type is a 400.
+        user_id:
+          type: string
+          format: uuid
+          description: The Terra user id to stamp on the event, as a UUID. Omitted, a fresh id is minted per event.
+        reference_id:
+          type: string
+          description: Your own id for that user. Omitted, a fresh UUID is minted.
+        destination_id:
+          type: string
+          description: 'Deliver to this one destination only, by the id the destinations list reports. Omitted, the event goes to every destination the dispatcher would deliver it to: active, of a deliverable type, and with event_types that admit the type. An unknown id is a 404; an inactive, non-accepting or undeliverable one is a 422.'
+        start_time:
+          type: string
+          format: date-time
+          description: The moment the generated data is anchored to, RFC 3339. Omitted, now.
+      required:
+        - type
+    GenerateEventResult:
+      type: object
+      properties:
+        event_id:
+          type: string
+          description: The id of the generated event; the same id the delivery history and resend use.
+        user_id:
+          type: string
+          format: uuid
+        reference_id:
+          type: string
+        type:
+          type: string
+          description: The generated data type, e.g. daily.
+        provider:
+          type:
+            - string
+            - 'null'
+          description: The lower-case provider slug the event carries. null when none was requested.
+        destination_id:
+          type:
+            - string
+            - 'null'
+          description: The single destination delivered to, echoing the request. null when the event went to every active destination.
+        dispatched:
+          type: boolean
+          description: True when the payload was stored and queued for delivery; false for a ?dry_run=true preview.
+        payload:
+          type: object
+          description: The normalised payload exactly as destinations receive it.
+      required:
+        - provider
+        - destination_id
     EventStatsBucket:
       type: object
       description: Delivery attempt counts within a UTC bucket, clipped to the requested window.
