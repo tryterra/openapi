@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.17
+  version: 2026.09.21
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -2529,6 +2529,8 @@ paths:
                     data_type: activity
                     provider: garmin
                     destination_type: webhook
+                    destination_id: '1937255512398764032'
+                    destination_url: https://api.acme.com/terra/webhook
                     http_status: 200
                     response_time_ms: 184
                     bytes: 15872
@@ -2548,12 +2550,26 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Delivery-history debug surface
-      description: 'Delivery metadata, not payloads: each row is one dispatch with its HTTP status, latency and size, while the body that was sent is a separate payloads:read-gated sub-resource. Keyset cursor pagination over a bounded window: the default is the trailing 7 days, since and until move it, and nothing older than the 14 days a payload is retained for is worth querying. Filter by outcome (delivered or failed), provider, data_type, destination_type, summary_id, user_id, reference_id, or event_id for one exact event. An event_id widens the default window to 14 days. No matching deliveries returns an empty page; an unknown user_id or reference_id returns 404.'
+      description: 'Delivery metadata, not payloads: each row is one dispatch with its HTTP status, latency and size, while the body that was sent is a separate payloads:read-gated sub-resource. Keyset cursor pagination over a bounded window: the default is the trailing 7 days, since and until move it, and nothing older than the 14 days a payload is retained for is worth querying. Filter by outcome (delivered or failed), provider, data_type, destination_type, destination, destination_url, summary_id, user_id, reference_id, or event_id for one exact event. An event_id widens the default window to 14 days. No matching deliveries returns an empty page; an unknown user_id or reference_id returns 404.'
       security:
         - adminToken:
             - events:read
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - name: destination
+          in: query
+          x-terra-help: Exact destination ID recorded at delivery time. Older rows without IDs do not match; use --destination-url for those.
+          description: String-encoded destination ID, matched exactly against the delivery-time record. Rows that predate destination ID recording do not match. Use destination_url to include older rows.
+          schema:
+            type: string
+          example: '1937255512398764032'
+        - name: destination_url
+          in: query
+          x-terra-help: Exact recorded destination URL, including older deliveries. Combines with --destination.
+          description: Exact, case-sensitive destination URL recorded at delivery time. Combines with destination when both are supplied. Also matches older rows without a recorded destination ID.
+          schema:
+            type: string
+          example: https://api.acme.com/terra/webhook
         - name: limit
           x-terra-help: 'Positive rows per page: default 50, clamped to 200. --paginate fetches pages; --max-pages caps page count.'
           in: query
@@ -3007,12 +3023,26 @@ paths:
       tags:
         - webhookevents
       summary: Delivery event statistics
-      description: 'Recorded outbound delivery attempt analytics over [since, until). Basic is the default: flat scalar counts, rates and latency percentiles, without bucket or breakdown aggregation. Full preserves those top-level metrics and adds every UTC time bucket, breakdowns and a response-time histogram. Full allows at most 1500 intersecting buckets; basic has no bucket limit. Status 200-299 is successful; every other status is failed. delivery_attempts includes retries; successful_attempts and failed_attempts partition that count. Latency samples must be finite and positive; units are milliseconds. Percentiles use TDigest over the whole window. Breakdown dimensions are event data type, provider, destination type and HTTP status. compare=previous_period requires view=full and adds a summary for the immediately preceding equal-duration window. This does not include synchronous API reads. Timestamps must be within 1900-2299 with at most millisecond precision.'
+      description: 'Recorded outbound delivery attempt analytics over [since, until). Basic is the default: flat scalar counts, rates and latency percentiles, without bucket or breakdown aggregation. Full preserves those top-level metrics and adds every UTC time bucket, breakdowns and a response-time histogram. Full allows at most 1500 intersecting buckets; basic has no bucket limit. Status 200-299 is successful; every other status is failed. delivery_attempts includes retries; successful_attempts and failed_attempts partition that count. Latency samples must be finite and positive; units are milliseconds. Percentiles use TDigest over the whole window. Breakdown dimensions are event data type, provider, destination type and HTTP status. compare=previous_period requires view=full and adds a summary for the immediately preceding equal-duration window. This does not include synchronous API reads. Timestamps must be within 1900-2299 with at most millisecond precision. Destination filters apply to every metric and to the comparison window.'
       security:
         - adminToken:
             - events:read
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - name: destination
+          in: query
+          x-terra-help: Exact destination ID recorded at delivery time. Older rows without IDs do not match; use --destination-url for those.
+          description: String-encoded destination ID, matched exactly against the delivery-time record. Rows that predate destination ID recording do not match. Use destination_url to include older rows.
+          schema:
+            type: string
+          example: '1937255512398764032'
+        - name: destination_url
+          in: query
+          x-terra-help: Exact recorded destination URL, including older deliveries. Combines with --destination.
+          description: Exact, case-sensitive destination URL recorded at delivery time. Combines with destination when both are supplied. Also matches older rows without a recorded destination ID.
+          schema:
+            type: string
+          example: https://api.acme.com/terra/webhook
         - name: since
           in: query
           x-terra-help: 'Inclusive start (RFC3339, millisecond precision). Default: 24 hours before --until.'
@@ -6358,6 +6388,12 @@ components:
           type: string
         destination_type:
           type: string
+        destination_id:
+          type: string
+          description: String-encoded destination ID recorded at delivery time. Absent on older rows that did not record an ID.
+        destination_url:
+          type: string
+          description: Destination URL recorded at delivery time, including for destinations since edited or deleted. Empty for destinations without a URL.
         http_status:
           type: integer
         response_time_ms:
@@ -6385,6 +6421,12 @@ components:
               args:
                 - '--env'
                 - <dev-id>
+            - summary: Summarize one destination
+              args:
+                - '--env'
+                - <dev-id>
+                - '--destination'
+                - <destination-id>
             - summary: Compare hourly delivery statistics with the previous period
               args:
                 - '--env'
@@ -6403,15 +6445,19 @@ components:
             - data_type
             - provider
             - destination_type
+            - destination_id
+            - destination_url
             - http_status
             - sent_at
           examples:
-            - summary: Find failed deliveries
+            - summary: Find failed deliveries for one destination
               args:
                 - '--env'
                 - <dev-id>
                 - '--outcome'
                 - failed
+                - '--destination'
+                - <destination-id>
             - summary: Filter providers and destinations
               args:
                 - '--env'
