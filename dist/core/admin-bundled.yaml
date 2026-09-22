@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.22
+  version: 2026.09.22.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -867,6 +867,9 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Add/change a plan
       description: |
+        Accepts an admin token with explicitly approved billing:write or a dashboard session
+        with billing:write. Device-flow approval requires an account admin; no dashboard
+        session is required when using the approved token. System tokens are rejected.
         The admin API owns the scope-to-price mapping, eligibility checks and Stripe writes.
         Annual event plans also require a deferred monthly metered overage subscription after payment.
         A committed 202 means payment is pending, with a Stripe-hosted invoice URL in payment_url.
@@ -1086,6 +1089,9 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Cancel incomplete (failed-3DS) subscriptions
       description: |
+        Accepts an admin token with explicitly approved billing:write or a dashboard session
+        with billing:write. Device-flow approval requires an account admin; no dashboard
+        session is required when using the approved token. System tokens are rejected.
         Reads every page of the canonical customer's subscriptions and selects only incomplete.
         Terminal incomplete_expired subscriptions are excluded. Commit rechecks ownership and status
         before each cancellation.
