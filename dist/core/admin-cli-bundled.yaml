@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.22.1
+  version: 2026.09.22.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -214,16 +214,19 @@ paths:
         - tokens
       responses:
         '200':
-          description: OK
+          description: Updated (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/DashboardUser'
-                required:
-                  - user
+                anyOf:
+                  - type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/DashboardUser'
+                    required:
+                      - user
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 user:
                   user_id: usr_8f2a1c
@@ -257,6 +260,7 @@ paths:
         - adminToken:
             - account:write
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -314,16 +318,19 @@ paths:
         - tokens
       responses:
         '200':
-          description: OK
+          description: Updated (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  metadata:
-                    $ref: '#/components/schemas/MeMetadata'
-                required:
-                  - metadata
+                anyOf:
+                  - type: object
+                    properties:
+                      metadata:
+                        $ref: '#/components/schemas/MeMetadata'
+                    required:
+                      - metadata
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 metadata:
                   analytics_layout:
@@ -354,6 +361,7 @@ paths:
         - adminToken:
             - account:write
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -368,6 +376,28 @@ paths:
       tags:
         - tokens
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The preview describes the token the call would revoke, which is the calling token itself.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: revoke
+                preview:
+                  token_id: 1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  kind: admin
+                  name: terra-cli on alex-mbp
+                  scopes:
+                    - account:read
+                  dev_ids: null
+                  created_by: alex@acme.test
+                  created_via: device
+                  created_at: '2026-06-24T10:00:00Z'
+                  expires_at: '2026-07-24T10:00:00Z'
+                  last_used_at: '2026-06-24T11:02:00Z'
+                  revoked_at: null
         '204':
           description: Revoked.
         '401':
@@ -381,6 +411,7 @@ paths:
       security:
         - adminToken: []
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
   /tokens/self/rotate:
     post:
@@ -389,6 +420,26 @@ paths:
       tags:
         - tokens
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The preview carries the clamped expiry the successor would get (a rotation near the grant anchor yields a short token); it omits token_id and token, which do not exist until the swap runs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: rotate
+                preview:
+                  kind: admin
+                  name: ci runner
+                  scopes:
+                    - account:read
+                  created_at: '2026-06-24T10:00:00Z'
+                  expires_at: '2026-07-24T10:00:00Z'
+                  last_used_at: null
+                  revoked_at: null
+                  rotated_from: 1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  will_return_token: true
         '201':
           description: Rotated.
           content:
@@ -419,6 +470,7 @@ paths:
       security:
         - adminToken: []
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
   /tokens:
     get:
@@ -495,6 +547,25 @@ paths:
       tags:
         - tokens
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The preview is the token that would be revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: revoke
+                preview:
+                  token_id: 1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f
+                  kind: admin
+                  name: ci runner
+                  scopes:
+                    - account:read
+                  created_at: '2026-06-24T10:00:00Z'
+                  expires_at: '2026-07-24T10:00:00Z'
+                  last_used_at: null
+                  revoked_at: null
         '204':
           description: Revoked.
         '401':
@@ -519,6 +590,7 @@ paths:
             type: string
             format: uuid
           description: The token to act on, by the id its creation returned. The token value itself is never accepted here.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
   /company:
     get:
@@ -562,16 +634,19 @@ paths:
         - company
       responses:
         '200':
-          description: OK
+          description: Updated (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  company:
-                    $ref: '#/components/schemas/CompanyProfile'
-                required:
-                  - company
+                anyOf:
+                  - type: object
+                    properties:
+                      company:
+                        $ref: '#/components/schemas/CompanyProfile'
+                    required:
+                      - company
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 company:
                   company_id: cus_9f3k2m
@@ -598,6 +673,7 @@ paths:
         - adminToken:
             - account:write
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -673,16 +749,19 @@ paths:
         - environments
       responses:
         '200':
-          description: OK — a profile already existed for this dev-id (idempotent get-or-create; the existing row is returned unchanged)
+          description: The dev-id already has a profile; the existing row is returned unchanged (or DryRunResult when ?dry_run=true, reporting whether it would create one or change nothing).
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  profile:
-                    $ref: '#/components/schemas/EnvironmentProfile'
-                required:
-                  - profile
+                anyOf:
+                  - type: object
+                    properties:
+                      profile:
+                        $ref: '#/components/schemas/EnvironmentProfile'
+                    required:
+                      - profile
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 profile:
                   dev_id: prod-app-x81LmQ
@@ -734,6 +813,7 @@ paths:
         - adminToken:
             - account:write
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -857,11 +937,14 @@ paths:
         - billing
       responses:
         '200':
-          description: OK
+          description: OK (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BillingState'
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/BillingState'
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 state: ok
         '202':
@@ -895,10 +978,17 @@ paths:
         A committed 202 means payment is pending, with a Stripe-hosted invoice URL in payment_url.
         Product access and provisioning follow the existing Stripe webhook settlement.
         Send an Idempotency-Key so a successful response can be replayed on retry.
+        With ?dry_run=true the same planning runs and nothing is subscribed: the preview carries
+        the action it would take (create or update), the price items it would add or remove, the
+        proration date and behaviour, whether an annual plan defers its metered overage, and an
+        invoice estimate of what the change would bill now. `would` is create or update.
+        The estimate is current Stripe state rather than a reservation, and no preview can say
+        whether the card will need a challenge; the commit recalculates it.
       security:
         - adminToken:
             - billing:write
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -1098,11 +1188,14 @@ paths:
         - billing
       responses:
         '200':
-          description: OK
+          description: OK (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BillingState'
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/BillingState'
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 state: ok
         '401':
@@ -1124,10 +1217,15 @@ paths:
         Terminal incomplete_expired subscriptions are excluded. Commit rechecks ownership and status
         before each cancellation.
         Cancellation is sequential and can partially complete if a later Stripe request fails.
+        With ?dry_run=true the preview lists the subscriptions the call would cancel, read with the
+        same selection, and cancels nothing. `would` is cancel, or noop when none are incomplete.
+        Stripe can move one out of incomplete between the preview and the commit, which is why the
+        commit rechecks each subscription rather than trusting the list.
       security:
         - adminToken:
             - billing:write
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
   /environments/{dev_id}:
     get:
@@ -1179,16 +1277,19 @@ paths:
         - environments
       responses:
         '200':
-          description: OK
+          description: Updated (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  profile:
-                    $ref: '#/components/schemas/EnvironmentProfile'
-                required:
-                  - profile
+                anyOf:
+                  - type: object
+                    properties:
+                      profile:
+                        $ref: '#/components/schemas/EnvironmentProfile'
+                    required:
+                      - profile
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 profile:
                   dev_id: prod-app-x81LmQ
@@ -1221,6 +1322,7 @@ paths:
             - account:write
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -1277,16 +1379,19 @@ paths:
         - environments
       responses:
         '200':
-          description: OK
+          description: Updated (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  widget:
-                    $ref: '#/components/schemas/WidgetConfig'
-                required:
-                  - widget
+                anyOf:
+                  - type: object
+                    properties:
+                      widget:
+                        $ref: '#/components/schemas/WidgetConfig'
+                    required:
+                      - widget
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 widget:
                   widget_config_url: https://widget.example/config.json
@@ -1313,6 +1418,7 @@ paths:
             - dataconfig:write
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -1412,11 +1518,14 @@ paths:
         - sources
       responses:
         '200':
-          description: OK
+          description: Enabled (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProviderEnabled'
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/ProviderEnabled'
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 provider: garmin
                 active: true
@@ -1444,6 +1553,7 @@ paths:
           schema:
             type: string
           description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is a 400.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
     delete:
       operationId: disableSource
@@ -1553,6 +1663,7 @@ paths:
           schema:
             type: string
           description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is a 400.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -1562,11 +1673,14 @@ paths:
               $ref: '#/components/schemas/ProviderCredentialWrite'
       responses:
         '200':
-          description: The stored credential (secret masked).
+          description: Stored (or DryRunResult when ?dry_run=true; the client secret is masked in both).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProviderCredentials'
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/ProviderCredentials'
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 provider: garmin
                 has_credentials: true
@@ -1637,11 +1751,14 @@ paths:
         - sources
       responses:
         '200':
-          description: OK
+          description: Updated (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProviderScopes'
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/ProviderScopes'
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 provider: garmin
                 scopes:
@@ -1672,6 +1789,7 @@ paths:
           schema:
             type: string
           description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is a 400.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -1740,6 +1858,22 @@ paths:
       tags:
         - destinations
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The preview omits id and signing_secret, which do not exist until the destination does; will_return_signing_secret says one would be issued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: create
+                preview:
+                  type: webhook
+                  url: https://example.com/terra
+                  active: true
+                  event_types:
+                    - activity
+                  will_return_signing_secret: true
         '201':
           description: Created.
           content:
@@ -1772,6 +1906,7 @@ paths:
             - destinations:write
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -1787,11 +1922,14 @@ paths:
         - destinations
       responses:
         '200':
-          description: OK
+          description: Updated (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DestinationSummary'
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/DestinationSummary'
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 id: '1937255512398764032'
                 type: webhook
@@ -1823,6 +1961,7 @@ paths:
           schema:
             type: string
           description: The destination to act on, by the id its creation returned.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -1882,6 +2021,20 @@ paths:
       tags:
         - destinations
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The authorization URL carries a session token, so previewing one would mean creating the session the preview promised not to create.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: start
+                preview:
+                  redirect_uri: https://api.tryterra.co/api/v2/oauth/callback/dashboard/supabase
+                  scope: all
+                  expires_in: 600
+                  will_return_authorization_url: true
         '201':
           description: Started.
           content:
@@ -1910,6 +2063,7 @@ paths:
             - destinations:write
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
   /environments/{dev_id}/unified-api/destinations/supabase/oauth/{oauth_session_id}:
     get:
@@ -2019,6 +2173,20 @@ paths:
       tags:
         - destinations
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The OAuth session, its readiness and the project reference are all validated, so the preview says the provisioning would start; nothing is created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: provision
+                preview:
+                  project_ref: abcdefghijklmnopqrst
+                  project_name: terra-prod
+                  organization: Acme
+                  will_create_destination: true
         '201':
           description: Provisioned.
           content:
@@ -2050,6 +2218,7 @@ paths:
             - destinations:write
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -2121,7 +2290,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SelectedDataField'
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/SelectedDataField'
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 data_type: activity
                 fields:
@@ -2139,7 +2311,7 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Replace a data-type field selection
-      description: 'Scoped to the single data type named in the body, and the field list replaces what was stored: anything left out of `fields` is deselected. samples_enabled comes back in the response but cannot be set here, and the PUT on this path is what selects data types in the first place. Supports ?dry_run=true for a preview that commits nothing.'
+      description: 'Scoped to the single data type named in the body, and the field list replaces what was stored: anything left out of `fields` is deselected. samples_enabled comes back in the response but cannot be set here, and the PUT on this path is what selects data types in the first place. A data type that is not selected returns 404 in both preview and live mode. Supports ?dry_run=true for a preview that commits nothing.'
       security:
         - adminToken:
             - dataconfig:write
@@ -2160,11 +2332,14 @@ paths:
         - dataconfig
       responses:
         '200':
-          description: OK
+          description: Updated (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SelectedDataTypes'
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/SelectedDataTypes'
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 scopes:
                   - ATHLETE
@@ -2190,6 +2365,7 @@ paths:
             - dataconfig:write
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       description: 'Sets WHICH data types this environment collects, wholesale — the PATCH on this path sets the fields within one data type. Send the complete desired set: anything omitted is deselected, and nothing is read back first, so a concurrent edit is never silently reinstated. ATHLETE is always selected and need not be sent; SAMPLES is the per-row samples flag, not a data type; HEALTH_OBSERVATION is 403 access_denied unless the account holds the health_observation entitlement. Gated dataconfig:write rather than account:write so an environment''s data scopes stay editable by every role that can configure data.'
       requestBody:
@@ -2304,11 +2480,14 @@ paths:
         - scores
       responses:
         '200':
-          description: OK
+          description: Updated (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ScoreResult'
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/ScoreResult'
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 score: sleep
                 active: true
@@ -2342,6 +2521,7 @@ paths:
           description: |-
             The score to act on, named however you have it: the score name, an alias, the enum
                       name, or the numeric enum value. An unrecognised score is a 400.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -2684,6 +2864,21 @@ paths:
       tags:
         - webhookevents
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. Every lookup and the routing decision have run, so destination_count is how many destinations a live resend would reach; nothing is queued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: resend
+                preview:
+                  event_id: 7d2f1c3a-9b4e-4f60-8a1d-2c3b4e5f6a7b
+                  event_type: activity
+                  user_id: 3f8e2b1c-4d5a-4e6f-9a0b-1c2d3e4f5a6b
+                  destination_count: 2
+                  dispatched: false
         '202':
           description: Queued for redelivery. Dispatch is asynchronous, so a 202 means the event was accepted rather than delivered; re-read the event to see the outcome.
           content:
@@ -2713,6 +2908,7 @@ paths:
             - events:write
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -2746,7 +2942,7 @@ paths:
                     type: sleep
                     data: []
         '202':
-          description: Generated and queued for delivery. Dispatch is asynchronous, so a 202 means the event was stored and accepted rather than delivered; it appears in the delivery history under event_id once sent.
+          description: Queued for delivery. Dispatch is asynchronous, so the event is stored and accepted rather than delivered; it appears in the delivery history under event_id once sent.
           content:
             application/json:
               schema:
@@ -3424,14 +3620,18 @@ paths:
             - dataconfig:write
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '200':
-          description: The updated processing types.
+          description: Updated (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
                 type: object
+                anyOf:
+                  - type: object
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 data:
                   - type: fhir
@@ -3533,6 +3733,7 @@ paths:
             - tokens:write
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -3541,6 +3742,25 @@ paths:
             schema:
               $ref: '#/components/schemas/MintDataTokenRequest'
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The preview omits token_id and token, which do not exist until the mint runs; it carries the expiry the token would get. The preview checks the current active-token limit with the same storage predicate as the write. The write rechecks it atomically; a preview does not reserve capacity.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: create
+                preview:
+                  dev_id: prod-app-x81LmQ
+                  name: ingest worker
+                  scopes:
+                    - auth:write
+                  created_at: '2026-06-24T10:00:00Z'
+                  expires_at: '2026-09-22T10:00:00Z'
+                  last_used_at: null
+                  revoked_at: null
+                  will_return_token: true
         '201':
           description: The minted token (bearer shown once).
           content:
@@ -3591,8 +3811,28 @@ paths:
             type: string
             format: uuid
           description: The token to act on, by the id its creation returned. The token value itself is never accepted here.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The preview is the token that would be revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: revoke
+                preview:
+                  token_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                  dev_id: prod-app-x81LmQ
+                  name: ingest worker
+                  scopes:
+                    - auth:write
+                  created_at: '2026-06-24T10:00:00Z'
+                  expires_at: '2026-09-22T10:00:00Z'
+                  last_used_at: null
+                  revoked_at: null
         '204':
           description: Revoked.
         '400':
@@ -3768,16 +4008,19 @@ paths:
         - workouts
       responses:
         '200':
-          description: OK
+          description: Stored (or DryRunResult when ?dry_run=true; the preview checks the workout target and returns the same 404 as the write).
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  workout:
-                    $ref: '#/components/schemas/WorkoutMetadata'
-                required:
-                  - workout
+                anyOf:
+                  - type: object
+                    properties:
+                      workout:
+                        $ref: '#/components/schemas/WorkoutMetadata'
+                    required:
+                      - workout
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 workout:
                   workout_id: wk_9f3k2m
@@ -3790,6 +4033,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
         '429':
@@ -3812,6 +4057,7 @@ paths:
           schema:
             type: string
           description: The workout whose metadata this addresses. This surface annotates a workout, it never creates one.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -3826,16 +4072,19 @@ paths:
         - workouts
       responses:
         '200':
-          description: OK
+          description: Updated (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  workout:
-                    $ref: '#/components/schemas/WorkoutMetadata'
-                required:
-                  - workout
+                anyOf:
+                  - type: object
+                    properties:
+                      workout:
+                        $ref: '#/components/schemas/WorkoutMetadata'
+                    required:
+                      - workout
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 workout:
                   workout_id: wk_9f3k2m
@@ -3869,6 +4118,7 @@ paths:
           schema:
             type: string
           description: The workout whose metadata this addresses. This surface annotates a workout, it never creates one.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -3878,11 +4128,11 @@ paths:
               $ref: '#/components/schemas/PatchWorkoutMetadataRequest'
     delete:
       operationId: deleteWorkoutMetadata
-      x-terra-help: Delete workout metadata without deleting the workout or its data. No dry-run is available.
+      x-terra-help: Delete workout metadata without deleting the workout or its data. Preview it first with ?dry_run=true.
       tags:
         - workouts
       summary: Delete a workout's metadata
-      description: 'Deletes the metadata row for the workout, not the workout or its data: what goes is the stored pace_units. The 204 carries nothing, and unlike the other destructive routes here this one has no dry-run, so read the value first if you might want to put it back.'
+      description: 'Deletes the metadata row for the workout, not the workout or its data: what goes is the stored pace_units. The 204 carries nothing, so pass ?dry_run=true first for a preview of the row that would go.'
       security:
         - adminToken:
             - dataconfig:write
@@ -3895,8 +4145,24 @@ paths:
           schema:
             type: string
           description: The workout whose metadata this addresses. This surface annotates a workout, it never creates one.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The preview is the metadata row that would be removed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: delete
+                preview:
+                  workout:
+                    workout_id: 3f8e2b1c-4d5a-4e6f-9a0b-1c2d3e4f5a6b
+                    dev_id: prod-app-x81LmQ
+                    pace_units:
+                      unit: min_per_km
         '204':
           description: Deleted.
         '400':
@@ -3965,16 +4231,19 @@ paths:
         - company
       responses:
         '200':
-          description: OK
+          description: Updated (or DryRunResult when ?dry_run=true).
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  onboarding:
-                    $ref: '#/components/schemas/OnboardingInfo'
-                required:
-                  - onboarding
+                anyOf:
+                  - type: object
+                    properties:
+                      onboarding:
+                        $ref: '#/components/schemas/OnboardingInfo'
+                    required:
+                      - onboarding
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 onboarding:
                   company_id: cus_9f3k2m
@@ -4005,6 +4274,7 @@ paths:
         - adminToken:
             - account:write
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -4020,19 +4290,22 @@ paths:
         - company
       responses:
         '200':
-          description: OK
+          description: Recorded (or DryRunResult when ?dry_run=true, which reports the acceptance that would be stored and omits `agreed`).
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  terms_version:
-                    type: string
-                  agreed:
-                    type: boolean
-                required:
-                  - terms_version
-                  - agreed
+                anyOf:
+                  - type: object
+                    properties:
+                      terms_version:
+                        type: string
+                      agreed:
+                        type: boolean
+                    required:
+                      - terms_version
+                      - agreed
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 terms_version: '2026-05-01'
                 agreed: true
@@ -4054,6 +4327,7 @@ paths:
         - adminToken:
             - account:write
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -4179,6 +4453,17 @@ paths:
       tags:
         - company
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. Nothing is enabled.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: enable
+                preview:
+                  feature: points
         '204':
           description: No Content
         '401':
@@ -4197,6 +4482,7 @@ paths:
         - adminToken:
             - account:write
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
   /company/referral-code:
     get:
@@ -4242,16 +4528,19 @@ paths:
         - company
       responses:
         '200':
-          description: OK
+          description: The referral code (or DryRunResult when ?dry_run=true, reporting whether it would create one or change nothing).
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  referral_code:
-                    type: string
-                required:
-                  - referral_code
+                anyOf:
+                  - type: object
+                    properties:
+                      referral_code:
+                        type: string
+                    required:
+                      - referral_code
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 referral_code: ACME-REF-42
         '400':
@@ -4271,6 +4560,7 @@ paths:
         - adminToken:
             - account:write
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -4430,16 +4720,19 @@ paths:
         - team
       responses:
         '200':
-          description: OK
+          description: Updated (or DryRunResult when ?dry_run=true, whose settles_grant_epoch reports whether the change would strand the member's tokens).
           content:
             application/json:
               schema:
                 type: object
-                properties:
-                  user:
-                    $ref: '#/components/schemas/DashboardUser'
-                required:
-                  - user
+                anyOf:
+                  - type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/DashboardUser'
+                    required:
+                      - user
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 user:
                   user_id: usr_8f2a1c
@@ -4480,6 +4773,7 @@ paths:
           schema:
             type: string
           description: The team member's id, as returned by GET /team/members.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -4493,6 +4787,21 @@ paths:
       tags:
         - team
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The preview is the member that would be removed, or reports that nothing would change when the user is not a member (the live DELETE is idempotent).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: delete
+                preview:
+                  user:
+                    user_id: usr_8f2a1c
+                    email: dana@example.com
+                    role: developer
+                  revokes_tokens: true
         '204':
           description: Detached (or already not a member — idempotent).
         '401':
@@ -4518,6 +4827,7 @@ paths:
           schema:
             type: string
           description: The team member's id, as returned by GET /team/members.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
   /environments/{dev_id}/models/runs:
     get:
@@ -4701,6 +5011,20 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateTeamInvitationRequest'
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The preview carries the deterministic expiry; the invitation token itself does not exist until the invitation does.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: create
+                preview:
+                  email: dana@example.com
+                  role: developer
+                  expires_at: '2026-07-01T10:00:00Z'
+                  will_return_token: true
         '201':
           description: Created
           content:
@@ -4728,6 +5052,7 @@ paths:
         - adminToken:
             - team:write
       parameters:
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
     get:
       operationId: listTeamInvitations
@@ -4801,8 +5126,25 @@ paths:
           schema:
             type: string
           description: The invitation's id, as returned by GET /team/invitations.
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The preview is the pending invitation that would be revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: revoke
+                preview:
+                  invitation:
+                    id: inv_7d2f1c3a
+                    email: dana@example.com
+                    role: developer
+                    created_at: '2026-06-24T10:00:00Z'
+                    expires_at: '2026-07-01T10:00:00Z'
         '204':
           description: No Content
         '400':
@@ -4830,11 +5172,14 @@ paths:
         - environments
       responses:
         '200':
-          description: OK
+          description: Rotated (or DryRunResult when ?dry_run=true; the new key is never previewed).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RotatedApiKey'
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/RotatedApiKey'
+                  - $ref: '#/components/schemas/DryRunResult'
               example:
                 dev_id: prod-app-x81LmQ
                 api_key: 6f8c…new-secret…2a1b
@@ -4854,6 +5199,7 @@ paths:
             - keys:write
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
       description: Mints a new client_secret for this environment and returns it. Requires keys:write, the dangerous scope reserved for legacy-key mutation, which a default token does not hold; keys:read alone reveals but never rotates. Prefer coexisting data tokens — mint new, revoke old — which need no atomic swap; this exists for the dashboard settings page's legacy key. The rotated-away secret stops working immediately.
 components:
@@ -5075,7 +5421,7 @@ components:
       required: false
       schema:
         type: boolean
-      description: When true, returns a DryRunResult preview without committing.
+      description: When true the operation commits nothing and answers 200 with a DryRunResult — {dry_run, would, preview} — whatever its live success code is. Operations whose live success is also 200 publish both the live response and DryRunResult in the response schema.
   responses:
     Unauthorized:
       description: Missing/invalid/expired admin token.
@@ -5777,6 +6123,26 @@ components:
         - user_code
         - verification_uri
         - expires_in
+    DryRunPreview:
+      type: object
+      description: |-
+        The representation the live call would return, or for a delete the representation of what
+        would go. A value that cannot exist without committing is omitted rather than invented, and
+        the will_return_* flags below say one is coming.
+      properties:
+        will_return_token:
+          type: boolean
+          description: The call would issue a bearer token, returned once by the live call.
+        will_return_signing_secret:
+          type: boolean
+          description: The call would issue a webhook signing secret, returned once by the live call.
+        will_return_api_key:
+          type: boolean
+          description: The call would issue an API key, returned once by the live call.
+        will_return_authorization_url:
+          type: boolean
+          description: The call would return an authorization URL to send the user to.
+      unevaluatedProperties: {}
     DryRunResult:
       type: object
       description: Returned by any mutating endpoint invoked with ?dry_run=true.
@@ -5789,7 +6155,7 @@ components:
           type: string
           description: the action that would be taken
         preview:
-          type: object
+          $ref: '#/components/schemas/DryRunPreview'
       required:
         - dry_run
         - would
