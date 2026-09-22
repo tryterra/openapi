@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.21
+  version: 2026.09.22
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -852,7 +852,7 @@ paths:
             - billing:read
     post:
       operationId: subscribe
-      x-terra-help: Add or change a plan. A requires_action response needs a card challenge at dashboard_url before the change takes effect.
+      x-terra-help: Add or change a plan. A requires_action response needs payment at payment_url.
       tags:
         - billing
       responses:
@@ -865,14 +865,14 @@ paths:
               example:
                 state: ok
         '202':
-          description: Payment confirmation is required before the plan changes. The response carries a dashboard_url; open it to complete the challenge, after which the subscription activates.
+          description: Payment confirmation is required before the plan changes. The response carries a payment_url; open it to complete the challenge, after which the subscription activates.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BillingState'
               example:
                 state: requires_action
-                dashboard_url: https://dashboard.tryterra.co/dashboard/settings/payment
+                payment_url: https://invoice.stripe.com/i/example
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -886,7 +886,12 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Add/change a plan
-      description: 'The plan is named by `scope`; schedule and promo_code are optional. A 200 means the change is live, while a 202 with state requires_action means nothing has changed yet: someone has to finish the card challenge at the dashboard_url in the body before the subscription activates. Send an Idempotency-Key so that a retry replays the stored response instead of applying the change twice.'
+      description: |
+        The admin API owns the scope-to-price mapping, eligibility checks and Stripe writes.
+        Annual event plans also require a deferred monthly metered overage subscription after payment.
+        A committed 202 means payment is pending, with a Stripe-hosted invoice URL in payment_url.
+        Product access and provisioning follow the existing Stripe webhook settlement.
+        Send an Idempotency-Key so a successful response can be replayed on retry.
       security:
         - adminToken:
             - billing:write
@@ -1085,7 +1090,7 @@ paths:
   /billing/subscriptions/cancel-incomplete:
     post:
       operationId: cancelIncomplete
-      x-terra-help: Cancel all subscriptions with unfinished payment challenges. List subscriptions again to see which remain.
+      x-terra-help: Cancel incomplete subscriptions with unfinished payment challenges.
       tags:
         - billing
       responses:
@@ -1108,7 +1113,11 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Cancel incomplete (failed-3DS) subscriptions
-      description: 'Sweeps the account''s subscriptions that are still incomplete because a payment challenge was never finished. There is no request body, so nothing here names one subscription: the sweep covers all of them. The response is a billing state rather than a list of what was cancelled, so re-read the list endpoint to see what survived.'
+      description: |
+        Reads every page of the canonical customer's subscriptions and selects only incomplete.
+        Terminal incomplete_expired subscriptions are excluded. Commit rechecks ownership and status
+        before each cancellation.
+        Cancellation is sequential and can partially complete if a later Stripe request fails.
       security:
         - adminToken:
             - billing:write
@@ -5301,9 +5310,9 @@ components:
           enum:
             - ok
             - requires_action
-        dashboard_url:
+        payment_url:
           type: string
-          description: Where the human finishes 3DS / card entry. Present only with requires_action.
+          description: Stripe-hosted invoice URL where the human finishes payment. Present only with requires_action.
       required:
         - state
     CompanyProfile:
@@ -7726,12 +7735,31 @@ components:
       properties:
         scope:
           type: string
-          description: The plan or add-on to move to. Required. Relayed to the billing system, which owns the plan vocabulary and rejects an unknown value.
+          enum:
+            - startup
+            - event_monthly
+            - event_annual_base
+            - metered
+            - free
+            - growth
+            - graph_api
+            - compliance_baa
+            - enterprise_sla
+            - data_enrichment
+            - vantage
+            - lab_reports
+            - streaming
+            - models
+            - planned_workouts
+          description: The plan or add-on selected by the admin API's server-owned Stripe price catalogue.
           x-terra-help: Plan or add-on to subscribe to. Unknown plans are rejected by billing.
         schedule:
           type: string
-          description: Billing cadence for the change, e.g. monthly or yearly. Omitted leaves the cadence to the billing system's default for the scope.
-          x-terra-help: 'Billing cadence, e.g. monthly or yearly (default: plan default).'
+          enum:
+            - monthly
+            - annual
+          description: Required for startup. For other scopes, must match the configured price cadence.
+          x-terra-help: 'Billing cadence: monthly or annual. Required for startup.'
         promo_code:
           type: string
           description: A promotional code to apply. Omitted applies none; an invalid one is rejected by the billing system rather than ignored.
