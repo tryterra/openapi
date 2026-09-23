@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.22.2
+  version: 2026.09.23
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -5643,6 +5643,7 @@ components:
             - bundle
             - tos
             - dpa
+            - mnda
           description: Which legal document this acceptance covers. Omitted means 'bundle' (the pre-split combined terms).
           default: bundle
           x-terra-help: 'Legal document to accept (default: bundle).'
@@ -5652,6 +5653,14 @@ components:
             - 'null'
           description: Free-text role of the accepting user at acceptance time (e.g. admin, developer).
           x-terra-help: Your role when accepting, as free text (e.g. admin or developer).
+        client_ip:
+          type: string
+          description: The accepting browser's IP address. Honoured only from a dashboard-issued token; otherwise the request's own address is recorded.
+          x-terra-help: Accepting browser's IP; dashboard tokens only.
+        user_agent:
+          type: string
+          description: The accepting browser's user agent. Honoured only from a dashboard-issued token.
+          x-terra-help: Accepting browser's user agent; dashboard tokens only.
       required:
         - terms_version
     BillingState:
