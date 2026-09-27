@@ -3,7 +3,7 @@ info:
   contact: {}
   description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted). Selected product enforcement requires a current Vantage grant for orders, results and lab work. Missing grants or disabled environments return 403 with code entitlement_required or environment_disabled; unavailable current authorization returns 503 with code authorization_unavailable. Configuration, catalogue and recovery remain authenticated.
   title: Terra Vantage API
-  version: 2026.09.16
+  version: 2026.09.27
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -2217,9 +2217,34 @@ components:
         width:
           type: integer
           format: int32
+    Biomarker:
+      type: object
+      description: One measurement a kit includes.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Human-readable biomarker name.
+          example: HDL Cholesterol
+        code:
+          type: string
+          description: The code the result bundle uses for this analyte.
+          example: HDL
+        loinc:
+          type: string
+          description: LOINC code for this analyte, when known.
+          example: 2085-9
     ProductVariant:
       type: object
+      required:
+        - biomarkers
       properties:
+        biomarkers:
+          type: array
+          description: Biomarkers measured by this variant. Empty when the panel is not catalogued or could not be read.
+          items:
+            $ref: '#/components/schemas/Biomarker'
         available_collection_types:
           type: array
           items:
@@ -2258,11 +2283,15 @@ components:
           format: int32
         variant_defining_attrs:
           type: object
+          description: Attributes that distinguish this variant from its siblings. The biomarkers key is lifted out into the typed biomarkers array above, and remains here only when it could not be read.
           additionalProperties: {}
         variant_name:
           type: string
     Product:
       type: object
+      required:
+        - variants
+        - model_descriptive_attrs
       properties:
         enabled:
           type: boolean
@@ -2285,6 +2314,7 @@ components:
             $ref: '#/components/schemas/Image'
         model_descriptive_attrs:
           type: object
+          description: Supplier-supplied descriptive attributes for the product (for example collection_method). Keys and values vary by supplier.
           additionalProperties:
             type: string
         name:
@@ -2294,6 +2324,7 @@ components:
           format: int64
         variants:
           type: array
+          description: The product's variants, on the same curation rules as GET /products/{id}/variants. Empty when the product has none.
           items:
             $ref: '#/components/schemas/ProductVariant'
     ProductType:
