@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.28.1
+  version: 2026.09.28.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -861,6 +861,93 @@ paths:
       security:
         - adminToken:
             - entitlements:read
+  /billing/payment-method/setup:
+    post:
+      operationId: createPaymentSetup
+      summary: Create a customer-bound payment setup
+      description: Creates a SetupIntent for the authenticated canonical billing customer. Confirmation stays in Stripe.js; the secret is returned only to this caller. Preview creates no intent.
+      tags:
+        - billing
+      security:
+        - adminToken:
+            - billing:write
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Completed, or a preview when dry_run is true.
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/PaymentSetupResult'
+                  - $ref: '#/components/schemas/DryRunResult'
+              example:
+                client_secret: seti_example_secret_example
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /billing/invoices/pay:
+    post:
+      operationId: payInvoice
+      summary: Pay an owned invoice
+      description: Pays only the authenticated customer’s open invoice using Stripe payment-method precedence. An already paid invoice returns success; payment authentication returns a hosted URL. Preview never charges.
+      tags:
+        - billing
+      security:
+        - adminToken:
+            - billing:write
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Completed, or a preview when dry_run is true.
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/BillingState'
+                  - $ref: '#/components/schemas/DryRunResult'
+              example:
+                state: ok
+        '202':
+          description: Payment requires confirmation on the returned payment_url.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingState'
+              example:
+                state: requires_action
+                payment_url: https://invoice.stripe.com/i/example
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PayInvoiceRequest'
   /billing/subscriptions:
     get:
       operationId: listSubscriptions
@@ -931,7 +1018,7 @@ paths:
               example:
                 state: ok
         '202':
-          description: Payment confirmation is required before the plan changes. The response carries a payment_url; open it to complete the challenge, after which the subscription activates.
+          description: Payment confirmation is required before the plan changes. The response carries a payment_url and/or client_secret. Use the hosted page or embedded Stripe confirmation to complete payment, after which the subscription activates.
           content:
             application/json:
               schema:
@@ -958,7 +1045,8 @@ paths:
         session is required when using the approved token. System tokens are rejected.
         The admin API owns the scope-to-price mapping, eligibility checks and Stripe writes.
         Annual event plans also require a deferred monthly metered overage subscription after payment.
-        A committed 202 means payment is pending, with a Stripe-hosted invoice URL in payment_url.
+        A committed 202 means payment is pending, with a hosted payment_url and/or an embedded
+        Stripe invoice confirmation client_secret. Never log the client secret or cache it as account data.
         Product access and provisioning follow the existing Stripe webhook settlement.
         Send an Idempotency-Key so a successful response can be replayed on retry.
         With ?dry_run=true the same planning runs and nothing is subscribed: the preview carries
@@ -1065,6 +1153,47 @@ paths:
         - adminToken:
             - billing:read
   /billing/payment-method:
+    post:
+      operationId: updatePaymentMethod
+      summary: Set the default payment method
+      description: Accepts only a successful customer-owned SetupIntent. Updates billable subscriptions before the customer default; a partial failure is retryable and is never reported as success.
+      tags:
+        - billing
+      security:
+        - adminToken:
+            - billing:write
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Completed, or a preview when dry_run is true.
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/BillingState'
+                  - $ref: '#/components/schemas/DryRunResult'
+              example:
+                state: ok
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePaymentMethodRequest'
     get:
       operationId: getPaymentMethod
       tags:
@@ -1092,7 +1221,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Default payment method (masked)
-      description: 'The default card only, and only the fields that are safe to show: brand, last4 and expiry. has_card is the field to branch on, since when it is false the account has no card on file and the rest are absent.'
+      description: The subscription default, then customer default, then first attached method. Safe card fields are brand, last4 and expiry. has_card is the field to branch on, since when it is false the account has no card on file and the rest are absent.
       security:
         - adminToken:
             - billing:read
@@ -1161,6 +1290,25 @@ paths:
       operationId: cancelIncomplete
       tags:
         - billing
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                only_operation_keys:
+                  type: boolean
+                  default: false
+                  description: Select only incomplete subscriptions belonging to the supplied operation keys. Used by payment-failure callbacks so an older challenge cannot cancel a newer purchase.
+                operation_keys:
+                  type: array
+                  maxItems: 100
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 255
+                  description: Candidate subscription Idempotency-Key values to acknowledge only after their owned subscription is canceled or incomplete_expired.
       responses:
         '200':
           description: OK (or DryRunResult when ?dry_run=true).
@@ -5405,6 +5553,30 @@ components:
           description: The accepting browser's user agent. Honoured only from a dashboard-issued token.
       required:
         - terms_version
+    PaymentSetupResult:
+      type: object
+      properties:
+        client_secret:
+          type: string
+          description: Caller-bound Stripe setup confirmation secret. Never log it.
+      required:
+        - client_secret
+    UpdatePaymentMethodRequest:
+      type: object
+      properties:
+        intent_id:
+          type: string
+          description: Successful SetupIntent created for this account.
+      required:
+        - intent_id
+    PayInvoiceRequest:
+      type: object
+      properties:
+        invoice_id:
+          type: string
+          description: Invoice belonging to this account.
+      required:
+        - invoice_id
     BillingState:
       type: object
       properties:
@@ -5413,9 +5585,21 @@ components:
           enum:
             - ok
             - requires_action
+            - closed
         payment_url:
           type: string
           description: Stripe-hosted invoice URL where the human finishes payment. Present only with requires_action.
+        client_secret:
+          type: string
+          description: Invoice confirmation secret for embedded Stripe confirmation. Only returned for pending payment to the authenticated billing caller; never log or persist in dashboard caches.
+        cancelled:
+          type: integer
+          description: Number of incomplete subscriptions cancelled by the explicit cancellation operation.
+        cancelled_operation_keys:
+          type: array
+          description: Supplied operation keys confirmed to belong to this customer's canceled or incomplete_expired subscriptions, including earlier cancellations whose response was lost. Active subscriptions and pending updates are excluded.
+          items:
+            type: string
       required:
         - state
     CompanyProfile:
@@ -6826,6 +7010,9 @@ components:
     PaymentMethodSummary:
       type: object
       properties:
+        method:
+          type: string
+          description: Native Stripe payment method type; absent when no method is available.
         brand:
           type: string
         last4:
@@ -7210,6 +7397,9 @@ components:
         promo_code:
           type: string
           description: A promotional code to apply. Omitted applies none; an invalid one is rejected by the billing system rather than ignored.
+        resume_only:
+          type: boolean
+          description: Resume only the original Idempotency-Key and purchase inputs. Never plans or creates a new purchase if its receipt is missing. Completion-only requests cannot preview a new purchase.
       required:
         - scope
     SubscriptionSummary:
