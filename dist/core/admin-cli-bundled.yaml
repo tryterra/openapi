@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.28.3
+  version: 2026.09.28.4
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -1142,10 +1142,57 @@ paths:
       security:
         - adminToken:
             - billing:read
+  /billing/invoices/previews:
+    get:
+      operationId: listInvoicePreviews
+      x-terra-help: Preview every billable subscription without creating invoices or charging.
+      tags:
+        - billing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InvoiceSummary'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data: []
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Preview each billable subscription
+      description: Complete upcoming invoice summaries for each current billable subscription. Includes past-due and unpaid subscriptions; excludes voided collection pauses. Each row names its subscription. This read neither charges nor creates an invoice.
+      security:
+        - adminToken:
+            - billing:read
   /billing/invoices/upcoming:
     get:
       operationId: getUpcomingInvoice
-      x-terra-help: Preview the upcoming invoice. Its ID is upcoming and created_at is null; it has not been issued.
+      x-terra-help: Preview a customer invoice. It has not been issued; use previews for every billable subscription.
       tags:
         - billing
       responses:
@@ -1172,7 +1219,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Upcoming (preview) invoice
-      description: 'A preview of the invoice the open period would produce, not an issued one: its id is the literal `upcoming` and created_at is null. The list endpoint covers invoices that have actually been issued.'
+      description: A customer-level invoice preview, not an issued invoice. For multiple subscriptions use the previews endpoint. Preview IDs and dates are provider-generated and are not payment instructions.
       security:
         - adminToken:
             - billing:read
@@ -1251,6 +1298,37 @@ paths:
       security:
         - adminToken:
             - billing:read
+  /billing/usage/current:
+    get:
+      operationId: getCurrentUsage
+      x-terra-help: Read current live metered items, explicit measurement windows, UTC daily usage, and exact native price decimals.
+      tags:
+        - billing
+      summary: Current metered usage by subscription item
+      description: Includes active, trialing, past_due and unpaid subscriptions, including collection-paused items. Native subscription periods remain separate from the enclosing minute-aligned measurement windows required by Stripe. minute_envelope amounts are estimates for that measurement window, never exact billed-period quantities or invoice charges. UTC daily edge buckets can extend beyond the period. Rows preserve currencies and independent periods; no account-wide total is computed. Pricing decimals are exact strings in currency minor units; unavailable pricing is null. Meter data is eventually consistent.
+      security:
+        - adminToken:
+            - billing:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUsageResponse'
+              example:
+                rows: []
+                meters: {}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /billing/usage:
     get:
       operationId: getUsage
@@ -7137,6 +7215,30 @@ components:
     InvoiceSummary:
       type: object
       properties:
+        subscription_id:
+          type: string
+        number:
+          type: string
+        total:
+          type: integer
+          format: int64
+        amount_paid:
+          type: integer
+          format: int64
+        period_start:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        period_end:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceLineSummary'
         id:
           type: string
         status:
@@ -7170,6 +7272,12 @@ components:
           path: /billing/invoices
           examples:
             - summary: List your invoices
+              args: []
+        - method_name: previews
+          operation: get
+          path: /billing/invoices/previews
+          examples:
+            - summary: Preview every billable subscription
               args: []
         - method_name: upcoming
           operation: get
@@ -8809,6 +8917,25 @@ components:
               args: []
       x-terra-summary: Manage admin tokens for this account
       x-terra-resource: tokens
+    CurrentUsageResponse:
+      type: object
+      description: Current live metered items. Rows are independent; do not sum across currencies, meters or overlapping periods.
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurrentUsageRow'
+        meters:
+          description: Every provider meter, including inactive meters needed to label invoice history.
+          $ref: '#/components/schemas/RecordUsageMeter'
+      required:
+        - rows
+        - meters
+      $defs:
+        RecordUsageMeter:
+          type: object
+          unevaluatedProperties:
+            $ref: '#/components/schemas/UsageMeter'
     UsageResponse:
       type: object
       properties:
@@ -8827,6 +8954,12 @@ components:
           items:
             $ref: '#/components/schemas/UsageSummary'
       x-terra-operations:
+        - method_name: current
+          operation: get
+          path: /billing/usage/current
+          examples:
+            - summary: Read metered items and their current usage windows
+              args: []
         - method_name: retrieve
           operation: get
           path: /billing/usage
@@ -9290,6 +9423,228 @@ components:
         - recurring
         - current_period_start
         - current_period_end
+    InvoiceLineSummary:
+      type: object
+      properties:
+        subscription_id:
+          type: string
+          description: Subscription that owns this line, when supplied by the billing provider; never inferred from the invoice or price.
+        id:
+          type: string
+        description:
+          type: string
+        amount:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        quantity:
+          type:
+            - integer
+            - 'null'
+          format: int64
+        period_start:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        period_end:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        price_id:
+          type: string
+        product_id:
+          type: string
+        meter_id:
+          type: string
+          description: Meter for this historical price, including prices no longer subscribed. Omitted for non-metered lines.
+      required:
+        - id
+        - description
+        - amount
+        - currency
+        - quantity
+        - period_start
+        - period_end
+    UsageMeter:
+      type: object
+      properties:
+        event_name:
+          type: string
+        display_name:
+          type: string
+      required:
+        - event_name
+        - display_name
+    UsageDay:
+      type: object
+      properties:
+        t:
+          type: integer
+          format: int64
+          description: UTC midnight Unix seconds; the bucket ends at t + 86400.
+        value:
+          type: number
+      required:
+        - t
+        - value
+    UsagePriceTier:
+      type: object
+      properties:
+        up_to:
+          type:
+            - integer
+            - 'null'
+          format: int64
+          description: null denotes the unlimited terminal tier.
+        unit_amount_decimal:
+          type:
+            - string
+            - 'null'
+          description: Exact native decimal component; null when the provider has no per-unit component.
+        flat_amount_decimal:
+          type:
+            - string
+            - 'null'
+          description: Exact native decimal component; null when the provider has no flat component.
+      required:
+        - up_to
+        - unit_amount_decimal
+        - flat_amount_decimal
+    UsagePricing:
+      type: object
+      properties:
+        billing_scheme:
+          type: string
+        unit_amount_decimal:
+          type:
+            - string
+            - 'null'
+          description: Exact provider decimal string in currency minor units; null when not a flat per-unit price.
+        tiers_mode:
+          type:
+            - string
+            - 'null'
+        tiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/UsagePriceTier'
+        divide_by:
+          type:
+            - integer
+            - 'null'
+          format: int64
+        round:
+          type:
+            - string
+            - 'null'
+      required:
+        - billing_scheme
+        - unit_amount_decimal
+        - tiers_mode
+        - tiers
+        - divide_by
+        - round
+    CurrentUsageRow:
+      type: object
+      properties:
+        subscription_id:
+          type: string
+        item_id:
+          type: string
+        scope:
+          type: string
+          description: Compatibility label; unknown when the product is not in the configured catalogue.
+        product_id:
+          type: string
+        product_name:
+          type: string
+        price_id:
+          type: string
+        meter_id:
+          type: string
+        currency:
+          type: string
+          description: Native Stripe currency. All pricing amounts are decimal strings in this currency's minor unit, never major units.
+        event_name:
+          type: string
+        display_name:
+          type: string
+        formula:
+          type: string
+        period_start:
+          type: integer
+          format: int64
+          description: Native subscription item period, inclusive start in Unix seconds.
+        period_end:
+          type: integer
+          format: int64
+          description: Native subscription item period, exclusive end in Unix seconds.
+        usage_window_start:
+          type: integer
+          format: int64
+          description: Inclusive start of the provider-supported minute-aligned measurement window.
+        usage_window_end:
+          type: integer
+          format: int64
+          description: Exclusive end of the measured minute window. Can extend less than a minute beyond the native period.
+        period_alignment:
+          type: string
+          enum:
+            - exact
+            - minute_envelope
+        amount:
+          type: number
+          description: Eventually consistent measurement for usage_window_start/end, not an invoice amount or exact billed-period quantity when alignment is minute_envelope.
+        included:
+          type:
+            - integer
+            - 'null'
+          format: int64
+          description: First finite tier with explicit zero per-unit pricing; null when unknown or absent.
+        daily:
+          type: array
+          description: UTC daily windows enclosing the native period. Edge days can extend beyond it.
+          items:
+            $ref: '#/components/schemas/UsageDay'
+        pricing:
+          description: Exact native monetary facts. null when the provider pricing representation is unavailable or unsupported.
+          anyOf:
+            - $ref: '#/components/schemas/UsagePricing'
+            - type: 'null'
+        pause_collection:
+          description: Collection pause remains visible and does not suppress the usage measurement.
+          anyOf:
+            - $ref: '#/components/schemas/SubscriptionPauseSummary'
+            - type: 'null'
+      required:
+        - subscription_id
+        - item_id
+        - scope
+        - product_id
+        - product_name
+        - price_id
+        - meter_id
+        - currency
+        - event_name
+        - display_name
+        - formula
+        - period_start
+        - period_end
+        - usage_window_start
+        - usage_window_end
+        - period_alignment
+        - amount
+        - included
+        - daily
+        - pricing
+        - pause_collection
+    RecordUsageMeter:
+      type: object
+      unevaluatedProperties:
+        $ref: '#/components/schemas/UsageMeter'
 x-terra-nodes:
   billing: Subscriptions, invoices, payment method and usage
   models: The catalog of generally-available models, and the per-environment history of model runs
