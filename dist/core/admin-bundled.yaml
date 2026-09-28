@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.23
+  version: 2026.09.28
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -894,6 +894,9 @@ paths:
                     status: active
                     cancel_at_period_end: false
                     collection_method: charge_automatically
+                    scopes:
+                      - api
+                      - growth
                 has_more: false
                 next_cursor: null
         '401':
@@ -907,7 +910,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: List subscriptions
-      description: 'Cursor-paginated. `status` alone does not say whether a plan is ending: a subscription scheduled to stop is still active until the period closes, which is what cancel_at_period_end reports. collection_method says whether the card on file is charged automatically or an invoice is sent.'
+      description: 'Cursor-paginated. `status` alone does not say whether a plan is ending: a subscription scheduled to stop is still active until the period closes, which is what cancel_at_period_end reports. collection_method says whether the card on file is charged automatically or an invoice is sent. scopes contains billing plan labels for active, trialing, past_due and unpaid subscriptions; other states return an empty array. These labels never authorize products: use /entitlements.'
       security:
         - adminToken:
             - billing:read
@@ -7187,7 +7190,6 @@ components:
             - event_monthly
             - event_annual_base
             - metered
-            - free
             - growth
             - graph_api
             - compliance_baa
@@ -7221,6 +7223,13 @@ components:
           type: boolean
         collection_method:
           type: string
+        scopes:
+          type: array
+          description: Billing plan labels, not product access. Empty for canceled, incomplete or paused subscriptions; product access comes from /entitlements.
+          items:
+            type: string
+      required:
+        - scopes
     SupabaseProvisionRequest:
       type: object
       properties:
