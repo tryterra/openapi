@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.28
+  version: 2026.09.28.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -8160,12 +8160,31 @@ components:
           type: boolean
         collection_method:
           type: string
+        cancel_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Scheduled cancellation time; null when no explicit cancellation is scheduled.
+        pause_collection:
+          description: Stripe collection pause only; does not imply a paused subscription or service access.
+          anyOf:
+            - $ref: '#/components/schemas/SubscriptionPauseSummary'
+            - type: 'null'
+        items:
+          type: array
+          description: Native Stripe facts for every subscription item, including archived/custom prices. Never grants access or authorizes a purchase.
+          items:
+            $ref: '#/components/schemas/SubscriptionItemSummary'
         scopes:
           type: array
           description: Billing plan labels, not product access. Empty for canceled, incomplete or paused subscriptions; product access comes from /entitlements.
           items:
             type: string
       required:
+        - cancel_at
+        - pause_collection
+        - items
         - scopes
       x-terra-operations:
         - method_name: list
@@ -8969,6 +8988,82 @@ components:
         - type
         - title
         - instance
+    SubscriptionPauseSummary:
+      type: object
+      properties:
+        behavior:
+          type: string
+        resumes_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: RFC3339 timestamp, or null for an indefinite collection pause.
+      required:
+        - behavior
+        - resumes_at
+    SubscriptionRecurringSummary:
+      type: object
+      properties:
+        interval:
+          type: string
+        interval_count:
+          type: integer
+          format: int64
+        usage_type:
+          type: string
+      required:
+        - interval
+        - interval_count
+        - usage_type
+    SubscriptionItemSummary:
+      type: object
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          description: Stripe Product name; null for deleted products or unavailable names. Never inferred from plan labels.
+        currency:
+          type: string
+        billing_scheme:
+          type: string
+        unit_amount:
+          type:
+            - integer
+            - 'null'
+          format: int64
+          description: 'Integer unit amount in the currency''s minor unit. Null for fractional, tiered, custom or unavailable prices. Not an invoice total: discounts, tax, quantity transforms and usage are not applied.'
+        quantity:
+          type:
+            - integer
+            - 'null'
+          format: int64
+          description: Licensed quantity only; null for metered or unavailable recurrence.
+        recurring:
+          anyOf:
+            - $ref: '#/components/schemas/SubscriptionRecurringSummary'
+            - type: 'null'
+        current_period_start:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: RFC3339 timestamp, or null when unavailable. Mixed-interval subscriptions retain each item's period.
+        current_period_end:
+          type:
+            - string
+            - 'null'
+          format: date-time
+      required:
+        - name
+        - currency
+        - billing_scheme
+        - unit_amount
+        - quantity
+        - recurring
+        - current_period_start
+        - current_period_end
 x-terra-nodes:
   billing: Subscriptions, invoices, payment method and usage
   models: The catalog of generally-available models, and the per-environment history of model runs
