@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.28.2
+  version: 2026.09.28.3
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -446,6 +446,8 @@ paths:
   /tokens/self/rotate:
     post:
       operationId: rotateSelf
+      x-terra-confirmation-reason: Invalidates the token you are signed in with, and returns its replacement
+        only once.
       x-terra-help: Rotate the current token within its grant window. Save the new bearer now; check its
         expiry, scopes and environments.
       tags:
@@ -583,6 +585,8 @@ paths:
   /tokens/{token_id}:
     delete:
       operationId: revokeToken
+      x-terra-confirmation-reason: The token stops authenticating immediately, so anything still using
+        it starts failing.
       x-terra-help: Revoke a token immediately, including your current token. An unknown token or one
         outside your account returns 404.
       tags:
@@ -947,6 +951,7 @@ paths:
   /billing/payment-method/setup:
     post:
       operationId: createPaymentSetup
+      x-terra-confirmation-reason: Creates a payment setup for the account.
       x-terra-help: Create a customer-bound Stripe setup intent. Confirm the returned client_secret with
         Stripe.js before updating the default payment method.
       summary: Create a customer-bound payment setup
@@ -986,6 +991,7 @@ paths:
   /billing/invoices/pay:
     post:
       operationId: payInvoice
+      x-terra-confirmation-reason: Charges the payment method for this invoice.
       x-terra-help: Pay an invoice owned by this account. If payment requires action, open the returned
         payment_url to complete it.
       summary: Pay an owned invoice
@@ -1323,6 +1329,7 @@ paths:
         - billing:read
     post:
       operationId: subscribe
+      x-terra-confirmation-reason: Charges the payment method on file.
       x-terra-help: Add or change a plan (requires billing:write). A requires_action response needs payment
         at payment_url.
       tags:
@@ -1550,6 +1557,7 @@ paths:
   /billing/payment-method:
     post:
       operationId: updatePaymentMethod
+      x-terra-confirmation-reason: Changes the card charged by all billable subscriptions.
       x-terra-help: Set the default payment method using a successfully confirmed setup intent owned by
         this account.
       summary: Set the default payment method
@@ -1740,6 +1748,8 @@ paths:
   /billing/subscriptions/cancel-incomplete:
     post:
       operationId: cancelIncomplete
+      x-terra-confirmation-reason: Cancels every incomplete subscription on the account; nothing here
+        names one.
       x-terra-help: Cancel incomplete subscriptions with unfinished payment challenges (requires billing:write).
       tags:
       - billing
@@ -1978,6 +1988,8 @@ paths:
       - $ref: '#/components/parameters/DevId'
     put:
       operationId: setWidgetConfig
+      x-terra-confirmation-reason: Any field left out of the body is cleared, so read the current config
+        first and send it back with the edit applied.
       x-terra-help: Replace the whole widget configuration; omitted fields are cleared. Read it first
         and send the form this deployment serves.
       tags:
@@ -2175,6 +2187,8 @@ paths:
       - $ref: '#/components/parameters/IdempotencyKey'
     delete:
       operationId: disableSource
+      x-terra-confirmation-reason: End users can no longer authorize this provider, and existing connections
+        stop syncing.
       x-terra-help: Disable a provider and stop collection. Re-enabling does not backfill the gap. Use
         dry_run to preview.
       tags:
@@ -2273,6 +2287,8 @@ paths:
           a 400.
     put:
       operationId: setSourceCredentials
+      x-terra-confirmation-reason: Replaces the provider's live OAuth credentials; end-user authorization
+        fails until the new ones are correct.
       x-terra-help: Set custom provider OAuth credentials. Repeated calls are safe; the secret is write-only
         and masked on read.
       tags:
@@ -2380,6 +2396,8 @@ paths:
           a 400.
     put:
       operationId: setSourceScopes
+      x-terra-confirmation-reason: Whatever is not in the body is removed, and an empty list restores
+        the provider's defaults.
       x-terra-help: Replace all custom provider OAuth scopes. An empty array restores provider defaults.
       tags:
       - sources
@@ -2494,6 +2512,8 @@ paths:
       - $ref: '#/components/parameters/DevId'
     post:
       operationId: createDestination
+      x-terra-confirmation-reason: Starts sending this environment's event data to the configured destination
+        URL.
       x-terra-help: Create a destination. Save the signing_secret now; it is returned only once. Type
         defaults to webhook.
       tags:
@@ -2562,6 +2582,8 @@ paths:
   /environments/{dev_id}/unified-api/destinations/{destination_id}:
     patch:
       operationId: patchDestination
+      x-terra-confirmation-reason: Enables or disables delivery to this destination and changes which
+        event types it receives.
       x-terra-help: Update destination active state or event types. URL and type cannot change; the signing
         secret is not returned.
       tags:
@@ -2619,6 +2641,8 @@ paths:
               $ref: '#/components/schemas/PatchDestinationRequest'
     delete:
       operationId: deleteDestination
+      x-terra-confirmation-reason: Deliveries to this endpoint stop at once, and events arriving afterward
+        are not held for a replacement.
       x-terra-help: Permanently delete a destination and its signing secret. Recreating the URL creates
         a new secret. Use dry_run to preview.
       tags:
@@ -2954,6 +2978,7 @@ paths:
       - $ref: '#/components/parameters/DevId'
     patch:
       operationId: patchUnifiedApiScopes
+      x-terra-confirmation-reason: Any field left out of `fields` is deselected for the named data type.
       x-terra-help: Replace selected fields for one data type; omitted fields are deselected. Cannot set
         samples_enabled. Use dry_run to preview.
       tags:
@@ -3005,6 +3030,8 @@ paths:
               $ref: '#/components/schemas/SelectedDataFieldsRequest'
     put:
       operationId: putUnifiedApiScopes
+      x-terra-confirmation-reason: Any data type left out of the body is deselected, so this environment
+        stops collecting it.
       x-terra-help: Replace selected data types; omitted types are deselected. ATHLETE stays selected;
         HEALTH_OBSERVATION needs its entitlement. SAMPLES controls sample flags.
       tags:
@@ -3607,6 +3634,8 @@ paths:
   /environments/{dev_id}/webhook-events/resend:
     post:
       operationId: resendWebhookEvent
+      x-terra-confirmation-reason: Sends the stored event payload again to this environment's matching
+        destinations, which may receive duplicate data.
       x-terra-help: Re-send a stored payload in the selected environment (events:write). Acceptance is
         asynchronous; the destination may receive the event twice.
       tags:
@@ -4105,7 +4134,9 @@ paths:
         example: minute
       - name: compare
         in: query
-        x-terra-help: Requires view full. Use previous_period for the preceding equal-length window.
+        x-terra-help: Requires view set to full. Use previous_period for the preceding equal-length window.
+        x-terra-mcp-help: Requires view set to full. Use previous_period for the preceding equal-length
+          window.
         description: Requires view=full. Adds a flat summary for the previous equal-duration period. Omit
           to avoid the additional aggregate query.
         schema:
@@ -4557,6 +4588,8 @@ paths:
           $ref: '#/components/responses/RateLimited'
     post:
       operationId: mintDataToken
+      x-terra-confirmation-reason: Whoever holds the new token can use the data API with its scopes until
+        it expires or is revoked.
       x-terra-help: Mint a scoped, long-lived data token. Returns the bearer, also retrievable with keys:read.
         Rotate by minting a replacement and revoking the old token.
       tags:
@@ -4634,6 +4667,8 @@ paths:
   /environments/{dev_id}/tokens/{token_id}:
     delete:
       operationId: revokeDataToken
+      x-terra-confirmation-reason: Any service still presenting this token loses access to the data API
+        at once.
       x-terra-help: Revoke an environment data token immediately.
       tags:
       - tokens
@@ -4990,6 +5025,7 @@ paths:
               $ref: '#/components/schemas/PatchWorkoutMetadataRequest'
     delete:
       operationId: deleteWorkoutMetadata
+      x-terra-confirmation-reason: Clears every stored metadata field for this workout.
       x-terra-help: Delete workout metadata without deleting the workout or its data. Preview it first
         with ?dry_run=true.
       tags:
@@ -5611,6 +5647,8 @@ paths:
         - team:read
     patch:
       operationId: patchTeamMember
+      x-terra-confirmation-reason: Changes what this person can do on the account, and lowering their
+        role stops every token they minted from working.
       x-terra-help: Update a team member. Missing users and users outside your company both return 404.
       tags:
       - team
@@ -5681,6 +5719,7 @@ paths:
               $ref: '#/components/schemas/PatchTeamMemberRequest'
     delete:
       operationId: removeTeamMember
+      x-terra-confirmation-reason: Revokes this person's access to the account immediately.
       x-terra-help: Remove a user from your company. Already-removed users are accepted; other companies
         are unaffected.
       tags:
@@ -5916,6 +5955,8 @@ paths:
   /team/invitations:
     post:
       operationId: createTeamInvitation
+      x-terra-confirmation-reason: Whoever signs in with the invited email and the returned token joins
+        the account with this role.
       x-terra-help: Invite a team member. Save the one-use token now; lost tokens must be replaced. Membership
         starts at dashboard sign-in.
       tags:
@@ -6040,6 +6081,7 @@ paths:
   /team/invitations/{invitation_id}:
     delete:
       operationId: revokeTeamInvitation
+      x-terra-confirmation-reason: The invitation link stops working, and joining requires a new invitation.
       x-terra-help: Revoke an unclaimed invitation. Missing, claimed and other-company invitations return
         404.
       tags:
@@ -6099,6 +6141,8 @@ paths:
   /environments/{dev_id}/api-key/rotate:
     post:
       operationId: rotateEnvironmentApiKey
+      x-terra-confirmation-reason: The current client_secret stops working immediately, breaking every
+        integration still holding it.
       x-terra-help: Rotate the legacy API key and return its replacement. The old key stops working immediately;
         requires keys:write.
       tags:
@@ -6286,6 +6330,9 @@ components:
           - tokens:admin
           x-scope-presets:
           - name: Coding agent
+            mcp_name: MCP
+            mcp_summary: Connect an AI assistant. Reads integration data, writes integration config, and
+              resends events. Cannot spend, remove people, issue credentials, or rotate the key.
             summary: A developer or their coding agent at the terminal. Reads everything, writes integration
               config, resends events. Cannot spend, remove people, issue credentials, or rotate the key.
             scopes:
@@ -6577,6 +6624,7 @@ components:
           format: date-time
         client_secret:
           type: string
+          x-terra-secret: true
         payment_url:
           type: string
       required:
@@ -6705,6 +6753,7 @@ components:
         client_secret:
           type: string
           description: Caller-bound Stripe setup confirmation secret. Never log it.
+          x-terra-secret: true
       required:
       - client_secret
     UpdatePaymentMethodRequest:
@@ -6741,6 +6790,7 @@ components:
           type: string
           description: Invoice confirmation secret for embedded Stripe confirmation. Only returned for
             pending payment to the authenticated billing caller; never log or persist in dashboard caches.
+          x-terra-secret: true
         cancelled:
           type: integer
           description: Number of incomplete subscriptions cancelled by the explicit cancellation operation.
@@ -6876,6 +6926,7 @@ components:
           type: string
           description: The secret this destination signs its webhook payloads with. Present for webhook
             destinations only, and returned only here.
+          x-terra-secret: true
       required:
       - id
       - type
@@ -6927,6 +6978,7 @@ components:
         token:
           type: string
           description: The bearer (terra_dt_*). Shown once at mint.
+          x-terra-secret: true
       required:
       - token_id
       - dev_id
@@ -6989,12 +7041,9 @@ components:
       - method_name: create
         operation: post
         path: /environments/{dev_id}/tokens
-        destructive: Whoever holds the new token can use the data API with its scopes until it expires
-          or is revoked.
       - method_name: delete
         operation: delete
         path: /environments/{dev_id}/tokens/{token_id}
-        destructive: Any service still presenting this token loses access to the data API at once.
       - method_name: retrieve-secret
         operation: get
         path: /environments/{dev_id}/tokens/{token_id}/secret
@@ -7039,8 +7088,6 @@ components:
       - method_name: delete
         operation: delete
         path: /environments/{dev_id}/unified-api/destinations/{destination_id}
-        destructive: Deliveries to this endpoint stop at once, and events arriving afterward are not held
-          for a replacement.
       x-terra-summary: Manage data destinations
       x-terra-resource: unified-api.destinations
     DevDetail:
@@ -7089,8 +7136,6 @@ components:
       - method_name: rotate-api-key
         operation: post
         path: /environments/{dev_id}/api-key/rotate
-        destructive: The current client_secret stops working immediately, breaking every integration still
-          holding it.
       x-terra-summary: Manage environments (dev-ids) and their credentials
       x-terra-resource: environments
     DevKeys:
@@ -7101,10 +7146,12 @@ components:
         api_key:
           type: string
           description: full client_secret — returned once, keys:read only
+          x-terra-secret: true
         signing_secret:
           type: string
           description: The secret destinations sign their webhook payloads with. Returned once, keys:read
             only.
+          x-terra-secret: true
     DevSummary:
       type: object
       properties:
@@ -7146,14 +7193,17 @@ components:
       properties:
         device_code:
           type: string
+          x-terra-secret: true
         user_code:
           type: string
+          x-terra-secret: true
         verification_uri:
           type: string
         expires_in:
           type: integer
         verification_uri_complete:
           type: string
+          x-terra-secret: true
         interval:
           type: integer
           description: 'Polling interval in seconds. RFC 8628 §3.2: absent means 5.'
@@ -7970,7 +8020,6 @@ components:
       - method_name: pay
         operation: post
         path: /billing/invoices/pay
-        destructive: Charges the payment method for this invoice.
       - method_name: list
         operation: get
         path: /billing/invoices
@@ -8253,6 +8302,7 @@ components:
         access_token:
           type: string
           description: The minted bearer, returned once by the token endpoint.
+          x-terra-secret: true
         token_type:
           type: string
           enum:
@@ -8591,11 +8641,11 @@ components:
       - method_name: setup
         operation: post
         path: /billing/payment-method/setup
-        destructive: Creates a payment setup for the account.
+        mcp_omit: Payment setup requires client-side Stripe confirmation with the returned secret. Use
+          the dashboard to add a payment method.
       - method_name: update
         operation: post
         path: /billing/payment-method
-        destructive: Changes the card charged by all billable subscriptions.
       - method_name: retrieve
         operation: get
         path: /billing/payment-method
@@ -8739,8 +8789,6 @@ components:
       - method_name: replace
         operation: put
         path: /environments/{dev_id}/unified-api/sources/{provider}/credentials
-        destructive: Replaces the provider's live OAuth credentials; end-user authorization fails until
-          the new ones are correct.
       x-terra-summary: Your own OAuth credentials for a provider, used instead of Terra's
       x-terra-resource: unified-api.sources.credentials
     ProviderEnabled:
@@ -8773,8 +8821,6 @@ components:
       - method_name: replace
         operation: put
         path: /environments/{dev_id}/unified-api/sources/{provider}/scopes
-        destructive: Whatever is not in the body is removed, and an empty list restores the provider's
-          defaults.
       x-terra-summary: Which data types a provider is asked for
       x-terra-resource: unified-api.sources.scopes
     ProviderSummary:
@@ -8800,7 +8846,6 @@ components:
       - method_name: disable
         operation: delete
         path: /environments/{dev_id}/unified-api/sources/{provider}
-        destructive: End users can no longer authorize this provider, and existing connections stop syncing.
       x-terra-summary: Enable and configure wearable providers
       x-terra-resource: unified-api.sources
     PutWorkoutMetadataRequest:
@@ -8884,6 +8929,7 @@ components:
           type: string
           description: The new client_secret, shown once. The signing secret is per-destination and is
             not rotated with it.
+          x-terra-secret: true
       required:
       - dev_id
       - api_key
@@ -9017,12 +9063,9 @@ components:
       - method_name: update
         operation: patch
         path: /environments/{dev_id}/unified-api/scopes
-        destructive: Any field left out of `fields` is deselected for the named data type.
       - method_name: replace
         operation: put
         path: /environments/{dev_id}/unified-api/scopes
-        destructive: Any data type left out of the body is deselected, so this environment stops collecting
-          it.
       x-terra-summary: Which fields Terra collects per data type
       x-terra-resource: unified-api.data.scopes
     SelectedDataFieldsRequest:
@@ -9162,11 +9205,9 @@ components:
       - method_name: create
         operation: post
         path: /billing/subscriptions
-        destructive: Charges the payment method on file.
       - method_name: cancel-incomplete
         operation: post
         path: /billing/subscriptions/cancel-incomplete
-        destructive: Cancels every incomplete subscription on the account; nothing here names one.
       x-terra-summary: Plans this account is subscribed to
       x-terra-resource: billing.subscriptions
     SupabaseProvisionRequest:
@@ -9286,8 +9327,6 @@ components:
       - method_name: create
         operation: post
         path: /team/invitations
-        destructive: Whoever signs in with the invited email and the returned token joins the account
-          with this role.
       - method_name: list
         operation: get
         path: /team/invitations
@@ -9300,7 +9339,6 @@ components:
       - method_name: delete
         operation: delete
         path: /team/invitations/{invitation_id}
-        destructive: The invitation link stops working, and joining requires a new invitation.
       x-terra-summary: Outstanding invitations to join this account
       x-terra-resource: team.invitations
     TeamInvitationResponse:
@@ -9309,6 +9347,7 @@ components:
         token:
           type: string
           description: The one-use invitation token. Returned only here; only its digest is stored.
+          x-terra-secret: true
         expires_at:
           type: string
           format: date-time
@@ -9352,12 +9391,9 @@ components:
       - method_name: update
         operation: patch
         path: /team/members/{user_id}
-        destructive: Changes what this person can do on the account, and lowering their role stops every
-          token they minted from working.
       - method_name: delete
         operation: delete
         path: /team/members/{user_id}
-        destructive: Revokes this person's access to the account immediately.
       x-terra-summary: People with access to this account
       x-terra-resource: team.members
     TokenPollFormRequest:
@@ -9383,6 +9419,7 @@ components:
         token:
           type: string
           description: The bearer, shown once at mint or rotation.
+          x-terra-secret: true
         token_id:
           type: string
         kind:
@@ -9481,11 +9518,11 @@ components:
       - method_name: delete
         operation: delete
         path: /tokens/{token_id}
-        destructive: The token stops authenticating immediately, so anything still using it starts failing.
       - method_name: rotate
         operation: post
         path: /tokens/self/rotate
-        destructive: Invalidates the token you are signed in with, and returns its replacement only once.
+        mcp_omit: The MCP client holds the current token and cannot adopt the masked replacement returned
+          by a tool. Rotate credentials through the client to avoid losing access.
       x-terra-summary: Manage admin tokens for this account
       x-terra-resource: tokens
     CurrentUsageResponse:
@@ -9789,8 +9826,6 @@ components:
       - method_name: update
         operation: put
         path: /environments/{dev_id}/unified-api/widget/config
-        destructive: Any field left out of the body is cleared, so read the current config first and send
-          it back with the edit applied.
       x-terra-summary: Configure the Terra widget
       x-terra-resource: unified-api.widget
     WorkoutMetadata:
@@ -9822,7 +9857,6 @@ components:
       - method_name: delete
         operation: delete
         path: /environments/{dev_id}/workouts/{workout_id}/metadata
-        destructive: Clears every stored metadata field for this workout.
       x-terra-summary: Custom fields attached to a workout
       x-terra-resource: workouts.metadata
     schemas-Problem:

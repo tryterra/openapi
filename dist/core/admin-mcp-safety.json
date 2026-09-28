@@ -1,0 +1,956 @@
+{
+  "activateDeal": {
+    "confirmation_reason": "Applies deal credit and may create a monthly subscription.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "billing:write"
+    ],
+    "sensitive": false
+  },
+  "agreeToTerms": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "account:write"
+    ],
+    "sensitive": false
+  },
+  "askDocs": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "post",
+    "scopes": [],
+    "sensitive": false
+  },
+  "cancelIncomplete": {
+    "confirmation_reason": "Cancels every incomplete subscription on the account; nothing here names one.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "billing:write"
+    ],
+    "sensitive": false
+  },
+  "checkDealEligibility": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "post",
+    "scopes": [
+      "billing:read"
+    ],
+    "sensitive": false
+  },
+  "createDestination": {
+    "confirmation_reason": "Starts sending this environment's event data to the configured destination URL.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "destinations:write"
+    ],
+    "sensitive": false
+  },
+  "createEnvironmentProfile": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "account:write"
+    ],
+    "sensitive": false
+  },
+  "createPaymentSetup": {
+    "confirmation_reason": "Creates a payment setup for the account.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "billing:write"
+    ],
+    "sensitive": false
+  },
+  "createTeamInvitation": {
+    "confirmation_reason": "Whoever signs in with the invited email and the returned token joins the account with this role.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "team:write"
+    ],
+    "sensitive": false
+  },
+  "deleteDestination": {
+    "confirmation_reason": "Deliveries to this endpoint stop at once, and events arriving afterward are not held for a replacement.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "delete",
+    "scopes": [
+      "destinations:write"
+    ],
+    "sensitive": false
+  },
+  "deleteWorkoutMetadata": {
+    "confirmation_reason": "Clears every stored metadata field for this workout.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "delete",
+    "scopes": [
+      "dataconfig:write"
+    ],
+    "sensitive": false
+  },
+  "disableSource": {
+    "confirmation_reason": "End users can no longer authorize this provider, and existing connections stop syncing.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "delete",
+    "scopes": [
+      "providers:write"
+    ],
+    "sensitive": false
+  },
+  "enableSource": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "put",
+    "scopes": [
+      "providers:write"
+    ],
+    "sensitive": false
+  },
+  "ensureReferralCode": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "account:write"
+    ],
+    "sensitive": false
+  },
+  "generateWebhookEvent": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "events:write"
+    ],
+    "sensitive": false
+  },
+  "getAgreedToTerms": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "account:read"
+    ],
+    "sensitive": false
+  },
+  "getCompany": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "account:read"
+    ],
+    "sensitive": false
+  },
+  "getCurrentDeal": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "billing:read"
+    ],
+    "sensitive": false
+  },
+  "getCurrentUsage": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "billing:read"
+    ],
+    "sensitive": false
+  },
+  "getEnvironment": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "account:read"
+    ],
+    "sensitive": false
+  },
+  "getEnvironmentApiKey": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "keys:read"
+    ],
+    "sensitive": true
+  },
+  "getEventStats": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "events:read"
+    ],
+    "sensitive": false
+  },
+  "getMe": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [],
+    "sensitive": false
+  },
+  "getMeMetadata": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "account:read"
+    ],
+    "sensitive": false
+  },
+  "getModelsCatalog": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "models:read"
+    ],
+    "sensitive": false
+  },
+  "getOnboarding": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "account:read"
+    ],
+    "sensitive": false
+  },
+  "getPaymentMethod": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "billing:read"
+    ],
+    "sensitive": false
+  },
+  "getReferralCode": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "account:read"
+    ],
+    "sensitive": false
+  },
+  "getReferrals": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "account:read"
+    ],
+    "sensitive": false
+  },
+  "getScore": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "scores:read"
+    ],
+    "sensitive": false
+  },
+  "getScoresAnalytics": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "scores:read"
+    ],
+    "sensitive": false
+  },
+  "getSourceCredentials": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "providers:read"
+    ],
+    "sensitive": false
+  },
+  "getSourceScopes": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "providers:read"
+    ],
+    "sensitive": false
+  },
+  "getTeamMember": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "team:read"
+    ],
+    "sensitive": false
+  },
+  "getUpcomingInvoice": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "billing:read"
+    ],
+    "sensitive": false
+  },
+  "getUsage": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "billing:read"
+    ],
+    "sensitive": false
+  },
+  "getUserStats": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "connections:read"
+    ],
+    "sensitive": false
+  },
+  "getWebhookEvent": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "events:read"
+    ],
+    "sensitive": false
+  },
+  "getWebhookEventPayload": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "payloads:read"
+    ],
+    "sensitive": true
+  },
+  "getWidgetConfig": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "dataconfig:read"
+    ],
+    "sensitive": false
+  },
+  "getWorkoutMetadata": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "dataconfig:read"
+    ],
+    "sensitive": false
+  },
+  "listCompanyFeatureFlags": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "account:read"
+    ],
+    "sensitive": false
+  },
+  "listDataTokens": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "tokens:read"
+    ],
+    "sensitive": false
+  },
+  "listDestinations": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "destinations:read"
+    ],
+    "sensitive": false
+  },
+  "listEntitlements": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "entitlements:read"
+    ],
+    "sensitive": false
+  },
+  "listEnvironments": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "account:read"
+    ],
+    "sensitive": false
+  },
+  "listInvoicePreviews": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "billing:read"
+    ],
+    "sensitive": false
+  },
+  "listInvoices": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "billing:read"
+    ],
+    "sensitive": false
+  },
+  "listModelRuns": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "models:read"
+    ],
+    "sensitive": false
+  },
+  "listProcessing": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "dataconfig:read"
+    ],
+    "sensitive": false
+  },
+  "listScores": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "scores:read"
+    ],
+    "sensitive": false
+  },
+  "listScoresHistory": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "scores:read"
+    ],
+    "sensitive": false
+  },
+  "listSources": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "providers:read"
+    ],
+    "sensitive": false
+  },
+  "listSubscriptions": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "billing:read"
+    ],
+    "sensitive": false
+  },
+  "listSupabaseProjects": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "destinations:write"
+    ],
+    "sensitive": false
+  },
+  "listTeamInvitations": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "team:read"
+    ],
+    "sensitive": false
+  },
+  "listTeamMembers": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "team:read"
+    ],
+    "sensitive": false
+  },
+  "listTokens": {
+    "confirmation_reason": null,
+    "dangerous": true,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "tokens:admin"
+    ],
+    "sensitive": false
+  },
+  "listUnifiedApiScopes": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "dataconfig:read"
+    ],
+    "sensitive": false
+  },
+  "listUsers": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "connections:read"
+    ],
+    "sensitive": false
+  },
+  "listWebhookEvents": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "events:read"
+    ],
+    "sensitive": false
+  },
+  "listWorkoutMetadata": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "dataconfig:read"
+    ],
+    "sensitive": false
+  },
+  "mintDataToken": {
+    "confirmation_reason": "Whoever holds the new token can use the data API with its scopes until it expires or is revoked.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "tokens:write"
+    ],
+    "sensitive": false
+  },
+  "optInToPoints": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "account:write"
+    ],
+    "sensitive": false
+  },
+  "patchCompany": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "account:write"
+    ],
+    "sensitive": false
+  },
+  "patchDestination": {
+    "confirmation_reason": "Enables or disables delivery to this destination and changes which event types it receives.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "destinations:write"
+    ],
+    "sensitive": false
+  },
+  "patchEnvironmentProfile": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "account:write"
+    ],
+    "sensitive": false
+  },
+  "patchMe": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "account:write"
+    ],
+    "sensitive": false
+  },
+  "patchMeMetadata": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "account:write"
+    ],
+    "sensitive": false
+  },
+  "patchOnboarding": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "account:write"
+    ],
+    "sensitive": false
+  },
+  "patchScore": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "scores:write"
+    ],
+    "sensitive": false
+  },
+  "patchTeamMember": {
+    "confirmation_reason": "Changes what this person can do on the account, and lowering their role stops every token they minted from working.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "team:write"
+    ],
+    "sensitive": false
+  },
+  "patchUnifiedApiScopes": {
+    "confirmation_reason": "Any field left out of `fields` is deselected for the named data type.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "dataconfig:write"
+    ],
+    "sensitive": false
+  },
+  "patchWorkoutMetadata": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "dataconfig:write"
+    ],
+    "sensitive": false
+  },
+  "payInvoice": {
+    "confirmation_reason": "Charges the payment method for this invoice.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "billing:write"
+    ],
+    "sensitive": false
+  },
+  "pollSupabaseOauth": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "destinations:write"
+    ],
+    "sensitive": false
+  },
+  "provisionSupabase": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "destinations:write"
+    ],
+    "sensitive": false
+  },
+  "putUnifiedApiScopes": {
+    "confirmation_reason": "Any data type left out of the body is deselected, so this environment stops collecting it.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "put",
+    "scopes": [
+      "dataconfig:write"
+    ],
+    "sensitive": false
+  },
+  "putWorkoutMetadata": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "put",
+    "scopes": [
+      "dataconfig:write"
+    ],
+    "sensitive": false
+  },
+  "removeTeamMember": {
+    "confirmation_reason": "Revokes this person's access to the account immediately.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "delete",
+    "scopes": [
+      "team:write"
+    ],
+    "sensitive": false
+  },
+  "resendWebhookEvent": {
+    "confirmation_reason": "Sends the stored event payload again to this environment's matching destinations, which may receive duplicate data.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "events:write"
+    ],
+    "sensitive": false
+  },
+  "revealDataToken": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "keys:read"
+    ],
+    "sensitive": true
+  },
+  "revokeDataToken": {
+    "confirmation_reason": "Any service still presenting this token loses access to the data API at once.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "delete",
+    "scopes": [
+      "tokens:write"
+    ],
+    "sensitive": false
+  },
+  "revokeTeamInvitation": {
+    "confirmation_reason": "The invitation link stops working, and joining requires a new invitation.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "delete",
+    "scopes": [
+      "team:write"
+    ],
+    "sensitive": false
+  },
+  "revokeToken": {
+    "confirmation_reason": "The token stops authenticating immediately, so anything still using it starts failing.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "delete",
+    "scopes": [
+      "tokens:admin"
+    ],
+    "sensitive": false
+  },
+  "rotateEnvironmentApiKey": {
+    "confirmation_reason": "The current client_secret stops working immediately, breaking every integration still holding it.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "keys:write"
+    ],
+    "sensitive": false
+  },
+  "rotateSelf": {
+    "confirmation_reason": "Invalidates the token you are signed in with, and returns its replacement only once.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [],
+    "sensitive": false
+  },
+  "setProcessing": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "dataconfig:write"
+    ],
+    "sensitive": false
+  },
+  "setSourceCredentials": {
+    "confirmation_reason": "Replaces the provider's live OAuth credentials; end-user authorization fails until the new ones are correct.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "put",
+    "scopes": [
+      "providers:write"
+    ],
+    "sensitive": false
+  },
+  "setSourceScopes": {
+    "confirmation_reason": "Whatever is not in the body is removed, and an empty list restores the provider's defaults.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "put",
+    "scopes": [
+      "providers:write"
+    ],
+    "sensitive": false
+  },
+  "setWidgetConfig": {
+    "confirmation_reason": "Any field left out of the body is cleared, so read the current config first and send it back with the edit applied.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "put",
+    "scopes": [
+      "dataconfig:write"
+    ],
+    "sensitive": false
+  },
+  "startSupabaseOauth": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "destinations:write"
+    ],
+    "sensitive": false
+  },
+  "subscribe": {
+    "confirmation_reason": "Charges the payment method on file.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "billing:write"
+    ],
+    "sensitive": false
+  },
+  "updatePaymentMethod": {
+    "confirmation_reason": "Changes the card charged by all billable subscriptions.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "billing:write"
+    ],
+    "sensitive": false
+  },
+  "validatePromotion": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "billing:read"
+    ],
+    "sensitive": false
+  },
+  "validatePromotionPrivate": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "post",
+    "scopes": [
+      "billing:read"
+    ],
+    "sensitive": false
+  }
+}
