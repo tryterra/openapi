@@ -1,9 +1,12 @@
 openapi: 3.1.0
 info:
   contact: {}
-  description: Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted). Selected product enforcement requires a current Vantage grant for orders, results and lab work. Missing grants or disabled environments return 403 with code entitlement_required or environment_disabled; unavailable current authorization returns 503 with code authorization_unavailable. Configuration, catalogue and recovery remain authenticated.
+  description: |-
+    Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted). Selected product enforcement requires a current Vantage grant for orders, results and lab work. Missing grants or disabled environments return 403 with code entitlement_required or environment_disabled; unavailable current authorization returns 503 with code authorization_unavailable. Configuration, catalogue and recovery remain authenticated.
+
+    **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version, and accounts created without a pin get the latest. Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. An unsupported value returns 400 with code `invalid_api_version`. Supported versions: `2026-10-01` (latest; typed catalogue variants) and `2026-09-27` (catalogue attribute bags and integer availability). This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.09.27
+  version: 2026.09.28
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -15,6 +18,7 @@ paths:
       security: []
       description: Returns an HTML page for end users to activate their test kit and provide test-taker information
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: kit_id
           in: query
           description: Supplier Kit ID from test kit packaging
@@ -23,18 +27,27 @@ paths:
             type: string
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: HTML activation form
           content:
             text/html:
               schema:
                 type: string
         '400':
-          description: Invalid kit ID
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid kit ID. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             text/html:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             text/html:
@@ -53,38 +66,58 @@ paths:
               $ref: '#/components/schemas/ActivationContextDTO'
         description: Activation details including test-taker info
         required: true
+      parameters:
+        - $ref: '#/components/parameters/ApiVersion'
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Kit activated successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ActivateKitResponse'
         '400':
-          description: Invalid request body or kit already activated
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid request body or kit already activated. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '404':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Kit not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '409':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Kit already activated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Supplier service unavailable
           content:
             application/json:
@@ -101,20 +134,33 @@ paths:
         - BasicAuth: []
         - DataBearer: []
           DevIDHeader: []
+      parameters:
+        - $ref: '#/components/parameters/ApiVersion'
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current destination
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClientResponse'
+        '400':
+          $ref: '#/components/responses/InvalidApiVersion'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -147,38 +193,58 @@ paths:
         - BasicAuth: []
         - DataBearer: []
           DevIDHeader: []
+      parameters:
+        - $ref: '#/components/parameters/ApiVersion'
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Webhook URL updated successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ClientResponse'
         '400':
-          description: Bad request - invalid URL format or validation error
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Bad request - invalid URL format or validation error. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Unauthorized - invalid client credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
         '404':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Client not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -196,6 +262,7 @@ paths:
         - DataBearer: []
           DevIDHeader: []
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: limit
           in: query
           required: false
@@ -241,30 +308,45 @@ paths:
               - GO_TO_LAB
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: One page of orders
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListOrdersResponse'
         '400':
-          description: Invalid pagination or filter parameters
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid pagination or filter parameters. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Missing or invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -281,6 +363,7 @@ paths:
         - DataBearer: []
           DevIDHeader: []
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: Idempotency-Key
           in: header
           required: false
@@ -298,42 +381,63 @@ paths:
         required: true
       responses:
         '201':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Order created successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateOrderResponse'
         '400':
-          description: Bad request - invalid JSON or validation errors
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Bad request - invalid JSON or validation errors. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateOrderValidationError'
         '402':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Payment authorization failed. Nothing was created — no supplier order and no charge. Retry after resolving the payment method.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaymentRequiredProblem'
         '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: A requested product is not enabled in your catalog
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '409':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: The Idempotency-Key was already used with a different request body, or a request with this key is still in progress.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -346,6 +450,7 @@ paths:
         - orders
       description: Returns complete order details including items, recipient, and status
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: orderID
           in: path
           description: Order ID
@@ -360,36 +465,54 @@ paths:
           DevIDHeader: []
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Successfully retrieved order
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetOrderResponse'
         '400':
-          description: Invalid order ID format
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid order ID format. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Unauthorized - invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
         '404':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Order not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -407,6 +530,7 @@ paths:
         - DataBearer: []
           DevIDHeader: []
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: orderID
           in: path
           required: true
@@ -421,42 +545,63 @@ paths:
               $ref: '#/components/schemas/SimulateOrderRequest'
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Event applied
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimulateOrderResponse'
         '400':
-          description: Invalid order id, request body, order_item_id, or event
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid order id, request body, order_item_id, or event. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Not available in the production environment
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '404':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Order (or order item) not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '422':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Event is not a valid transition from the current status
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimulateTransitionProblem'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -473,8 +618,13 @@ paths:
         - BasicAuth: []
         - DataBearer: []
           DevIDHeader: []
+      parameters:
+        - $ref: '#/components/parameters/ApiVersion'
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Successfully retrieved product types
           content:
             application/json:
@@ -482,19 +632,30 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ProductType'
+        '400':
+          $ref: '#/components/responses/InvalidApiVersion'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Unauthorized - invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -517,32 +678,49 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateCatalogSelectionRequest'
+      parameters:
+        - $ref: '#/components/parameters/ApiVersion'
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Selection saved
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UpdateCatalogSelectionResponse'
         '400':
-          description: Invalid request body
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid request body. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Missing or invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -555,6 +733,7 @@ paths:
         - products
       description: Returns all products within a specific product type category
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: show_all
           in: query
           required: false
@@ -576,6 +755,9 @@ paths:
           DevIDHeader: []
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Successfully retrieved products. An existing product type with no available products returns an empty array.
           content:
             application/json:
@@ -584,18 +766,27 @@ paths:
                 items:
                   $ref: '#/components/schemas/Product'
         '400':
-          description: Invalid product type ID format
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid product type ID format. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Unauthorized - invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
         '404':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Product type not found
           content:
             application/json:
@@ -624,12 +815,18 @@ paths:
                   - title
                   - type
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -642,6 +839,7 @@ paths:
         - products
       description: Returns all available variants/options for a specific diagnostic test product (e.g., different panel sizes, customizations)
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: show_all
           in: query
           required: false
@@ -663,6 +861,9 @@ paths:
           DevIDHeader: []
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Successfully retrieved variants
           content:
             application/json:
@@ -671,18 +872,27 @@ paths:
                 items:
                   $ref: '#/components/schemas/ProductVariant'
         '400':
-          description: Invalid product ID format
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid product ID format. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Unauthorized - invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
         '404':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: No product variants were found
           content:
             application/json:
@@ -711,12 +921,18 @@ paths:
                   - title
                   - type
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -734,6 +950,7 @@ paths:
         - DataBearer: []
           DevIDHeader: []
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: limit
           in: query
           required: false
@@ -757,30 +974,45 @@ paths:
             type: string
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: One page of results
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListResultsResponse'
         '400':
-          description: Invalid pagination or filter parameters
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid pagination or filter parameters. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Missing or invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -793,6 +1025,7 @@ paths:
         - results
       description: 'Returns a time-limited presigned URL to download normalized test results in FHIR format (JSON). The URL is valid for 15 minutes before credential validation is configured. Validated requests receive a URL bounded by token expiry and the original authorization deadline (at most 45 seconds), even when product policy is off; request a fresh URL when starting each download. Note: Every orderItemID can only be associated with maximum 1 panel, hence results can be uniquely identified by orderItemID.'
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: orderItemID
           in: path
           description: Order Item ID
@@ -814,36 +1047,54 @@ paths:
           DevIDHeader: []
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Successfully generated download URL
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetResultsURLResponse'
         '400':
-          description: Invalid or missing order item ID
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid or missing order item ID. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Unauthorized - invalid client credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
         '404':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Results not found for this order item
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -856,6 +1107,7 @@ paths:
         - results
       description: Records the end user's affirmative confirmation that they have received and viewed their results (Schedule C §C6A). Must be triggered by an explicit end-user action (e.g. a checkbox or button in the client's UI) — never automatically by the backend on retrieval or delivery. Required for compliance and audit trails.
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: orderItemID
           in: path
           description: Order Item ID
@@ -877,36 +1129,54 @@ paths:
           DevIDHeader: []
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Results acknowledged successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AcknowledgeResultsResponse'
         '400':
-          description: Invalid order item ID
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid order item ID. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Unauthorized - invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
         '404':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Order item not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -924,6 +1194,7 @@ paths:
         - DataBearer: []
           DevIDHeader: []
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: zip_code
           in: query
           required: true
@@ -933,30 +1204,45 @@ paths:
             example: '10001'
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Nearby lab draw sites
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListLabsResponse'
         '400':
-          description: Missing or invalid zip code
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Missing or invalid zip code. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Missing or invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -974,6 +1260,7 @@ paths:
         - DataBearer: []
           DevIDHeader: []
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: since
           in: query
           required: false
@@ -990,30 +1277,45 @@ paths:
             format: date-time
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Analytics summary
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OverviewResponse'
         '400':
-          description: Invalid time window
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid time window. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Missing or invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -1031,6 +1333,7 @@ paths:
         - DataBearer: []
           DevIDHeader: []
       parameters:
+        - $ref: '#/components/parameters/ApiVersion'
         - name: outcome
           in: query
           required: false
@@ -1061,30 +1364,45 @@ paths:
             example: '333410942627700737'
       responses:
         '200':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: One page of delivery outcomes
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/WebhookDeliveriesResponse'
         '400':
-          description: Invalid pagination or filter parameters
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+          description: Invalid pagination or filter parameters. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Missing or invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '503':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
           description: Current authorization is unavailable; retry after the dependency recovers.
           content:
             application/json:
@@ -1099,7 +1417,7 @@ webhooks:
       description: |-
         Sent when an order's fulfilment status changes. `data.status` uses the same `order.*` vocabulary as REST reads of the order.
 
-        Deliveries carry `X-Terra-Signature: t=<unix_seconds>,v1=<hex>` where `v1 = HMAC-SHA256(signing_secret, "<t>.<raw_body>")` — verify against the raw body before trusting the payload — plus `X-Terra-Trace-Id` (the event_id). Delivery is at-least-once: dedupe on `event_id`. On network errors/408/429/5xx an event gets up to 5 HTTP attempts with exponential backoff (~1s, 2s, 4s, 8s) on first delivery, then single re-attempts with growing delays (5s doubling, capped at 10 minutes) for up to 10 deliveries in total — at most ~14 calls spread over ~30 minutes — before dead-lettering. Other 4xx responses are recorded as rejected and not retried at all.
+        Deliveries carry `X-Terra-Signature: t=<unix_seconds>,v1=<hex>` where `v1 = HMAC-SHA256(signing_secret, "<t>.<raw_body>")` — verify against the raw body before trusting the payload — plus `X-Terra-Trace-Id` (the event_id) and `X-Terra-Version` (the API version the payload is rendered in: your account's pinned version, or the latest). Delivery is at-least-once: dedupe on `event_id`. On network errors/408/429/5xx an event gets up to 5 HTTP attempts with exponential backoff (~1s, 2s, 4s, 8s) on first delivery, then single re-attempts with growing delays (5s doubling, capped at 10 minutes) for up to 10 deliveries in total — at most ~14 calls spread over ~30 minutes — before dead-lettering. Other 4xx responses are recorded as rejected and not retried at all.
       requestBody:
         required: true
         content:
@@ -1117,7 +1435,7 @@ webhooks:
       description: |-
         Sent when an order item's results status changes. `data.results_status` uses the `results.*` vocabulary shared with REST reads.
 
-        Signing, `X-Terra-Trace-Id`, at-least-once delivery, and retry semantics are identical to `order.status_changed` — see its description.
+        Signing, `X-Terra-Trace-Id`, `X-Terra-Version`, at-least-once delivery, and retry semantics are identical to `order.status_changed` — see its description.
       requestBody:
         required: true
         content:
@@ -1128,6 +1446,35 @@ webhooks:
         '200':
           description: Return any 2xx quickly to acknowledge receipt.
 components:
+  parameters:
+    ApiVersion:
+      name: X-Terra-Version
+      in: header
+      required: false
+      description: The API version to serve this request in. Defaults to your account's pinned version, or the latest for new accounts.
+      schema:
+        type: string
+        enum:
+          - '2026-09-27'
+          - '2026-10-01'
+  headers:
+    ApiVersion:
+      description: The API version this response was rendered in.
+      schema:
+        type: string
+        enum:
+          - '2026-09-27'
+          - '2026-10-01'
+  responses:
+    InvalidApiVersion:
+      description: Unsupported `X-Terra-Version`; the problem carries code `invalid_api_version` and lists the supported versions in `detail`.
+      headers:
+        X-Terra-Version:
+          $ref: '#/components/headers/ApiVersion'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
   securitySchemes:
     DataBearer:
       type: http
@@ -2158,17 +2505,50 @@ components:
         status:
           type: string
           example: acknowledged
-    AvailabilityStatus:
-      type: integer
-      format: int32
+    Availability:
+      type: string
+      description: Whether the item can be ordered right now. `unknown` is served when the supplier has not stated availability.
       enum:
-        - 0
-        - 1
-        - 2
+        - unknown
+        - in_stock
+        - out_of_stock
       x-enum-varnames:
-        - AvailabilityStatus_AVAILABILITY_STATUS_UNSPECIFIED
-        - AvailabilityStatus_AVAILABILITY_STATUS_IN_STOCK
-        - AvailabilityStatus_AVAILABILITY_STATUS_OUT_OF_STOCK
+        - Availability_UNKNOWN
+        - Availability_IN_STOCK
+        - Availability_OUT_OF_STOCK
+      x-enum-descriptions:
+        - Availability has not been stated.
+        - Orderable.
+        - Temporarily unavailable.
+      example: in_stock
+    CollectionMethod:
+      type: string
+      description: How the sample is taken. Omitted when the supplier states a method outside this vocabulary.
+      enum:
+        - finger_prick
+        - venous_draw
+      x-enum-varnames:
+        - CollectionMethod_FINGER_PRICK
+        - CollectionMethod_VENOUS_DRAW
+      x-enum-descriptions:
+        - Self-collected capillary sample from a lancet.
+        - Phlebotomy draw, taken by a clinician.
+      example: finger_prick
+    TurnaroundDays:
+      type: object
+      description: The supplier's stated lab turnaround in days, from sample received to results. A single stated figure has `min` == `max`.
+      required:
+        - min
+        - max
+      properties:
+        min:
+          type: integer
+          format: int32
+          example: 3
+        max:
+          type: integer
+          format: int32
+          example: 5
     Currency:
       type: integer
       format: int32
@@ -2238,8 +2618,38 @@ components:
     ProductVariant:
       type: object
       required:
+        - name
         - biomarkers
+        - requires_activation
+        - availability
       properties:
+        id:
+          type: integer
+          format: int64
+        product_id:
+          type: integer
+          format: int64
+        product_type_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          description: The variant's name, as the supplier states it.
+          example: Standard Kit
+        description:
+          type: string
+          description: The supplier's blurb for this variant. Omitted when it states none.
+          example: Good starter panel
+        collection_method:
+          $ref: '#/components/schemas/CollectionMethod'
+        turnaround_days:
+          $ref: '#/components/schemas/TurnaroundDays'
+        requires_activation:
+          type: boolean
+          description: Whether the kit has to be activated before the lab will process its sample. When true, call the kit activation endpoint as part of your flow; the sample is not processed without it.
+          example: true
+        availability:
+          $ref: '#/components/schemas/Availability'
         biomarkers:
           type: array
           description: Biomarkers measured by this variant. Empty when the panel is not catalogued or could not be read.
@@ -2256,48 +2666,27 @@ components:
             type: string
           example:
             - GB
+        price_cents:
+          type: integer
+          format: int32
         currency:
           type: integer
           format: int32
-        descriptive_attrs_override:
-          type: object
-          additionalProperties: {}
-        id:
-          type: integer
-          format: int64
         images:
           type: array
           items:
             $ref: '#/components/schemas/Image'
-        price_cents:
-          type: integer
-          format: int32
-        product_id:
-          type: integer
-          format: int64
-        product_type_id:
-          type: integer
-          format: int64
-        variant_availability:
-          type: integer
-          format: int32
-        variant_defining_attrs:
-          type: object
-          description: Attributes that distinguish this variant from its siblings. The biomarkers key is lifted out into the typed biomarkers array above, and remains here only when it could not be read.
-          additionalProperties: {}
-        variant_name:
-          type: string
     Product:
       type: object
       required:
         - variants
-        - model_descriptive_attrs
+        - availability
       properties:
         enabled:
           type: boolean
           description: Present only on ?show_all=true — the caller's per-product curation flag.
         availability:
-          $ref: '#/components/schemas/AvailabilityStatus'
+          $ref: '#/components/schemas/Availability'
         base_price_cents:
           type: integer
           format: int32
@@ -2312,11 +2701,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Image'
-        model_descriptive_attrs:
-          type: object
-          description: Supplier-supplied descriptive attributes for the product (for example collection_method). Keys and values vary by supplier.
-          additionalProperties:
-            type: string
         name:
           type: string
         product_type_id:
