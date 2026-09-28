@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.28.3
+  version: 2026.09.28.4
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -948,6 +948,212 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PayInvoiceRequest'
+  /billing/deal:
+    get:
+      operationId: getCurrentDeal
+      summary: Read the current billing deal
+      description: Reads the current canonical account's owned deal. Remaining USD credit is the whole customer balance, not per-deal attribution.
+      tags:
+        - billing
+      security:
+        - adminToken:
+            - billing:read
+      responses:
+        '200':
+          description: Current deal, or null
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - deal
+                properties:
+                  deal:
+                    anyOf:
+                      - $ref: '#/components/schemas/BillingDeal'
+                      - type: 'null'
+              example:
+                deal: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /billing/deals/eligibility:
+    post:
+      operationId: checkDealEligibility
+      summary: Preview an accelerator deal for this company
+      description: Read-only eligibility before saving a card. Activation rechecks all facts before reserving a code or applying credit.
+      tags:
+        - billing
+      security:
+        - adminToken:
+            - billing:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateDealRequest'
+      responses:
+        '200':
+          description: Eligibility reason or null when the current company can proceed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealEligibilityResult'
+              example:
+                reason: null
+        '400':
+          description: Invalid code or request body
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /billing/deals/activate:
+    post:
+      operationId: activateDeal
+      summary: Activate an accelerator billing deal
+      description: Freezes the authenticated company's canonical billing identity before issuing credit. Retries resume persisted steps; an expired unknown provider outcome requires reconciliation. Dry run reads eligibility and makes no reservation or provider writes. Existing subscriptions are preserved. Requires DEALS_ENABLED=true on the API. A payment challenge returns 202 after persisting its subscription; retry the same code after confirmation. Company onboarding completes only after payment.
+      tags:
+        - billing
+      security:
+        - adminToken:
+            - billing:write
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateDealRequest'
+      responses:
+        '200':
+          description: Active deal or no-write preview
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/DealActivationResult'
+                  - $ref: '#/components/schemas/DryRunResult'
+              example:
+                state: ok
+                subscription_id: sub_deal
+                expires_at: null
+        '202':
+          description: Confirm payment, then retry the same code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealActivationResult'
+              example:
+                state: requires_action
+                subscription_id: sub_deal
+                expires_at: null
+                payment_url: https://invoice.stripe.com/example
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /billing/promotions/validate:
+    get:
+      operationId: validatePromotion
+      summary: Check promotion availability
+      description: Checks active codes and customer restrictions. Does not guarantee invoice eligibility, redemption limits or final pricing; subscription creation validates those facts again.
+      tags:
+        - billing
+      security:
+        - adminToken:
+            - billing:read
+      parameters:
+        - in: query
+          name: code
+          schema:
+            type: string
+          description: Omitted or empty means no promotion and returns valid.
+      responses:
+        '200':
+          description: Current promotion availability
+          content:
+            application/json:
+              example:
+                valid: true
+              schema:
+                type: object
+                required:
+                  - valid
+                properties:
+                  valid:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      operationId: validatePromotionPrivate
+      summary: Check promotion availability without exposing a code in the URL
+      description: Checks active codes and customer restrictions. Subscription creation validates invoice eligibility again.
+      tags:
+        - billing
+      security:
+        - adminToken:
+            - billing:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  description: Promotion code to check.
+      responses:
+        '200':
+          description: Current promotion availability
+          content:
+            application/json:
+              example:
+                valid: true
+              schema:
+                $ref: '#/components/schemas/PromotionValidation'
+        '400':
+          description: Invalid request body
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /billing/subscriptions:
     get:
       operationId: listSubscriptions
@@ -5592,6 +5798,90 @@ components:
             instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin
             code: unsupported_operation
   schemas:
+    BillingDeal:
+      type: object
+      properties:
+        code:
+          type: string
+        subscription_id:
+          type: string
+        grant_usd_cents:
+          type: integer
+          format: int64
+        remaining_usd_cents:
+          type:
+            - integer
+            - 'null'
+          format: int64
+          description: Current total customer credit balance, not attribution of individual remaining deal dollars. Null for a non-USD account.
+        expires_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+      required:
+        - code
+        - subscription_id
+        - grant_usd_cents
+        - remaining_usd_cents
+        - expires_at
+    ActivateDealRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Accelerator deal code to check or activate.
+      required:
+        - code
+    DealActivationResult:
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+            - ok
+            - requires_action
+        subscription_id:
+          type: string
+        expires_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        client_secret:
+          type: string
+        payment_url:
+          type: string
+      required:
+        - state
+        - subscription_id
+        - expires_at
+    DealEligibilityResult:
+      type: object
+      properties:
+        reason:
+          type:
+            - string
+            - 'null'
+          enum:
+            - invalid
+            - spent
+            - revoked
+            - closed
+            - already_claimed
+            - ineligible_subscription
+            - needs_reconciliation
+            - null
+      required:
+        - reason
+    PromotionValidation:
+      type: object
+      properties:
+        valid:
+          type: boolean
+          description: Active and available to this customer; not a quote or guarantee of invoice eligibility.
+      required:
+        - valid
     AccountSummary:
       type: object
       properties:
@@ -7470,6 +7760,9 @@ components:
     SubscribeRequest:
       type: object
       properties:
+        startup_onboarding:
+          type: boolean
+          description: First event-plan onboarding. Only first customer creation sets the historical startup credit alert threshold; an existing customer is unchanged.
         scope:
           type: string
           enum:
