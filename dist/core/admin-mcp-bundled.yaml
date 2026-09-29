@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.28.3
+  version: 2026.09.29
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -41,6 +41,8 @@ tags:
   description: Inspect end-user connections
 - name: workouts
   description: Manage workout metadata
+- name: vantage
+  description: Configure Vantage
 - name: entitlements
   description: Manage account capabilities
 - name: billing
@@ -4778,6 +4780,110 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /environments/{dev_id}/vantage/api-version:
+    get:
+      operationId: getVantageApiVersion
+      x-terra-help: Show the pinned Vantage API version, the latest version and every version the pin
+        can move to.
+      tags:
+      - vantage
+      summary: Get the Vantage API version pin
+      description: The version Vantage serves this environment's requests that send no X-Terra-Version
+        header. pinned is null until the environment's first Vantage request pins it to the then-latest
+        version; a pin that cannot be read right now is a 503, never null. versions lists every supported
+        version, newest first.
+      security:
+      - adminToken:
+        - dataconfig:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      responses:
+        '200':
+          description: The pin and the supported versions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VantageApiVersion'
+              example:
+                pinned: '2026-09-27'
+                latest: '2026-10-01'
+                versions:
+                - version: '2026-10-01'
+                  summary: 'Typed catalogue fields: name, description, collection method, turnaround,
+                    activation requirement and string availability.'
+                - version: '2026-09-27'
+                  summary: Original catalogue shape with attribute bags and integer availability.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    put:
+      operationId: setVantageApiVersion
+      x-terra-help: Pin Vantage to one of the listed API versions, older or newer. Takes effect on the
+        next request. Use dry_run to preview.
+      tags:
+      - vantage
+      summary: Change the Vantage API version pin
+      description: Pins the environment to any supported version, older or newer than the current one,
+        taking effect on its next Vantage request. An X-Terra-Version header on a request still overrides
+        the pin for that request. There is no unpin. A version this API does not list is a 400. Supports
+        ?dry_run=true. Returns the same shape as the GET.
+      security:
+      - adminToken:
+        - dataconfig:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetVantageApiVersionRequest'
+            example:
+              version: '2026-09-27'
+      responses:
+        '200':
+          description: Updated (or DryRunResult when ?dry_run=true).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                - $ref: '#/components/schemas/VantageApiVersion'
+                - $ref: '#/components/schemas/DryRunResult'
+              example:
+                pinned: '2026-09-27'
+                latest: '2026-10-01'
+                versions:
+                - version: '2026-10-01'
+                  summary: 'Typed catalogue fields: name, description, collection method, turnaround,
+                    activation requirement and string availability.'
+                - version: '2026-09-27'
+                  summary: Original catalogue shape with attribute bags and integer availability.
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /environments/{dev_id}/workouts/metadata:
     get:
       operationId: listWorkoutMetadata
@@ -9785,6 +9891,63 @@ components:
         path: /environments/{dev_id}/users/stats
       x-terra-summary: Inspect end-user connections
       x-terra-resource: users
+    VantageApiVersion:
+      type: object
+      description: The environment's pinned Vantage API version. An environment is pinned to the then-latest
+        version on its first Vantage request; X-Terra-Version on a request still overrides the pin for
+        that request.
+      properties:
+        pinned:
+          type:
+          - string
+          - 'null'
+          description: The version requests without X-Terra-Version are served. null until the environment's
+            first Vantage request pins it.
+        latest:
+          type: string
+          description: The newest version, which an environment is pinned to on its first request.
+        versions:
+          type: array
+          description: Every version the pin can be set to, newest first.
+          items:
+            $ref: '#/components/schemas/VantageApiVersionEntry'
+      required:
+      - pinned
+      - latest
+      - versions
+      x-terra-operations:
+      - method_name: retrieve
+        operation: get
+        path: /environments/{dev_id}/vantage/api-version
+      - method_name: update
+        operation: put
+        path: /environments/{dev_id}/vantage/api-version
+      x-terra-summary: View and change the Vantage API version
+      x-terra-resource: vantage.api-version
+    VantageApiVersionEntry:
+      type: object
+      description: One servable Vantage API version and what it changed.
+      properties:
+        version:
+          type: string
+          description: The version's date, as sent in X-Terra-Version.
+        summary:
+          type: string
+          description: What this version changed from the one before it.
+      required:
+      - version
+      - summary
+    SetVantageApiVersionRequest:
+      type: object
+      properties:
+        version:
+          type: string
+          description: The version to pin, one of the versions GET lists. Takes effect on the environment's
+            next request.
+          x-terra-help: Vantage API version to pin, e.g. 2026-10-01. Must be one of the listed versions.
+      required:
+      - version
+      additionalProperties: false
     WidgetConfig:
       type: object
       description: 'Widget branding + config for a dev-id. Exactly one of widget_config_url / widget_config
@@ -10212,4 +10375,5 @@ x-terra-nodes:
   team: Manage team members and invitations
   unified-api: The Unified API product and the products built on it
   unified-api.data: Configure which data Terra collects and how it is processed
+  vantage: Configure Vantage
   workouts: Manage workout metadata

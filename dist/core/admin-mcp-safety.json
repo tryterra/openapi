@@ -365,6 +365,16 @@
     ],
     "sensitive": false
   },
+  "getVantageApiVersion": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "dataconfig:read"
+    ],
+    "sensitive": false
+  },
   "getWebhookEvent": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -890,6 +900,16 @@
     "method": "put",
     "scopes": [
       "providers:write"
+    ],
+    "sensitive": false
+  },
+  "setVantageApiVersion": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "put",
+    "scopes": [
+      "dataconfig:write"
     ],
     "sensitive": false
   },
