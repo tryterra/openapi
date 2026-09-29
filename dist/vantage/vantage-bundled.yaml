@@ -4,9 +4,9 @@ info:
   description: |-
     Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted). Selected product enforcement requires a current Vantage grant for orders, results and lab work. Missing grants or disabled environments return 403 with code entitlement_required or environment_disabled; unavailable current authorization returns 503 with code authorization_unavailable. Configuration, catalogue and recovery remain authenticated.
 
-    **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version, and accounts created without a pin get the latest. Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. An unsupported value returns 400 with code `invalid_api_version`. Supported versions: `2026-10-01` (latest; typed catalogue variants) and `2026-09-27` (catalogue attribute bags and integer availability). This document describes the latest version.
+    **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version if it has one, otherwise the latest. Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. An unsupported value returns 400 with code `invalid_api_version`. Supported versions: `2026-10-01` (latest; typed catalogue variants) and `2026-09-27` (catalogue attribute bags and integer availability). This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.09.28
+  version: 2026.09.29
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -1451,7 +1451,7 @@ components:
       name: X-Terra-Version
       in: header
       required: false
-      description: The API version to serve this request in. Defaults to your account's pinned version, or the latest for new accounts.
+      description: The API version to serve this request in. Defaults to your account's pinned version if it has one, otherwise the latest.
       schema:
         type: string
         enum:
