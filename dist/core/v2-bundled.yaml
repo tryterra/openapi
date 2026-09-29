@@ -3,7 +3,7 @@ info:
   description: |
     The Terra API (v2 surface, served at access.tryterra.co/api/v2). Protected product operations require a current product entitlement in addition to valid credentials and token scopes. Missing access returns HTTP 403 with code entitlement_required; disabled environments return environment_disabled. Unavailable current authorization returns HTTP 503 with code authorization_unavailable. Billing, configuration and recovery remain available under their existing permissions. Completed Health Scores stay with the caller's own authorized data. Pass recipients require their own Health Scores entitlement; otherwise enrichment fields retain null values. New score computation requires Health Scores access. Retained lab reports remain readable through the report endpoints with valid credentials and ownership, without a current Lab Reports entitlement. New uploads and reprocessing require it.
   title: TerraAPI
-  version: 2026.09.18.1
+  version: 2026.09.29
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -2723,6 +2723,12 @@ components:
           type: string
           deprecated: true
           description: Deprecated; use warnings. Set when the template could not be represented exactly on the provider.
+        completed_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          description: Time the session was reported complete by the user's device. Null until a device reports it.
         warnings:
           type: array
           items:
@@ -7761,6 +7767,22 @@ components:
           minimum: 0
           maximum: 100
           description: Total amount of fluid in the user's body.
+        water_mass_g:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 38600
+          minimum: 0
+          description: Mass of fluid in the user's body. Reported instead of water_percentage by sources that measure water as a mass; converting between the two needs a total body weight, which is a separate reading and often absent.
+        waist_circumference_cm:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 84.5
+          minimum: 0
+          description: Circumference of the user's waist.
         insulin_units:
           anyOf:
             - type: number
@@ -10728,6 +10750,11 @@ components:
         is_external:
           type: boolean
           description: True when the workout was created on the provider side rather than through Terra
+        completed_at:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Time the session was reported complete by the user's device (RFC 3339, whole seconds, UTC). Null until a device reports it.
         athlete_metrics:
           anyOf:
             - $ref: '#/components/schemas/AthleteMetrics'
@@ -10753,6 +10780,7 @@ components:
         - created_at
         - last_updated_at
         - is_external
+        - completed_at
         - athlete_metrics
         - workout
         - details

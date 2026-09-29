@@ -43,6 +43,11 @@ properties:
   is_external:
     type: boolean
     description: True when the workout was created on the provider side rather than through Terra
+  completed_at:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Time the session was reported complete by the user's device (RFC 3339, whole seconds, UTC). Null until a device reports it.
   athlete_metrics:
     anyOf:
       - $ref: AthleteMetrics.yaml
@@ -68,6 +73,7 @@ required:
   - created_at
   - last_updated_at
   - is_external
+  - completed_at
   - athlete_metrics
   - workout
   - details

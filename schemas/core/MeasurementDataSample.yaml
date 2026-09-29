@@ -96,6 +96,22 @@ properties:
     minimum: 0
     maximum: 100
     description: Total amount of fluid in the user's body.
+  water_mass_g:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 38600
+    minimum: 0
+    description: Mass of fluid in the user's body. Reported instead of water_percentage by sources that measure water as a mass; converting between the two needs a total body weight, which is a separate reading and often absent.
+  waist_circumference_cm:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 84.5
+    minimum: 0
+    description: Circumference of the user's waist.
   insulin_units:
     anyOf:
       - type: number
