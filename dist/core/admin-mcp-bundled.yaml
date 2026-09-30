@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.30
+  version: 2026.09.30.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -54,6 +54,144 @@ tags:
 - name: docs
   description: Natural-language search over Terra's published documentation.
 paths:
+  /auth/authorize:
+    get:
+      operationId: authorizeOAuth
+      x-terra-hand-written: true
+      tags:
+      - auth
+      summary: Begin an authorization-code grant with S256 PKCE
+      description: Requires ADMIN_OAUTH_ENABLED. Validates HTTPS CIMD client metadata and the exact registered
+        redirect before any redirect. Empty scope selects the MCP preset. Untrusted clients receive a
+        local error page. Consent is completed through the authenticated dashboard bridge.
+      security: []
+      parameters:
+      - name: client_id
+        in: query
+        required: true
+        schema:
+          type: string
+        description: HTTPS client metadata URL.
+      - name: redirect_uri
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Registered redirect URI.
+      - name: response_type
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - code
+        description: Authorization code response.
+      - name: code_challenge
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Base64url SHA-256 of the verifier.
+      - name: code_challenge_method
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - S256
+        description: Required PKCE method.
+      - name: resource
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        description: https://access.tryterra.co/api/v3/admin/mcp
+      - name: scope
+        in: query
+        schema:
+          type: string
+        description: Space-separated admin scopes.
+      - name: state
+        in: query
+        schema:
+          type: string
+        description: Opaque state echoed unchanged.
+      - name: requested_dev_ids
+        in: query
+        schema:
+          type: string
+        description: Optional space-separated environment IDs.
+      responses:
+        '302':
+          description: Dashboard consent redirect or trusted client error redirect with state and iss.
+          headers:
+            Location:
+              description: Redirect destination.
+              schema:
+                type: string
+        '400':
+          description: Client or redirect is untrusted; no redirect is issued.
+          content:
+            text/html:
+              schema:
+                type: string
+        '503':
+          description: Authorization-code flow is disabled or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+  /auth/revoke:
+    post:
+      operationId: revokeOAuthToken
+      x-terra-hand-written: true
+      tags:
+      - auth
+      summary: Revoke a token issued to a public OAuth client
+      description: Requires ADMIN_OAUTH_ENABLED. Revokes the token and its rotation successors only when
+        the durable grant matches client_id. Unknown and already-revoked tokens return 200.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OAuthRevokeFormRequest'
+      responses:
+        '200':
+          description: Revocation processed without disclosing token existence.
+          content:
+            application/json:
+              schema:
+                type: object
+              example: {}
+        '400':
+          description: Invalid request or public client metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+        '401':
+          description: Header client authentication failed.
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+        '503':
+          description: Authorization-code flow is disabled or unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
   /auth/device:
     post:
       operationId: startDeviceAuth
@@ -123,18 +261,31 @@ paths:
               example:
                 error: authorization_pending
                 error_description: authorization pending
-      summary: Poll for the minted token
+        '401':
+          description: Header client authentication failed (RFC 6749 §5.2).
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthError'
+      summary: Exchange an authorization code or poll a device grant
       security: []
       requestBody:
         required: true
         content:
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TokenPollFormRequest'
-      description: 'Standard RFC 8628 §3.4 device access token request: form-encoded body with grant_type
-        urn:ietf:params:oauth:grant-type:device_code, RFC 6749 §5.1 token response, §5.2/§3.5 error envelope,
-        Cache-Control: no-store. This endpoint speaks only the OAuth wire format. No refresh tokens are
-        issued — rotate via POST /tokens/self/rotate.'
+              anyOf:
+              - $ref: '#/components/schemas/TokenPollFormRequest'
+              - $ref: '#/components/schemas/AuthorizationCodeFormRequest'
+      description: 'Accepts authorization_code with a public CIMD client_id, code, S256 code_verifier,
+        canonical MCP resource and optional exact redirect_uri. Requires ADMIN_OAUTH_ENABLED. Also accepts
+        the standard RFC 8628 §3.4 device access token request: form-encoded body with grant_type urn:ietf:params:oauth:grant-type:device_code,
+        RFC 6749 §5.1 token response, §5.2/§3.5 error envelope, Cache-Control: no-store. This endpoint
+        speaks only the OAuth wire format. No refresh tokens are issued — rotate via POST /tokens/self/rotate.'
   /docs/ask:
     post:
       operationId: askDocs
@@ -6481,11 +6632,13 @@ components:
   securitySchemes:
     adminToken:
       type: oauth2
-      description: Terra access token (customer-scoped, kind=admin, `terra_at_*`). The ONLY grant is the
-        RFC 8628 device-authorization flow (POST /auth/device, approve in the dashboard, poll POST /auth/token)
-        or a dashboard mint — there is NO client_credentials token endpoint; the clientCredentials flow
-        object below exists solely because OAS 3.1 has no first-class device-flow representation and this
-        is where scopes are machine-readable (see x-grant-type). This surface accepts ONLY admin tokens;
+      description: Terra access token (customer-scoped, kind=admin, `terra_at_*`). Tokens are minted by
+        the RFC 8628 device-authorization flow (POST /auth/device, approve in the dashboard, poll POST
+        /auth/token), the authorization_code grant (GET /auth/authorize, dashboard consent, S256 exchange
+        at POST /auth/token), or a dashboard mint. There is no client_credentials token endpoint; the
+        clientCredentials flow object below exists solely because OAS 3.1 has no first-class device-flow
+        representation and this is where scopes are machine-readable (see x-grant-type); the authorizationCode
+        flow is the browser grant and shares the same scopes. This surface accepts ONLY admin tokens;
         data tokens (kind=data, `terra_dt_*`, minted at POST /environments/{dev_id}/tokens) authenticate
         the data API only — the planes never cross. Each operation names its required scope; admin tokens
         may also carry an environment audience. The scopes map below is the whole closed vocabulary —
@@ -6694,8 +6847,62 @@ components:
             - tokens:admin
             - tokens:read
             - tokens:write
-          x-not-a-real-flow: Scope registry only. Token issuance is the device flow (see scheme description);
-            this tokenUrl does not accept client_credentials grants.
+          x-not-a-real-flow: Scope registry only. Token issuance is the device flow or the authorizationCode
+            flow (see scheme description); this tokenUrl does not accept client_credentials grants.
+        authorizationCode:
+          authorizationUrl: /api/v3/admin/auth/authorize
+          tokenUrl: /api/v3/admin/auth/token
+          scopes:
+            account:read: See your account details and environment IDs.
+            keys:read: Reveal API keys and token secrets in plain text.
+            keys:write: Rotate the API key. Anything still using the old key stops working.
+            providers:read: See which providers are enabled and how they are configured.
+            providers:write: Enable or disable providers and change their OAuth settings.
+            destinations:read: See where your data is delivered, such as webhooks and Supabase.
+            destinations:write: Add, change or remove delivery destinations.
+            events:read: See the history of delivered events.
+            events:write: Resend previously delivered events and generate synthetic test events.
+            connections:read: See which users are connected in each environment.
+            payloads:read: Read the contents of delivered payloads, including user health data.
+            dataconfig:read: See which fields each data type returns.
+            dataconfig:write: Change which fields each data type returns.
+            scores:read: See which scores are enabled and how they are set up.
+            scores:write: Enable and configure scores.
+            models:read: See the model catalogue and past model runs.
+            models:run: 'Data plane: run a model over a user''s stored data.'
+            workouts:read: 'Data plane: read workout templates and planned workouts.'
+            workouts:write: 'Data plane: create workout templates and plan workouts for users.'
+            labreports:read: 'Data plane: read lab reports.'
+            labreports:write: 'Data plane: reprocess or delete lab reports.'
+            testdata:write: 'Data plane: generate synthetic test data.'
+            billing:read: See your plan, invoices, payment method and usage.
+            billing:write: Change your subscription. This can spend money.
+            tokens:admin: List and revoke any token in the account, including other people's.
+            entitlements:read: See which features your company has access to.
+            auth:write: 'Data plane: create user authentication flows — widget sessions, auth tokens (in
+              place of a client_secret).'
+            connections:write: 'Data plane: deauthenticate users and update connection attributes.'
+            data:read: 'Data plane: read stored end-user health data (activity, sleep, body, …).'
+            data:write: 'Data plane: push or delete end-user health data.'
+            routes:read: 'Data plane: read routes and pushed routes.'
+            routes:write: 'Data plane: create, update, push, and delete routes.'
+            datalinks:read: 'Data plane: read data links.'
+            datalinks:write: 'Data plane: create and delete data links.'
+            graphs:read: 'Data plane: read graph sessions.'
+            graphs:write: 'Data plane: create and manage graph sessions (public renders of health data).'
+            vantage:read: 'Data plane: read Vantage orders, results, labs and configuration.'
+            vantage:write: 'Data plane: create Vantage orders, simulate orders and update configuration
+              or result acknowledgments. Includes vantage:read.'
+            agents:read: 'Data plane: read agents, bundles, jobs, and schedules.'
+            agents:write: 'Data plane: create, update, and delete agents and their configuration.'
+            agents:run: 'Data plane: execute agents and bundles (incurs model spend).'
+            ai:run: 'Data plane: run AI-context queries and the MCP proxy.'
+            tokens:read: See the tokens issued for an environment, without their secrets.
+            tokens:write: Create and revoke tokens for an environment. A new token can do anything its
+              scopes allow.
+            account:write: Change your company profile, onboarding and referral details.
+            team:read: See who is on your team.
+            team:write: Change or remove team members, including taking away their access.
       x-grant-type: urn:ietf:params:oauth:grant-type:device_code
     sessionToken:
       type: http
@@ -8586,6 +8793,8 @@ components:
           - access_denied
           - expired_token
           - server_error
+          - invalid_client
+          - temporarily_unavailable
         error_description:
           type: string
       required:
@@ -9692,6 +9901,45 @@ components:
         path: /team/members/{user_id}
       x-terra-summary: People with access to this account
       x-terra-resource: team.members
+    AuthorizationCodeFormRequest:
+      type: object
+      description: Authorization-code exchange for a public CIMD client with mandatory S256 PKCE.
+      properties:
+        grant_type:
+          type: string
+          enum:
+          - authorization_code
+        code:
+          type: string
+        client_id:
+          type: string
+        redirect_uri:
+          type: string
+        code_verifier:
+          type: string
+        resource:
+          type: string
+          enum:
+          - https://access.tryterra.co/api/v3/admin/mcp
+      required:
+      - grant_type
+      - code
+      - client_id
+      - code_verifier
+      - resource
+    OAuthRevokeFormRequest:
+      type: object
+      description: RFC 7009 public-client token revocation.
+      properties:
+        token:
+          type: string
+        client_id:
+          type: string
+        token_type_hint:
+          type: string
+      required:
+      - token
+      - client_id
     TokenPollFormRequest:
       type: object
       description: RFC 8628 §3.4 device access token request (form-encoded wire mode).
@@ -9752,6 +10000,9 @@ components:
     TokenSummary:
       type: object
       properties:
+        oauth_client:
+          type: string
+          description: Durable OAuth client label, independent of the editable token name.
         token_id:
           type: string
         kind:
