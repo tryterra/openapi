@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.30.1
+  version: 2026.09.30.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -9832,6 +9832,8 @@ components:
       - method_name: create
         operation: post
         path: /team/invitations
+        mcp_omit: The invitation token is shown once and only its digest is retained. Create invitations
+          in the authenticated dashboard until a safe encrypted reveal path exists.
       - method_name: list
         operation: get
         path: /team/invitations
