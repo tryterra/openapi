@@ -6,7 +6,7 @@ info:
 
     **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. An unsupported value returns 400 with code `invalid_api_version`. Supported versions: `2026-10-01` (latest; typed catalogue variants) and `2026-09-27` (catalogue attribute bags and integer availability). This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.09.29.1
+  version: 2026.10.01
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -2673,6 +2673,7 @@ components:
           type: integer
           format: int32
         images:
+          description: This variant's images, in display order. Omitted when it has none.
           type: array
           items:
             $ref: '#/components/schemas/Image'
@@ -2698,6 +2699,7 @@ components:
           type: integer
           format: int64
         images:
+          description: Every image of the product's variants, in display order.
           type: array
           items:
             $ref: '#/components/schemas/Image'
