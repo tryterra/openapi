@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.01.3
+  version: 2026.10.01.4
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -1145,6 +1145,52 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
+  /billing/invoice-details:
+    post:
+      operationId: updateInvoiceDetails
+      x-terra-confirmation-reason: Changes the name and VAT number printed on future invoices.
+      x-terra-help: Set the legal name and VAT number printed on invoices. Issued invoices keep the details they were finalized with.
+      summary: Set invoice billing details
+      description: Sets the legal entity name and EU, UK or Swiss VAT number on the authenticated canonical billing customer, creating it for a first purchase. Both freeze onto an invoice at finalization, so set them before subscribing. A VAT number replaces any other of the same type. Preview writes nothing.
+      tags:
+        - billing
+      security:
+        - adminToken:
+            - billing:write
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+      responses:
+        '200':
+          description: Completed, or a preview when dry_run is true.
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/BillingState'
+                  - $ref: '#/components/schemas/DryRunResult'
+              example:
+                state: ok
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceDetailsRequest'
   /billing/invoices/pay:
     post:
       operationId: payInvoice
@@ -6665,6 +6711,34 @@ components:
           x-terra-help: Invoice ID from this account's issued invoices.
       required:
         - invoice_id
+    InvoiceDetailsRequest:
+      type: object
+      properties:
+        billing_name:
+          type: string
+          description: Legal entity invoices are billed to. Omitted keeps the current name.
+          x-terra-help: Legal entity name printed on invoices. Omitted keeps the current name.
+        tax_id:
+          type: string
+          description: EU (including XI), UK or Swiss (CHE…MWST/TVA/IVA/VAT) VAT number. Replaces any other number of the same type; other regimes are rejected.
+          x-terra-help: EU, UK or Swiss VAT number. Replaces an existing number of the same type.
+        startup_onboarding:
+          type: boolean
+          description: 'First event-plan onboarding. Only first customer creation sets the historical startup credit alert threshold; an existing customer is unchanged. Rejected once the company has finished onboarding, and on its own: billing_name or tax_id is required.'
+          x-terra-help: Mark the first event-plan onboarding; existing customers are unchanged. Needs --billing-name or --tax-id.
+      x-terra-operations:
+        - method_name: update
+          operation: post
+          path: /billing/invoice-details
+          examples:
+            - summary: Bill invoices to a company with a VAT number
+              args:
+                - '--billing-name'
+                - Acme Ltd
+                - '--tax-id'
+                - GB123456789
+      x-terra-summary: The legal name and VAT number printed on invoices
+      x-terra-resource: billing.invoice-details
     BillingState:
       type: object
       properties:

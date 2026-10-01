@@ -943,6 +943,16 @@
     ],
     "sensitive": false
   },
+  "updateInvoiceDetails": {
+    "confirmation_reason": "Changes the name and VAT number printed on future invoices.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "billing:write"
+    ],
+    "sensitive": false
+  },
   "updatePaymentMethod": {
     "confirmation_reason": "Changes the card charged by all billable subscriptions.",
     "dangerous": true,
