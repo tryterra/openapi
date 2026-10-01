@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.09.30.2
+  version: 2026.10.01
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -5487,8 +5487,8 @@ paths:
       operationId: getOnboarding
       x-terra-mcp-annotations:
         openWorldHint: false
-      x-terra-help: Get onboarding destination and providers. Missing onboarding returns 404; has_password
-        indicates a write-only password.
+      x-terra-help: Get onboarding destination and providers. Missing onboarding returns 404; no destination
+        password is stored.
       tags:
       - company
       responses:
@@ -5509,7 +5509,7 @@ paths:
                   destination: s3
                   scheme: https
                   host: ingest.acme.example
-                  has_password: true
+                  has_password: false
                   providers:
                   - GARMIN
                   - FITBIT
@@ -5527,8 +5527,8 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Get onboarding info
       description: The stored onboarding destination and provider selection. 404 when the account has
-        no onboarding row yet, which the PATCH on this path creates. The configured password is never
-        returned; has_password reports only whether one is set.
+        no onboarding row yet, which the PATCH on this path creates. No destination password is stored;
+        has_password is legacy and cannot be set through this API.
       security:
       - adminToken:
         - account:read
@@ -5537,8 +5537,8 @@ paths:
       x-terra-mcp-annotations:
         idempotentHint: true
         openWorldHint: false
-      x-terra-help: Create or update onboarding settings. Omitted fields stay unchanged; the password
-        is write-only.
+      x-terra-help: Create or update onboarding settings. Omitted fields stay unchanged; password is accepted
+        but ignored.
       tags:
       - company
       responses:
@@ -5562,7 +5562,7 @@ paths:
                   destination: s3
                   scheme: https
                   host: ingest.acme.example
-                  has_password: true
+                  has_password: false
                   providers:
                   - GARMIN
                   - FITBIT
@@ -5583,7 +5583,7 @@ paths:
       summary: Upsert onboarding info
       description: 'Upsert: the row is created if it does not exist yet and the supplied fields are then
         applied, so writing anything clears the 404 the GET gives for a missing row. Omitted fields are
-        left unchanged, and `password` is write-only: the read reports only has_password.'
+        left unchanged, and `password` is accepted but ignored: it is never stored.'
       security:
       - adminToken:
         - account:write
@@ -8828,8 +8828,8 @@ components:
       - token_id
     OnboardingInfo:
       type: object
-      description: dashboard.onboarding_info row for the customer. password is never returned; has_password
-        reports whether one is set.
+      description: dashboard.onboarding_info row for the customer. No destination password is stored;
+        has_password is legacy and cannot be set through this API.
       additionalProperties: true
     PatchCompanyRequest:
       type: object
@@ -9040,9 +9040,8 @@ components:
           type:
           - string
           - 'null'
-          description: 'Password the destination authenticates with. Write-only: reads report has_password
-            instead, never the value. null clears it.'
-          x-terra-help: Destination password (write-only). Null clears it; reads never return the value.
+          description: Ignored. Accepted for compatibility with existing callers; the value is never stored.
+          x-terra-help: Ignored; never stored.
         path:
           type:
           - string
