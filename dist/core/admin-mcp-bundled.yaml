@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.01.1
+  version: 2026.10.01.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -5199,7 +5199,7 @@ paths:
                 - next_cursor
               example:
                 data:
-                - workout_id: wk_9f3k2m
+                - workout_id: '910989'
                   created_at: '2026-05-01T12:00:00Z'
                   pace_units:
                     running: min_per_km
@@ -5247,7 +5247,7 @@ paths:
                 - workout
               example:
                 workout:
-                  workout_id: wk_9f3k2m
+                  workout_id: '910989'
                   created_at: '2026-05-01T12:00:00Z'
                   pace_units:
                     running: min_per_km
@@ -5286,8 +5286,8 @@ paths:
       operationId: putWorkoutMetadata
       x-terra-mcp-annotations:
         openWorldHint: false
-      x-terra-help: Create or update workout metadata. Omitted or null pace_units preserves the value;
-        created_at applies only on creation.
+      x-terra-help: Set pace units on an existing workout. Omitted or null pace_units preserves the value;
+        created_at is ignored.
       tags:
       - workouts
       responses:
@@ -5308,7 +5308,7 @@ paths:
                 - $ref: '#/components/schemas/DryRunResult'
               example:
                 workout:
-                  workout_id: wk_9f3k2m
+                  workout_id: '910989'
                   created_at: '2026-05-01T12:00:00Z'
                   pace_units:
                     running: min_per_km
@@ -5320,8 +5320,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -5329,9 +5327,10 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Upsert a workout's metadata
-      description: 'Upsert, and preserving rather than replacing: an absent or null pace_units leaves
-        whatever is stored in place, so this cannot clear it (the PATCH on this path can). created_at
-        is applied only when the row is first inserted and is ignored afterwards.'
+      description: 'Sets pace_units on an existing workout, preserving rather than replacing: an absent
+        or null pace_units leaves whatever is stored in place, so this cannot clear it (the PATCH on this
+        path can). It never creates a workout: an unknown workout_id is a 404. created_at is accepted
+        but ignored; the response carries the workout''s own creation time.'
       security:
       - adminToken:
         - dataconfig:write
@@ -5378,7 +5377,7 @@ paths:
                 - $ref: '#/components/schemas/DryRunResult'
               example:
                 workout:
-                  workout_id: wk_9f3k2m
+                  workout_id: '910989'
                   created_at: '2026-05-01T12:00:00Z'
                   pace_units: null
         '400':
@@ -9344,8 +9343,8 @@ components:
       x-terra-resource: unified-api.sources
     PutWorkoutMetadataRequest:
       type: object
-      description: 'Upsert semantics: an absent or null pace_units preserves whatever is already stored
-        (COALESCE); created_at is only applied on first insert.'
+      description: 'Upsert semantics on an existing workout: an absent or null pace_units preserves whatever
+        is already stored (COALESCE); created_at is accepted but ignored.'
       properties:
         pace_units:
           type:
@@ -9360,9 +9359,9 @@ components:
           - string
           - 'null'
           format: date-time
-          description: When the workout was created, as RFC3339. Applied only when the metadata row is
-            first inserted, so it cannot be corrected by re-sending it.
-          x-terra-help: Workout creation time (RFC3339). Applied only on first insert.
+          description: 'Accepted but ignored, as RFC3339: the response carries the workout''s own creation
+            time.'
+          x-terra-help: Ignored; the workout's own creation time is reported. Must be RFC3339 if sent.
     ReplaceDataTypesRequest:
       type: object
       description: The complete desired data-type selection. Upper-case data-type tokens; ATHLETE is implicit
