@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.01
+  version: 2026.10.01.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -404,7 +404,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Update the calling principal's own dashboard user profile
-      description: The write is strictly self-scoped but carries account:write — a state change requires a write scope; account:write is in the default mint set, so only explicitly read-narrowed tokens lose self-edit. 404 not_found when the token has no resolvable own dashboard.users row (see DashboardUser).
+      description: The write is strictly self-scoped but carries account:write — a state change requires a write scope; account:write is in the default mint set, so only explicitly read-narrowed tokens lose self-edit. 404 not_found when the token has no resolvable own dashboard user (see DashboardUser).
       security:
         - adminToken:
             - account:write
@@ -872,7 +872,7 @@ paths:
                       company_id: cus_9f3k2m
                       name: Production
                       billable: true
-                      widget_config_url: null
+                      widget_config: null
                       widget_name: null
                       app_logo: null
                   - dev_id: staging-app-b52TnP
@@ -919,7 +919,7 @@ paths:
                   company_id: cus_9f3k2m
                   name: Production
                   billable: true
-                  widget_config_url: null
+                  widget_config: null
                   widget_name: null
                   app_logo: null
         '201':
@@ -939,7 +939,7 @@ paths:
                   company_id: cus_9f3k2m
                   name: Staging
                   billable: false
-                  widget_config_url: null
+                  widget_config: null
                   widget_name: null
                   app_logo: null
         '400':
@@ -1853,7 +1853,7 @@ paths:
                   company_id: cus_9f3k2m
                   name: Production
                   billable: true
-                  widget_config_url: null
+                  widget_config: null
                   widget_name: null
                   app_logo: null
                 api_key_masked: '****k2Qw'
@@ -1899,7 +1899,7 @@ paths:
                   company_id: cus_9f3k2m
                   name: Production (EU)
                   billable: true
-                  widget_config_url: null
+                  widget_config: null
                   widget_name: null
                   app_logo: null
         '400':
@@ -1936,7 +1936,7 @@ paths:
   /environments/{dev_id}/unified-api/widget/config:
     get:
       operationId: getWidgetConfig
-      x-terra-help: Get connect-widget branding and configuration. Read whichever of widget_config_url or widget_config is non-null.
+      x-terra-help: Get connect-widget branding and the inlined widget_config document.
       tags:
         - environments
       responses:
@@ -1953,7 +1953,8 @@ paths:
                   - widget
               example:
                 widget:
-                  widget_config_url: https://widget.example/config.json
+                  widget_config:
+                    theme: dark
                   widget_name: Acme Connect
                   app_logo: https://cdn.tryterra.co/acme/logo.png
         '401':
@@ -1969,7 +1970,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Get the dev-id's widget config
-      description: 'Branding and configuration for the connect widget. Exactly one of widget_config_url and widget_config is served, depending on the deployment: the URL is an S3 indirection on legacy deployments and the document is inlined on newer ones, so read whichever is non-null rather than assuming either.'
+      description: Branding and configuration for the connect widget. The configuration is the inlined widget_config document; widget_config_url is retired and no longer returned.
       security:
         - adminToken:
             - dataconfig:read
@@ -1978,7 +1979,7 @@ paths:
     put:
       operationId: setWidgetConfig
       x-terra-confirmation-reason: Any field left out of the body is cleared, so read the current config first and send it back with the edit applied.
-      x-terra-help: Replace the whole widget configuration; omitted fields are cleared. Read it first and send the form this deployment serves.
+      x-terra-help: Replace the whole widget configuration; omitted fields are cleared. Read it first and send it back with the edit applied.
       tags:
         - environments
       responses:
@@ -1998,7 +1999,8 @@ paths:
                   - $ref: '#/components/schemas/DryRunResult'
               example:
                 widget:
-                  widget_config_url: https://widget.example/config.json
+                  widget_config:
+                    theme: dark
                   widget_name: Acme Connect
                   app_logo: null
         '400':
@@ -2016,7 +2018,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Replace the dev-id's widget config (full replace)
-      description: 'A whole-document replace, not a merge: any field left out of the body is cleared, so read the current config first and send it back with the edit applied. Send whichever of widget_config_url and widget_config this deployment serves; the other is not accepted.'
+      description: 'A whole-document replace, not a merge: any field left out of the body is cleared, so read the current config first and send it back with the edit applied. widget_config_url is retired and rejected with 400.'
       security:
         - adminToken:
             - dataconfig:write
@@ -6654,7 +6656,7 @@ components:
         - active
     CreateEnvironmentProfileRequest:
       type: object
-      description: dev_id is required and must already exist as a tesseract credential — this does not provision one. name defaults to dev_id; billable defaults to false.
+      description: dev_id is required and must already exist as a tesseract credential — this does not provision one. An omitted name or billable leaves the credential's value unchanged.
       properties:
         dev_id:
           type: string
@@ -6662,12 +6664,12 @@ components:
           x-terra-help: Existing dev-id you own to create a profile for; does not provision credentials.
         name:
           type: string
-          description: Display name for the environment. Omitting it defaults to the dev-id in legacy deployments and leaves the credential's name unchanged in accounts deployments. Ignored when a profile already exists, since the create is get-or-create.
-          x-terra-help: 'Display name. Omitted: dev-id on legacy, unchanged on accounts deployments. Ignored if a profile exists.'
+          description: Display name for the environment. Omitting it leaves the credential's name unchanged. Ignored when a profile already exists, since the create is get-or-create.
+          x-terra-help: 'Display name. Omitted: unchanged. Ignored if a profile exists.'
         billable:
           type: boolean
-          description: Whether usage on this environment is billable. Omitting it defaults to false in legacy deployments and leaves the credential's billable status unchanged in accounts deployments. Ignored when a profile already exists.
-          x-terra-help: 'Make usage billable. Omitted: false on legacy, unchanged on accounts deployments. Ignored if a profile exists.'
+          description: Whether usage on this environment is billable. Omitting it leaves the credential's billable status unchanged. Ignored when a profile already exists.
+          x-terra-help: 'Make usage billable. Omitted: unchanged. Ignored if a profile exists.'
       required:
         - dev_id
       additionalProperties: false
@@ -6720,7 +6722,7 @@ components:
       type:
         - object
         - 'null'
-      description: 'A dashboard.users row: user_id, email, verified, name, phone_number, created_at, last_login, company_id, role. No credential material — passwords live in dashboard.auth_keys, a separate table this surface never reads. null when the caller''s token has no resolvable own user (see PatchMeRequest''s description).'
+      description: 'A dashboard user: user_id, email, verified, name, phone_number, created_at, last_login, company_id, role. No credential material — passwords live in a separate credential table this surface never reads. null when the caller''s token has no resolvable own user (see PatchMeRequest''s description).'
       additionalProperties: true
     DataToken:
       type: object
@@ -7135,7 +7137,7 @@ components:
       type:
         - object
         - 'null'
-      description: 'The dev-id''s environment profile, or null when no profile row exists yet (POST /environments creates one for an existing credential). Exactly one of widget_config_url / widget_config is served per deployment: widget_config_url (an S3 indirection) on legacy deployments, the inlined widget_config after the environments release.'
+      description: The dev-id's environment profile, or null when no profile row exists yet (POST /environments creates one for an existing credential). The widget configuration is the inlined widget_config document; widget_config_url is retired and no longer returned.
       properties:
         dev_id:
           type: string
@@ -7151,12 +7153,12 @@ components:
           type:
             - string
             - 'null'
-          description: Legacy only — replaced by widget_config after the environments release.
+          description: 'Retired: no longer returned. The configuration is served inline as widget_config.'
         widget_config:
           type:
             - object
             - 'null'
-          description: The widget configuration document, served inline. Environments-release deployments only.
+          description: The widget configuration document, served inline.
           additionalProperties: true
         widget_name:
           type:
@@ -8260,7 +8262,7 @@ components:
       additionalProperties: true
     PatchCompanyRequest:
       type: object
-      description: Partial update of dashboard.company_info. Every property is optional; unknown fields, created_at, and the billing columns (stripe_customer_id, stripe_subscription_id, stripe_metering_type — they live in dashboard.company_billing, which this route does not write) are rejected with 400.
+      description: Partial update of the company profile. Every property is optional; unknown fields, created_at, the billing columns (stripe_customer_id, stripe_subscription_id, stripe_metering_type — this route does not write billing) and the retired app_logo, widget_name and agreed_to_terms_at are rejected with 400.
       properties:
         name:
           type: string
@@ -8286,8 +8288,8 @@ components:
           type:
             - string
             - 'null'
-          description: Logo shown in the connection widget, as a URL. null clears it. Not accepted after the accounts release, where it moves to the environment and is set per dev-id instead.
-          x-terra-help: Widget logo URL. Null clears it. Legacy deployments only; otherwise set it on the environment.
+          description: 'Retired: rejected with 400. The widget logo is set per dev-id on the environment''s widget config.'
+          x-terra-help: Retired and rejected; set the logo on the environment's widget config.
         description:
           type:
             - string
@@ -8322,8 +8324,8 @@ components:
           type:
             - string
             - 'null'
-          description: Name shown in the connection widget. null clears it. Not accepted after the accounts release, where it moves to the environment and is set per dev-id instead.
-          x-terra-help: Widget display name. Null clears it. Legacy deployments only; otherwise set it on the environment.
+          description: 'Retired: rejected with 400. The widget name is set per dev-id on the environment''s widget config.'
+          x-terra-help: Retired and rejected; set the name on the environment's widget config.
         user_flow_done:
           type: boolean
           description: Whether the company has finished the guided setup flow.
@@ -8333,8 +8335,8 @@ components:
             - string
             - 'null'
           format: date-time
-          description: 'When the company accepted the terms, as RFC3339. null clears it. Legacy only: after the accounts release acceptances are an append-only log written by POST /company/terms, and this field is no longer accepted.'
-          x-terra-help: Legacy terms acceptance time (RFC3339). Null clears it. Accounts deployments require company agree-terms.
+          description: 'Retired: rejected with 400. Terms acceptances are an append-only log written by POST /company/terms.'
+          x-terra-help: Retired and rejected; use company agree-terms.
       additionalProperties: false
       minProperties: 1
     PatchDestinationRequest:
@@ -8383,7 +8385,7 @@ components:
       minProperties: 1
     PatchMeRequest:
       type: object
-      description: Partial update of the calling principal's own dashboard.users row. Every property is optional; at least one is required. Gated on account:write (in the default mint set); the write is strictly self-scoped. Requires the token to resolve to an own user (see DashboardUser) — otherwise 404 not_found.
+      description: Partial update of the calling principal's own dashboard user. Every property is optional; at least one is required. Gated on account:write (in the default mint set); the write is strictly self-scoped. Requires the token to resolve to an own user (see DashboardUser) — otherwise 404 not_found.
       properties:
         name:
           type: string
@@ -8470,7 +8472,7 @@ components:
       minProperties: 1
     PatchTeamMemberRequest:
       type: object
-      description: Partial update of a teammate's dashboard.users row. Every property is optional; at least one is required. Email, company_id and the rest of the row are not reassignable here.
+      description: Partial update of a teammate's dashboard user. Every property is optional; at least one is required. Email, company_id and the rest of the row are not reassignable here.
       properties:
         name:
           type: string
@@ -9383,7 +9385,7 @@ components:
         - expires_at
     TeamMemberSummary:
       type: object
-      description: 'One row of GET /team/members: a lean projection, not the full dashboard.users row.'
+      description: 'One row of GET /team/members: a lean projection, not the full dashboard user.'
       properties:
         user_id:
           type: string
@@ -9960,21 +9962,21 @@ components:
       additionalProperties: false
     WidgetConfig:
       type: object
-      description: 'Widget branding + config for a dev-id. Exactly one of widget_config_url / widget_config is served (and accepted on PUT) per deployment: widget_config_url (an S3 indirection) on legacy deployments, the inlined widget_config document after the environments release.'
+      description: 'Widget branding + config for a dev-id. The configuration is the inlined widget_config document; widget_config_url is retired: no longer returned, and rejected with 400 on PUT.'
       properties:
         widget_config_url:
           type:
             - string
             - 'null'
-          description: Legacy only — replaced by widget_config after the environments release.
-          x-terra-help: Legacy widget config URL. Omitted or null clears it; environments-release deployments use --widget-config.
+          description: 'Retired: no longer returned, and rejected with 400 on PUT. Send widget_config instead.'
+          x-terra-help: Retired and rejected; use --widget-config.
         widget_config:
           type:
             - object
             - 'null'
-          description: The widget configuration document, served inline. Environments-release deployments only.
+          description: The widget configuration document, served inline.
           additionalProperties: true
-          x-terra-help: Widget config JSON object for environments-release deployments. Omitted or null clears it.
+          x-terra-help: Widget config JSON object. Omitted or null clears it.
         widget_name:
           type:
             - string
