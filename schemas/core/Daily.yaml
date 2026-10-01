@@ -16,6 +16,11 @@ properties:
       - $ref: DailyDataEnrichment.yaml
       - type: "null"
     description: Object containing additional enrichment data for the day.
+  trends:
+    anyOf:
+      - $ref: TrendsData.yaml
+      - type: "null"
+    description: Personal 30-day baselines and trends for the user as of this day (trends product). Null for customers without the product enabled.
   device_data:
     anyOf:
       - $ref: DeviceData.yaml

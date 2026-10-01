@@ -3,7 +3,7 @@ info:
   description: |
     The Terra API (v2 surface, served at access.tryterra.co/api/v2). Protected product operations require a current product entitlement in addition to valid credentials and token scopes. Missing access returns HTTP 403 with code entitlement_required; disabled environments return environment_disabled. Unavailable current authorization returns HTTP 503 with code authorization_unavailable. Billing, configuration and recovery remain available under their existing permissions. Completed Health Scores stay with the caller's own authorized data. Pass recipients require their own Health Scores entitlement; otherwise enrichment fields retain null values. New score computation requires Health Scores access. Retained lab reports remain readable through the report endpoints with valid credentials and ownership, without a current Lab Reports entitlement. New uploads and reprocessing require it.
   title: TerraAPI
-  version: 2026.09.29
+  version: 2026.10.01
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -3221,6 +3221,11 @@ components:
             - $ref: '#/components/schemas/DailyDataEnrichment'
             - type: 'null'
           description: Object containing additional enrichment data for the day.
+        trends:
+          anyOf:
+            - $ref: '#/components/schemas/TrendsData'
+            - type: 'null'
+          description: Personal 30-day baselines and trends for the user as of this day (trends product). Null for customers without the product enabled.
         device_data:
           anyOf:
             - $ref: '#/components/schemas/DeviceData'
@@ -3419,6 +3424,11 @@ components:
             - $ref: '#/components/schemas/SleepDataEnrichment'
             - type: 'null'
           description: Object containing additional enrichment data for the sleep session.
+        trends:
+          anyOf:
+            - $ref: '#/components/schemas/TrendsData'
+            - type: 'null'
+          description: Personal 30-day baselines and trends for the user as of this session (trends product). Null for customers without the product enabled.
         device_data:
           anyOf:
             - $ref: '#/components/schemas/DeviceData'
@@ -8282,6 +8292,96 @@ components:
           properties: {}
           unevaluatedProperties:
             type: number
+    MetricTrend:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        baseline:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 52
+          description: Median of the trailing window, in the metric's own units (bpm, ms, seconds).
+        average:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 53.5
+          description: Mean of the trailing window.
+        previous_average:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 50
+          description: Mean of the window immediately preceding the trailing window.
+        delta:
+          anyOf:
+            - type: number
+            - type: 'null'
+          examples:
+            - 3.5
+          description: average minus previous_average. Present only when both averages are.
+        days_with_data:
+          type: integer
+          minimum: -2147483648
+          maximum: 2147483647
+          examples:
+            - 28
+          description: Number of days with data in the trailing window.
+        previous_days_with_data:
+          type: integer
+          minimum: -2147483648
+          maximum: 2147483647
+          examples:
+            - 30
+          description: Number of days with data in the preceding window.
+      required:
+        - days_with_data
+        - previous_days_with_data
+      description: Personal trend for one metric, computed by Terra from the user's own stored daily values. Both windows are trailing calendar-day windows that end the day BEFORE the record's own local day, so the record's value is never inside its own baseline. Statistics are absent (null) when the window has no data; the day counts say how much history stands behind each number.
+    TrendsData:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        window_days:
+          type: integer
+          minimum: -2147483648
+          maximum: 2147483647
+          examples:
+            - 30
+          description: Length of each window in days.
+        window_end:
+          type: string
+          examples:
+            - '2026-09-15'
+          description: 'Inclusive ISO date (yyyy-mm-dd) the trailing window ends on: the last completed local day before the record''s own.'
+        resting_heart_rate:
+          anyOf:
+            - $ref: '#/components/schemas/MetricTrend'
+            - type: 'null'
+          description: 'Resting heart rate trend, in bpm. Source: daily summaries.'
+        hrv_rmssd:
+          anyOf:
+            - $ref: '#/components/schemas/MetricTrend'
+            - type: 'null'
+          description: 'Heart-rate variability (RMSSD) trend, in ms. Source: sleep sessions.'
+        hrv_sdnn:
+          anyOf:
+            - $ref: '#/components/schemas/MetricTrend'
+            - type: 'null'
+          description: 'Heart-rate variability (SDNN) trend, in ms. Source: sleep sessions. Apple Health reports SDNN rather than RMSSD.'
+        sleep_duration:
+          anyOf:
+            - $ref: '#/components/schemas/MetricTrend'
+            - type: 'null'
+          description: 'Time asleep per session trend, in seconds (matches sleep_durations_data.asleep_time). Source: sleep sessions.'
+      required:
+        - window_days
+        - window_end
+      description: Personal baselines and trends for the user, as of the record. Present on sleep and daily payloads for customers with the trends product enabled; null otherwise.
     DailyDistanceData:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object

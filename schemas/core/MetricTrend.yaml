@@ -1,0 +1,49 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  baseline:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 52
+    description: Median of the trailing window, in the metric's own units (bpm, ms, seconds).
+  average:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 53.5
+    description: Mean of the trailing window.
+  previous_average:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 50
+    description: Mean of the window immediately preceding the trailing window.
+  delta:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 3.5
+    description: average minus previous_average. Present only when both averages are.
+  days_with_data:
+    type: integer
+    minimum: -2147483648
+    maximum: 2147483647
+    examples:
+      - 28
+    description: Number of days with data in the trailing window.
+  previous_days_with_data:
+    type: integer
+    minimum: -2147483648
+    maximum: 2147483647
+    examples:
+      - 30
+    description: Number of days with data in the preceding window.
+required:
+  - days_with_data
+  - previous_days_with_data
+description: Personal trend for one metric, computed by Terra from the user's own stored daily values. Both windows are trailing calendar-day windows that end the day BEFORE the record's own local day, so the record's value is never inside its own baseline. Statistics are absent (null) when the window has no data; the day counts say how much history stands behind each number.

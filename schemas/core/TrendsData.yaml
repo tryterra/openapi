@@ -1,0 +1,39 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  window_days:
+    type: integer
+    minimum: -2147483648
+    maximum: 2147483647
+    examples:
+      - 30
+    description: Length of each window in days.
+  window_end:
+    type: string
+    examples:
+      - 2026-09-15
+    description: "Inclusive ISO date (yyyy-mm-dd) the trailing window ends on: the last completed local day before the record's own."
+  resting_heart_rate:
+    anyOf:
+      - $ref: MetricTrend.yaml
+      - type: "null"
+    description: "Resting heart rate trend, in bpm. Source: daily summaries."
+  hrv_rmssd:
+    anyOf:
+      - $ref: MetricTrend.yaml
+      - type: "null"
+    description: "Heart-rate variability (RMSSD) trend, in ms. Source: sleep sessions."
+  hrv_sdnn:
+    anyOf:
+      - $ref: MetricTrend.yaml
+      - type: "null"
+    description: "Heart-rate variability (SDNN) trend, in ms. Source: sleep sessions. Apple Health reports SDNN rather than RMSSD."
+  sleep_duration:
+    anyOf:
+      - $ref: MetricTrend.yaml
+      - type: "null"
+    description: "Time asleep per session trend, in seconds (matches sleep_durations_data.asleep_time). Source: sleep sessions."
+required:
+  - window_days
+  - window_end
+description: Personal baselines and trends for the user, as of the record. Present on sleep and daily payloads for customers with the trends product enabled; null otherwise.

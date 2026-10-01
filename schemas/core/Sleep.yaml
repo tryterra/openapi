@@ -6,6 +6,11 @@ properties:
       - $ref: SleepDataEnrichment.yaml
       - type: "null"
     description: Object containing additional enrichment data for the sleep session.
+  trends:
+    anyOf:
+      - $ref: TrendsData.yaml
+      - type: "null"
+    description: Personal 30-day baselines and trends for the user as of this session (trends product). Null for customers without the product enabled.
   device_data:
     anyOf:
       - $ref: DeviceData.yaml
