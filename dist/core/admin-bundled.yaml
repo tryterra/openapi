@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.01.4
+  version: 2026.10.02
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -49,7 +49,7 @@ paths:
       tags:
         - auth
       summary: Begin an authorization-code grant with S256 PKCE
-      description: Requires ADMIN_OAUTH_ENABLED. Accepts an HTTPS CIMD client_id or a tdcr_v1. client_id issued by POST /auth/register, and validates the client and the exact registered redirect before any redirect. Empty scope selects the MCP preset. Untrusted clients receive a local error page. A tdcr_v1. client_id with a valid signature that has passed its 90-day lifetime is redirected to its exactly matching registered redirect_uri with error=invalid_client, state and iss, so the client registers again. Consent is completed through the authenticated dashboard bridge.
+      description: Requires ADMIN_OAUTH_ENABLED. Accepts an HTTPS client ID metadata document URL as client_id, and validates the client and the exact registered redirect before any redirect. Empty scope selects the MCP preset. Untrusted clients receive a local error page. Consent is completed through the authenticated dashboard bridge.
       security: []
       parameters:
         - name: client_id
@@ -57,7 +57,7 @@ paths:
           required: true
           schema:
             type: string
-          description: HTTPS client metadata URL, or the client_id issued by POST /auth/register (prefixed tdcr_v1.).
+          description: HTTPS client ID metadata document URL.
         - name: redirect_uri
           in: query
           required: true
@@ -114,7 +114,7 @@ paths:
           description: Optional space-separated environment IDs.
       responses:
         '302':
-          description: Dashboard consent redirect, or a client error redirect with state and iss (including invalid_client for an expired registration).
+          description: Dashboard consent redirect, or a client error redirect with state and iss.
           headers:
             Location:
               description: Redirect destination.
@@ -140,107 +140,6 @@ paths:
             text/html:
               schema:
                 type: string
-  /auth/register:
-    post:
-      operationId: registerOAuthClient
-      tags:
-        - auth
-      summary: Register a public OAuth client dynamically
-      description: 'Requires ADMIN_OAUTH_ENABLED and configured registration signing keys. RFC 7591 registration for public clients only; token_endpoint_auth_method must be none. Nothing is stored: the returned client_id is a signed, versioned registration of at most 2048 bytes verified on every use, and it expires 90 days after issue. Rate limited per IP more tightly than authorize. The consent page labels these clients unverified and shows client_name as self-declared. Returns 404 when registration is not enabled.'
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ClientRegistrationRequest'
-      responses:
-        '201':
-          description: Registered client metadata.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClientRegistrationResponse'
-              example:
-                client_id: tdcr_v1.k1.eyJuIjoiRXhhbXBsZSIsInIiOlsiaHR0cDovLzEyNy4wLjAuMS9jYWxsYmFjayJdLCJ0IjoibmF0aXZlIiwiaWF0IjoxNzkxMDAwMDAwfQ.signature
-                client_id_issued_at: 1791000000
-                client_name: Example agent
-                redirect_uris:
-                  - http://127.0.0.1/callback
-                application_type: native
-                token_endpoint_auth_method: none
-                grant_types:
-                  - authorization_code
-                response_types:
-                  - code
-        '400':
-          description: Invalid client metadata or redirect URI.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OAuthError'
-        '404':
-          description: Registration is disabled or not configured.
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-        '429':
-          description: Per-IP registration budget exhausted.
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-  /auth/revoke:
-    post:
-      operationId: revokeOAuthToken
-      tags:
-        - auth
-      summary: Revoke a token issued to an OAuth client
-      description: 'Requires ADMIN_OAUTH_ENABLED. The client authenticates with its registered method: none for public CIMD and tdcr_v1. clients, or private_key_jwt for CIMD clients that declare it. Revokes the token and its rotation successors only when the durable grant matches the authenticated client_id. Unknown and already-revoked tokens return 200.'
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              anyOf:
-                - $ref: '#/components/schemas/OAuthRevokeFormRequest'
-                - $ref: '#/components/schemas/OAuthRevokeAssertionFormRequest'
-      responses:
-        '200':
-          description: Revocation processed without disclosing token existence.
-          content:
-            application/json:
-              schema:
-                type: object
-              example: {}
-        '400':
-          description: invalid_request, or invalid_client when client authentication fails.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OAuthError'
-        '401':
-          description: Header client authentication failed.
-          headers:
-            WWW-Authenticate:
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OAuthError'
-        '503':
-          description: temporarily_unavailable with Retry-After when the flow is disabled, client metadata or keys cannot be fetched, or assertion replay protection is unavailable.
-          headers:
-            Retry-After:
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OAuthError'
   /auth/device:
     post:
       operationId: startDeviceAuth
@@ -336,7 +235,7 @@ paths:
                 - $ref: '#/components/schemas/TokenPollFormRequest'
                 - $ref: '#/components/schemas/AuthorizationCodeFormRequest'
                 - $ref: '#/components/schemas/AuthorizationCodeAssertionFormRequest'
-      description: 'Accepts authorization_code with code, S256 code_verifier, canonical MCP resource and optional exact redirect_uri, authenticated by the client''s registered method: none with a CIMD or tdcr_v1. client_id, or private_key_jwt for CIMD clients that declare it, in which case client_id may be omitted. Requires ADMIN_OAUTH_ENABLED. Also accepts the standard RFC 8628 §3.4 device access token request: form-encoded body with grant_type urn:ietf:params:oauth:grant-type:device_code, RFC 6749 §5.1 token response, §5.2/§3.5 error envelope, Cache-Control: no-store. This endpoint speaks only the OAuth wire format. No refresh tokens are issued — rotate via POST /tokens/self/rotate.'
+      description: 'Accepts authorization_code with code, S256 code_verifier, canonical MCP resource and optional exact redirect_uri, authenticated by the client''s declared method: none with a CIMD client_id, or private_key_jwt for CIMD clients that declare it, in which case client_id may be omitted. Requires ADMIN_OAUTH_ENABLED. Also accepts the standard RFC 8628 §3.4 device access token request: form-encoded body with grant_type urn:ietf:params:oauth:grant-type:device_code, RFC 6749 §5.1 token response, §5.2/§3.5 error envelope, Cache-Control: no-store. This endpoint speaks only the OAuth wire format. No refresh tokens are issued — rotate via POST /tokens/self/rotate.'
   /docs/ask:
     post:
       operationId: askDocs
@@ -3584,7 +3483,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Generate a synthetic test event
-      description: Builds a realistic payload of the requested type for a made-up user, normalises it exactly as live provider data is, stores it, and queues it to every destination the dispatcher would deliver it to (active, deliverable type, event_types admit the type), or to the one named by destination_id. Register the receiver as a destination first; there is no ad-hoc URL, and having no eligible destination (or naming an inactive or non-accepting one) is a 422 on real and dry-run calls alike. The payload is returned in the response so the caller sees what the destination will receive. The event is marked synthetic end to end and never touches a real connection. Pass ?dry_run=true to get the payload without storing or delivering anything. Requires the environment to be entitled to the Unified API.
+      description: Builds a realistic payload of the requested type for a made-up user, normalises it exactly as live provider data is, stores it, and queues it to every destination the dispatcher would deliver it to (active, deliverable type, event_types admit the type), or to the one named by destination_id. Register the receiver as a destination first; there is no ad-hoc URL, and having no eligible destination (or naming an inactive or non-accepting one) is a 422 on real and dry-run calls alike. The payload is returned in the response so the caller sees what the destination will receive. Pass samples false to leave time-series samples out of the generated event. The event is marked synthetic end to end and never touches a real connection. Pass ?dry_run=true to get the payload without storing or delivering anything. Requires the environment to be entitled to the Unified API.
       security:
         - adminToken:
             - events:write
@@ -4090,6 +3989,7 @@ paths:
             - payloads:read
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/PayloadSamples'
         - name: event_id
           in: path
           required: true
@@ -6093,6 +5993,14 @@ components:
       schema:
         type: boolean
       description: When true the operation commits nothing and answers 200 with a DryRunResult — {dry_run, would, preview} — whatever its live success code is. Operations whose live success is also 200 publish both the live response and DryRunResult in the response schema.
+    PayloadSamples:
+      name: samples
+      in: query
+      required: false
+      schema:
+        type: boolean
+        default: true
+      description: When false, arrays named samples or ending in _samples are removed from the returned payload, which keeps it small enough to read. It changes only this response; the stored payload keeps its samples.
   responses:
     Unauthorized:
       description: Missing/invalid/expired admin token.
@@ -6872,6 +6780,10 @@ components:
           type: string
           format: date-time
           description: The moment the generated data is anchored to, RFC 3339. Omitted, now.
+        samples:
+          type: boolean
+          description: Whether the generated event carries its time-series samples. False removes them before the event is stored and delivered, as an environment with samples disabled receives it.
+          default: true
       required:
         - type
     GenerateEventResult:
@@ -8402,7 +8314,7 @@ components:
             - https://access.tryterra.co/api/v3/admin/mcp
         client_id:
           type: string
-          description: The CIMD URL, or the client_id issued by POST /auth/register (prefixed tdcr_v1.).
+          description: The client ID metadata document URL.
         client_assertion_type:
           description: Not sent by public clients; a private_key_jwt client sends both assertion fields and matches the assertion variant.
           not: {}
@@ -8450,128 +8362,6 @@ components:
         - resource
         - client_assertion_type
         - client_assertion
-    OAuthRevokeFormRequest:
-      type: object
-      description: RFC 7009 token revocation, authenticated as a public client by client_id alone.
-      properties:
-        token:
-          type: string
-        token_type_hint:
-          type: string
-        client_id:
-          type: string
-          description: The CIMD URL, or the client_id issued by POST /auth/register (prefixed tdcr_v1.).
-        client_assertion_type:
-          description: Not sent by public clients; a private_key_jwt client sends both assertion fields and matches the assertion variant.
-          not: {}
-        client_assertion:
-          description: Not sent by public clients; a private_key_jwt client sends both assertion fields and matches the assertion variant.
-          not: {}
-      required:
-        - token
-        - client_id
-    OAuthRevokeAssertionFormRequest:
-      type: object
-      description: RFC 7009 token revocation, authenticated by a private_key_jwt assertion whose sub names the client.
-      properties:
-        token:
-          type: string
-        token_type_hint:
-          type: string
-        client_id:
-          type: string
-          description: Optional with an assertion; when present it must equal the assertion's iss and sub.
-        client_assertion_type:
-          type: string
-          enum:
-            - urn:ietf:params:oauth:client-assertion-type:jwt-bearer
-        client_assertion:
-          type: string
-          description: An asymmetrically signed JWT of at most 4096 bytes with iss and sub equal to client_id, a single-valued aud equal to the issuer https://access.tryterra.co or the token endpoint https://access.tryterra.co/api/v3/admin/auth/token, a single-use jti and an exp at most five minutes ahead.
-      required:
-        - token
-        - client_assertion_type
-        - client_assertion
-    ClientRegistrationRequest:
-      type: object
-      description: RFC 7591 dynamic registration of a public client. Unknown fields are ignored.
-      properties:
-        client_name:
-          type: string
-          description: Display name shown on the consent page as self-declared. At most 128 bytes.
-        redirect_uris:
-          type: array
-          description: One to five distinct HTTPS or loopback HTTP redirect URIs, each at most 512 bytes and at most 1024 bytes together.
-          items:
-            type: string
-        application_type:
-          type: string
-          enum:
-            - native
-            - web
-          description: Defaults to native when any redirect is loopback, otherwise web. Web clients cannot register loopback redirects.
-        token_endpoint_auth_method:
-          type: string
-          enum:
-            - none
-          description: Only none is accepted.
-        grant_types:
-          type: array
-          description: Must include authorization_code when present; other grant types are not registered.
-          items:
-            type: string
-        response_types:
-          type: array
-          description: Must include code when present.
-          items:
-            type: string
-      required:
-        - client_name
-        - redirect_uris
-    ClientRegistrationResponse:
-      type: object
-      description: The registered client metadata. The client_id is a signed registration that stores nothing server-side.
-      properties:
-        client_id:
-          type: string
-        client_id_issued_at:
-          type: integer
-        client_name:
-          type: string
-        redirect_uris:
-          type: array
-          items:
-            type: string
-        application_type:
-          type: string
-          enum:
-            - native
-            - web
-        token_endpoint_auth_method:
-          type: string
-          enum:
-            - none
-        grant_types:
-          type: array
-          items:
-            type: string
-            enum:
-              - authorization_code
-        response_types:
-          type: array
-          items:
-            type: string
-            enum:
-              - code
-      required:
-        - client_id
-        - client_id_issued_at
-        - client_name
-        - redirect_uris
-        - application_type
-        - token_endpoint_auth_method
-        - grant_types
-        - response_types
     TokenPollFormRequest:
       type: object
       description: RFC 8628 §3.4 device access token request (form-encoded wire mode).
