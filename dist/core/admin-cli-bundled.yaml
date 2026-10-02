@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.02
+  version: 2026.10.02.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -1219,6 +1219,7 @@ paths:
   /billing/deals/activate:
     post:
       operationId: activateDeal
+      x-terra-confirmation-reason: Applies deal credit and may create a monthly subscription.
       x-terra-help: Activate a deal code. This may create a subscription or require payment confirmation.
       summary: Activate an accelerator billing deal
       description: Freezes the authenticated company's canonical billing identity before issuing credit. Retries resume persisted steps; an expired unknown provider outcome requires reconciliation. Dry run reads eligibility and makes no reservation or provider writes. Existing subscriptions are preserved. Requires DEALS_ENABLED=true on the API. A payment challenge returns 202 after persisting its subscription; retry the same code after confirmation. Company onboarding completes only after payment.
@@ -6383,7 +6384,6 @@ components:
         - method_name: activate
           operation: post
           path: /billing/deals/activate
-          destructive: Applies deal credit and may create a monthly subscription.
           examples:
             - summary: Activate a deal
               args:
