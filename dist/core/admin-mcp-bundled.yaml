@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.02.1
+  version: 2026.10.02.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -1113,46 +1113,6 @@ paths:
       security:
       - adminToken:
         - entitlements:read
-  /billing/payment-method/setup:
-    post:
-      operationId: createPaymentSetup
-      x-terra-confirmation-reason: Creates a payment setup for the account.
-      x-terra-help: Create a customer-bound Stripe setup intent. Confirm the returned client_secret with
-        Stripe.js before updating the default payment method.
-      summary: Create a customer-bound payment setup
-      description: Creates a SetupIntent for the authenticated canonical billing customer. Confirmation
-        stays in Stripe.js; the secret is returned only to this caller. Preview creates no intent.
-      tags:
-      - billing
-      security:
-      - adminToken:
-        - billing:write
-      parameters:
-      - $ref: '#/components/parameters/DryRun'
-      responses:
-        '200':
-          description: Completed, or a preview when dry_run is true.
-          content:
-            application/json:
-              schema:
-                type: object
-                anyOf:
-                - $ref: '#/components/schemas/PaymentSetupResult'
-                - $ref: '#/components/schemas/DryRunResult'
-              example:
-                client_secret: seti_example_secret_example
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
   /billing/invoice-details:
     post:
       operationId: updateInvoiceDetails
@@ -1263,237 +1223,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PayInvoiceRequest'
-  /billing/deal:
-    get:
-      operationId: getCurrentDeal
-      x-terra-help: Read your current accelerator deal and remaining account credit.
-      summary: Read the current billing deal
-      description: Reads the current canonical account's owned deal. Remaining USD credit is the whole
-        customer balance, not per-deal attribution.
-      tags:
-      - billing
-      security:
-      - adminToken:
-        - billing:read
-      responses:
-        '200':
-          description: Current deal, or null
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                - deal
-                properties:
-                  deal:
-                    anyOf:
-                    - $ref: '#/components/schemas/BillingDeal'
-                    - type: 'null'
-              example:
-                deal: null
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-  /billing/deals/eligibility:
-    post:
-      operationId: checkDealEligibility
-      x-terra-mcp-annotations:
-        readOnlyHint: true
-      x-terra-help: Check whether a deal code is eligible before saving a card; activation rechecks eligibility.
-      summary: Preview an accelerator deal for this company
-      description: Read-only eligibility before saving a card. Activation rechecks all facts before reserving
-        a code or applying credit.
-      tags:
-      - billing
-      security:
-      - adminToken:
-        - billing:read
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ActivateDealRequest'
-      responses:
-        '200':
-          description: Eligibility reason or null when the current company can proceed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DealEligibilityResult'
-              example:
-                reason: null
-        '400':
-          description: Invalid code or request body
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-  /billing/deals/activate:
-    post:
-      operationId: activateDeal
-      x-terra-mcp-annotations:
-        idempotentHint: true
-      x-terra-confirmation-reason: Applies deal credit and may create a monthly subscription.
-      x-terra-help: Activate a deal code. This may create a subscription or require payment confirmation.
-      summary: Activate an accelerator billing deal
-      description: Freezes the authenticated company's canonical billing identity before issuing credit.
-        Retries resume persisted steps; an expired unknown provider outcome requires reconciliation. Dry
-        run reads eligibility and makes no reservation or provider writes. Existing subscriptions are
-        preserved. Requires DEALS_ENABLED=true on the API. A payment challenge returns 202 after persisting
-        its subscription; retry the same code after confirmation. Company onboarding completes only after
-        payment.
-      tags:
-      - billing
-      security:
-      - adminToken:
-        - billing:write
-      parameters:
-      - $ref: '#/components/parameters/DryRun'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ActivateDealRequest'
-      responses:
-        '200':
-          description: Active deal or no-write preview
-          content:
-            application/json:
-              schema:
-                type: object
-                anyOf:
-                - $ref: '#/components/schemas/DealActivationResult'
-                - $ref: '#/components/schemas/DryRunResult'
-              example:
-                state: ok
-                subscription_id: sub_deal
-                expires_at: null
-        '202':
-          description: Confirm payment, then retry the same code
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DealActivationResult'
-              example:
-                state: requires_action
-                subscription_id: sub_deal
-                expires_at: null
-                payment_url: https://invoice.stripe.com/example
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-  /billing/promotions/validate:
-    get:
-      operationId: validatePromotion
-      x-terra-help: Check whether a promotion code is currently available; final invoice eligibility is
-        checked later.
-      summary: Check promotion availability
-      description: Checks active codes and customer restrictions. Does not guarantee invoice eligibility,
-        redemption limits or final pricing; subscription creation validates those facts again.
-      tags:
-      - billing
-      security:
-      - adminToken:
-        - billing:read
-      parameters:
-      - in: query
-        name: code
-        x-terra-help: Promotion code to check; omit or leave empty when no promotion is used.
-        schema:
-          type: string
-        description: Omitted or empty means no promotion and returns valid.
-      responses:
-        '200':
-          description: Current promotion availability
-          content:
-            application/json:
-              example:
-                valid: true
-              schema:
-                type: object
-                required:
-                - valid
-                properties:
-                  valid:
-                    type: boolean
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-    post:
-      operationId: validatePromotionPrivate
-      x-terra-mcp-annotations:
-        readOnlyHint: true
-      x-terra-help: Check a promotion code without putting it in the URL; final invoice eligibility is
-        checked later.
-      summary: Check promotion availability without exposing a code in the URL
-      description: Checks active codes and customer restrictions. Subscription creation validates invoice
-        eligibility again.
-      tags:
-      - billing
-      security:
-      - adminToken:
-        - billing:read
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                code:
-                  type: string
-                  description: Promotion code to check.
-                  x-terra-help: Promotion code to check.
-      responses:
-        '200':
-          description: Current promotion availability
-          content:
-            application/json:
-              example:
-                valid: true
-              schema:
-                $ref: '#/components/schemas/PromotionValidation'
-        '400':
-          description: Invalid request body
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
   /billing/subscriptions:
     get:
       operationId: listSubscriptions
@@ -1781,53 +1510,6 @@ paths:
       - adminToken:
         - billing:read
   /billing/payment-method:
-    post:
-      operationId: updatePaymentMethod
-      x-terra-mcp-annotations:
-        idempotentHint: true
-      x-terra-confirmation-reason: Changes the card charged by all billable subscriptions.
-      x-terra-help: Set the default payment method using a successfully confirmed setup intent owned by
-        this account.
-      summary: Set the default payment method
-      description: Accepts only a successful customer-owned SetupIntent. Updates billable subscriptions
-        before the customer default; a partial failure is retryable and is never reported as success.
-      tags:
-      - billing
-      security:
-      - adminToken:
-        - billing:write
-      parameters:
-      - $ref: '#/components/parameters/DryRun'
-      responses:
-        '200':
-          description: Completed, or a preview when dry_run is true.
-          content:
-            application/json:
-              schema:
-                type: object
-                anyOf:
-                - $ref: '#/components/schemas/BillingState'
-                - $ref: '#/components/schemas/DryRunResult'
-              example:
-                state: ok
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePaymentMethodRequest'
     get:
       operationId: getPaymentMethod
       x-terra-help: Get the default card with masked details. When has_card is false, card details are
@@ -1901,78 +1583,6 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-  /billing/usage:
-    get:
-      operationId: getUsage
-      x-terra-help: Get metered usage totals. Requires a meter and a minute-aligned Unix-second start/end
-        window; usage is eventually consistent.
-      tags:
-      - billing
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UsageResponse'
-              example:
-                meter_id: mtr_61RQw
-                start: 1748736000
-                end: 1751328000
-                total_usage: 18234
-                summaries:
-                - meter_id: mtr_61RQw
-                  aggregated_value: 18234
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Metered usage totals
-      description: All three of meter_id, start and end are required, so there is no default window, and
-        the bounds are plain integers rather than the RFC3339 timestamps the rest of this API uses. The
-        response repeats the window it measured, the total, and a per-meter breakdown.
-      security:
-      - adminToken:
-        - billing:read
-      parameters:
-      - name: meter_id
-        x-terra-help: Billing meter configured for your account. An unknown meter returns 404.
-        in: query
-        required: true
-        schema:
-          type: string
-        description: The billing meter to total. One of the meters configured for your account; an unknown
-          one is a 404.
-      - name: start
-        x-terra-help: Positive Unix-second window start, a multiple of 60 and before end. Required; no
-          default.
-        in: query
-        required: true
-        schema:
-          type: integer
-          minimum: 1
-          multipleOf: 60
-        description: Start of the window, as a positive unix-second timestamp. Must be minute-aligned
-          (a multiple of 60), which is the billing provider's own rule, and before end.
-      - name: end
-        x-terra-help: Positive Unix-second window end, a multiple of 60 and after start. Recent usage
-          may still be arriving.
-        in: query
-        required: true
-        schema:
-          type: integer
-          minimum: 1
-          multipleOf: 60
-        description: End of the window, as a positive unix-second timestamp. Minute-aligned like start.
-          Usage is eventually consistent, so a window ending at now may still be filling in.
   /billing/subscriptions/cancel-incomplete:
     post:
       operationId: cancelIncomplete
@@ -7108,114 +6718,6 @@ components:
             instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin
             code: unsupported_operation
   schemas:
-    BillingDeal:
-      type: object
-      properties:
-        code:
-          type: string
-        subscription_id:
-          type: string
-        grant_usd_cents:
-          type: integer
-          format: int64
-        remaining_usd_cents:
-          type:
-          - integer
-          - 'null'
-          format: int64
-          description: Current total customer credit balance, not attribution of individual remaining
-            deal dollars. Null for a non-USD account.
-        expires_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-      required:
-      - code
-      - subscription_id
-      - grant_usd_cents
-      - remaining_usd_cents
-      - expires_at
-      x-terra-operations:
-      - method_name: get
-        operation: get
-        path: /billing/deal
-      - method_name: eligibility
-        operation: post
-        path: /billing/deals/eligibility
-      - method_name: activate
-        operation: post
-        path: /billing/deals/activate
-      x-terra-summary: Accelerator billing credit
-      x-terra-resource: billing.deals
-    ActivateDealRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Accelerator deal code to check or activate.
-          x-terra-help: Accelerator deal code to check or activate.
-      required:
-      - code
-    DealActivationResult:
-      type: object
-      properties:
-        state:
-          type: string
-          enum:
-          - ok
-          - requires_action
-        subscription_id:
-          type: string
-        expires_at:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        client_secret:
-          type: string
-          x-terra-secret: true
-        payment_url:
-          type: string
-      required:
-      - state
-      - subscription_id
-      - expires_at
-    DealEligibilityResult:
-      type: object
-      properties:
-        reason:
-          type:
-          - string
-          - 'null'
-          enum:
-          - invalid
-          - spent
-          - revoked
-          - closed
-          - already_claimed
-          - ineligible_subscription
-          - needs_reconciliation
-          - null
-      required:
-      - reason
-    PromotionValidation:
-      type: object
-      properties:
-        valid:
-          type: boolean
-          description: Active and available to this customer; not a quote or guarantee of invoice eligibility.
-      required:
-      - valid
-      x-terra-operations:
-      - method_name: validate
-        operation: get
-        path: /billing/promotions/validate
-      - method_name: validate-private
-        operation: post
-        path: /billing/promotions/validate
-      x-terra-summary: Promotion availability
-      x-terra-resource: billing.promotions
     AccountSummary:
       type: object
       properties:
@@ -7297,24 +6799,6 @@ components:
           x-terra-help: Accepting browser's user agent; dashboard tokens only.
       required:
       - terms_version
-    PaymentSetupResult:
-      type: object
-      properties:
-        client_secret:
-          type: string
-          description: Caller-bound Stripe setup confirmation secret. Never log it.
-          x-terra-secret: true
-      required:
-      - client_secret
-    UpdatePaymentMethodRequest:
-      type: object
-      properties:
-        intent_id:
-          type: string
-          description: Successful SetupIntent created for this account.
-          x-terra-help: Confirmed SetupIntent ID returned by payment setup for this account.
-      required:
-      - intent_id
     PayInvoiceRequest:
       type: object
       properties:
@@ -9214,14 +8698,6 @@ components:
         has_card:
           type: boolean
       x-terra-operations:
-      - method_name: setup
-        operation: post
-        path: /billing/payment-method/setup
-        mcp_omit: Payment setup requires client-side Stripe confirmation with the returned secret. Use
-          the dashboard to add a payment method.
-      - method_name: update
-        operation: post
-        path: /billing/payment-method
       - method_name: retrieve
         operation: get
         path: /billing/payment-method
@@ -10194,44 +9670,17 @@ components:
       required:
       - rows
       - meters
+      x-terra-operations:
+      - method_name: current
+        operation: get
+        path: /billing/usage/current
+      x-terra-summary: Metered usage for the current period
+      x-terra-resource: billing.usage
       $defs:
         RecordUsageMeter:
           type: object
           unevaluatedProperties:
             $ref: '#/components/schemas/UsageMeter'
-    UsageResponse:
-      type: object
-      properties:
-        meter_id:
-          type: string
-        start:
-          type: integer
-          format: int64
-        end:
-          type: integer
-          format: int64
-        total_usage:
-          type: number
-        summaries:
-          type: array
-          items:
-            $ref: '#/components/schemas/UsageSummary'
-      x-terra-operations:
-      - method_name: current
-        operation: get
-        path: /billing/usage/current
-      - method_name: retrieve
-        operation: get
-        path: /billing/usage
-      x-terra-summary: Metered usage for the current period
-      x-terra-resource: billing.usage
-    UsageSummary:
-      type: object
-      properties:
-        meter_id:
-          type: string
-        aggregated_value:
-          type: number
     UserStatsCurrent:
       type: object
       description: Current log-derived balances, independent of the requested window.

@@ -1,14 +1,4 @@
 {
-  "activateDeal": {
-    "confirmation_reason": "Applies deal credit and may create a monthly subscription.",
-    "dangerous": true,
-    "dry_run": true,
-    "method": "post",
-    "scopes": [
-      "billing:write"
-    ],
-    "sensitive": false
-  },
   "agreeToTerms": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -37,16 +27,6 @@
     ],
     "sensitive": false
   },
-  "checkDealEligibility": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "post",
-    "scopes": [
-      "billing:read"
-    ],
-    "sensitive": false
-  },
   "createDestination": {
     "confirmation_reason": "Starts sending this environment's event data to the configured destination URL.",
     "dangerous": false,
@@ -64,16 +44,6 @@
     "method": "post",
     "scopes": [
       "account:write"
-    ],
-    "sensitive": false
-  },
-  "createPaymentSetup": {
-    "confirmation_reason": "Creates a payment setup for the account.",
-    "dangerous": true,
-    "dry_run": true,
-    "method": "post",
-    "scopes": [
-      "billing:write"
     ],
     "sensitive": false
   },
@@ -164,16 +134,6 @@
     "method": "get",
     "scopes": [
       "account:read"
-    ],
-    "sensitive": false
-  },
-  "getCurrentDeal": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "get",
-    "scopes": [
-      "billing:read"
     ],
     "sensitive": false
   },
@@ -336,16 +296,6 @@
     "sensitive": false
   },
   "getUpcomingInvoice": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "get",
-    "scopes": [
-      "billing:read"
-    ],
-    "sensitive": false
-  },
-  "getUsage": {
     "confirmation_reason": null,
     "dangerous": false,
     "dry_run": false,
@@ -950,36 +900,6 @@
     "method": "post",
     "scopes": [
       "billing:write"
-    ],
-    "sensitive": false
-  },
-  "updatePaymentMethod": {
-    "confirmation_reason": "Changes the card charged by all billable subscriptions.",
-    "dangerous": true,
-    "dry_run": true,
-    "method": "post",
-    "scopes": [
-      "billing:write"
-    ],
-    "sensitive": false
-  },
-  "validatePromotion": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "get",
-    "scopes": [
-      "billing:read"
-    ],
-    "sensitive": false
-  },
-  "validatePromotionPrivate": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "post",
-    "scopes": [
-      "billing:read"
     ],
     "sensitive": false
   }
