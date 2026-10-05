@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.05
+  version: 2026.10.05.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -391,107 +391,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchMeRequest'
-  /me/metadata:
-    get:
-      operationId: getMeMetadata
-      x-terra-help: Get your analytics layout and preferences. Returns 404 if the token has no dashboard user.
-      tags:
-        - tokens
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  metadata:
-                    $ref: '#/components/schemas/MeMetadata'
-                required:
-                  - metadata
-              example:
-                metadata:
-                  analytics_layout:
-                    widgets:
-                      - sleep
-                      - recovery
-                  preferences:
-                    units: metric
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Get the calling principal's own analytics layout and preferences
-      description: 'Strictly self-scoped: it reads the calling principal''s own row and there is no way to read anyone else''s. Both values are opaque JSON that the server neither interprets nor validates, and the internal debug layout is not exposed here. 404 when the token has no resolvable dashboard user.'
-      security:
-        - adminToken:
-            - account:read
-    patch:
-      operationId: patchMeMetadata
-      x-terra-help: Update your layout or preferences. Send at least one field; use --preferences-merge to preserve omitted preference keys.
-      tags:
-        - tokens
-      responses:
-        '200':
-          description: Updated (or DryRunResult when ?dry_run=true).
-          content:
-            application/json:
-              schema:
-                type: object
-                anyOf:
-                  - type: object
-                    properties:
-                      metadata:
-                        $ref: '#/components/schemas/MeMetadata'
-                    required:
-                      - metadata
-                  - $ref: '#/components/schemas/DryRunResult'
-              example:
-                metadata:
-                  analytics_layout:
-                    widgets:
-                      - sleep
-                      - recovery
-                  preferences:
-                    units: metric
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Upsert the calling principal's own analytics layout and/or preferences
-      description: Send at least one field. analytics_layout and preferences replace the stored value wholesale, so a partial preferences object drops the keys it omits; preferences_merge is the concurrency-safe alternative, shallow-merging its top-level keys atomically, and cannot be sent together with preferences.
-      security:
-        - adminToken:
-            - account:write
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-        - $ref: '#/components/parameters/IdempotencyKey'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchMeMetadataRequest'
   /tokens/self:
     delete:
       operationId: revokeSelf
@@ -4588,266 +4487,6 @@ paths:
       security:
         - adminToken:
             - account:read
-    patch:
-      operationId: patchOnboarding
-      x-terra-help: Create or update onboarding settings. Omitted fields stay unchanged; password is accepted but ignored.
-      tags:
-        - company
-      responses:
-        '200':
-          description: Updated (or DryRunResult when ?dry_run=true).
-          content:
-            application/json:
-              schema:
-                type: object
-                anyOf:
-                  - type: object
-                    properties:
-                      onboarding:
-                        $ref: '#/components/schemas/OnboardingInfo'
-                    required:
-                      - onboarding
-                  - $ref: '#/components/schemas/DryRunResult'
-              example:
-                onboarding:
-                  company_id: cus_9f3k2m
-                  destination: s3
-                  scheme: https
-                  host: ingest.acme.example
-                  has_password: false
-                  providers:
-                    - GARMIN
-                    - FITBIT
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Upsert onboarding info
-      description: 'Upsert: the row is created if it does not exist yet and the supplied fields are then applied, so writing anything clears the 404 the GET gives for a missing row. Omitted fields are left unchanged, and `password` is accepted but ignored: it is never stored.'
-      security:
-        - adminToken:
-            - account:write
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-        - $ref: '#/components/parameters/IdempotencyKey'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchOnboardingRequest'
-  /company/terms:
-    post:
-      operationId: agreeToTerms
-      x-terra-help: Record terms acceptance for a document, default bundle. Bundle acceptance is separate from accepting tos and dpa individually.
-      tags:
-        - company
-      responses:
-        '200':
-          description: Recorded (or DryRunResult when ?dry_run=true, which reports the acceptance that would be stored and omits `agreed`).
-          content:
-            application/json:
-              schema:
-                type: object
-                anyOf:
-                  - type: object
-                    properties:
-                      terms_version:
-                        type: string
-                      agreed:
-                        type: boolean
-                    required:
-                      - terms_version
-                      - agreed
-                  - $ref: '#/components/schemas/DryRunResult'
-              example:
-                terms_version: '2026-05-01'
-                agreed: true
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Record terms acceptance
-      description: 'Acceptance is recorded per document, so `document` matters: omitting it records the acceptance against the combined `bundle`, which is not the same record as accepting `tos` and `dpa` separately. accepted_role is free text, stored as given. The response echoes the version it recorded, which the check endpoint reads back.'
-      security:
-        - adminToken:
-            - account:write
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-        - $ref: '#/components/parameters/IdempotencyKey'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AgreeToTermsRequest'
-  /company/terms/{version}:
-    get:
-      operationId: getAgreedToTerms
-      x-terra-help: 'Check terms acceptance for a version. Never accepted returns agreed: false; omit document to match any document.'
-      tags:
-        - company
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  agreed:
-                    type: boolean
-                required:
-                  - agreed
-              example:
-                agreed: true
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Check terms acceptance
-      description: 'Answers a single boolean for the version in the path, and an account that has never accepted it is agreed: false rather than an error. Omitting the `document` query accepts a match under any document; pass one to require that specific document.'
-      security:
-        - adminToken:
-            - account:read
-      parameters:
-        - name: version
-          x-terra-help: Terms version to check.
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The terms_version to check.
-        - name: document
-          x-terra-help: 'Document to check: bundle, tos or dpa. Omit to match acceptance under any document.'
-          in: query
-          required: false
-          schema:
-            type: string
-            enum:
-              - bundle
-              - tos
-              - dpa
-          description: Narrow the check to one document. Omitted means accepted under any document.
-  /company/feature-flags:
-    get:
-      operationId: listCompanyFeatureFlags
-      x-terra-help: List enabled feature flags. Disabled, unknown or unmatched flags return an empty data array.
-      tags:
-        - company
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: string
-                  has_more:
-                    type: boolean
-                  next_cursor:
-                    type:
-                      - string
-                      - 'null'
-                required:
-                  - data
-                  - has_more
-                  - next_cursor
-              example:
-                data:
-                  - flag-beta
-                  - flag-global
-                has_more: false
-                next_cursor: null
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: List enabled feature flags
-      description: Only enabled flags are listed, as bare names, so a flag that is off and a flag that does not exist look the same from here. The `name` query narrows to one flag and answers with an empty data array on no match rather than a 404.
-      security:
-        - adminToken:
-            - account:read
-      parameters:
-        - name: name
-          x-terra-help: Filter by exact feature flag name. No match returns an empty data array.
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Narrow to the single flag with this name (empty data[] on no match, never 404).
-  /company/points/opt-in:
-    post:
-      operationId: optInToPoints
-      x-terra-help: Enable points for your company. Repeated calls are safe.
-      tags:
-        - company
-      responses:
-        '200':
-          description: DryRunResult when ?dry_run=true. Nothing is enabled.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DryRunResult'
-              example:
-                dry_run: true
-                would: enable
-                preview:
-                  feature: points
-        '204':
-          description: No Content
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Opt the company in to the points programme
-      description: 'Enables the points feature for the calling token''s own company. There is no generic feature-flag write: the route is the flag, so no caller can name which flag it is setting. Idempotent.'
-      security:
-        - adminToken:
-            - account:write
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-        - $ref: '#/components/parameters/IdempotencyKey'
   /company/referral-code:
     get:
       operationId: getReferralCode
@@ -6001,45 +5640,6 @@ components:
           examples:
             - summary: View your onboarding settings
               args: []
-        - method_name: update-onboarding
-          operation: patch
-          path: /company/onboarding
-          examples:
-            - summary: Set your onboarding providers
-              args:
-                - '--providers'
-                - GARMIN
-                - '--providers'
-                - FITBIT
-        - method_name: agree-terms
-          operation: post
-          path: /company/terms
-          examples:
-            - summary: Accept a terms version
-              args:
-                - '--terms-version'
-                - <terms-version>
-                - '--document'
-                - bundle
-        - method_name: retrieve-terms
-          operation: get
-          path: /company/terms/{version}
-          examples:
-            - summary: Check whether a terms version was accepted
-              args:
-                - <terms-version>
-        - method_name: list-feature-flags
-          operation: get
-          path: /company/feature-flags
-          examples:
-            - summary: List your enabled features
-              args: []
-        - method_name: opt-in-points
-          operation: post
-          path: /company/points/opt-in
-          examples:
-            - summary: Join the points program
-              args: []
         - method_name: retrieve-referral-code
           operation: get
           path: /company/referral-code
@@ -6062,39 +5662,6 @@ components:
               args: []
       x-terra-summary: Manage the company record and onboarding
       x-terra-resource: company
-    AgreeToTermsRequest:
-      type: object
-      properties:
-        terms_version:
-          type: string
-          description: The version of the terms being accepted, as your own identifier for it. Required. Recorded as sent; this API does not maintain a list of versions.
-          x-terra-help: Terms version to accept, recorded as sent.
-        document:
-          type: string
-          enum:
-            - bundle
-            - tos
-            - dpa
-            - mnda
-          description: Which legal document this acceptance covers. Omitted means 'bundle' (the pre-split combined terms).
-          default: bundle
-          x-terra-help: 'Legal document to accept (default: bundle).'
-        accepted_role:
-          type:
-            - string
-            - 'null'
-          description: Free-text role of the accepting user at acceptance time (e.g. admin, developer).
-          x-terra-help: Your role when accepting, as free text (e.g. admin or developer).
-        client_ip:
-          type: string
-          description: The accepting browser's IP address. Honoured only from a dashboard-issued token; otherwise the request's own address is recorded.
-          x-terra-help: Accepting browser's IP; dashboard tokens only.
-        user_agent:
-          type: string
-          description: The accepting browser's user agent. Honoured only from a dashboard-issued token.
-          x-terra-help: Accepting browser's user agent; dashboard tokens only.
-      required:
-        - terms_version
     PayInvoiceRequest:
       type: object
       properties:
@@ -7564,18 +7131,6 @@ components:
             type: string
       required:
         - url
-    MeMetadata:
-      type: object
-      description: 'The calling principal''s own dashboard.user_metadata, restricted to analytics_layout and preferences — debug_layout is internal and never exposed on this surface. Both values pass through as opaque JSON: the server does not interpret or validate their shape.'
-      properties:
-        analytics_layout:
-          type:
-            - object
-            - 'null'
-        preferences:
-          type:
-            - object
-            - 'null'
     MeResponse:
       type: object
       properties:
@@ -7639,20 +7194,6 @@ components:
               args:
                 - '--name'
                 - Alex Smith
-        - method_name: retrieve-metadata
-          operation: get
-          path: /me/metadata
-          examples:
-            - summary: View your saved dashboard preferences
-              args: []
-        - method_name: update-metadata
-          operation: patch
-          path: /me/metadata
-          examples:
-            - summary: Replace your dashboard preferences
-              args:
-                - '--preferences'
-                - '{"theme":"dark"}'
       x-terra-summary: Inspect and update the token's own account record
       x-terra-resource: account
     MintDataTokenRequest:
@@ -7884,8 +7425,8 @@ components:
             - string
             - 'null'
           format: date-time
-          description: 'Retired: rejected with 400. Terms acceptances are an append-only log written by POST /company/terms.'
-          x-terra-help: Retired and rejected; use company agree-terms.
+          description: 'Retired: rejected with 400. Terms are accepted in the dashboard.'
+          x-terra-help: Retired and rejected; terms are accepted in the dashboard.
       additionalProperties: false
       minProperties: 1
     PatchDestinationRequest:
@@ -7915,23 +7456,6 @@ components:
           x-terra-help: Make usage on this environment billable.
       additionalProperties: false
       minProperties: 1
-    PatchMeMetadataRequest:
-      type: object
-      description: Partial upsert of the calling principal's own user_metadata. Every property is optional; at least one is required. analytics_layout/preferences replace the stored value wholesale; preferences_merge shallow-merges its top-level keys into the stored preferences atomically (concurrent writers cannot erase each other's keys) and is mutually exclusive with preferences. Values pass through as opaque JSON otherwise.
-      properties:
-        analytics_layout:
-          type: object
-          description: Your saved dashboard analytics layout, replaced wholesale. Opaque JSON to this API.
-          x-terra-help: Replace your saved analytics layout with this JSON object.
-        preferences:
-          type: object
-          description: Your saved preferences, replaced wholesale. Opaque JSON to this API, and mutually exclusive with preferences_merge.
-          x-terra-help: Replace your saved preferences with this JSON object. Cannot combine with --preferences-merge.
-        preferences_merge:
-          type: object
-          description: Top-level keys to merge into the stored preferences, leaving the rest in place. Atomic, so two concurrent writers cannot erase each other's keys. Mutually exclusive with preferences.
-          x-terra-help: Merge top-level preference keys atomically, preserving other keys. Cannot combine with --preferences.
-      minProperties: 1
     PatchMeRequest:
       type: object
       description: Partial update of the calling principal's own dashboard user. Every property is optional; at least one is required. Gated on account:write (in the default mint set); the write is strictly self-scoped. Requires the token to resolve to an own user (see DashboardUser) — otherwise 404 not_found.
@@ -7947,61 +7471,6 @@ components:
           description: Your phone number, as free text. null clears it.
           x-terra-help: Your phone number as free text. Null clears it.
       minProperties: 1
-    PatchOnboardingRequest:
-      type: object
-      description: 'Partial update of dashboard.onboarding_info. Upserts: the row is created first if it does not exist yet, then these fields are applied.'
-      properties:
-        destination:
-          type:
-            - string
-            - 'null'
-          description: The delivery destination you are setting up, e.g. webhook or sftp. null clears it.
-          x-terra-help: Destination type being set up (e.g. webhook or sftp). Null clears it.
-        scheme:
-          type:
-            - string
-            - 'null'
-          description: Scheme for the destination, e.g. https or sftp. null clears it.
-          x-terra-help: Destination scheme (e.g. https or sftp). Null clears it.
-        host:
-          type:
-            - string
-            - 'null'
-          description: Host the destination delivers to. null clears it.
-          x-terra-help: Destination host. Null clears it.
-        port:
-          type:
-            - string
-            - 'null'
-          description: Port the destination delivers to, as text. null clears it.
-          x-terra-help: Destination port, as text. Null clears it.
-        username:
-          type:
-            - string
-            - 'null'
-          description: Username the destination authenticates with. null clears it.
-          x-terra-help: Destination username. Null clears it.
-        password:
-          type:
-            - string
-            - 'null'
-          description: Ignored. Accepted for compatibility with existing callers; the value is never stored.
-          x-terra-help: Ignored; never stored.
-        path:
-          type:
-            - string
-            - 'null'
-          description: Path on the destination, e.g. the endpoint or upload directory. null clears it.
-          x-terra-help: Destination endpoint or upload directory. Null clears it.
-        providers:
-          type:
-            - array
-            - 'null'
-          description: Providers you intend to integrate, as a list of slugs. Replaced wholesale, so send the full list; null clears it.
-          items:
-            type: string
-          x-terra-help: Replace the full provider slug list; repeat for each provider. Null clears it.
-      additionalProperties: false
     PatchScoreRequest:
       type: object
       description: At least one of active/weights required.

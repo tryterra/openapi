@@ -1,14 +1,4 @@
 {
-  "agreeToTerms": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": true,
-    "method": "post",
-    "scopes": [
-      "account:write"
-    ],
-    "sensitive": false
-  },
   "askDocs": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -117,16 +107,6 @@
     ],
     "sensitive": false
   },
-  "getAgreedToTerms": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "get",
-    "scopes": [
-      "account:read"
-    ],
-    "sensitive": false
-  },
   "getCompany": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -183,16 +163,6 @@
     "dry_run": false,
     "method": "get",
     "scopes": [],
-    "sensitive": false
-  },
-  "getMeMetadata": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "get",
-    "scopes": [
-      "account:read"
-    ],
     "sensitive": false
   },
   "getModelsCatalog": {
@@ -362,16 +332,6 @@
     "method": "get",
     "scopes": [
       "dataconfig:read"
-    ],
-    "sensitive": false
-  },
-  "listCompanyFeatureFlags": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "get",
-    "scopes": [
-      "account:read"
     ],
     "sensitive": false
   },
@@ -585,16 +545,6 @@
     ],
     "sensitive": false
   },
-  "optInToPoints": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": true,
-    "method": "post",
-    "scopes": [
-      "account:write"
-    ],
-    "sensitive": false
-  },
   "patchCompany": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -626,26 +576,6 @@
     "sensitive": false
   },
   "patchMe": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": true,
-    "method": "patch",
-    "scopes": [
-      "account:write"
-    ],
-    "sensitive": false
-  },
-  "patchMeMetadata": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": true,
-    "method": "patch",
-    "scopes": [
-      "account:write"
-    ],
-    "sensitive": false
-  },
-  "patchOnboarding": {
     "confirmation_reason": null,
     "dangerous": false,
     "dry_run": true,
