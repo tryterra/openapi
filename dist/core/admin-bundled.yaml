@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.05
+  version: 2026.10.05.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -749,84 +749,6 @@ paths:
       security:
         - adminToken:
             - account:read
-    post:
-      operationId: createEnvironmentProfile
-      tags:
-        - environments
-      responses:
-        '200':
-          description: The dev-id already has a profile; the existing row is returned unchanged (or DryRunResult when ?dry_run=true, reporting whether it would create one or change nothing).
-          content:
-            application/json:
-              schema:
-                type: object
-                anyOf:
-                  - type: object
-                    properties:
-                      profile:
-                        $ref: '#/components/schemas/EnvironmentProfile'
-                    required:
-                      - profile
-                  - $ref: '#/components/schemas/DryRunResult'
-              example:
-                profile:
-                  dev_id: prod-app-x81LmQ
-                  company_id: cus_9f3k2m
-                  name: Production
-                  billable: true
-                  widget_config: null
-                  widget_name: null
-                  app_logo: null
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  profile:
-                    $ref: '#/components/schemas/EnvironmentProfile'
-                required:
-                  - profile
-              example:
-                profile:
-                  dev_id: staging-app-b52TnP
-                  company_id: cus_9f3k2m
-                  name: Staging
-                  billable: false
-                  widget_config: null
-                  widget_name: null
-                  app_logo: null
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Create the environment profile for an existing dev-id
-      description: 'This does not provision a dev-id: the dev_id in the body must already exist as a credential, and what gets created is the profile row carrying its display name and billable flag. Get-or-create, so a 200 means a profile already existed and is returned unchanged and only a 201 means one was written. name defaults to the dev_id and billable to false.'
-      security:
-        - adminToken:
-            - account:write
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-        - $ref: '#/components/parameters/IdempotencyKey'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateEnvironmentProfileRequest'
   /entitlements:
     get:
       operationId: listEntitlements
@@ -1196,39 +1118,6 @@ paths:
       security:
         - adminToken:
             - billing:read
-  /billing/invoices/upcoming:
-    get:
-      operationId: getUpcomingInvoice
-      tags:
-        - billing
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InvoiceSummary'
-              example:
-                id: upcoming
-                status: draft
-                amount_due: 52300
-                currency: usd
-                created_at: null
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Upcoming (preview) invoice
-      description: A customer-level invoice preview, not an issued invoice. For multiple subscriptions use the previews endpoint. Preview IDs and dates are provider-generated and are not payment instructions.
-      security:
-        - adminToken:
-            - billing:read
   /billing/payment-method:
     get:
       operationId: getPaymentMethod
@@ -1261,9 +1150,9 @@ paths:
       security:
         - adminToken:
             - billing:read
-  /billing/usage/current:
+  /billing/usage:
     get:
-      operationId: getCurrentUsage
+      operationId: getUsage
       tags:
         - billing
       summary: Current metered usage by subscription item
@@ -4161,7 +4050,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Upsert a workout's metadata
-      description: 'Sets pace_units on an existing workout, preserving rather than replacing: an absent or null pace_units leaves whatever is stored in place, so this cannot clear it (the PATCH on this path can). It never creates a workout: an unknown workout_id is a 404. created_at is accepted but ignored; the response carries the workout''s own creation time.'
+      description: 'Sets pace_units on an existing workout, preserving rather than replacing: an absent or null pace_units leaves whatever is stored in place, so this cannot clear it (DELETE on this path does). It never creates a workout: an unknown workout_id is a 404. created_at is accepted but ignored; the response carries the workout''s own creation time.'
       security:
         - adminToken:
             - dataconfig:write
@@ -4181,65 +4070,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PutWorkoutMetadataRequest'
-    patch:
-      operationId: patchWorkoutMetadata
-      tags:
-        - workouts
-      responses:
-        '200':
-          description: Updated (or DryRunResult when ?dry_run=true).
-          content:
-            application/json:
-              schema:
-                type: object
-                anyOf:
-                  - type: object
-                    properties:
-                      workout:
-                        $ref: '#/components/schemas/WorkoutMetadata'
-                    required:
-                      - workout
-                  - $ref: '#/components/schemas/DryRunResult'
-              example:
-                workout:
-                  workout_id: '910989'
-                  created_at: '2026-05-01T12:00:00Z'
-                  pace_units: null
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Overwrite a workout's pace_units
-      description: A PATCH, but pace_units is required and overwrites unconditionally, and sending null clears the column. That is the difference from the PUT on this path, which preserves whatever is already stored when pace_units is absent or null.
-      security:
-        - adminToken:
-            - dataconfig:write
-      parameters:
-        - $ref: '#/components/parameters/DevId'
-        - name: workout_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The workout whose metadata this addresses. This surface annotates a workout, it never creates one.
-        - $ref: '#/components/parameters/DryRun'
-        - $ref: '#/components/parameters/IdempotencyKey'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchWorkoutMetadataRequest'
     delete:
       operationId: deleteWorkoutMetadata
       tags:
@@ -4291,167 +4121,6 @@ paths:
           $ref: '#/components/responses/InternalError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-  /company/onboarding:
-    get:
-      operationId: getOnboarding
-      tags:
-        - company
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  onboarding:
-                    $ref: '#/components/schemas/OnboardingInfo'
-                required:
-                  - onboarding
-              example:
-                onboarding:
-                  company_id: cus_9f3k2m
-                  destination: s3
-                  scheme: https
-                  host: ingest.acme.example
-                  has_password: false
-                  providers:
-                    - GARMIN
-                    - FITBIT
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Get onboarding info
-      description: The stored onboarding destination and provider selection. 404 when the account has no onboarding row yet, which the PATCH on this path creates. No destination password is stored; has_password is legacy and cannot be set through this API.
-      security:
-        - adminToken:
-            - account:read
-  /company/referral-code:
-    get:
-      operationId: getReferralCode
-      tags:
-        - company
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  referral_code:
-                    type: string
-                required:
-                  - referral_code
-              example:
-                referral_code: ACME-REF-42
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Get referral code
-      description: Read-only, and 404 when the company has no code yet. The POST on this path is get-or-create and is the way to obtain one.
-      security:
-        - adminToken:
-            - account:read
-    post:
-      operationId: ensureReferralCode
-      tags:
-        - company
-      responses:
-        '200':
-          description: The referral code (or DryRunResult when ?dry_run=true, reporting whether it would create one or change nothing).
-          content:
-            application/json:
-              schema:
-                type: object
-                anyOf:
-                  - type: object
-                    properties:
-                      referral_code:
-                        type: string
-                    required:
-                      - referral_code
-                  - $ref: '#/components/schemas/DryRunResult'
-              example:
-                referral_code: ACME-REF-42
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Get or create referral code
-      security:
-        - adminToken:
-            - account:write
-      parameters:
-        - $ref: '#/components/parameters/DryRun'
-        - $ref: '#/components/parameters/IdempotencyKey'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EnsureReferralCodeRequest'
-      description: 'Get-or-create semantics: always 200, even when a code already existed — the store cannot distinguish create from exists at this layer.'
-  /company/referrals:
-    get:
-      operationId: getReferrals
-      tags:
-        - company
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  rewarded_count:
-                    type: integer
-                required:
-                  - rewarded_count
-              example:
-                rewarded_count: 3
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Get referral reward count
-      description: 'One number: how many referrals have been rewarded. There is no per-referral detail here and no count of referrals still awaiting a reward, and the account''s own code is a separate read.'
-      security:
-        - adminToken:
-            - account:read
   /team/members:
     get:
       operationId: listTeamMembers
@@ -5508,22 +5177,6 @@ components:
           description: Credential JSON for a destination type that needs one, e.g. s3 or a database. For a webhook it must be a JSON object, which the API adds its generated signing secret to and returns that secret once.
       required:
         - url
-    CreateEnvironmentProfileRequest:
-      type: object
-      description: dev_id is required and must already exist as a tesseract credential — this does not provision one. An omitted name or billable leaves the credential's value unchanged.
-      properties:
-        dev_id:
-          type: string
-          description: 'The dev-id to create the profile for. Required. The credential must already exist and belong to you: this creates the profile row, it does not provision a dev-id.'
-        name:
-          type: string
-          description: Display name for the environment. Omitting it leaves the credential's name unchanged. Ignored when a profile already exists, since the create is get-or-create.
-        billable:
-          type: boolean
-          description: Whether usage on this environment is billable. Omitting it leaves the credential's billable status unchanged. Ignored when a profile already exists.
-      required:
-        - dev_id
-      additionalProperties: false
     CreateTeamInvitationRequest:
       type: object
       description: 'A new invitation. There is deliberately no company_id and no source: the invited company is the caller''s own, read from the token''s principal, and source is provenance a customer-authenticated caller must not be able to set (it would let an invite grant a capability nobody sanctioned). Both are rejected, not ignored.'
@@ -5800,14 +5453,6 @@ components:
         - dry_run
         - would
         - preview
-    EnsureReferralCodeRequest:
-      type: object
-      properties:
-        referral_code:
-          type: string
-          description: 'The code to claim. Required. Get-or-create: if the company already has a code, that one is returned and this value is ignored, so the response is what to read rather than the request.'
-      required:
-        - referral_code
     Entitlement:
       type: object
       properties:
@@ -5819,7 +5464,7 @@ components:
       type:
         - object
         - 'null'
-      description: The dev-id's environment profile, or null when no profile row exists yet (POST /environments creates one for an existing credential). The widget configuration is the inlined widget_config document; widget_config_url is retired and no longer returned.
+      description: The dev-id's environment profile, or null when no profile row exists yet. The widget configuration is the inlined widget_config document; widget_config_url is retired and no longer returned.
       properties:
         dev_id:
           type: string
@@ -6687,10 +6332,6 @@ components:
         - token_type
         - scope
         - token_id
-    OnboardingInfo:
-      type: object
-      description: dashboard.onboarding_info row for the customer. No destination password is stored; has_password is legacy and cannot be set through this API.
-      additionalProperties: true
     PatchCompanyRequest:
       type: object
       description: Partial update of the company profile. Every property is optional; unknown fields, created_at, the billing columns (stripe_customer_id, stripe_subscription_id, stripe_metering_type — this route does not write billing) and the retired app_logo, widget_name and agreed_to_terms_at are rejected with 400.
@@ -6829,19 +6470,6 @@ components:
             - null
           description: The member's dashboard role. superadmin is recognised by the dashboard but is not assignable here — the dashboard's own team editor never offers it.
       minProperties: 1
-    PatchWorkoutMetadataRequest:
-      type: object
-      description: pace_units is required (object or null); unlike PUT this overwrites unconditionally — a null clears the column.
-      properties:
-        pace_units:
-          type:
-            - object
-            - 'null'
-          description: 'Pace units for the workout, as an object. Required: unlike PUT this overwrites unconditionally, so null clears the value rather than preserving it.'
-          additionalProperties: true
-      required:
-        - pace_units
-      additionalProperties: false
     PaymentMethodSummary:
       type: object
       properties:

@@ -27,16 +27,6 @@
     ],
     "sensitive": false
   },
-  "createEnvironmentProfile": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": true,
-    "method": "post",
-    "scopes": [
-      "account:write"
-    ],
-    "sensitive": false
-  },
   "createTeamInvitation": {
     "confirmation_reason": "Whoever signs in with the invited email and the returned token joins the account with this role.",
     "dangerous": true,
@@ -87,16 +77,6 @@
     ],
     "sensitive": false
   },
-  "ensureReferralCode": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": true,
-    "method": "post",
-    "scopes": [
-      "account:write"
-    ],
-    "sensitive": false
-  },
   "generateWebhookEvent": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -114,16 +94,6 @@
     "method": "get",
     "scopes": [
       "account:read"
-    ],
-    "sensitive": false
-  },
-  "getCurrentUsage": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "get",
-    "scopes": [
-      "billing:read"
     ],
     "sensitive": false
   },
@@ -175,16 +145,6 @@
     ],
     "sensitive": false
   },
-  "getOnboarding": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "get",
-    "scopes": [
-      "account:read"
-    ],
-    "sensitive": false
-  },
   "getPaymentMethod": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -192,26 +152,6 @@
     "method": "get",
     "scopes": [
       "billing:read"
-    ],
-    "sensitive": false
-  },
-  "getReferralCode": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "get",
-    "scopes": [
-      "account:read"
-    ],
-    "sensitive": false
-  },
-  "getReferrals": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "get",
-    "scopes": [
-      "account:read"
     ],
     "sensitive": false
   },
@@ -265,7 +205,7 @@
     ],
     "sensitive": false
   },
-  "getUpcomingInvoice": {
+  "getUsage": {
     "confirmation_reason": null,
     "dangerous": false,
     "dry_run": false,
@@ -606,16 +546,6 @@
     "sensitive": false
   },
   "patchUnifiedApiScopes": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": true,
-    "method": "patch",
-    "scopes": [
-      "dataconfig:write"
-    ],
-    "sensitive": false
-  },
-  "patchWorkoutMetadata": {
     "confirmation_reason": null,
     "dangerous": false,
     "dry_run": true,
