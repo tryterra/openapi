@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.02.2
+  version: 2026.10.05
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -1640,7 +1640,6 @@ paths:
         - $ref: '#/components/parameters/DevId'
     put:
       operationId: setWidgetConfig
-      x-terra-confirmation-reason: Any field left out of the body is cleared, so read the current config first and send it back with the edit applied.
       x-terra-help: Replace the whole widget configuration; omitted fields are cleared. Read it first and send it back with the edit applied.
       tags:
         - environments
@@ -1825,7 +1824,6 @@ paths:
         - $ref: '#/components/parameters/IdempotencyKey'
     delete:
       operationId: disableSource
-      x-terra-confirmation-reason: End users can no longer authorize this provider, and existing connections stop syncing.
       x-terra-help: Disable a provider and stop collection. Re-enabling does not backfill the gap. Use --dry-run to preview.
       tags:
         - sources
@@ -2016,7 +2014,6 @@ paths:
           description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is a 400.
     put:
       operationId: setSourceScopes
-      x-terra-confirmation-reason: Whatever is not in the body is removed, and an empty list restores the provider's defaults.
       x-terra-help: Replace all custom provider OAuth scopes. An empty array restores provider defaults.
       tags:
         - sources
@@ -2125,7 +2122,6 @@ paths:
         - $ref: '#/components/parameters/DevId'
     post:
       operationId: createDestination
-      x-terra-confirmation-reason: Starts sending this environment's event data to the configured destination URL.
       x-terra-help: Create a destination. Save the signing_secret now; it is returned only once. Type defaults to webhook.
       tags:
         - destinations
@@ -2189,7 +2185,6 @@ paths:
   /environments/{dev_id}/unified-api/destinations/{destination_id}:
     patch:
       operationId: patchDestination
-      x-terra-confirmation-reason: Enables or disables delivery to this destination and changes which event types it receives.
       x-terra-help: Update destination active state or event types. URL and type cannot change; the signing secret is not returned.
       tags:
         - destinations
@@ -2555,7 +2550,6 @@ paths:
         - $ref: '#/components/parameters/DevId'
     patch:
       operationId: patchUnifiedApiScopes
-      x-terra-confirmation-reason: Any field left out of `fields` is deselected for the named data type.
       x-terra-help: Replace selected fields for one data type; omitted fields are deselected. Cannot set samples_enabled. Use --dry-run to preview.
       tags:
         - dataconfig
@@ -2602,7 +2596,6 @@ paths:
               $ref: '#/components/schemas/SelectedDataFieldsRequest'
     put:
       operationId: putUnifiedApiScopes
-      x-terra-confirmation-reason: Any data type left out of the body is deselected, so this environment stops collecting it.
       x-terra-help: Replace selected data types; omitted types are deselected. ATHLETE stays selected; HEALTH_OBSERVATION needs its entitlement. SAMPLES controls sample flags.
       tags:
         - dataconfig
@@ -3136,7 +3129,6 @@ paths:
   /environments/{dev_id}/webhook-events/resend:
     post:
       operationId: resendWebhookEvent
-      x-terra-confirmation-reason: Sends the stored event payload again to this environment's matching destinations, which may receive duplicate data.
       x-terra-help: Re-send a stored payload in the selected environment (events:write). Acceptance is asynchronous; the destination may receive the event twice.
       tags:
         - webhookevents
@@ -4500,7 +4492,6 @@ paths:
               $ref: '#/components/schemas/PatchWorkoutMetadataRequest'
     delete:
       operationId: deleteWorkoutMetadata
-      x-terra-confirmation-reason: Clears every stored metadata field for this workout.
       x-terra-help: Delete workout metadata without deleting the workout or its data. Preview it first with ?dry_run=true.
       tags:
         - workouts
