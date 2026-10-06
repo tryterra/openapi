@@ -8,7 +8,7 @@
     "sensitive": false
   },
   "cancelIncomplete": {
-    "confirmation_reason": "Cancels every incomplete subscription on the account; nothing here names one.",
+    "confirmation_reason": "Cancels unfinished subscriptions: either all of them, or only the ones this request names.",
     "dangerous": true,
     "dry_run": true,
     "method": "post",
@@ -28,7 +28,7 @@
     "sensitive": false
   },
   "createTeamInvitation": {
-    "confirmation_reason": "Whoever signs in with the invited email and the returned token joins the account with this role.",
+    "confirmation_reason": "Anyone who signs in with the invited email and the invite token joins your account with this role.",
     "dangerous": true,
     "dry_run": true,
     "method": "post",
@@ -38,7 +38,7 @@
     "sensitive": false
   },
   "deleteDestination": {
-    "confirmation_reason": "Deliveries to this endpoint stop at once, and events arriving afterward are not held for a replacement.",
+    "confirmation_reason": "Data stops going here straight away. Data sent after that is not saved for a new destination.",
     "dangerous": false,
     "dry_run": true,
     "method": "delete",
@@ -476,7 +476,7 @@
     "sensitive": false
   },
   "mintDataToken": {
-    "confirmation_reason": "Whoever holds the new token can use the data API with its scopes until it expires or is revoked.",
+    "confirmation_reason": "Anyone with the new token can use the access it's given until it expires or you cancel it.",
     "dangerous": true,
     "dry_run": true,
     "method": "post",
@@ -536,7 +536,7 @@
     "sensitive": false
   },
   "patchTeamMember": {
-    "confirmation_reason": "Changes what this person can do on the account, and lowering their role stops every token they minted from working.",
+    "confirmation_reason": "Changes what this person can do. Lowering their role also stops every token they made from working.",
     "dangerous": true,
     "dry_run": true,
     "method": "patch",
@@ -556,7 +556,7 @@
     "sensitive": false
   },
   "payInvoice": {
-    "confirmation_reason": "Charges the payment method for this invoice.",
+    "confirmation_reason": "Charges your payment method for this invoice.",
     "dangerous": true,
     "dry_run": true,
     "method": "post",
@@ -606,7 +606,7 @@
     "sensitive": false
   },
   "removeTeamMember": {
-    "confirmation_reason": "Revokes this person's access to the account immediately.",
+    "confirmation_reason": "This person loses access to your account straight away.",
     "dangerous": true,
     "dry_run": true,
     "method": "delete",
@@ -636,7 +636,7 @@
     "sensitive": true
   },
   "revokeDataToken": {
-    "confirmation_reason": "Any service still presenting this token loses access to the data API at once.",
+    "confirmation_reason": "This token stops working straight away, so anything still using it loses access to your data.",
     "dangerous": true,
     "dry_run": true,
     "method": "delete",
@@ -646,7 +646,7 @@
     "sensitive": false
   },
   "revokeTeamInvitation": {
-    "confirmation_reason": "The invitation link stops working, and joining requires a new invitation.",
+    "confirmation_reason": "The invite link stops working. They'll need a new invite to join.",
     "dangerous": true,
     "dry_run": true,
     "method": "delete",
@@ -656,7 +656,7 @@
     "sensitive": false
   },
   "revokeToken": {
-    "confirmation_reason": "The token stops authenticating immediately, so anything still using it starts failing.",
+    "confirmation_reason": "This token stops working straight away, so anything still using it will fail.",
     "dangerous": true,
     "dry_run": true,
     "method": "delete",
@@ -666,7 +666,7 @@
     "sensitive": false
   },
   "rotateEnvironmentApiKey": {
-    "confirmation_reason": "The current client_secret stops working immediately, breaking every integration still holding it.",
+    "confirmation_reason": "Your current API key stops working straight away, so anything still using it will break.",
     "dangerous": true,
     "dry_run": true,
     "method": "post",
@@ -676,7 +676,7 @@
     "sensitive": false
   },
   "rotateSelf": {
-    "confirmation_reason": "Invalidates the token you are signed in with, and returns its replacement only once.",
+    "confirmation_reason": "The token you're signed in with stops working. Its replacement is shown only once, so save it.",
     "dangerous": false,
     "dry_run": true,
     "method": "post",
@@ -694,7 +694,7 @@
     "sensitive": false
   },
   "setSourceCredentials": {
-    "confirmation_reason": "Replaces the provider's live OAuth credentials; end-user authorization fails until the new ones are correct.",
+    "confirmation_reason": "Replaces the sign-in settings for this wearable or app. Your users can't connect until the new ones are right.",
     "dangerous": false,
     "dry_run": true,
     "method": "put",
@@ -744,7 +744,7 @@
     "sensitive": false
   },
   "subscribe": {
-    "confirmation_reason": "Charges the payment method on file.",
+    "confirmation_reason": "Charges your saved payment method.",
     "dangerous": true,
     "dry_run": true,
     "method": "post",
@@ -754,7 +754,7 @@
     "sensitive": false
   },
   "updateInvoiceDetails": {
-    "confirmation_reason": "Changes the name and VAT number printed on future invoices.",
+    "confirmation_reason": "Changes the name and VAT number on your future invoices.",
     "dangerous": true,
     "dry_run": true,
     "method": "post",

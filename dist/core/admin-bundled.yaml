@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.05.1
+  version: 2026.10.06
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -478,7 +478,7 @@ paths:
           $ref: '#/components/responses/Conflict'
         '429':
           $ref: '#/components/responses/RateLimited'
-      summary: Rotate the calling token within its grant window
+      summary: Replace the token you're signed in with
       description: 'Mints a replacement for the calling token and returns the new bearer once, which is the only copy: a caller that loses it has to pair again. Rotation is available only inside the token''s grant window, and outside it the request conflicts instead of minting anything. Read expires_at, scopes and dev_ids off the response rather than assuming they match the old token.'
       security:
         - adminToken: []
@@ -587,7 +587,7 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/RateLimited'
-      summary: Revoke a token by id
+      summary: Revoke an access token
       description: 'Immediate: validation happens per request, so the revoked token''s next call fails. 404 when no token with that id belongs to this account, whether it never existed or is someone else''s. Revoking the token you are calling with works here too, though the self route does it without tokens:admin.'
       security:
         - adminToken:
@@ -853,7 +853,7 @@ paths:
   /billing/invoices/pay:
     post:
       operationId: payInvoice
-      summary: Pay an owned invoice
+      summary: Pay an invoice
       description: Pays only the authenticated customer’s open invoice using Stripe payment-method precedence. An already paid invoice returns success; payment authentication returns a hosted URL. Preview never charges.
       tags:
         - billing
@@ -991,7 +991,7 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-      summary: Add/change a plan
+      summary: Add or change a plan
       description: |
         Accepts an admin token with explicitly approved billing:write or a dashboard session
         with billing:write. Device-flow approval requires an account admin; no dashboard
@@ -1226,7 +1226,7 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-      summary: Cancel incomplete (failed-3DS) subscriptions
+      summary: Cancel unfinished subscriptions
       description: |
         Accepts an admin token with explicitly approved billing:write or a dashboard session
         with billing:write. Device-flow approval requires an account admin; no dashboard
@@ -1656,7 +1656,7 @@ paths:
       operationId: setSourceCredentials
       tags:
         - sources
-      summary: Set custom provider OAuth credentials
+      summary: Set custom sign-in settings for a wearable or app
       description: Set the customer's own OAuth credentials (client_id/secret, optional redirect URL, verification secret, sandbox) so auth runs against their app. Idempotent; the secret is write-only and masked on read.
       security:
         - adminToken:
@@ -3650,7 +3650,7 @@ paths:
       operationId: mintDataToken
       tags:
         - tokens
-      summary: Mint a data token
+      summary: Create a data access token
       description: Creates a dev-scoped, explicitly-scoped, long-lived data-plane token (e.g. auth:write only for SDK authentication). Multiple tokens coexist per dev-id, so rotation = mint new + revoke old — no shared-secret cutover. The bearer is returned at mint and retrievable later via the keys:read-gated /secret sub-resource (API-key DX parity).
       security:
         - adminToken:
@@ -3719,7 +3719,7 @@ paths:
       operationId: revokeDataToken
       tags:
         - tokens
-      summary: Revoke a data token
+      summary: Revoke a data access token
       description: Revocation is immediate (per-request validation).
       security:
         - adminToken:
@@ -4613,7 +4613,7 @@ paths:
       operationId: revokeTeamInvitation
       tags:
         - team
-      summary: Revoke an outstanding invitation
+      summary: Revoke an invitation
       description: 'Withdraws an unclaimed invitation. Tenancy is structural — the delete carries the caller''s own company — so an id belonging to another company matches nothing and answers 404 rather than confirming it exists. A claimed invitation is also a 404: that person is already a member, and removing them is DELETE /team/members/{user_id}.'
       parameters:
         - name: invitation_id
@@ -4688,7 +4688,7 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '500':
           $ref: '#/components/responses/InternalError'
-      summary: Rotate the legacy client_secret
+      summary: Replace your API key
       security:
         - adminToken:
             - keys:write
@@ -4701,27 +4701,27 @@ components:
   securitySchemes:
     adminToken:
       type: oauth2
-      description: Terra access token (customer-scoped, kind=admin, `terra_at_*`). Tokens are minted by the RFC 8628 device-authorization flow (POST /auth/device, approve in the dashboard, poll POST /auth/token), the authorization_code grant (GET /auth/authorize, dashboard consent, S256 exchange at POST /auth/token), or a dashboard mint. There is no client_credentials token endpoint; the clientCredentials flow object below exists solely because OAS 3.1 has no first-class device-flow representation and this is where scopes are machine-readable (see x-grant-type); the authorizationCode flow is the browser grant and shares the same scopes. This surface accepts ONLY admin tokens; data tokens (kind=data, `terra_dt_*`, minted at POST /environments/{dev_id}/tokens) authenticate the data API only — the planes never cross. Each operation names its required scope; admin tokens may also carry an environment audience. The scopes map below is the whole closed vocabulary — BOTH planes. POST /auth/device grants only the admin-plane names and rejects the rest with 400 invalid_scope, so check the plane before choosing a set — x-scope-planes is the machine-readable answer, and a data-only description also opens with `Data plane:`. Every admin-grantable description is the sentence the approval page shows the person granting it, so it cites no routes and carries no plane, danger or sensitivity marker; the lists below are the only statement of those facts. Three more lists classify the admin-grantable scopes by rule. x-scope-dangerous is anything irreversible or about money, people, or credentials (spend, remove a person, issue or revoke credentials, rotate the key) — a default grant leaves it off and the approver must turn it on. x-scope-sensitive is disclosure of what the approver already sees in the dashboard (the environment key, stored payload bodies) — granted by default, labeled. x-scope-account-level is anything that acts on the customer as a whole rather than one environment — a token limited to environments cannot hold it. Everything else is reversible configuration, undone with the same token. x-scope-presets are the named grant sets the approval page offers, derived from those lists.
+      description: Terra access token (customer-scoped, kind=admin, `terra_at_*`). Tokens are minted by the RFC 8628 device-authorization flow (POST /auth/device, approve in the dashboard, poll POST /auth/token), the authorization_code grant (GET /auth/authorize, dashboard consent, S256 exchange at POST /auth/token), or a dashboard mint. There is no client_credentials token endpoint; the clientCredentials flow object below exists solely because OAS 3.1 has no first-class device-flow representation and this is where scopes are machine-readable (see x-grant-type); the authorizationCode flow is the browser grant and shares the same scopes. This surface accepts ONLY admin tokens; data tokens (kind=data, `terra_dt_*`, minted at POST /environments/{dev_id}/tokens) authenticate the data API only — the planes never cross. Each operation names its required scope; admin tokens may also carry an environment audience. The scopes map below is the whole closed vocabulary — BOTH planes. POST /auth/device grants only the admin-plane names and rejects the rest with 400 invalid_scope, so check the plane before choosing a set — x-scope-planes is the machine-readable answer, and a data-only description also opens with `Data plane:`. Every admin-grantable description is the sentence the approval page shows the person granting it, so it cites no routes and carries no plane, danger or sensitivity marker; the lists below are the only statement of those facts. More lists classify the admin-grantable scopes by rule. x-scope-dangerous is anything irreversible or about money, people, or credentials (spend, remove a person, issue or revoke credentials, rotate the key) — a default grant leaves it off and the approver must turn it on. It maps each dangerous scope to what it puts at stake (money, access or team). x-scope-sensitive is disclosure of what the approver already sees in the dashboard (the environment key, stored payload bodies) — granted by default, labeled. x-scope-account-level is anything that acts on the customer as a whole rather than one environment — a token limited to environments cannot hold it. Everything else is reversible configuration, undone with the same token. x-scope-presets are the named grant sets the approval page offers, derived from those lists.
       flows:
         clientCredentials:
           tokenUrl: /api/v3/admin/auth/token
           scopes:
             account:read: See your account details and environment IDs.
-            keys:read: Reveal API keys and token secrets in plain text.
-            keys:write: Rotate the API key. Anything still using the old key stops working.
-            providers:read: See which providers are enabled and how they are configured.
-            providers:write: Enable or disable providers and change their OAuth settings.
-            destinations:read: See where your data is delivered, such as webhooks and Supabase.
-            destinations:write: Add, change or remove delivery destinations.
-            events:read: See the history of delivered events.
-            events:write: Resend previously delivered events and generate synthetic test events.
-            connections:read: See which users are connected in each environment.
-            payloads:read: Read the contents of delivered payloads, including user health data.
-            dataconfig:read: See which fields each data type returns.
-            dataconfig:write: Change which fields each data type returns.
-            scores:read: See which scores are enabled and how they are set up.
-            scores:write: Enable and configure scores.
-            models:read: See the model catalogue and past model runs.
+            keys:read: See your API key and the secret values of your data access tokens.
+            keys:write: Replace your API key. Anything using the old key will stop working.
+            providers:read: See which wearables and apps are turned on, and their settings.
+            providers:write: Turn wearables and apps on or off, and change their sign-in settings.
+            destinations:read: See where your data is sent, like a webhook or Supabase.
+            destinations:write: Add, change or remove where your data is sent.
+            events:read: See a log of the data sent to you, without its contents.
+            events:write: Send data again, and send test data.
+            connections:read: See which of your users have connected.
+            payloads:read: See the data sent to you, including your users' health data.
+            dataconfig:read: See which health data fields you get.
+            dataconfig:write: Change which health data fields you get.
+            scores:read: See which scores are turned on, and their settings.
+            scores:write: Turn scores on and change their settings.
+            models:read: See the available models and their past results.
             models:run: 'Data plane: run a model over a user''s stored data.'
             workouts:read: 'Data plane: read workout templates and planned workouts.'
             workouts:write: 'Data plane: create workout templates and plan workouts for users.'
@@ -4729,8 +4729,8 @@ components:
             labreports:write: 'Data plane: reprocess or delete lab reports.'
             testdata:write: 'Data plane: generate synthetic test data.'
             billing:read: See your plan, invoices, payment method and usage.
-            billing:write: Change your subscription. This can spend money.
-            tokens:admin: List and revoke any token in the account, including other people's.
+            billing:write: Change your plan, pay invoices and update payment details. This can spend money.
+            tokens:admin: See and revoke every token across your account, including other people's.
             entitlements:read: See which features your company has access to.
             auth:write: 'Data plane: create user authentication flows — widget sessions, auth tokens (in place of a client_secret).'
             connections:write: 'Data plane: deauthenticate users and update connection attributes.'
@@ -4748,11 +4748,11 @@ components:
             agents:write: 'Data plane: create, update, and delete agents and their configuration.'
             agents:run: 'Data plane: execute agents and bundles (incurs model spend).'
             ai:run: 'Data plane: run AI-context queries and the MCP proxy.'
-            tokens:read: See the tokens issued for an environment, without their secrets.
-            tokens:write: Create and revoke tokens for an environment. A new token can do anything its scopes allow.
-            account:write: Change your company profile, onboarding and referral details.
+            tokens:read: See the data access tokens in an environment, but not their secret values.
+            tokens:write: Create and revoke data access tokens in an environment, including other people's. A new token can do anything it's given access to.
+            account:write: Change your profile and your company's details.
             team:read: See who is on your team.
-            team:write: Change or remove team members, including taking away their access.
+            team:write: Invite, change or remove team members. This can take away someone's access.
           x-scope-planes:
             account:read: admin
             keys:read: both
@@ -4802,11 +4802,11 @@ components:
             team:read: admin
             team:write: admin
           x-scope-dangerous:
-            - billing:write
-            - keys:write
-            - team:write
-            - tokens:admin
-            - tokens:write
+            billing:write: money
+            keys:write: access
+            team:write: team
+            tokens:admin: access
+            tokens:write: access
           x-scope-sensitive:
             - keys:read
             - payloads:read
@@ -4894,21 +4894,21 @@ components:
           tokenUrl: /api/v3/admin/auth/token
           scopes:
             account:read: See your account details and environment IDs.
-            keys:read: Reveal API keys and token secrets in plain text.
-            keys:write: Rotate the API key. Anything still using the old key stops working.
-            providers:read: See which providers are enabled and how they are configured.
-            providers:write: Enable or disable providers and change their OAuth settings.
-            destinations:read: See where your data is delivered, such as webhooks and Supabase.
-            destinations:write: Add, change or remove delivery destinations.
-            events:read: See the history of delivered events.
-            events:write: Resend previously delivered events and generate synthetic test events.
-            connections:read: See which users are connected in each environment.
-            payloads:read: Read the contents of delivered payloads, including user health data.
-            dataconfig:read: See which fields each data type returns.
-            dataconfig:write: Change which fields each data type returns.
-            scores:read: See which scores are enabled and how they are set up.
-            scores:write: Enable and configure scores.
-            models:read: See the model catalogue and past model runs.
+            keys:read: See your API key and the secret values of your data access tokens.
+            keys:write: Replace your API key. Anything using the old key will stop working.
+            providers:read: See which wearables and apps are turned on, and their settings.
+            providers:write: Turn wearables and apps on or off, and change their sign-in settings.
+            destinations:read: See where your data is sent, like a webhook or Supabase.
+            destinations:write: Add, change or remove where your data is sent.
+            events:read: See a log of the data sent to you, without its contents.
+            events:write: Send data again, and send test data.
+            connections:read: See which of your users have connected.
+            payloads:read: See the data sent to you, including your users' health data.
+            dataconfig:read: See which health data fields you get.
+            dataconfig:write: Change which health data fields you get.
+            scores:read: See which scores are turned on, and their settings.
+            scores:write: Turn scores on and change their settings.
+            models:read: See the available models and their past results.
             models:run: 'Data plane: run a model over a user''s stored data.'
             workouts:read: 'Data plane: read workout templates and planned workouts.'
             workouts:write: 'Data plane: create workout templates and plan workouts for users.'
@@ -4916,8 +4916,8 @@ components:
             labreports:write: 'Data plane: reprocess or delete lab reports.'
             testdata:write: 'Data plane: generate synthetic test data.'
             billing:read: See your plan, invoices, payment method and usage.
-            billing:write: Change your subscription. This can spend money.
-            tokens:admin: List and revoke any token in the account, including other people's.
+            billing:write: Change your plan, pay invoices and update payment details. This can spend money.
+            tokens:admin: See and revoke every token across your account, including other people's.
             entitlements:read: See which features your company has access to.
             auth:write: 'Data plane: create user authentication flows — widget sessions, auth tokens (in place of a client_secret).'
             connections:write: 'Data plane: deauthenticate users and update connection attributes.'
@@ -4935,11 +4935,11 @@ components:
             agents:write: 'Data plane: create, update, and delete agents and their configuration.'
             agents:run: 'Data plane: execute agents and bundles (incurs model spend).'
             ai:run: 'Data plane: run AI-context queries and the MCP proxy.'
-            tokens:read: See the tokens issued for an environment, without their secrets.
-            tokens:write: Create and revoke tokens for an environment. A new token can do anything its scopes allow.
-            account:write: Change your company profile, onboarding and referral details.
+            tokens:read: See the data access tokens in an environment, but not their secret values.
+            tokens:write: Create and revoke data access tokens in an environment, including other people's. A new token can do anything it's given access to.
+            account:write: Change your profile and your company's details.
             team:read: See who is on your team.
-            team:write: Change or remove team members, including taking away their access.
+            team:write: Invite, change or remove team members. This can take away someone's access.
       x-grant-type: urn:ietf:params:oauth:grant-type:device_code
     sessionToken:
       type: http
