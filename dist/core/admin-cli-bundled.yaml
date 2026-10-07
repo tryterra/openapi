@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.07.3
+  version: 2026.10.07.4
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -2279,7 +2279,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Start Supabase OAuth
-      description: 'Opens a pairing session and changes nothing yet: someone has to visit the authorization_url and approve access, after which the state endpoint for this oauth_session_id reports ready. The session expires after `expires_in` seconds, and `interval` is how often to poll in the meantime. The body is optional. With `return_to: dashboard` the browser comes back to the dashboard''s connections page with `supabase_setup=success&oauth_session_id=<id>`, or `supabase_setup=error&reason=<code>` if the authorization failed; the default, `cli`, shows a page telling the user to return to their terminal.'
+      description: 'Opens a pairing session and changes nothing yet: someone has to visit the authorization_url and approve access, after which the state endpoint for this oauth_session_id reports ready. The session expires after `expires_in` seconds, and `interval` is how often to poll in the meantime. The body is optional. With `return_to: dashboard` the browser comes back to the dashboard''s connections page with `supabase_setup=success&oauth_session_id=<id>`, or `supabase_setup=error&reason=<code>` if the authorization failed; the default, `cli`, shows a page telling the user to return to their terminal. Both values share one redirect_uri, the Terra callback registered with Supabase; return_to only decides where that callback sends the browser.'
       security:
         - adminToken:
             - destinations:write
@@ -2319,7 +2319,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Poll Supabase OAuth state
-      description: 'Reports one of pending, ready or failed for the session started on this path. Poll it at the `interval` the start response gave and give up at its `expires_in`: a failed authorization is a 200 carrying state: failed, not an error status.'
+      description: 'Reports one of pending, ready or failed for the session started on this path. Poll it at the `interval` the start response gave and give up at its `expires_in`: a failed authorization is a 200 carrying state: failed, not an error status. The session reads pending until the authorization completes, and a 404 means only that the handle is unknown or expired.'
       security:
         - adminToken:
             - destinations:write
@@ -2335,7 +2335,7 @@ paths:
   /environments/{dev_id}/unified-api/destinations/supabase/oauth/{oauth_session_id}/projects:
     get:
       operationId: listSupabaseProjects
-      x-terra-help: List projects for a ready Supabase OAuth session; otherwise returns 409. Use a returned project_ref to provision.
+      x-terra-help: List projects for a ready Supabase OAuth session; otherwise returns 409. Pass a returned id to provision as project_ref.
       tags:
         - destinations
       responses:
@@ -2430,7 +2430,7 @@ paths:
         - destinations
       responses:
         '200':
-          description: DryRunResult when ?dry_run=true. The OAuth session, its readiness, the project reference or new project's organization, and any destination to replace are all validated, so the preview says the provisioning would start; nothing is created or deleted.
+          description: DryRunResult when ?dry_run=true. The OAuth session, its readiness, the project reference and its status, or the new project's organization, and any destination to replace are all validated, so the preview refuses what the call would refuse; nothing is created or deleted.
           content:
             application/json:
               schema:
@@ -2471,6 +2471,19 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '422':
+          description: The project_ref names a project that is paused, or that failed or was removed, so it cannot be provisioned into until it is restored or repaired in Supabase (code unsupported_operation, with the project's status in the remediation). Retrying unchanged returns the same error.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                type: about:blank
+                title: unprocessable entity
+                detail: the Supabase project is paused
+                instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/destinations/supabase/provision
+                code: unsupported_operation
+                remediation: Its status is INACTIVE. Restore the project from the Supabase dashboard, wait until its status is ACTIVE_HEALTHY, then provision again.
         '429':
           $ref: '#/components/responses/RateLimited'
         '503':
@@ -2487,7 +2500,7 @@ paths:
                 code: dependency_failed
                 remediation: The project limit for this organization has been reached.
       summary: Provision the Supabase destination
-      description: 'Long-running: provisioning a Supabase project can take minutes, so allow a generous timeout rather than reading a slow response as a hang. It needs a ready oauth_session_id and exactly one of a project_ref from the projects list or a create_project naming one of that list''s organizations, and it creates a data destination as a side effect: the destination_id it returns is managed through the ordinary destinations endpoints from then on. A created project''s database password is returned once as database_password, so send an Idempotency-Key with create_project: once a call succeeds, a retry replays the result with database_password null. If a call fails after Supabase created the project, retrying the same create_project on the same session resumes that project rather than creating a second one, and returns its password once connected. replace_destination_id must name a Supabase destination, which is deleted only after the new one is written.'
+      description: 'Long-running: provisioning a Supabase project can take minutes, so allow a generous timeout rather than reading a slow response as a hang. It needs a ready oauth_session_id and exactly one of a project_ref from the projects list or a create_project naming one of that list''s organizations, and it creates a data destination as a side effect: the destination_id it returns delivers every event type and is managed through the ordinary destinations endpoints from then on. A created project''s database password is returned once as database_password, so send an Idempotency-Key with create_project: once a call succeeds, a retry replays the result with database_password null. If a call fails after Supabase created the project, retrying the same create_project on the same session resumes that project rather than creating a second one, and returns its password once connected. replace_destination_id must name a Supabase destination, which is deleted only after the new one is written.'
       security:
         - adminToken:
             - destinations:write
@@ -6132,10 +6145,10 @@ components:
           x-terra-help: Configuration JSON for the type; see destination-types list for its fields.
         event_types:
           type: array
-          description: Which events to deliver here, as a list of event-type names. Omitted delivers the default set for the type, and an unrecognised name is a 400 naming it.
+          description: Which events to deliver here, as a list of event-type names. Omitted or empty delivers every event type, and an unrecognised name is a 400 naming it.
           items:
             type: string
-          x-terra-help: Events to deliver; repeat for each type. Omitted uses the destination type defaults; unknown names are rejected.
+          x-terra-help: Events to deliver; repeat for each type. Omitted delivers every event type; unknown names are rejected.
         active:
           type: boolean
           description: Whether to start delivering immediately. Omitted defaults to true.
@@ -6200,6 +6213,7 @@ components:
           type: boolean
         event_types:
           type: array
+          description: The event types delivered here. An empty list delivers every event type.
           items:
             type: string
         configured:
@@ -6381,6 +6395,7 @@ components:
           type: boolean
         event_types:
           type: array
+          description: The event types delivered here. An empty list delivers every event type.
           items:
             type: string
       required:
@@ -6469,6 +6484,7 @@ components:
           type: boolean
         event_types:
           type: array
+          description: The event types delivered here. An empty list delivers every event type.
           items:
             type: string
         configured:
@@ -7920,7 +7936,7 @@ components:
           x-terra-help: Set whether delivery is enabled. Omitted leaves the current state unchanged.
         event_types:
           type: array
-          description: Which events to deliver here, replaced wholesale, so send the full list rather than the additions. Omitted leaves the current set alone; an unrecognised name is a 400 naming it.
+          description: Which events to deliver here, replaced wholesale, so send the full list rather than the additions. Omitted leaves the current set alone, an empty list delivers every event type, and an unrecognised name is a 400 naming it.
           items:
             type: string
           x-terra-help: Replace the full event-type list; repeat for each type. Omitted preserves it; unknown names are rejected.
@@ -8725,7 +8741,7 @@ components:
       properties:
         id:
           type: string
-          description: The project reference, which provision takes as project_ref.
+          description: The project reference. Pass it to provision as project_ref.
         name:
           type: string
         organization_id:
@@ -8751,8 +8767,8 @@ components:
           x-terra-help: Ready OAuth session ID from start-oauth. A pending session returns 409; tokens remain server-side.
         project_ref:
           type: string
-          description: An existing Supabase project to provision into, by its reference from the projects step. Send exactly one of project_ref and create_project.
-          x-terra-help: Existing Supabase project reference from list-projects. Use instead of --create-project.
+          description: 'An existing Supabase project to provision into: the id of a row from the projects step. Its status must not be paused, failed or removed, or this is a 422. Send exactly one of project_ref and create_project.'
+          x-terra-help: 'Existing Supabase project: an id from list-projects. Use instead of --create-project.'
         project_name:
           type: string
           description: Display only, with project_ref; defaults to the project's Supabase name. Not accepted with create_project, which names the project itself.
@@ -8779,7 +8795,7 @@ components:
           description: Whether this call created the project.
         destination_id:
           type: string
-          description: Id of the created Supabase data destination (string-encoded). Manage it via the destinations CRUD.
+          description: Id of the created Supabase data destination (string-encoded). It delivers every event type; manage it, including narrowing its event_types, via the destinations CRUD.
         database_password:
           type:
             - string
