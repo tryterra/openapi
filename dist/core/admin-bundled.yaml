@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.07.1
+  version: 2026.10.07.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -8068,6 +8068,11 @@ components:
         user_id:
           type: string
           description: The user's id, the same one data reads and webhooks carry.
+        reference_id:
+          type:
+            - string
+            - 'null'
+          description: Your own identifier for the user, given when it was created; null when none was.
         description:
           type:
             - string
@@ -8097,6 +8102,7 @@ components:
             - type: 'null'
       required:
         - user_id
+        - reference_id
         - description
         - persona
         - provider
