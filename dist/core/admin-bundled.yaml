@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.07.2
+  version: 2026.10.07.3
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -1849,7 +1849,7 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: List destinations
-      description: 'Rows carry no credential material: a destination''s signing secret is returned only in the create response, and the metadata an advanced destination type was configured with is not read back. Cursor-paginated, and inactive destinations are listed too, with active: false.'
+      description: 'Rows carry no credential material: a destination''s signing secret is returned only in the create response, each url has any credentials it embeds removed, and the configuration is read back, masked, by retrieving one destination. Cursor-paginated, and inactive destinations are listed too, with active: false.'
       security:
         - adminToken:
             - destinations:read
@@ -1875,6 +1875,11 @@ paths:
                   active: true
                   event_types:
                     - activity
+                  configured: true
+                  missing: []
+                  config:
+                    url: https://example.com/terra
+                    delivery: push
                   will_return_signing_secret: true
         '201':
           description: Created.
@@ -1890,6 +1895,11 @@ paths:
                 event_types:
                   - activity
                   - sleep
+                configured: true
+                missing: []
+                config:
+                  url: https://api.acme.com/terra/webhook
+                  delivery: push
                 signing_secret: a4f8…shown-once…c917
         '400':
           $ref: '#/components/responses/ValidationError'
@@ -1902,7 +1912,7 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Create a destination
-      description: 'The 201 body is the only place this destination''s signing_secret appears: signing is per destination, and neither the list nor the update endpoint returns it again, so store it now. `url` is the only required field, type defaults to webhook, and `metadata` carries the credential JSON that advanced destination types need.'
+      description: 'The server translates `config` into what delivery reads, so the caller needs only the fields GET /destination-types lists for the type. An active destination must be complete, and each missing field is a 400 naming it; `active: false` saves a draft to finish with a PATCH. For a webhook, the 201 body is the only place its signing_secret appears, so store it now, or pass `signing_secret_source: environment` to sign with the environment''s secret instead. Secrets in the response are masked. `url` and `metadata` are the deprecated stored form and cannot be combined with `config`.'
       security:
         - adminToken:
             - destinations:write
@@ -1916,7 +1926,82 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateDestinationRequest'
+            examples:
+              webhook:
+                summary: A webhook signed with the environment's secret
+                value:
+                  type: webhook
+                  event_types:
+                    - activity
+                    - sleep
+                  signing_secret_source: environment
+                  config:
+                    url: https://api.acme.com/terra/webhook
+              sql:
+                summary: A Postgres database
+                value:
+                  type: sql
+                  config:
+                    scheme: postgres
+                    host: db.acme.com
+                    port: 5432
+                    database: terra
+                    username: terra
+                    password: correct-horse-battery-staple
+              draft:
+                summary: An S3 draft to finish later
+                value:
+                  type: s3
+                  active: false
   /environments/{dev_id}/unified-api/destinations/{destination_id}:
+    get:
+      operationId: retrieveDestination
+      tags:
+        - destinations
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Destination'
+              example:
+                id: '1937255512398764032'
+                type: s3
+                url: acme-terra
+                active: false
+                event_types: []
+                configured: false
+                missing:
+                  - config.secret_access_key
+                config:
+                  bucket: acme-terra
+                  region: eu-west-1
+                  access_key_id: AKIAIOSFODNN7EXAMPLE
+                  secret_access_key_masked: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Retrieve a destination
+      description: The configuration uses the field names create and update take. Each secret comes back as <field>_masked, the last four characters behind asterisks, or null when unset, and a key file as has_service_account_key with its service_account_email; GET .../secrets reveals them under keys:read. `configured` and `missing` say whether the destination has everything it needs to deliver.
+      security:
+        - adminToken:
+            - destinations:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: destination_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The destination to read, by the id its creation returned.
     patch:
       operationId: patchDestination
       tags:
@@ -1929,15 +2014,24 @@ paths:
               schema:
                 type: object
                 anyOf:
-                  - $ref: '#/components/schemas/DestinationSummary'
+                  - $ref: '#/components/schemas/Destination'
                   - $ref: '#/components/schemas/DryRunResult'
               example:
                 id: '1937255512398764032'
-                type: webhook
-                url: https://api.acme.com/terra/webhook
-                active: false
+                type: sql
+                url: db2.acme.com
+                active: true
                 event_types:
                   - activity
+                configured: true
+                missing: []
+                config:
+                  scheme: postgres
+                  host: db2.acme.com
+                  port: 5432
+                  database: terra
+                  username: terra
+                  password_masked: '****aple'
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -1949,7 +2043,7 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Update a destination
-      description: 'Only `active` and `event_types` can change: a destination''s URL and type are fixed once created, so pointing deliveries somewhere else means creating a new destination and deleting the old one. The response is the destination summary, which never includes the signing secret.'
+      description: '`config` is merged over the stored configuration: an omitted field keeps its value, secrets included, so a form can send only what changed, and null clears an optional field. A stored secret is never sent to a new endpoint: changing a database''s scheme, host, port, database or username, a Kafka host or port, a Supabase project_url or an Azure account_url requires the secret in the same request. The type cannot change. Activating a destination, or editing an active one, needs a complete configuration. A webhook keeps its signing secret. Any successful update resets the destination''s delivery-failure tracking. The response is the destination with its secrets masked.'
       security:
         - adminToken:
             - destinations:write
@@ -1969,6 +2063,28 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchDestinationRequest'
+            examples:
+              host:
+                summary: Move a database, which needs its password again
+                value:
+                  config:
+                    host: db2.acme.com
+                    password: correct-horse-battery-staple
+              events:
+                summary: Change the delivered events, keeping the stored configuration
+                value:
+                  event_types:
+                    - activity
+                    - sleep
+              activate:
+                summary: Finish and activate a draft
+                value:
+                  active: true
+                  config:
+                    bucket: acme-terra
+                    region: eu-west-1
+                    access_key_id: AKIAIOSFODNN7EXAMPLE
+                    secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
     delete:
       operationId: deleteDestination
       tags:
@@ -1998,7 +2114,7 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Delete a destination
-      description: Removal is permanent and takes the destination's signing secret with it, so recreating the same URL produces a new destination with a new secret that receivers have to be told about. Pass ?dry_run=true first for a preview of what would go.
+      description: Removal is permanent and takes the destination's signing secret with it, so recreating the same URL produces a new destination with a new secret that receivers have to be told about. Its delivery-failure tracking is reset. Pass ?dry_run=true first for a preview of what would go.
       security:
         - adminToken:
             - destinations:write
@@ -2012,6 +2128,48 @@ paths:
           description: The destination to act on, by the id its creation returned.
         - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
+  /environments/{dev_id}/unified-api/destinations/{destination_id}/secrets:
+    get:
+      operationId: revealDestinationSecrets
+      tags:
+        - destinations
+      summary: Reveal a destination's credentials
+      description: 'Returns the secret configuration fields that retrieving a destination masks: a database password, an access key secret, a key file, an API key, a SAS token, or a webhook''s own signing secret. Gated by keys:read (sensitive plaintext disclosure, same class as GET /api-key) and audited. A destination outside this environment returns 404; one whose stored configuration is unreadable returns 409.'
+      security:
+        - adminToken:
+            - keys:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: destination_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The destination to read, by the id its creation returned.
+      responses:
+        '200':
+          description: The destination's secrets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DestinationSecrets'
+              example:
+                id: '1937255512398764032'
+                type: sql
+                secrets:
+                  password: correct-horse-battery-staple
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /environments/{dev_id}/unified-api/destinations/supabase/oauth:
     post:
       operationId: startSupabaseOauth
@@ -2030,6 +2188,7 @@ paths:
                 preview:
                   redirect_uri: https://api.tryterra.co/api/v2/oauth/callback/dashboard/supabase
                   scope: all
+                  return_to: cli
                   expires_in: 600
                   will_return_authorization_url: true
         '201':
@@ -2043,6 +2202,8 @@ paths:
                 oauth_session_id: 7f3a…64-hex…c2d1
                 expires_in: 900
                 interval: 5
+        '400':
+          $ref: '#/components/responses/ValidationError'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2054,7 +2215,7 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Start Supabase OAuth
-      description: 'Opens a pairing session and changes nothing yet: someone has to visit the authorization_url and approve access, after which the state endpoint for this oauth_session_id reports ready. The session expires after `expires_in` seconds, and `interval` is how often to poll in the meantime.'
+      description: 'Opens a pairing session and changes nothing yet: someone has to visit the authorization_url and approve access, after which the state endpoint for this oauth_session_id reports ready. The session expires after `expires_in` seconds, and `interval` is how often to poll in the meantime. The body is optional. With `return_to: dashboard` the browser comes back to the dashboard''s connections page with `supabase_setup=success&oauth_session_id=<id>`, or `supabase_setup=error&reason=<code>` if the authorization failed; the default, `cli`, shows a page telling the user to return to their terminal.'
       security:
         - adminToken:
             - destinations:write
@@ -2062,6 +2223,12 @@ paths:
         - $ref: '#/components/parameters/DevId'
         - $ref: '#/components/parameters/DryRun'
         - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupabaseStartRequest'
   /environments/{dev_id}/unified-api/destinations/supabase/oauth/{oauth_session_id}:
     get:
       operationId: pollSupabaseOauth
@@ -2115,7 +2282,7 @@ paths:
                   data:
                     type: array
                     items:
-                      type: object
+                      $ref: '#/components/schemas/SupabaseProject'
                   has_more:
                     type: boolean
                   next_cursor:
@@ -2124,16 +2291,32 @@ paths:
                       - 'null'
                   meta:
                     type: object
+                    properties:
+                      organizations:
+                        type: array
+                        description: Every organization the authorization can see, including any without projects. create_project.organization_id must be one of these.
+                        items:
+                          $ref: '#/components/schemas/SupabaseOrganization'
+                    required:
+                      - organizations
                 required:
                   - data
                   - has_more
                   - next_cursor
+                  - meta
               example:
                 data:
                   - id: abcdefghijklmnop
                     name: acme-prod
+                    organization_id: wxyzorgabcdefgh
+                    region: us-east-1
+                    status: ACTIVE_HEALTHY
+                has_more: false
+                next_cursor: null
                 meta:
-                  organization: acme
+                  organizations:
+                    - id: wxyzorgabcdefgh
+                      name: Acme
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2145,9 +2328,20 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          description: Supabase's management API returned an error (code dependency_failed, with Supabase's message as the remediation), or Supabase provisioning is not available on this deployment.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                type: about:blank
+                title: service unavailable
+                detail: the Supabase management API returned an error
+                instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/destinations/supabase/oauth/7f3a…c2d1/projects
+                code: dependency_failed
+                remediation: Retry shortly.
       summary: List Supabase projects
-      description: 'Reads the projects visible to the OAuth session, so it works only once that session has reached the ready state: poll it first, or expect a 409. Rows are passed through as the objects Supabase returns rather than a fixed Terra shape, and `meta` names the organization they belong to. Pick a project_ref from here to pass to the provision call.'
+      description: 'Reads the projects visible to the OAuth session, so it works only once that session has reached the ready state: poll it first, or expect a 409. Each row carries the organization it belongs to, and `meta.organizations` lists every organization the authorization can see, so a project can be created in one that has none yet. Pass a row''s `id` to provision as project_ref, or an organization''s `id` as create_project.organization_id.'
       security:
         - adminToken:
             - destinations:write
@@ -2166,7 +2360,7 @@ paths:
         - destinations
       responses:
         '200':
-          description: DryRunResult when ?dry_run=true. The OAuth session, its readiness and the project reference are all validated, so the preview says the provisioning would start; nothing is created.
+          description: DryRunResult when ?dry_run=true. The OAuth session, its readiness, the project reference or new project's organization, and any destination to replace are all validated, so the preview says the provisioning would start; nothing is created or deleted.
           content:
             application/json:
               schema:
@@ -2175,10 +2369,15 @@ paths:
                 dry_run: true
                 would: provision
                 preview:
-                  project_ref: abcdefghijklmnopqrst
-                  project_name: terra-prod
+                  create_project:
+                    name: terra-prod
+                    organization_id: wxyzorgabcdefgh
+                    region: us-east-1
                   organization: Acme
+                  will_create_project: true
+                  will_return_database_password: true
                   will_create_destination: true
+                  replace_destination_id: '1937255512398760001'
         '201':
           description: Provisioned.
           content:
@@ -2188,7 +2387,10 @@ paths:
               example:
                 provisioned: true
                 project_ref: abcdefghijklmnop
+                project_created: true
                 destination_id: '1937255512398764033'
+                database_password: q8Zr…32-chars…Kx1v
+                replaced_destination_id: '1937255512398760001'
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -2202,9 +2404,20 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
         '503':
-          $ref: '#/components/responses/ServiceUnavailable'
+          description: Supabase's management API returned an error (code dependency_failed, with Supabase's message as the remediation), or Supabase provisioning is not available on this deployment. When a project was created but could not be connected, the remediation names its reference to retry with as project_ref.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                type: about:blank
+                title: service unavailable
+                detail: the Supabase management API returned an error
+                instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/destinations/supabase/provision
+                code: dependency_failed
+                remediation: The project limit for this organization has been reached.
       summary: Provision the Supabase destination
-      description: 'Long-running: provisioning a Supabase project can take minutes, so allow a generous timeout rather than reading a slow response as a hang. It needs a ready oauth_session_id and a project_ref from the projects list, and it creates a data destination as a side effect: the destination_id it returns is managed through the ordinary destinations endpoints from then on.'
+      description: 'Long-running: provisioning a Supabase project can take minutes, so allow a generous timeout rather than reading a slow response as a hang. It needs a ready oauth_session_id and exactly one of a project_ref from the projects list or a create_project naming one of that list''s organizations, and it creates a data destination as a side effect: the destination_id it returns is managed through the ordinary destinations endpoints from then on. A created project''s database password is returned once as database_password, so send an Idempotency-Key with create_project: once a call succeeds, a retry replays the result with database_password null. If a call fails after Supabase created the project, retrying the same create_project on the same session resumes that project rather than creating a second one, and returns its password once connected. replace_destination_id must name a Supabase destination, which is deleted only after the new one is written.'
       security:
         - adminToken:
             - destinations:write
@@ -4938,6 +5151,64 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '429':
           $ref: '#/components/responses/RateLimited'
+  /destination-types:
+    get:
+      operationId: listDestinationTypes
+      tags:
+        - destinations
+      summary: List destination types
+      description: Every type a destination can be created as, with the configuration fields it takes, which of them it needs to deliver and which are secrets. Account-level and identical for every caller.
+      security:
+        - adminToken:
+            - destinations:read
+      responses:
+        '200':
+          description: The destination types.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DestinationType'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - type: webhook
+                    display_name: Webhook
+                    icon_url: https://api.tryterra.co/static/assets/img/destination_icons/webhook.webp
+                    config_fields:
+                      - name: url
+                        type: string
+                        required: true
+                        secret: false
+                        enum: null
+                      - name: delivery
+                        type: string
+                        required: false
+                        secret: false
+                        enum:
+                          - push
+                          - ping
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /team/invitations:
     post:
       operationId: createTeamInvitation
@@ -5149,7 +5420,7 @@ components:
           tokenUrl: /api/v3/admin/auth/token
           scopes:
             account:read: See your account details and environment IDs.
-            keys:read: See your API key and the secret values of your data access tokens.
+            keys:read: See your API key, the secret values of your data access tokens and the credentials your destinations use.
             keys:write: Replace your API key. Anything using the old key will stop working.
             providers:read: See which wearables and apps are turned on, and their settings.
             providers:write: Turn wearables and apps on or off, and change their sign-in settings.
@@ -5338,7 +5609,7 @@ components:
           tokenUrl: /api/v3/admin/auth/token
           scopes:
             account:read: See your account details and environment IDs.
-            keys:read: See your API key and the secret values of your data access tokens.
+            keys:read: See your API key, the secret values of your data access tokens and the credentials your destinations use.
             keys:write: Replace your API key. Anything using the old key will stop working.
             providers:read: See which wearables and apps are turned on, and their settings.
             providers:write: Turn wearables and apps on or off, and change their sign-in settings.
@@ -5612,9 +5883,19 @@ components:
           type: string
           description: Where data is delivered, e.g. webhook, s3, gcs. Omitted defaults to webhook, which is the common case; an unrecognised type is a 400.
           default: webhook
-        url:
-          type: string
-          description: Where deliveries are sent. Required. For a webhook this is the HTTPS endpoint; for the storage and database types it is the location that type addresses.
+        config:
+          description: The type's configuration; GET /destination-types lists each type's fields. An active destination needs every required field, and each missing one is a 400 naming it. An inactive destination may be saved incomplete as a draft and finished with a PATCH.
+          anyOf:
+            - $ref: '#/components/schemas/WebhookDestinationConfig'
+            - $ref: '#/components/schemas/S3DestinationConfig'
+            - $ref: '#/components/schemas/SqsDestinationConfig'
+            - $ref: '#/components/schemas/GcsDestinationConfig'
+            - $ref: '#/components/schemas/FirestoreDestinationConfig'
+            - $ref: '#/components/schemas/SupabaseDestinationConfig'
+            - $ref: '#/components/schemas/MongodbDestinationConfig'
+            - $ref: '#/components/schemas/KafkaDestinationConfig'
+            - $ref: '#/components/schemas/SqlDestinationConfig'
+            - $ref: '#/components/schemas/AzureblobDestinationConfig'
         event_types:
           type: array
           description: Which events to deliver here, as a list of event-type names. Omitted delivers the default set for the type, and an unrecognised name is a 400 naming it.
@@ -5624,11 +5905,21 @@ components:
           type: boolean
           description: Whether to start delivering immediately. Omitted defaults to true.
           default: true
+        signing_secret_source:
+          type: string
+          enum:
+            - destination
+            - environment
+          description: Webhooks only. destination (the default) generates a secret for this destination and returns it once; environment signs with the environment's signing secret instead.
+          default: destination
+        url:
+          type: string
+          description: 'Deprecated: send config instead. The delivery location in the stored form; cannot be combined with config.'
+          deprecated: true
         metadata:
           type: string
-          description: Credential JSON for a destination type that needs one, e.g. s3 or a database. For a webhook it must be a JSON object, which the API adds its generated signing secret to and returns that secret once.
-      required:
-        - url
+          description: 'Deprecated: send config instead. Credential JSON in the stored form; cannot be combined with config.'
+          deprecated: true
     CreateTeamInvitationRequest:
       type: object
       description: 'A new invitation. There is deliberately no company_id and no source: the invited company is the caller''s own, read from the token''s principal, and source is provenance a customer-authenticated caller must not be able to set (it would let an invite grant a capability nobody sanctioned). Both are rejected, not ignored.'
@@ -5649,7 +5940,7 @@ components:
       additionalProperties: false
     CreatedDestination:
       type: object
-      description: 'A newly created destination: the summary plus the signing secret, which is shown once at creation the way a minted token is. Webhook signing is per-destination, so one endpoint''s leak or rotation never touches another''s.'
+      description: A newly created destination, plus its own webhook signing secret when it has one. A webhook destination signs with its own secret or with the environment's shared signing secret, as signing_secret_source chose.
       properties:
         id:
           type: string
@@ -5658,20 +5949,39 @@ components:
           type: string
         url:
           type: string
+          description: Where the destination delivers, as stored, without any embedded user and password. An azureblob URL omits its SAS token, which retrieving the destination's secrets returns.
         active:
           type: boolean
         event_types:
           type: array
           items:
             type: string
+        configured:
+          type: boolean
+          description: Whether the configuration has every field the type needs to deliver. A draft saved inactive reads false until it is completed.
+        missing:
+          type: array
+          description: The required configuration fields still unset, as config.<field>. Empty when configured.
+          items:
+            type: string
+        config:
+          description: Null when the stored configuration cannot be read; configured is then false, and config cannot be changed until the destination is recreated.
+          anyOf:
+            - $ref: '#/components/schemas/DestinationConfigView'
+            - type: 'null'
         signing_secret:
-          type: string
-          description: The secret this destination signs its webhook payloads with. Present for webhook destinations only, and returned only here.
+          type:
+            - string
+            - 'null'
+          description: The secret this destination signs its webhook payloads with. Present for webhook destinations created with signing_secret_source destination; null otherwise and on an Idempotency-Key replay. Retrieving the destination's secrets returns it again.
       required:
         - id
         - type
         - url
         - active
+        - configured
+        - missing
+        - config
     DashboardUser:
       type:
         - object
@@ -5771,6 +6081,7 @@ components:
           type: string
         url:
           type: string
+          description: Where the destination delivers, as stored, without any embedded user and password. An azureblob URL omits its SAS token, which retrieving the destination's secrets returns.
         active:
           type: boolean
         event_types:
@@ -5782,6 +6093,79 @@ components:
         - type
         - url
         - active
+    Destination:
+      type: object
+      description: 'A destination with its configuration. Secrets are never returned: each is replaced by a masked form ending in its last four characters, or null when unset.'
+      properties:
+        id:
+          type: string
+          description: string-encoded 64-bit id
+        type:
+          type: string
+        url:
+          type: string
+          description: Where the destination delivers, as stored, without any embedded user and password. An azureblob URL omits its SAS token, which retrieving the destination's secrets returns.
+        active:
+          type: boolean
+        event_types:
+          type: array
+          items:
+            type: string
+        configured:
+          type: boolean
+          description: Whether the configuration has every field the type needs to deliver. A draft saved inactive reads false until it is completed.
+        missing:
+          type: array
+          description: The required configuration fields still unset, as config.<field>. Empty when configured.
+          items:
+            type: string
+        config:
+          description: Null when the stored configuration cannot be read; configured is then false, and config cannot be changed until the destination is recreated.
+          anyOf:
+            - $ref: '#/components/schemas/DestinationConfigView'
+            - type: 'null'
+      required:
+        - id
+        - type
+        - url
+        - active
+        - configured
+        - missing
+        - config
+    DestinationType:
+      type: object
+      properties:
+        type:
+          type: string
+          description: The value create takes as type.
+        display_name:
+          type: string
+        icon_url:
+          type: string
+        config_fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/DestinationConfigField'
+      required:
+        - type
+        - display_name
+        - icon_url
+        - config_fields
+    DestinationSecrets:
+      type: object
+      description: A destination's stored secrets in plaintext.
+      properties:
+        id:
+          type: string
+          description: string-encoded 64-bit id
+        type:
+          type: string
+        secrets:
+          $ref: '#/components/schemas/DestinationSecretValues'
+      required:
+        - id
+        - type
+        - secrets
     DevDetail:
       type: object
       properties:
@@ -5890,6 +6274,9 @@ components:
         will_return_authorization_url:
           type: boolean
           description: The call would return an authorization URL to send the user to.
+        will_return_database_password:
+          type: boolean
+          description: The call would generate a database password, returned once by the live call.
       unevaluatedProperties: {}
     DryRunResult:
       type: object
@@ -6857,12 +7244,25 @@ components:
       properties:
         active:
           type: boolean
-          description: Whether the destination is delivering. Omitted leaves it as it is.
+          description: Whether the destination is delivering. Omitted leaves it as it is. Activating needs a complete configuration.
         event_types:
           type: array
           description: Which events to deliver here, replaced wholesale, so send the full list rather than the additions. Omitted leaves the current set alone; an unrecognised name is a 400 naming it.
           items:
             type: string
+        config:
+          description: 'Fields to change, merged over the stored configuration: an omitted field keeps its value, secrets included, and null clears an optional one. Changing where a secret is sent (a database''s scheme, host, port, database or username, a Kafka host or port, a Supabase project_url, an Azure account_url) requires resending that secret, because a stored secret is never sent to a new endpoint; a missing one is a 400 naming it. An empty secret is a 400. The type cannot change.'
+          anyOf:
+            - $ref: '#/components/schemas/WebhookDestinationConfig'
+            - $ref: '#/components/schemas/S3DestinationConfig'
+            - $ref: '#/components/schemas/SqsDestinationConfig'
+            - $ref: '#/components/schemas/GcsDestinationConfig'
+            - $ref: '#/components/schemas/FirestoreDestinationConfig'
+            - $ref: '#/components/schemas/SupabaseDestinationConfig'
+            - $ref: '#/components/schemas/MongodbDestinationConfig'
+            - $ref: '#/components/schemas/KafkaDestinationConfig'
+            - $ref: '#/components/schemas/SqlDestinationConfig'
+            - $ref: '#/components/schemas/AzureblobDestinationConfig'
     PatchEnvironmentProfileRequest:
       type: object
       description: 'Display fields only; the widget columns and the data-type selection have their own PUT surfaces. `active` is deliberately absent: writing it means round-tripping the credential''s whole data-type set, so a second writer here would silently lose a concurrent data-type change. It stays on the v2 route until a field-level RPC exists. Every field is optional and an omitted one is left unchanged; at least one is required.'
@@ -7360,21 +7760,77 @@ components:
         - pause_collection
         - items
         - scopes
+    SupabaseCreateProject:
+      type: object
+      description: A new Supabase project to create and connect.
+      properties:
+        name:
+          type: string
+          description: The new project's name.
+        organization_id:
+          type: string
+          description: The organization to create it in. It must be one listed in meta.organizations by the projects step, or this is a 400.
+        region:
+          type: string
+          description: The Supabase region to create it in, such as us-east-1. Required; there is no default.
+      required:
+        - name
+        - organization_id
+        - region
+    SupabaseOrganization:
+      type: object
+      description: A Supabase organization the OAuth session can see.
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      required:
+        - id
+        - name
+    SupabaseProject:
+      type: object
+      description: A Supabase project the OAuth session can see.
+      properties:
+        id:
+          type: string
+          description: The project reference, which provision takes as project_ref.
+        name:
+          type: string
+        organization_id:
+          type: string
+          description: The organization the project belongs to; its name is in meta.organizations.
+        region:
+          type: string
+        status:
+          type: string
+          description: Supabase's own project status, such as ACTIVE_HEALTHY or INACTIVE.
+      required:
+        - id
+        - name
+        - organization_id
+        - region
+        - status
     SupabaseProvisionRequest:
       type: object
       properties:
         oauth_session_id:
           type: string
-          description: The session handle the start step returned. Required. It must have reached the ready state, or this is a 409; the Supabase access token stays server-side and is never sent here.
+          description: The session handle the start step returned. Required. It must have reached the ready state, and not be provisioning or have provisioned already, or this is a 409; the Supabase access token stays server-side and is never sent here.
         project_ref:
           type: string
-          description: The Supabase project to provision into, by its reference. Required. Read it from the projects step.
+          description: An existing Supabase project to provision into, by its reference from the projects step. Send exactly one of project_ref and create_project.
         project_name:
           type: string
-          description: Display only; defaults to project_ref.
+          description: Display only, with project_ref; defaults to the project's Supabase name. Not accepted with create_project, which names the project itself.
+        create_project:
+          description: 'A new project to create in one of the session''s organizations and provision into. Send exactly one of project_ref and create_project. Supabase may bill for the new project. Its database password is generated by Terra and returned once in the response, so send an Idempotency-Key: once a call succeeds, a retry with the same key returns the stored result with database_password null. If a call fails after Supabase created the project, retrying the same create_project on the same session resumes that project instead of creating a second one, and returns its password once it is connected.'
+          $ref: '#/components/schemas/SupabaseCreateProject'
+        replace_destination_id:
+          type: string
+          description: An existing Supabase destination in this environment to delete once the new one is written, such as a placeholder being replaced. A destination outside this environment is a 404 and one of another type a 400, both before anything is created.
       required:
         - oauth_session_id
-        - project_ref
     SupabaseProvisioned:
       type: object
       properties:
@@ -7382,9 +7838,39 @@ components:
           type: boolean
         project_ref:
           type: string
+          description: 'The project provisioned into: the one passed, or the reference of the project created.'
+        project_created:
+          type: boolean
+          description: Whether this call created the project.
         destination_id:
           type: string
           description: Id of the created Supabase data destination (string-encoded). Manage it via the destinations CRUD.
+        database_password:
+          type:
+            - string
+            - 'null'
+          description: The new project's database password, returned once, by the call that connects the project it created. Terra holds it on the OAuth session only until then. Null when no project was created, and in an Idempotency-Key replay.
+        replaced_destination_id:
+          type:
+            - string
+            - 'null'
+          description: The destination deleted in place of replace_destination_id. Null when none was requested, or when that delete failed after the new destination was written; delete it through the destinations endpoint then.
+      required:
+        - provisioned
+        - project_ref
+        - project_created
+        - destination_id
+        - database_password
+        - replaced_destination_id
+    SupabaseStartRequest:
+      type: object
+      properties:
+        return_to:
+          type: string
+          enum:
+            - cli
+            - dashboard
+          description: Where the browser lands after the user approves access. cli (the default) shows a page telling them to return to their terminal; dashboard returns to the Terra dashboard's connections page with the oauth_session_id in the query string, or with an error reason if the authorization failed. A closed set, never a URL.
     SupabaseStartResponse:
       type: object
       properties:
@@ -8493,3 +8979,556 @@ components:
       type: object
       unevaluatedProperties:
         $ref: '#/components/schemas/UsageMeter'
+    WebhookDestinationConfig:
+      type: object
+      properties:
+        url:
+          type:
+            - string
+            - 'null'
+          description: The http or https endpoint deliveries are posted to. Reading the destination returns it as set, so verify deliveries with the signing secret rather than a token in the URL.
+        delivery:
+          type:
+            - string
+            - 'null'
+          enum:
+            - push
+            - ping
+            - null
+          description: push sends each payload; ping sends a notification to fetch it. Defaults to push.
+      additionalProperties: false
+    S3DestinationConfig:
+      type: object
+      properties:
+        bucket:
+          type:
+            - string
+            - 'null'
+        region:
+          type:
+            - string
+            - 'null'
+        access_key_id:
+          type:
+            - string
+            - 'null'
+        secret_access_key:
+          type:
+            - string
+            - 'null'
+          description: Write-only.
+      additionalProperties: false
+    SqsDestinationConfig:
+      type: object
+      properties:
+        queue:
+          type:
+            - string
+            - 'null'
+          description: The queue URL, its ARN or account_id/queue_name.
+        region:
+          type:
+            - string
+            - 'null'
+          description: Optional when the queue URL or ARN names it; a region that disagrees with the queue's is a 400.
+        access_key_id:
+          type:
+            - string
+            - 'null'
+        secret_access_key:
+          type:
+            - string
+            - 'null'
+          description: Write-only.
+        s3_bucket:
+          type:
+            - string
+            - 'null'
+          description: A bucket to stage payloads in; the message then carries an S3 URL.
+      additionalProperties: false
+    GcsDestinationConfig:
+      type: object
+      properties:
+        bucket:
+          type:
+            - string
+            - 'null'
+        service_account_key:
+          type:
+            - object
+            - 'null'
+          description: Write-only. The service account's JSON key file.
+          additionalProperties: true
+      additionalProperties: false
+    FirestoreDestinationConfig:
+      type: object
+      properties:
+        database:
+          type:
+            - string
+            - 'null'
+          description: Defaults to default.
+        service_account_key:
+          type:
+            - object
+            - 'null'
+          description: Write-only. The service account's JSON key file.
+          additionalProperties: true
+      additionalProperties: false
+    SupabaseDestinationConfig:
+      type: object
+      properties:
+        project_url:
+          type:
+            - string
+            - 'null'
+          description: The project's URL, e.g. https://abcd.supabase.co.
+        bucket:
+          type:
+            - string
+            - 'null'
+        api_key:
+          type:
+            - string
+            - 'null'
+          description: Write-only. A service-role key.
+      additionalProperties: false
+    MongodbDestinationConfig:
+      type: object
+      properties:
+        scheme:
+          type:
+            - string
+            - 'null'
+          enum:
+            - mongodb
+            - mongodb+srv
+            - null
+        host:
+          type:
+            - string
+            - 'null'
+        database:
+          type:
+            - string
+            - 'null'
+        username:
+          type:
+            - string
+            - 'null'
+        password:
+          type:
+            - string
+            - 'null'
+          description: Write-only.
+      additionalProperties: false
+    KafkaDestinationConfig:
+      type: object
+      properties:
+        host:
+          type:
+            - string
+            - 'null'
+        port:
+          type:
+            - integer
+            - 'null'
+          minimum: -2147483648
+          maximum: 2147483647
+        topic:
+          type:
+            - string
+            - 'null'
+        username:
+          type:
+            - string
+            - 'null'
+        password:
+          type:
+            - string
+            - 'null'
+          description: Write-only.
+      additionalProperties: false
+    SqlDestinationConfig:
+      type: object
+      properties:
+        scheme:
+          type:
+            - string
+            - 'null'
+          enum:
+            - postgres
+            - postgresql
+            - mysql
+            - null
+        host:
+          type:
+            - string
+            - 'null'
+        port:
+          type:
+            - integer
+            - 'null'
+          minimum: -2147483648
+          maximum: 2147483647
+        database:
+          type:
+            - string
+            - 'null'
+        username:
+          type:
+            - string
+            - 'null'
+        password:
+          type:
+            - string
+            - 'null'
+          description: Write-only.
+      additionalProperties: false
+    AzureblobDestinationConfig:
+      type: object
+      properties:
+        account_url:
+          type:
+            - string
+            - 'null'
+          description: The storage account's URL, e.g. https://account.blob.core.windows.net.
+        container:
+          type:
+            - string
+            - 'null'
+        sas_token:
+          type:
+            - string
+            - 'null'
+          description: Write-only. The SAS token the destination authenticates with, without its leading ?.
+      additionalProperties: false
+    WebhookDestinationConfigView:
+      type: object
+      properties:
+        url:
+          type:
+            - string
+            - 'null'
+          description: The endpoint deliveries are posted to, as set.
+        delivery:
+          type: string
+          enum:
+            - push
+            - ping
+      required:
+        - url
+        - delivery
+    S3DestinationConfigView:
+      type: object
+      properties:
+        bucket:
+          type:
+            - string
+            - 'null'
+        region:
+          type:
+            - string
+            - 'null'
+        access_key_id:
+          type:
+            - string
+            - 'null'
+        secret_access_key_masked:
+          type:
+            - string
+            - 'null'
+      required:
+        - bucket
+        - region
+        - access_key_id
+        - secret_access_key_masked
+    SqsDestinationConfigView:
+      type: object
+      properties:
+        queue:
+          type:
+            - string
+            - 'null'
+          description: The queue's AWS URL.
+        region:
+          type:
+            - string
+            - 'null'
+        access_key_id:
+          type:
+            - string
+            - 'null'
+        secret_access_key_masked:
+          type:
+            - string
+            - 'null'
+        s3_bucket:
+          type:
+            - string
+            - 'null'
+      required:
+        - queue
+        - region
+        - access_key_id
+        - secret_access_key_masked
+        - s3_bucket
+    GcsDestinationConfigView:
+      type: object
+      properties:
+        bucket:
+          type:
+            - string
+            - 'null'
+        has_service_account_key:
+          type: boolean
+        service_account_email:
+          type:
+            - string
+            - 'null'
+          description: The key file's client_email.
+      required:
+        - bucket
+        - has_service_account_key
+        - service_account_email
+    FirestoreDestinationConfigView:
+      type: object
+      properties:
+        database:
+          type: string
+        has_service_account_key:
+          type: boolean
+        service_account_email:
+          type:
+            - string
+            - 'null'
+          description: The key file's client_email.
+      required:
+        - database
+        - has_service_account_key
+        - service_account_email
+    SupabaseDestinationConfigView:
+      type: object
+      properties:
+        project_url:
+          type:
+            - string
+            - 'null'
+        bucket:
+          type:
+            - string
+            - 'null'
+        api_key_masked:
+          type:
+            - string
+            - 'null'
+        provisioned_via:
+          type: string
+          enum:
+            - oauth
+            - api_key
+          description: oauth when the destination was provisioned through the Supabase connection flow, api_key when it was configured with a key.
+        organization_name:
+          type:
+            - string
+            - 'null'
+        project_name:
+          type:
+            - string
+            - 'null'
+      required:
+        - project_url
+        - bucket
+        - api_key_masked
+        - provisioned_via
+        - organization_name
+        - project_name
+    MongodbDestinationConfigView:
+      type: object
+      properties:
+        scheme:
+          type:
+            - string
+            - 'null'
+        host:
+          type:
+            - string
+            - 'null'
+        database:
+          type:
+            - string
+            - 'null'
+        username:
+          type:
+            - string
+            - 'null'
+        password_masked:
+          type:
+            - string
+            - 'null'
+      required:
+        - scheme
+        - host
+        - database
+        - username
+        - password_masked
+    KafkaDestinationConfigView:
+      type: object
+      properties:
+        host:
+          type:
+            - string
+            - 'null'
+        port:
+          type:
+            - integer
+            - 'null'
+          minimum: -2147483648
+          maximum: 2147483647
+        topic:
+          type:
+            - string
+            - 'null'
+        username:
+          type:
+            - string
+            - 'null'
+        password_masked:
+          type:
+            - string
+            - 'null'
+      required:
+        - host
+        - port
+        - topic
+        - username
+        - password_masked
+    SqlDestinationConfigView:
+      type: object
+      properties:
+        scheme:
+          type:
+            - string
+            - 'null'
+        host:
+          type:
+            - string
+            - 'null'
+        port:
+          type:
+            - integer
+            - 'null'
+          minimum: -2147483648
+          maximum: 2147483647
+        database:
+          type:
+            - string
+            - 'null'
+        username:
+          type:
+            - string
+            - 'null'
+        password_masked:
+          type:
+            - string
+            - 'null'
+      required:
+        - scheme
+        - host
+        - port
+        - database
+        - username
+        - password_masked
+    AzureblobDestinationConfigView:
+      type: object
+      properties:
+        account_url:
+          type:
+            - string
+            - 'null'
+        container:
+          type:
+            - string
+            - 'null'
+        sas_token_masked:
+          type:
+            - string
+            - 'null'
+      required:
+        - account_url
+        - container
+        - sas_token_masked
+    DestinationConfigView:
+      description: A destination's configuration as read back, by type. Every field is present; unset ones are null.
+      anyOf:
+        - $ref: '#/components/schemas/WebhookDestinationConfigView'
+        - $ref: '#/components/schemas/S3DestinationConfigView'
+        - $ref: '#/components/schemas/SqsDestinationConfigView'
+        - $ref: '#/components/schemas/GcsDestinationConfigView'
+        - $ref: '#/components/schemas/FirestoreDestinationConfigView'
+        - $ref: '#/components/schemas/SupabaseDestinationConfigView'
+        - $ref: '#/components/schemas/MongodbDestinationConfigView'
+        - $ref: '#/components/schemas/KafkaDestinationConfigView'
+        - $ref: '#/components/schemas/SqlDestinationConfigView'
+        - $ref: '#/components/schemas/AzureblobDestinationConfigView'
+    DestinationSecretValues:
+      type: object
+      description: 'The secret configuration fields of the destination''s type, each null when unset. Only the type''s own fields are present: password (sql, mongodb, kafka), secret_access_key (s3, sqs), service_account_key (gcs, firestore), api_key (supabase), sas_token (azureblob), signing_secret (webhook).'
+      properties:
+        password:
+          type:
+            - string
+            - 'null'
+        secret_access_key:
+          type:
+            - string
+            - 'null'
+        service_account_key:
+          type:
+            - object
+            - 'null'
+          description: The service account's JSON key file.
+          additionalProperties: true
+        api_key:
+          type:
+            - string
+            - 'null'
+        sas_token:
+          type:
+            - string
+            - 'null'
+        signing_secret:
+          type:
+            - string
+            - 'null'
+          description: The destination's own webhook signing secret. Null when it signs with the environment's signing secret.
+    DestinationConfigField:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - string
+            - integer
+            - object
+        required:
+          type: boolean
+          description: Needed for the destination to deliver. A draft saved inactive may leave it unset.
+        secret:
+          type: boolean
+          description: 'Write-only: reads return it masked.'
+        enum:
+          type:
+            - array
+            - 'null'
+          description: The values the field accepts, or null when it is free text.
+          items:
+            type: string
+      required:
+        - name
+        - type
+        - required
+        - secret
+        - enum

@@ -315,6 +315,16 @@
     ],
     "sensitive": false
   },
+  "listDestinationTypes": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "destinations:read"
+    ],
+    "sensitive": false
+  },
   "listDestinations": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -616,7 +626,7 @@
     "sensitive": false
   },
   "provisionSupabase": {
-    "confirmation_reason": null,
+    "confirmation_reason": "Can create a new project in your Supabase organization, which Supabase may bill for, and deletes the destination it replaces.",
     "dangerous": false,
     "dry_run": true,
     "method": "post",
@@ -665,7 +675,27 @@
     ],
     "sensitive": false
   },
+  "retrieveDestination": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "destinations:read"
+    ],
+    "sensitive": false
+  },
   "revealDataToken": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "keys:read"
+    ],
+    "sensitive": true
+  },
+  "revealDestinationSecrets": {
     "confirmation_reason": null,
     "dangerous": false,
     "dry_run": false,
