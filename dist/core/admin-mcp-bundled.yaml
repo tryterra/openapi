@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.06.1
+  version: 2026.10.07
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -45,6 +45,8 @@ tags:
   description: Inspect, resend and generate webhook events
 - name: connections
   description: Inspect end-user connections
+- name: syntheticusers
+  description: Create synthetic test users and start or stop the data they generate
 - name: workouts
   description: Manage workout metadata
 - name: vantage
@@ -3717,6 +3719,495 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/users/{user_id}/data:
+    get:
+      operationId: getUserData
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Read a user's stored health data of one type (payloads:read). Works for any user,
+        including synthetic users, whether or not the data was delivered anywhere. Reads what Terra holds
+        and never asks the provider for more. The window defaults to the last 7 days and can be at most
+        31.
+      tags:
+      - connections
+      summary: Read a user's stored data
+      description: The user's stored data of one type over a window, in Terra's JSON format, the body
+        a data read returns. It reads what Terra already holds and never fetches from the provider, so
+        it works for synthetic users and for users with no destination.
+      security:
+      - adminToken:
+        - payloads:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/PayloadSamples'
+      - name: user_id
+        x-terra-help: User ID from the users or synthetic-users list.
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The user to read, by the id the users list returns.
+      - name: data_type
+        x-terra-help: 'Data type to read: activity, body, daily, menstruation, nutrition or sleep.'
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - activity
+          - body
+          - daily
+          - menstruation
+          - nutrition
+          - sleep
+        description: The type of data to read.
+      - name: since
+        x-terra-help: Window start (RFC 3339; default 7 days before until).
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: Start of the window. Defaults to 7 days before until; the window can be at most 31
+          days.
+      - name: until
+        x-terra-help: Window end (RFC 3339; default now).
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: End of the window. Defaults to now.
+      responses:
+        '200':
+          description: The user's stored data.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                user:
+                  user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                  provider: SYNTHETIC
+                data:
+                - metadata:
+                    start_time: '2026-07-01T23:12:00Z'
+                    end_time: '2026-07-02T06:48:00Z'
+                  sleep_durations_data:
+                    asleep:
+                      duration_asleep_state_seconds: 24120
+                type: sleep
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/synthetic-users:
+    get:
+      operationId: listSyntheticUsers
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: List synthetic test users, newest first, with each one's latest run.
+      tags:
+      - syntheticusers
+      summary: List synthetic users
+      description: A page of the environment's synthetic users, newest first (created-time desc), each
+        with its latest generation run, with keyset cursor pagination. A user that has never run is listed
+        with latest_run null.
+      security:
+      - adminToken:
+        - connections:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: status
+        x-terra-help: Only users that are generating or stopped.
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - generating
+          - stopped
+        description: Narrow the list to users that are generating data or stopped.
+      - name: limit
+        x-terra-help: 'Users per page: default 50, clamped to 200. Pass the previous page''s next_cursor
+          as cursor for the next page.'
+        x-terra-mcp-help: 'Users per page: default 50, clamped to 200. Pass the previous page''s next_cursor
+          as cursor for the next page.'
+        in: query
+        schema:
+          type: integer
+          default: 50
+          minimum: 1
+        description: Users per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
+      - name: cursor
+        x-terra-help: Previous next_cursor.
+        in: query
+        schema:
+          type: string
+        description: The previous page's next_cursor.
+      responses:
+        '200':
+          description: The environment's synthetic users.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SyntheticUser'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+                required:
+                - data
+                - has_more
+                - next_cursor
+              example:
+                data:
+                - user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                  description: a poor sleeper with high stress
+                  persona:
+                    data_types:
+                      sleep: normal
+                      daily: normal
+                      activity: sparse
+                    biases:
+                      sleep_quality: low
+                      stress: high
+                  provider: null
+                  status: generating
+                  created_at: '2026-07-02T09:00:00Z'
+                  latest_run:
+                    run_id: 3c9e1f2a-7b4d-4e8f-a1c2-5d6e7f8a9b0c
+                    status: active
+                    duration_hours: 24
+                    cadence_seconds: 300
+                    payloads_sent: 14
+                    started_at: '2026-07-02T09:00:00Z'
+                    expires_at: '2026-07-03T09:00:00Z'
+                    next_run_at: '2026-07-02T10:15:00Z'
+                    last_run_at: '2026-07-02T10:10:00Z'
+                has_more: false
+                next_cursor: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      operationId: createSyntheticUser
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Create a synthetic test user and start generating data for it (testdata:write). Describe
+        who to simulate in plain words, or pass a structured persona. Data arrives within seconds and
+        then every few minutes until the run ends; stop it any time.
+      tags:
+      - syntheticusers
+      summary: Create a synthetic user
+      description: Creates a synthetic user and starts its first generation run. A description is translated
+        into a persona when the user is created, so a preview shows the request rather than the translated
+        persona; pass persona to fix it in advance. The user receives one payload of each data type it
+        generates straight away, then one every cadence until the run ends.
+      security:
+      - adminToken:
+        - testdata:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSyntheticUserRequest'
+      responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. The preview is the validated request; no user
+            is created and the description is not translated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: create
+                preview:
+                  description: a poor sleeper with high stress
+                  persona: null
+                  provider: null
+                  duration_hours: 24
+                  reference_id: null
+                  backfill_days: 0
+        '201':
+          description: The created synthetic user, generating.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheticUser'
+              example:
+                user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                description: a poor sleeper with high stress
+                persona:
+                  data_types:
+                    sleep: normal
+                    daily: normal
+                    activity: sparse
+                  biases:
+                    sleep_quality: low
+                    stress: high
+                provider: null
+                status: generating
+                created_at: '2026-07-02T09:00:00Z'
+                latest_run:
+                  run_id: 3c9e1f2a-7b4d-4e8f-a1c2-5d6e7f8a9b0c
+                  status: active
+                  duration_hours: 24
+                  cadence_seconds: 300
+                  payloads_sent: 0
+                  started_at: '2026-07-02T09:00:00Z'
+                  expires_at: '2026-07-03T09:00:00Z'
+                  next_run_at: '2026-07-02T09:05:00Z'
+                  last_run_at: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/synthetic-users/{user_id}:
+    get:
+      operationId: getSyntheticUser
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Show a synthetic user, its persona and its latest run.
+      tags:
+      - syntheticusers
+      summary: Get a synthetic user
+      description: One synthetic user with its persona and latest generation run.
+      security:
+      - adminToken:
+        - connections:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/SyntheticUserId'
+      responses:
+        '200':
+          description: The synthetic user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheticUser'
+              example:
+                user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                description: a poor sleeper with high stress
+                persona:
+                  data_types:
+                    sleep: normal
+                    daily: normal
+                    activity: sparse
+                  biases:
+                    sleep_quality: low
+                    stress: high
+                provider: null
+                status: generating
+                created_at: '2026-07-02T09:00:00Z'
+                latest_run:
+                  run_id: 3c9e1f2a-7b4d-4e8f-a1c2-5d6e7f8a9b0c
+                  status: active
+                  duration_hours: 24
+                  cadence_seconds: 300
+                  payloads_sent: 14
+                  started_at: '2026-07-02T09:00:00Z'
+                  expires_at: '2026-07-03T09:00:00Z'
+                  next_run_at: '2026-07-02T10:15:00Z'
+                  last_run_at: '2026-07-02T10:10:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/synthetic-users/{user_id}/start:
+    post:
+      operationId: startSyntheticUser
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Start a stopped synthetic user again under the persona of its last run, or a new description
+        or persona (testdata:write). Its user ID and data history carry over.
+      tags:
+      - syntheticusers
+      summary: Start a synthetic user
+      description: Starts a new generation run for a stopped synthetic user, using the persona of its
+        latest run unless the body gives a description or persona. A user that has never run needs one
+        of them and duration_hours. A user that is already generating is a 409.
+      security:
+      - adminToken:
+        - testdata:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/SyntheticUserId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSyntheticUserRequest'
+      responses:
+        '200':
+          description: The synthetic user, generating; or DryRunResult when ?dry_run=true, whose preview
+            is the persona and duration the run would use.
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                - $ref: '#/components/schemas/SyntheticUser'
+                - $ref: '#/components/schemas/DryRunResult'
+              example:
+                user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                description: a poor sleeper with high stress
+                persona:
+                  data_types:
+                    sleep: normal
+                    daily: normal
+                    activity: sparse
+                  biases:
+                    sleep_quality: low
+                    stress: high
+                provider: null
+                status: generating
+                created_at: '2026-07-02T09:00:00Z'
+                latest_run:
+                  run_id: 3c9e1f2a-7b4d-4e8f-a1c2-5d6e7f8a9b0c
+                  status: active
+                  duration_hours: 24
+                  cadence_seconds: 300
+                  payloads_sent: 14
+                  started_at: '2026-07-02T09:00:00Z'
+                  expires_at: '2026-07-03T09:00:00Z'
+                  next_run_at: '2026-07-02T10:15:00Z'
+                  last_run_at: '2026-07-02T10:10:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/synthetic-users/{user_id}/stop:
+    post:
+      operationId: stopSyntheticUser
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Stop a synthetic user generating data (testdata:write). Stopping a stopped user changes
+        nothing.
+      tags:
+      - syntheticusers
+      summary: Stop a synthetic user
+      description: Ends the synthetic user's current run. The user and its data stay; start it again any
+        time. Stopping a user that is not generating changes nothing.
+      security:
+      - adminToken:
+        - testdata:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/SyntheticUserId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: The synthetic user, stopped; or DryRunResult when ?dry_run=true, whose preview
+            is the user as it is now (would is noop when it is already stopped).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                - $ref: '#/components/schemas/SyntheticUser'
+                - $ref: '#/components/schemas/DryRunResult'
+              example:
+                user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                description: a poor sleeper with high stress
+                persona:
+                  data_types:
+                    sleep: normal
+                    daily: normal
+                    activity: sparse
+                  biases:
+                    sleep_quality: low
+                    stress: high
+                provider: null
+                status: stopped
+                created_at: '2026-07-02T09:00:00Z'
+                latest_run:
+                  run_id: 3c9e1f2a-7b4d-4e8f-a1c2-5d6e7f8a9b0c
+                  status: cancelled
+                  duration_hours: 24
+                  cadence_seconds: 300
+                  payloads_sent: 14
+                  started_at: '2026-07-02T09:00:00Z'
+                  expires_at: '2026-07-03T09:00:00Z'
+                  next_run_at: null
+                  last_run_at: '2026-07-02T10:10:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /environments/{dev_id}/webhook-events/stats:
     get:
       operationId: getEventStats
@@ -5524,7 +6015,8 @@ components:
             events:read: See a log of the data sent to you, without its contents.
             events:write: Send data again, and send test data.
             connections:read: See which of your users have connected.
-            payloads:read: See the data sent to you, including your users' health data.
+            payloads:read: See your users' health data, both what was sent to you and what is stored for
+              them.
             dataconfig:read: See which health data fields you get.
             dataconfig:write: Change which health data fields you get.
             scores:read: See which scores are turned on, and their settings.
@@ -5535,7 +6027,8 @@ components:
             workouts:write: 'Data plane: create workout templates and plan workouts for users.'
             labreports:read: 'Data plane: read lab reports.'
             labreports:write: 'Data plane: reprocess or delete lab reports.'
-            testdata:write: 'Data plane: generate synthetic test data.'
+            testdata:write: Create test users with made-up health data, and start or stop the data they
+              send. Each test user counts as a connection on your bill.
             billing:read: See your plan, invoices, payment method and usage.
             billing:write: Change your plan, pay invoices and update payment details. This can spend money.
             tokens:admin: See and revoke every token across your account, including other people's.
@@ -5586,7 +6079,7 @@ components:
             workouts:write: data
             labreports:read: data
             labreports:write: data
-            testdata:write: data
+            testdata:write: both
             billing:read: admin
             billing:write: admin
             tokens:admin: admin
@@ -5633,10 +6126,12 @@ components:
           x-scope-presets:
           - name: Coding agent
             mcp_name: MCP
-            mcp_summary: Connect an AI assistant. Reads integration data, writes integration config, and
-              resends events. Cannot spend, remove people, issue credentials, or rotate the key.
+            mcp_summary: Connect an AI assistant. Reads integration data, writes integration config, resends
+              events and creates test users. Cannot spend, remove people, issue credentials, or rotate
+              the key.
             summary: A developer or their coding agent at the terminal. Reads everything, writes integration
-              config, resends events. Cannot spend, remove people, issue credentials, or rotate the key.
+              config, resends events, creates test users. Cannot spend, remove people, issue credentials,
+              or rotate the key.
             scopes:
             - account:read
             - account:write
@@ -5657,6 +6152,7 @@ components:
             - scores:read
             - scores:write
             - team:read
+            - testdata:write
             - tokens:read
           - name: Read only
             summary: Auditing, onboarding a teammate, or a demo. Every read except credential material
@@ -5699,6 +6195,7 @@ components:
             - scores:write
             - team:read
             - team:write
+            - testdata:write
             - tokens:admin
             - tokens:read
             - tokens:write
@@ -5718,7 +6215,8 @@ components:
             events:read: See a log of the data sent to you, without its contents.
             events:write: Send data again, and send test data.
             connections:read: See which of your users have connected.
-            payloads:read: See the data sent to you, including your users' health data.
+            payloads:read: See your users' health data, both what was sent to you and what is stored for
+              them.
             dataconfig:read: See which health data fields you get.
             dataconfig:write: Change which health data fields you get.
             scores:read: See which scores are turned on, and their settings.
@@ -5729,7 +6227,8 @@ components:
             workouts:write: 'Data plane: create workout templates and plan workouts for users.'
             labreports:read: 'Data plane: read lab reports.'
             labreports:write: 'Data plane: reprocess or delete lab reports.'
-            testdata:write: 'Data plane: generate synthetic test data.'
+            testdata:write: Create test users with made-up health data, and start or stop the data they
+              send. Each test user counts as a connection on your bill.
             billing:read: See your plan, invoices, payment method and usage.
             billing:write: Change your plan, pay invoices and update payment details. This can spend money.
             tokens:admin: See and revoke every token across your account, including other people's.
@@ -5768,6 +6267,15 @@ components:
         are enforced per operation and named in each description: an HTTP bearer scheme cannot carry an
         OAuth2 scope list, so the security requirement is necessarily empty.'
   parameters:
+    SyntheticUserId:
+      name: user_id
+      x-terra-help: Synthetic user ID from the synthetic-users list.
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The synthetic user to act on, by the id its creation returned.
     DevId:
       name: dev_id
       x-terra-help: Environment name or dev ID.
@@ -8869,6 +9377,9 @@ components:
       - method_name: stats
         operation: get
         path: /environments/{dev_id}/users/stats
+      - method_name: retrieve-data
+        operation: get
+        path: /environments/{dev_id}/users/{user_id}/data
       x-terra-summary: Inspect end-user connections
       x-terra-resource: users
     VantageApiVersion:
@@ -8996,6 +9507,272 @@ components:
         path: /environments/{dev_id}/workouts/{workout_id}/metadata
       x-terra-summary: Custom fields attached to a workout
       x-terra-resource: workouts.metadata
+    CreateSyntheticUserRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Plain-language description of the person to simulate, translated into a persona.
+            Required unless persona is given; at most 2000 characters.
+          maxLength: 2000
+          x-terra-help: Who to simulate, in plain words (e.g. "a poor sleeper with high stress").
+        persona:
+          description: A structured persona to use as given instead of translating a description.
+          $ref: '#/components/schemas/SyntheticPersona'
+        duration_hours:
+          type: number
+          enum:
+          - 24
+          - 48
+          - 72
+          description: How long the first run generates data for.
+          x-terra-help: 'Hours to generate data for: 24, 48 or 72.'
+        reference_id:
+          type: string
+          description: Your own identifier for the user, returned on its webhooks.
+          maxLength: 128
+          x-terra-help: Your own ID for this user, e.g. a tester's ID in your app.
+        provider:
+          type: string
+          description: A real provider whose data shape to simulate, e.g. GARMIN. Data types it does not
+            support are left out.
+          x-terra-help: Provider whose data shape to simulate, e.g. GARMIN.
+        backfill_days:
+          type: integer
+          description: Days of past data to add when the user is created, up to 30.
+          minimum: 0
+          maximum: 30
+          default: 0
+          x-terra-help: 'Days of past data to add (0-30; default: 0).'
+      required:
+      - duration_hours
+      anyOf:
+      - required:
+        - description
+      - required:
+        - persona
+      x-terra-most-common:
+      - description
+      - duration_hours
+    StartSyntheticUserRequest:
+      type: object
+      properties:
+        duration_hours:
+          type: number
+          enum:
+          - 24
+          - 48
+          - 72
+          description: How long the new run generates data for. Defaults to the latest run's duration;
+            required for a user that has never run.
+          x-terra-help: 'Hours to generate data for: 24, 48 or 72 (default: the last run''s).'
+        description:
+          type: string
+          description: A new plain-language description to generate from instead of the latest run's persona;
+            at most 2000 characters. A user that has never run needs this or persona.
+          maxLength: 2000
+          x-terra-help: 'Who to simulate from now on, in plain words (default: the last run''s persona).'
+        persona:
+          description: A structured persona to generate from instead of the latest run's.
+          $ref: '#/components/schemas/SyntheticPersona'
+    SyntheticPersona:
+      type: object
+      description: The structured persona a synthetic user generates data for. A description is translated
+        into this; passing it directly skips the translation.
+      properties:
+        data_types:
+          type: object
+          description: 'How often each data type (daily, sleep, activity, body, nutrition, menstruation)
+            arrives: normal, sparse or missing.'
+          unevaluatedProperties:
+            type: string
+            enum:
+            - normal
+            - sparse
+            - missing
+        biases:
+          $ref: '#/components/schemas/SyntheticPersonaBiases'
+      x-terra-help: Structured persona JSON, used instead of translating description.
+    SyntheticPersonaBiases:
+      type: object
+      description: Biases applied to a synthetic user's generated values. Each is low, normal or high;
+        blood_pressure is normal, elevated or high.
+      properties:
+        sleep_duration:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+        sleep_quality:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+        recovery:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+        stress:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+        resting_heart_rate:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+        activity_volume:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+        blood_pressure:
+          type: string
+          enum:
+          - normal
+          - elevated
+          - high
+        blood_pressure_anomaly_rate:
+          type: number
+          description: Share of blood-pressure readings that are anomalous, from 0 to 1.
+          minimum: 0
+          maximum: 1
+        blood_glucose:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+    SyntheticUser:
+      type: object
+      description: 'A synthetic user: a connection that receives generated data shaped by a persona, in
+        time-boxed runs.'
+      properties:
+        user_id:
+          type: string
+          description: The user's id, the same one data reads and webhooks carry.
+        description:
+          type:
+          - string
+          - 'null'
+          description: The description its latest run was created from; null when a persona was passed
+            directly.
+        persona:
+          anyOf:
+          - $ref: '#/components/schemas/SyntheticPersona'
+          - type: 'null'
+        provider:
+          type:
+          - string
+          - 'null'
+          description: The real provider whose data shape generation follows; null for the default shape.
+        status:
+          type: string
+          enum:
+          - generating
+          - stopped
+        created_at:
+          type: string
+          format: date-time
+        latest_run:
+          description: The latest generation run; null for a user that has never run.
+          anyOf:
+          - $ref: '#/components/schemas/SyntheticUserRun'
+          - type: 'null'
+      required:
+      - user_id
+      - description
+      - persona
+      - provider
+      - status
+      - created_at
+      - latest_run
+      x-terra-operations:
+      - method_name: list
+        operation: get
+        path: /environments/{dev_id}/synthetic-users
+        columns:
+        - user_id
+        - status
+        - description
+        - created_at
+      - method_name: retrieve
+        operation: get
+        path: /environments/{dev_id}/synthetic-users/{user_id}
+      - method_name: create
+        operation: post
+        path: /environments/{dev_id}/synthetic-users
+      - method_name: start
+        operation: post
+        path: /environments/{dev_id}/synthetic-users/{user_id}/start
+      - method_name: stop
+        operation: post
+        path: /environments/{dev_id}/synthetic-users/{user_id}/stop
+      x-terra-summary: Create synthetic test users and start or stop the data they generate
+      x-terra-resource: synthetic-users
+    SyntheticUserRun:
+      type: object
+      description: One time-boxed generation run of a synthetic user.
+      properties:
+        run_id:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - completed
+          - cancelled
+          description: active while generating, completed once it reached expires_at, cancelled when stopped.
+        duration_hours:
+          type: number
+          enum:
+          - 24
+          - 48
+          - 72
+        cadence_seconds:
+          type: integer
+          description: Seconds between generated payloads.
+          minimum: -2147483648
+          maximum: 2147483647
+        payloads_sent:
+          type: integer
+          minimum: -2147483648
+          maximum: 2147483647
+        started_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        next_run_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the next payload is due; null once the run has ended.
+        last_run_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+      required:
+      - run_id
+      - status
+      - duration_hours
+      - cadence_seconds
+      - payloads_sent
+      - started_at
+      - expires_at
+      - next_run_at
+      - last_run_at
     schemas-Problem:
       type: object
       description: 'An error response, following RFC 9457 (Problem Details for HTTP APIs, which obsoletes

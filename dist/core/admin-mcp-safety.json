@@ -27,6 +27,16 @@
     ],
     "sensitive": false
   },
+  "createSyntheticUser": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "testdata:write"
+    ],
+    "sensitive": false
+  },
   "createTeamInvitation": {
     "confirmation_reason": "Anyone who signs in with the invited email and the invite token joins your account with this role.",
     "dangerous": true,
@@ -195,6 +205,16 @@
     ],
     "sensitive": false
   },
+  "getSyntheticUser": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "connections:read"
+    ],
+    "sensitive": false
+  },
   "getTeamMember": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -214,6 +234,16 @@
       "billing:read"
     ],
     "sensitive": false
+  },
+  "getUserData": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "payloads:read"
+    ],
+    "sensitive": true
   },
   "getUserStats": {
     "confirmation_reason": null,
@@ -402,6 +432,16 @@
     "method": "get",
     "scopes": [
       "destinations:write"
+    ],
+    "sensitive": false
+  },
+  "listSyntheticUsers": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "connections:read"
     ],
     "sensitive": false
   },
@@ -740,6 +780,26 @@
     "method": "post",
     "scopes": [
       "destinations:write"
+    ],
+    "sensitive": false
+  },
+  "startSyntheticUser": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "testdata:write"
+    ],
+    "sensitive": false
+  },
+  "stopSyntheticUser": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "testdata:write"
     ],
     "sensitive": false
   },
