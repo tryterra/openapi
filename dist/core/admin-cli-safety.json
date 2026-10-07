@@ -93,7 +93,7 @@
     "dry_run": true,
     "method": "post",
     "scopes": [
-      "events:write"
+      "testdata:write"
     ],
     "sensitive": false
   },

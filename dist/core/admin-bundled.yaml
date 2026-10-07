@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.07
+  version: 2026.10.07.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -2935,7 +2935,7 @@ paths:
       description: Builds a realistic payload of the requested type for a made-up user, normalises it exactly as live provider data is, stores it, and queues it to every destination the dispatcher would deliver it to (active, deliverable type, event_types admit the type), or to the one named by destination_id. Register the receiver as a destination first; there is no ad-hoc URL, and having no eligible destination (or naming an inactive or non-accepting one) is a 422 on real and dry-run calls alike. The payload is returned in the response so the caller sees what the destination will receive. Pass samples false to leave time-series samples out of the generated event. The event is marked synthetic end to end and never touches a real connection. Pass ?dry_run=true to get the payload without storing or delivering anything. Requires the environment to be entitled to the Unified API.
       security:
         - adminToken:
-            - events:write
+            - testdata:write
       parameters:
         - $ref: '#/components/parameters/DevId'
         - $ref: '#/components/parameters/DryRun'
@@ -5156,7 +5156,7 @@ components:
             destinations:read: See where your data is sent, like a webhook or Supabase.
             destinations:write: Add, change or remove where your data is sent.
             events:read: See a log of the data sent to you, without its contents.
-            events:write: Send data again, and send test data.
+            events:write: Send data again.
             connections:read: See which of your users have connected.
             payloads:read: See your users' health data, both what was sent to you and what is stored for them.
             dataconfig:read: See which health data fields you get.
@@ -5169,7 +5169,7 @@ components:
             workouts:write: 'Data plane: create workout templates and plan workouts for users.'
             labreports:read: 'Data plane: read lab reports.'
             labreports:write: 'Data plane: reprocess or delete lab reports.'
-            testdata:write: Create test users with made-up health data, and start or stop the data they send. Each test user counts as a connection on your bill.
+            testdata:write: Send made-up health data to where your data goes, from one-off events or test users you can start and stop.
             billing:read: See your plan, invoices, payment method and usage.
             billing:write: Change your plan, pay invoices and update payment details. This can spend money.
             tokens:admin: See and revoke every token across your account, including other people's.
@@ -5345,7 +5345,7 @@ components:
             destinations:read: See where your data is sent, like a webhook or Supabase.
             destinations:write: Add, change or remove where your data is sent.
             events:read: See a log of the data sent to you, without its contents.
-            events:write: Send data again, and send test data.
+            events:write: Send data again.
             connections:read: See which of your users have connected.
             payloads:read: See your users' health data, both what was sent to you and what is stored for them.
             dataconfig:read: See which health data fields you get.
@@ -5358,7 +5358,7 @@ components:
             workouts:write: 'Data plane: create workout templates and plan workouts for users.'
             labreports:read: 'Data plane: read lab reports.'
             labreports:write: 'Data plane: reprocess or delete lab reports.'
-            testdata:write: Create test users with made-up health data, and start or stop the data they send. Each test user counts as a connection on your bill.
+            testdata:write: Send made-up health data to where your data goes, from one-off events or test users you can start and stop.
             billing:read: See your plan, invoices, payment method and usage.
             billing:write: Change your plan, pay invoices and update payment details. This can spend money.
             tokens:admin: See and revoke every token across your account, including other people's.
