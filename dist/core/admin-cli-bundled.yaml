@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.07.4
+  version: 2026.10.08
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -1565,6 +1565,108 @@ paths:
             - providers:read
       parameters:
         - $ref: '#/components/parameters/DevId'
+  /environments/{dev_id}/unified-api/sources/batch-enable:
+    post:
+      operationId: batchEnableSources
+      x-terra-help: Enable several providers in one call. Either every provider is enabled or none is; repeated calls are safe.
+      tags:
+        - sources
+      responses:
+        '200':
+          description: Enabled (or DryRunResult when ?dry_run=true).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/BatchEnabledSources'
+                  - $ref: '#/components/schemas/DryRunResult'
+              example:
+                data:
+                  - provider: garmin
+                    active: true
+                  - provider: oura
+                    active: true
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Enable several providers
+      description: 'Enables up to 100 providers in one transaction, so either every provider is enabled or none is. Each provider is enabled exactly as the single enable does it: no credentials, no scopes, an already-enabled one is left as it is and a paused one is resumed, so a repeat call is safe. Every provider is checked before anything is written; an unrecognised or repeated one is a 400 whose errors name its position in providers. The response lists the providers in request order.'
+      security:
+        - adminToken:
+            - providers:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchEnableSourcesRequest'
+            example:
+              providers:
+                - garmin
+                - oura
+  /environments/{dev_id}/unified-api/sources/batch-disable:
+    post:
+      operationId: batchDisableSources
+      x-terra-help: Disable several providers in one call. Either every provider is disabled or none is. Re-enabling does not backfill the gap. Use --dry-run to preview.
+      tags:
+        - sources
+      responses:
+        '200':
+          description: Dry-run preview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: disable
+                preview:
+                  data:
+                    - provider: garmin
+                    - provider: oura
+        '204':
+          description: Disabled.
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Disable several providers
+      description: 'Disables up to 100 providers in one transaction, so either every provider is disabled or none is. Each provider is disabled exactly as the single disable does it: nothing is collected from it while it is off, and enabling it again does not backfill the gap. Every provider is checked before anything is written; an unrecognised or repeated one is a 400 and one that is not enabled is a 404, each with errors naming its position in providers. Pass ?dry_run=true for a preview that commits nothing; POST sources/batch-enable is the inverse.'
+      security:
+        - adminToken:
+            - providers:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchDisableSourcesRequest'
+            example:
+              providers:
+                - garmin
+                - oura
   /environments/{dev_id}/unified-api/sources/{provider}:
     put:
       operationId: enableSource
@@ -1595,7 +1697,7 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Enable a provider (idempotent)
-      description: 'Enabling only turns the provider on: it configures no credentials and no scopes, so until custom credentials are set the environment authorizes end users against Terra''s own OAuth app, which is what terra_owned reports on the credentials read. A repeat call is not an error and answers with the same provider and active pair.'
+      description: 'Enabling only turns the provider on: it configures no credentials and no scopes, so until custom credentials are set the environment authorizes end users against Terra''s own OAuth app, which is what terra_owned reports on the credentials read. A repeat call is not an error and answers with the same provider and active pair, and a paused provider is resumed.'
       security:
         - adminToken:
             - providers:write
@@ -2006,6 +2108,104 @@ paths:
                 summary: An S3 draft to finish later
                 value:
                   type: s3
+                  active: false
+  /environments/{dev_id}/unified-api/destinations/batch-create:
+    post:
+      operationId: batchCreateDestinations
+      x-terra-help: Create several destinations in one call. Either every destination is created or none is. Save each webhook's signing_secret now.
+      tags:
+        - destinations
+      responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. Each item's preview omits id and signing_secret, which do not exist until the destination does; its will_return_signing_secret says one would be issued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: create
+                preview:
+                  data:
+                    - type: webhook
+                      url: https://example.com/terra
+                      active: true
+                      event_types: []
+                      configured: true
+                      missing: []
+                      config:
+                        url: https://example.com/terra
+                        delivery: push
+                      will_return_signing_secret: true
+        '201':
+          description: Created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchCreatedDestinations'
+              example:
+                data:
+                  - id: '1937255512398764032'
+                    type: webhook
+                    url: https://api.acme.com/terra/webhook
+                    active: true
+                    event_types: []
+                    configured: true
+                    missing: []
+                    config:
+                      url: https://api.acme.com/terra/webhook
+                      delivery: push
+                    signing_secret: a4f8…shown-once…c917
+                  - id: '1937255512398764033'
+                    type: s3
+                    url: ''
+                    active: false
+                    event_types: []
+                    configured: false
+                    missing:
+                      - config.bucket
+                      - config.region
+                      - config.access_key_id
+                      - config.secret_access_key
+                    config:
+                      bucket: null
+                      region: null
+                      access_key_id: null
+                      secret_access_key_masked: null
+                    signing_secret: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Create several destinations
+      description: 'Creates up to 100 destinations in one transaction, so either every destination is created or none is. Each item takes the same fields as a single create and is validated the same way, before anything is written; every invalid item is reported in one 400 whose errors are prefixed with its position, e.g. items[2].config.url. The deprecated url and metadata fields are not accepted. The response lists the destinations in request order, and for a webhook its item is the only place its signing_secret appears, so store it now, or pass signing_secret_source: environment on that item. Through the MCP, a batch whose result would not fit in one tool result is a 400 asking for smaller batches, so no signing secret is ever lost to a truncated result.'
+      security:
+        - adminToken:
+            - destinations:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchCreateDestinationsRequest'
+            example:
+              items:
+                - event_types:
+                    - activity
+                    - sleep
+                  config:
+                    url: https://api.acme.com/terra/webhook
+                - type: s3
                   active: false
   /environments/{dev_id}/unified-api/destinations/{destination_id}:
     get:
@@ -6115,6 +6315,114 @@ components:
             type: string
       required:
         - state
+    BatchCreateDestinationsRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          description: 'The destinations to create, each shaped like a single create: at least 1 and at most 100. Every item is validated before anything is written, and an invalid one is a 400 naming its position, so either every destination is created or none is. Through the MCP, a batch whose result would not fit in one tool result is a 400 asking for smaller batches.'
+          items:
+            $ref: '#/components/schemas/BatchDestinationItem'
+          minItems: 1
+          maxItems: 100
+          x-terra-help: JSON array of destinations, each shaped like a single create; at most 100.
+      required:
+        - items
+      x-terra-most-common:
+        - items
+    BatchCreatedDestinations:
+      type: object
+      properties:
+        data:
+          type: array
+          description: One created destination per item, in request order.
+          items:
+            $ref: '#/components/schemas/CreatedDestination'
+      required:
+        - data
+    BatchDestinationItem:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Where data is delivered, e.g. webhook, s3, gcs. Omitted defaults to webhook, which is the common case; an unrecognised type is a 400.
+          default: webhook
+          x-terra-help: 'Destination type, e.g. webhook, s3 or gcs (default: webhook).'
+        config:
+          description: The type's configuration; GET /destination-types lists each type's fields. An active destination needs every required field, and each missing one is a 400 naming it. An inactive destination may be saved incomplete as a draft and finished with a PATCH.
+          anyOf:
+            - $ref: '#/components/schemas/WebhookDestinationConfig'
+            - $ref: '#/components/schemas/S3DestinationConfig'
+            - $ref: '#/components/schemas/SqsDestinationConfig'
+            - $ref: '#/components/schemas/GcsDestinationConfig'
+            - $ref: '#/components/schemas/FirestoreDestinationConfig'
+            - $ref: '#/components/schemas/SupabaseDestinationConfig'
+            - $ref: '#/components/schemas/MongodbDestinationConfig'
+            - $ref: '#/components/schemas/KafkaDestinationConfig'
+            - $ref: '#/components/schemas/SqlDestinationConfig'
+            - $ref: '#/components/schemas/AzureblobDestinationConfig'
+          x-terra-help: Configuration JSON for the type; see destination-types list for its fields.
+        event_types:
+          type: array
+          description: Which events to deliver here, as a list of event-type names. Omitted or empty delivers every event type, and an unrecognised name is a 400 naming it.
+          items:
+            type: string
+          x-terra-help: Events to deliver; repeat for each type. Omitted delivers every event type; unknown names are rejected.
+        active:
+          type: boolean
+          description: Whether to start delivering immediately. Omitted defaults to true.
+          default: true
+          x-terra-help: 'Start delivering immediately (default: true). False saves a draft.'
+        signing_secret_source:
+          type: string
+          enum:
+            - destination
+            - environment
+          description: Webhooks only. destination (the default) generates a secret for this destination and returns it once; environment signs with the environment's signing secret instead.
+          default: destination
+          x-terra-help: 'Webhook signing secret: destination (default, returned once) or environment.'
+    BatchDisableSourcesRequest:
+      type: object
+      properties:
+        providers:
+          type: array
+          description: 'The providers to disable, as slugs, e.g. garmin: at least 1 and at most 100, each listed once. An unrecognised or repeated provider is a 400, and one that is not enabled is a 404, each naming its position, and then nothing is disabled.'
+          items:
+            type: string
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          x-terra-help: Provider to disable; repeat for each one, at most 100.
+      required:
+        - providers
+      x-terra-most-common:
+        - providers
+    BatchEnableSourcesRequest:
+      type: object
+      properties:
+        providers:
+          type: array
+          description: 'The providers to enable, as slugs, e.g. garmin: at least 1 and at most 100, each listed once. An unrecognised or repeated provider is a 400 naming its position, and then nothing is enabled.'
+          items:
+            type: string
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          x-terra-help: Provider to enable; repeat for each one, at most 100.
+      required:
+        - providers
+      x-terra-most-common:
+        - providers
+    BatchEnabledSources:
+      type: object
+      properties:
+        data:
+          type: array
+          description: One entry per requested provider, in request order.
+          items:
+            $ref: '#/components/schemas/ProviderEnabled'
+      required:
+        - data
     CompanyProfile:
       type:
         - object
@@ -6233,7 +6541,7 @@ components:
           type:
             - string
             - 'null'
-          description: The secret this destination signs its webhook payloads with. Present for webhook destinations created with signing_secret_source destination; null otherwise and on an Idempotency-Key replay. Retrieving the destination's secrets returns it again.
+          description: The secret this destination signs its webhook payloads with. Set for webhook destinations created with signing_secret_source destination; null otherwise and on an Idempotency-Key replay. Retrieving the destination's secrets returns it again.
       required:
         - id
         - type
@@ -6242,6 +6550,7 @@ components:
         - configured
         - missing
         - config
+        - signing_secret
     DashboardUser:
       type:
         - object
@@ -6447,6 +6756,16 @@ components:
                 - webhook
                 - '--config'
                 - '{"url":"https://example.com/terra/webhook"}'
+        - method_name: batch-create
+          operation: post
+          path: /environments/{dev_id}/unified-api/destinations/batch-create
+          examples:
+            - summary: Add two webhook destinations at once
+              args:
+                - '--env'
+                - <dev-id>
+                - '--items'
+                - '[{"config":{"url":"https://example.com/a"}},{"config":{"url":"https://example.com/b"}}]'
         - method_name: update
           operation: patch
           path: /environments/{dev_id}/unified-api/destinations/{destination_id}
@@ -8294,6 +8613,18 @@ components:
                 - '--env'
                 - <dev-id>
                 - <provider>
+        - method_name: batch-enable
+          operation: post
+          path: /environments/{dev_id}/unified-api/sources/batch-enable
+          examples:
+            - summary: Enable several providers at once
+              args:
+                - '--env'
+                - <dev-id>
+                - '--providers'
+                - garmin
+                - '--providers'
+                - oura
         - method_name: disable
           operation: delete
           path: /environments/{dev_id}/unified-api/sources/{provider}
@@ -8303,6 +8634,18 @@ components:
                 - '--env'
                 - <dev-id>
                 - <provider>
+        - method_name: batch-disable
+          operation: post
+          path: /environments/{dev_id}/unified-api/sources/batch-disable
+          examples:
+            - summary: Disable several providers at once
+              args:
+                - '--env'
+                - <dev-id>
+                - '--providers'
+                - garmin
+                - '--providers'
+                - oura
       x-terra-summary: Enable and configure wearable providers
       x-terra-resource: unified-api.sources
     PutWorkoutMetadataRequest:

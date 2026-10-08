@@ -7,6 +7,36 @@
     "scopes": [],
     "sensitive": false
   },
+  "batchCreateDestinations": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "destinations:write"
+    ],
+    "sensitive": false
+  },
+  "batchDisableSources": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "providers:write"
+    ],
+    "sensitive": false
+  },
+  "batchEnableSources": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "providers:write"
+    ],
+    "sensitive": false
+  },
   "cancelIncomplete": {
     "confirmation_reason": "Cancels unfinished subscriptions: either all of them, or only the ones this request names.",
     "dangerous": true,
