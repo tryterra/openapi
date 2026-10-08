@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Terra Widget API
   description: Endpoint for generating an authentication-widget session, used to redirect an end user into the Terra Authentication Widget so they can connect a data provider.
-  version: 2026.08.10.3
+  version: 2026.10.08
   license:
     name: Proprietary
 servers:
@@ -67,6 +67,11 @@ paths:
                     type: number
                     description: a number in seconds depicting how long the url is valid for
                     example: 86400
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                    description: present when part of the request could not be honoured, such as requested providers that are unknown or not enabled
         '400':
           description: Returned when one or more parameters is malformed - an appropriate error message will be returned
           content:
@@ -122,7 +127,7 @@ components:
       properties:
         providers:
           type: string
-          description: Comma separated list of providers to display on the device selection page
+          description: Comma separated list of providers to display on the device selection page. The legacy wildcard ALL means every provider enabled on your dashboard, the same as omitting the field.
           example: VALD,CATAPULT
         reference_id:
           type: string
@@ -130,7 +135,7 @@ components:
           example: user123@email.com
         auth_success_redirect_url:
           type: string
-          description: URL the user is redirected to upon successful authentication
+          description: URL the user is redirected to upon successful authentication. The legacy value multi-auth is honoured and sets multi_auth instead of acting as a URL.
           example: https://myapp.com/success
         auth_failure_redirect_url:
           type: string
@@ -163,3 +168,7 @@ components:
         samsung_app_url:
           type: string
           description: URL of your own Android app to hand Samsung Health connections to
+        language:
+          type: string
+          description: forces the widget UI language (e.g. en, fr, ja, zh_cn); unsupported codes fall back to the end user's browser language
+          example: en

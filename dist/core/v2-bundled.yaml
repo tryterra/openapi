@@ -3,7 +3,7 @@ info:
   description: |
     The Terra API (v2 surface, served at access.tryterra.co/api/v2). Protected product operations require a current product entitlement in addition to valid credentials and token scopes. Missing access returns HTTP 403 with code entitlement_required; disabled environments return environment_disabled. Unavailable current authorization returns HTTP 503 with code authorization_unavailable. Billing, configuration and recovery remain available under their existing permissions. Completed Health Scores stay with the caller's own authorized data. Pass recipients require their own Health Scores entitlement; otherwise enrichment fields retain null values. New score computation requires Health Scores access. Retained lab reports remain readable through the report endpoints with valid credentials and ownership, without a current Lab Reports entitlement. New uploads and reprocessing require it.
   title: TerraAPI
-  version: 2026.10.01
+  version: 2026.10.08
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -132,6 +132,11 @@ paths:
                     type: number
                     description: a number in seconds depicting how long the url is valid for
                     example: 900
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+                    description: present when part of the request could not be honoured, such as requested providers that are unknown or not enabled
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -2851,24 +2856,51 @@ components:
       properties:
         providers:
           type: string
-          description: Comma separated list of providers to display on the device selection page. This overrides your selected sources on your dashboard
-          example: GARMIN,FITBIT,OURA,WITHINGS,SUUNTO
-        language:
-          type: string
-          description: Display language of the widget
-          example: en
+          description: Comma separated list of providers to display on the device selection page. The legacy wildcard ALL means every provider enabled on your dashboard, the same as omitting the field.
+          example: VALD,CATAPULT
         reference_id:
           type: string
           description: Identifier of the end user on your system, such as a user ID or email associated with them
           example: user123@email.com
         auth_success_redirect_url:
           type: string
-          description: URL the user is redirected to upon successful authentication
+          description: URL the user is redirected to upon successful authentication. The legacy value multi-auth is honoured and sets multi_auth instead of acting as a URL.
           example: https://myapp.com/success
         auth_failure_redirect_url:
           type: string
           description: URL the user is redirected to upon unsuccessful authentication
           example: https://myapp.com/failure
+        use_terra_avengers_app:
+          type: boolean
+          description: Allow Apple Health connections through the Terra mobile app
+          example: false
+        connected_uids:
+          type: array
+          description: Terra user IDs already connected for this end user; their providers show as connected with a disconnect option
+          items:
+            type: string
+        show_disconnect:
+          type: boolean
+          description: Show disconnect buttons for providers already connected under reference_id
+          example: false
+        multi_auth:
+          type: boolean
+          description: Keep the user on the widget after each successful connection so they can connect several providers in one session
+          example: false
+        bypass_feedback:
+          type: boolean
+          description: When false, the user stays on the widget's own result screen instead of being redirected immediately
+          example: true
+        apple_app_url:
+          type: string
+          description: URL of your own iOS app to hand Apple Health connections to, instead of the Terra mobile app
+        samsung_app_url:
+          type: string
+          description: URL of your own Android app to hand Samsung Health connections to
+        language:
+          type: string
+          description: forces the widget UI language (e.g. en, fr, ja, zh_cn); unsupported codes fall back to the end user's browser language
+          example: en
     User:
       $ref: '#/components/schemas/TerraUser'
     DataSentToWebhook:
