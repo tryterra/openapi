@@ -6,7 +6,7 @@ info:
 
     **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. An unsupported value returns 400 with code `invalid_api_version`. Supported versions: `2026-10-15` (latest; string IDs and enums, the `data`/`has_more`/`next_cursor` list envelope, 200 on an idempotent replay, error types on the docs site), `2026-10-01` (typed catalogue variants) and `2026-09-27` (catalogue attribute bags and integer availability). This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.10.08.5
+  version: 2026.10.08.6
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -433,7 +433,7 @@ paths:
         - name: Idempotency-Key
           in: header
           required: false
-          description: Optional Stripe-style idempotency key. Replaying the same key with the same request body returns the original order with 200, without creating or charging again; the same key with a different body returns 409. If the original request failed before the order reached the supplier or any payment was captured (for example a 402 or a 403 catalogue rejection), the same key and body runs the request again. A key longer than 255 characters returns 400 with code `idempotency_key_too_long`. Versions before 2026-10-15 answer a replay with 201 and accept a longer key.
+          description: Optional Stripe-style idempotency key. Replaying the same key with the same request body returns the original order with 200, without creating or charging again; the same key with a different body returns 409. If the original request failed before a supplier order was created or any payment was captured (for example a 402, a 403 catalogue rejection, or a 422 `order_not_approved`), the same key and body runs the request again. A key longer than 255 characters returns 400 with code `idempotency_key_too_long`. Versions before 2026-10-15 answer a replay with 201 and accept a longer key.
           schema:
             type: string
             maxLength: 255
@@ -508,6 +508,17 @@ paths:
             X-Request-Id:
               $ref: '#/components/headers/RequestId'
           description: The Idempotency-Key was already used with a different request body, a request with this key is still in progress, or the original request failed at a point where running it again could duplicate the order (retry with a new key).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '422':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The order was not approved for testing (code `order_not_approved`), for tests that need a clinician's authorisation before they can be ordered. Nothing was created and no payment was taken.
           content:
             application/json:
               schema:
@@ -3264,6 +3275,10 @@ components:
               minimum: 1
               description: 'Present on results_ready and reanalysed: the version of the result now served, 1 for the first result and bumped by every re-analysis. Fetch the result again when it changes.'
               example: 1
+            amended:
+              type: boolean
+              const: true
+              description: Present only on results_ready for a later corrected release of a result already delivered; fetch the result again.
     GetResultsURLResponse:
       description: Response containing a presigned URL to download test results
       type: object
