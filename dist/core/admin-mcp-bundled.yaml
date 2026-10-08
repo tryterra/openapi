@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.08.2
+  version: 2026.10.08.3
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -1794,8 +1794,8 @@ paths:
       operationId: listSources
       x-terra-mcp-annotations:
         openWorldHint: false
-      x-terra-help: List unified API providers with active state and auth redirect URLs. Credentials and
-        custom scopes are separate.
+      x-terra-help: List unified API providers with active state, auth variant and auth redirect URLs.
+        Credentials and custom scopes are separate.
       tags:
       - sources
       responses:
@@ -1809,7 +1809,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ProviderSummary'
+                      $ref: '#/components/schemas/Source'
                   has_more:
                     type: boolean
                   next_cursor:
@@ -1825,8 +1825,11 @@ paths:
                 - provider: garmin
                   active: true
                   auth_redirect_url: https://api.acme.com/terra/callback
-                - provider: oura
-                  active: true
+                  auth_variant: byo
+                - provider: apple_health
+                  active: false
+                  auth_redirect_url: null
+                  auth_variant: standard
                 has_more: false
                 next_cursor: null
         '401':
@@ -1838,8 +1841,12 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: List enabled providers
-      description: Covers unified-api providers only. Rows are lean, giving the provider, whether it is
-        active and its auth redirect URL, with credentials and custom scopes on their own sub-resources.
+      description: Covers unified-api providers only. Each row gives the provider's slug, whether it is
+        active (a paused provider is listed with active false), its auth redirect URL, and whether users
+        connect through Terra's OAuth app or your own by default. Every enabled provider you can address
+        under sources/{provider} is listed, deprecated ones included; internal providers are not. Credentials
+        and custom scopes are on their own sub-resources; provider capabilities and deprecation are in
+        the provider catalogue.
       security:
       - adminToken:
         - providers:read
@@ -1870,8 +1877,12 @@ paths:
                 data:
                 - provider: garmin
                   active: true
+                  auth_redirect_url: https://api.acme.com/terra/callback
+                  auth_variant: standard
                 - provider: oura
                   active: true
+                  auth_redirect_url: https://api.tryterra.co/v2/auth/oura
+                  auth_variant: standard
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -1880,6 +1891,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Enable several providers
@@ -1887,8 +1900,10 @@ paths:
         or none is. Each provider is enabled exactly as the single enable does it: no credentials, no
         scopes, an already-enabled one is left as it is and a paused one is resumed, so a repeat call
         is safe. Every provider is checked before anything is written; an unrecognised or repeated one
-        is a 400 whose errors name its position in providers. The response lists the providers in request
-        order.'
+        is a 400, and a deprecated one this environment has no preview for is a 422, each with errors
+        naming its position in providers. Providers are named as on the single enable. The response lists
+        each provider''s source in request order. The preview''s would is noop when every provider is
+        already active, and nothing is written.'
       security:
       - adminToken:
         - providers:write
@@ -1984,11 +1999,13 @@ paths:
               schema:
                 type: object
                 anyOf:
-                - $ref: '#/components/schemas/ProviderEnabled'
+                - $ref: '#/components/schemas/Source'
                 - $ref: '#/components/schemas/DryRunResult'
               example:
                 provider: garmin
                 active: true
+                auth_redirect_url: https://api.acme.com/terra/callback
+                auth_variant: standard
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -1997,28 +2014,109 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Enable a provider (idempotent)
       description: 'Enabling only turns the provider on: it configures no credentials and no scopes, so
         until custom credentials are set the environment authorizes end users against Terra''s own OAuth
-        app, which is what terra_owned reports on the credentials read. A repeat call is not an error
-        and answers with the same provider and active pair, and a paused provider is resumed.'
+        app, which is what terra_owned reports on the credentials read. A paused provider is resumed and
+        one that was disabled comes back with its credentials. A repeat call is not an error: its preview''s
+        would is noop, and it writes nothing. A deprecated provider needs its private preview on this
+        environment, or the call is a 422, in a preview too. The response is the source as the list returns
+        it.'
       security:
       - adminToken:
         - providers:write
       parameters:
       - $ref: '#/components/parameters/DevId'
       - name: provider
-        x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
+        x-terra-help: Provider slug, e.g. garmin or apple_health. Unknown providers return 400.
         in: path
         required: true
         schema:
           type: string
-        description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is
-          a 400.
+        description: The provider this applies to, as a slug, e.g. garmin or apple_health. Case does not
+          matter. An unrecognised provider is a 400.
       - $ref: '#/components/parameters/DryRun'
       - $ref: '#/components/parameters/IdempotencyKey'
+    patch:
+      operationId: updateSource
+      x-terra-mcp-annotations:
+        idempotentHint: true
+        openWorldHint: false
+      x-terra-help: Pause or resume a provider, or switch whether users connect through Terra's OAuth
+        app or your own. Use dry_run to preview.
+      tags:
+      - sources
+      responses:
+        '200':
+          description: Updated (or DryRunResult when ?dry_run=true).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                - $ref: '#/components/schemas/Source'
+                - $ref: '#/components/schemas/DryRunResult'
+              example:
+                provider: garmin
+                active: false
+                auth_redirect_url: https://api.acme.com/terra/callback
+                auth_variant: byo
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Update a provider
+      description: 'Pausing a provider (active false) refuses new connections to it but keeps it listed
+        with its credentials, scopes and existing connections; active true resumes it. DELETE on this
+        path removes the provider instead. auth_variant byo makes users connect through your own OAuth
+        app by default, which needs byo_supported in the provider catalogue, or the call is a 422; standard
+        goes back to Terra''s. Send at least one field; an omitted one is left as it is. A provider that
+        is not enabled is a 404: enable it first with the PUT on this path. A deprecated provider can
+        always be paused, but resuming it or changing its auth variant needs its private preview on this
+        environment, or the call is a 422. When nothing would change, the preview''s would is noop and
+        nothing is written. The response is the source as the list returns it.'
+      security:
+      - adminToken:
+        - providers:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: provider
+        x-terra-help: Provider slug, e.g. garmin or apple_health. Unknown providers return 400.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider this applies to, as a slug, e.g. garmin or apple_health. Case does not
+          matter. An unrecognised provider is a 400.
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchSourceRequest'
+            examples:
+              pause:
+                summary: Pause a provider
+                value:
+                  active: false
+              byo:
+                summary: Connect users through your own OAuth app
+                value:
+                  auth_variant: byo
     delete:
       operationId: disableSource
       x-terra-mcp-annotations:
@@ -2061,13 +2159,13 @@ paths:
       parameters:
       - $ref: '#/components/parameters/DevId'
       - name: provider
-        x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
+        x-terra-help: Provider slug, e.g. garmin or apple_health. Unknown providers return 400.
         in: path
         required: true
         schema:
           type: string
-        description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is
-          a 400.
+        description: The provider this applies to, as a slug, e.g. garmin or apple_health. Case does not
+          matter. An unrecognised provider is a 400.
       - $ref: '#/components/parameters/DryRun'
       - $ref: '#/components/parameters/IdempotencyKey'
   /environments/{dev_id}/unified-api/sources/{provider}/credentials:
@@ -2093,6 +2191,10 @@ paths:
                 credential:
                   provider_client_id: acme-garmin-oauth
                   provider_client_secret_masked: '****9876'
+                  redirect_url: https://auth.acme.com/auth/garmin/oauth2
+                  sandbox: false
+                  oauth_version: '2'
+                  has_verification_secret: false
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -2105,22 +2207,24 @@ paths:
           $ref: '#/components/responses/RateLimited'
       summary: Provider OAuth credentials (masked)
       description: Reports whether this environment has its own OAuth app for the provider and, if so,
-        the client id with the secret masked to its last digits. `credential` is null when none is set,
-        and terra_owned distinguishes running on Terra's app from running on the customer's. The secret
-        itself is write-only and is never readable here.
+        the client id with the secret masked to its last digits, the redirect URL, the sandbox flag, the
+        OAuth version the stored app uses (null for providers that do not sign in with OAuth) and whether
+        a webhook verification secret is stored. `credential` is null when none is set or when the provider
+        runs on Terra's own app, which terra_owned reports. A paused provider keeps its credentials and
+        reports them here. Secrets are write-only and are never readable here.
       security:
       - adminToken:
         - providers:read
       parameters:
       - $ref: '#/components/parameters/DevId'
       - name: provider
-        x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
+        x-terra-help: Provider slug, e.g. garmin or apple_health. Unknown providers return 400.
         in: path
         required: true
         schema:
           type: string
-        description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is
-          a 400.
+        description: The provider this applies to, as a slug, e.g. garmin or apple_health. Case does not
+          matter. An unrecognised provider is a 400.
     put:
       operationId: setSourceCredentials
       x-terra-confirmation-reason: Replaces the sign-in settings for this wearable or app. Your users
@@ -2131,21 +2235,25 @@ paths:
       - sources
       summary: Set custom sign-in settings for a wearable or app
       description: Set the customer's own OAuth credentials (client_id/secret, optional redirect URL,
-        verification secret, sandbox) so auth runs against their app. Idempotent; the secret is write-only
-        and masked on read.
+        verification secret, sandbox) so auth runs against their app. This is a full replace, so an omitted
+        redirect_url, verification secret or sandbox flag goes back to its default; PATCH changes some
+        fields and keeps the rest. A redirect_url must be on a Terra domain or on a custom domain set
+        up for this provider in this or another of your environments within the token''s audience, or
+        the call is a 400; a 503 means the custom domain could not be checked. Idempotent; the secret
+        is write-only and masked on read.
       security:
       - adminToken:
         - providers:write
       parameters:
       - $ref: '#/components/parameters/DevId'
       - name: provider
-        x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
+        x-terra-help: Provider slug, e.g. garmin or apple_health. Unknown providers return 400.
         in: path
         required: true
         schema:
           type: string
-        description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is
-          a 400.
+        description: The provider this applies to, as a slug, e.g. garmin or apple_health. Case does not
+          matter. An unrecognised provider is a 400.
       - $ref: '#/components/parameters/DryRun'
       - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -2171,6 +2279,10 @@ paths:
                 credential:
                   provider_client_id: acme-garmin-oauth
                   provider_client_secret_masked: '****4321'
+                  redirect_url: https://api.tryterra.co/v2/auth/garmin
+                  sandbox: false
+                  oauth_version: '1'
+                  has_verification_secret: false
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -2185,12 +2297,530 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
+    patch:
+      operationId: updateSourceCredentials
+      x-terra-confirmation-reason: Changes the sign-in settings for this wearable or app. Your users can't
+        connect until the new ones are right.
+      x-terra-mcp-annotations:
+        idempotentHint: true
+        openWorldHint: false
+      x-terra-help: Change some custom provider OAuth credential fields and keep the rest. The secret
+        is write-only and masked on read.
+      tags:
+      - sources
+      summary: Update custom sign-in settings for a wearable or app
+      description: Changes the fields sent and keeps every other stored value, so the client secret can
+        stay unsent. Send at least one field. An empty client_secret or verification_secret is a 400;
+        omit it to keep the stored value. redirect_url null resets the redirect to the provider default,
+        and verification_secret null clears it. The merged credential passes every check the PUT on this
+        path runs, including, for Garmin, a check against Garmin with the stored secret; the redirect
+        host check runs when redirect_url is sent. When the merged credential equals the stored one, nothing
+        is written. A provider without your own credentials is a 404; set them with the PUT first. The
+        response is the masked credential as the GET returns it.
+      security:
+      - adminToken:
+        - providers:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: provider
+        x-terra-help: Provider slug, e.g. garmin or apple_health. Unknown providers return 400.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider this applies to, as a slug, e.g. garmin or apple_health. Case does not
+          matter. An unrecognised provider is a 400.
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderCredentialPatch'
+            examples:
+              rotate:
+                summary: Rotate the client secret
+                value:
+                  client_secret: new-client-secret
+              redirect:
+                summary: Move the redirect to a custom domain
+                value:
+                  redirect_url: https://auth.acme.com/auth/strava
+      responses:
+        '200':
+          description: Updated (or DryRunResult when ?dry_run=true; the client secret is masked in both).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                - $ref: '#/components/schemas/ProviderCredentials'
+                - $ref: '#/components/schemas/DryRunResult'
+              example:
+                provider: strava
+                has_credentials: true
+                terra_owned: false
+                credential:
+                  provider_client_id: acme-strava-oauth
+                  provider_client_secret_masked: '****4321'
+                  redirect_url: https://auth.acme.com/auth/strava
+                  sandbox: false
+                  oauth_version: '2'
+                  has_verification_secret: true
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/unified-api/sources/{provider}/domain:
+    get:
+      operationId: getSourceDomain
+      x-terra-help: 'Show a provider''s custom domain: the DNS record to publish, certificate state, and
+        whether it is live.'
+      tags:
+      - sources
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceDomain'
+              example:
+                provider: whoop
+                hostname: whoop.acme.com
+                state: ACTIVE
+                reason: null
+                detail: null
+                dns_record:
+                  type: A
+                  name: whoop.acme.com
+                  value: 34.120.0.1
+                resolved_ip: 34.120.0.1
+                resolved_ips:
+                - 34.120.0.1
+                serving: true
+                expires_at: '2027-01-01T00:00:00Z'
+                shared: false
+                redirect_served: true
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: A provider's custom domain
+      description: 'Reports the subdomain this environment set up for the provider''s OAuth redirect (and,
+        for Garmin and Strava, its webhooks): the A record to publish, the certificate''s state, and whether
+        the edge already serves it. The domain is live when state is ACTIVE and serving is true. FAILED,
+        or a reason such as CAA, names what to fix. When this environment has none of its own but its
+        stored redirect is on a domain another of your environments within the token''s audience set up,
+        that domain is returned with shared true. No domain is a 404. Each call looks the hostname up
+        in DNS and makes a TLS request to it, so poll every 5 seconds or slower. The provider does not
+        need to be enabled. A 503 service_unavailable means custom domains are not available on this deployment,
+        and a 503 dependency_failed that the certificate service did not answer.'
+      security:
+      - adminToken:
+        - providers:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: provider
+        x-terra-help: Provider slug, e.g. whoop. Only whoop, dexcom, dexcom_eu, strava and garmin use
+          a custom domain.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider this applies to, as a slug, e.g. whoop. Case does not matter. An unrecognised
+          provider is a 400, and one that does not use a custom domain (anything but whoop, dexcom, dexcom_eu,
+          strava and garmin) is a 422.
+    put:
+      operationId: setSourceDomain
+      x-terra-mcp-help: Claim a subdomain for a provider's OAuth redirect. Terra provisions its certificate,
+        but the user must publish the returned dns_record at their own DNS provider; poll the GET until
+        state is ACTIVE and serving is true.
+      x-terra-help: Claim a subdomain for a provider's OAuth redirect. Terra provisions its certificate,
+        but the user must publish the returned dns_record at their own DNS provider; poll the GET until
+        state is ACTIVE and serving is true.
+      tags:
+      - sources
+      responses:
+        '200':
+          description: Already set, replacing the current hostname, or reusing another of your environments'
+            domain (or DryRunResult when ?dry_run=true).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                - $ref: '#/components/schemas/SourceDomain'
+                - $ref: '#/components/schemas/DryRunResult'
+              example:
+                provider: whoop
+                hostname: whoop.acme.com
+                state: ACTIVE
+                reason: null
+                detail: null
+                dns_record:
+                  type: A
+                  name: whoop.acme.com
+                  value: 34.120.0.1
+                resolved_ip: 34.120.0.1
+                resolved_ips:
+                - 34.120.0.1
+                serving: true
+                expires_at: '2027-01-01T00:00:00Z'
+                shared: false
+                redirect_served: true
+        '201':
+          description: A certificate is being provisioned for the hostname.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceDomain'
+              example:
+                provider: whoop
+                hostname: whoop.acme.com
+                state: PROVISIONING
+                reason: null
+                detail: null
+                dns_record:
+                  type: A
+                  name: whoop.acme.com
+                  value: 34.120.0.1
+                resolved_ip: null
+                resolved_ips: []
+                serving: false
+                expires_at: null
+                shared: false
+                redirect_served: false
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Set a provider's custom domain
+      description: 'Claims a subdomain you own for the provider and starts provisioning its certificate,
+        returning the A record to publish at your DNS provider; Terra cannot publish it for you. Poll
+        the GET until the domain is live, then point the provider''s redirect_url at it with the credentials
+        PUT or PATCH. Sending the hostname already set is not an error and changes nothing. A hostname
+        another of your environments within the token''s audience already set up for this provider is
+        reused, with shared true. A different hostname replaces the current one, but only once nothing
+        still uses the old one: another of your environments redirecting to it, or Garmin webhooks pointing
+        at it, is a 409, and nothing changes. That check covers every environment of the account, but
+        names one only when the token''s audience includes it. A hostname you use for a different provider,
+        or one another account uses, is a 409. A new certificate returns 201 and anything else 200, both
+        with the domain as the GET returns it, without the DNS and TLS probes. The provider does not need
+        to be enabled.'
+      security:
+      - adminToken:
+        - providers:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: provider
+        x-terra-help: Provider slug, e.g. whoop. Only whoop, dexcom, dexcom_eu, strava and garmin use
+          a custom domain.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider this applies to, as a slug, e.g. whoop. Case does not matter. An unrecognised
+          provider is a 400, and one that does not use a custom domain (anything but whoop, dexcom, dexcom_eu,
+          strava and garmin) is a 422.
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetSourceDomainRequest'
+            examples:
+              claim:
+                summary: Claim a subdomain for WHOOP
+                value:
+                  hostname: whoop.acme.com
+    delete:
+      operationId: deleteSourceDomain
+      x-terra-confirmation-reason: OAuth redirects and webhooks on this hostname stop working when its
+        certificate is released.
+      x-terra-help: Release a provider's custom domain and its certificate. Use dry_run to preview.
+      tags:
+      - sources
+      responses:
+        '200':
+          description: Dry-run preview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: delete
+                preview:
+                  provider: whoop
+                  hostname: whoop.acme.com
+        '204':
+          description: Released, or this environment had no domain of its own.
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Release a provider's custom domain
+      description: Releases the certificate for this environment's domain, after which OAuth redirects
+        and webhooks on the hostname stop working. It refuses with a 409 while another of your environments
+        still redirects to the hostname, naming it only when the token's audience includes it, or, for
+        Garmin, while Garmin webhooks still point at it; a 503 means Garmin could not be read to check.
+        A domain another of your environments set up is never released from here, so an environment with
+        none of its own gets a 204 and changes nothing. The preview runs the same checks.
+      security:
+      - adminToken:
+        - providers:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: provider
+        x-terra-help: Provider slug, e.g. whoop. Only whoop, dexcom, dexcom_eu, strava and garmin use
+          a custom domain.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider this applies to, as a slug, e.g. whoop. Case does not matter. An unrecognised
+          provider is a 400, and one that does not use a custom domain (anything but whoop, dexcom, dexcom_eu,
+          strava and garmin) is a 422.
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+  /environments/{dev_id}/unified-api/sources/{provider}/webhook-endpoints:
+    get:
+      operationId: getSourceWebhookEndpoints
+      x-terra-help: 'Review the webhook URLs in your Garmin apps and what applying would change. Slow:
+        Terra signs in to each app.'
+      tags:
+      - sources
+      responses:
+        '200':
+          description: OK
+          headers:
+            ETag:
+              description: The fingerprint, quoted, for If-Match on the apply.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GarminWebhookEndpoints'
+              example:
+                provider: garmin
+                host: garmin.acme.com
+                locked: false
+                fingerprint: 9f2c4e0b7a1d
+                has_existing: true
+                entries:
+                - app_id: '123'
+                  id: dailiesUrl
+                  target: https://garmin.acme.com/hooks/garmin/push/dailies
+                  current:
+                    url: https://old.example.com/garmin
+                    enabled: true
+                    on_hold: false
+                    upload_type: push
+                  action: restore
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Garmin webhook endpoints
+      description: Garmin's developer portal has no field for a webhook URL, so Terra signs in to each
+        of your saved Garmin apps with its keys and reads the webhook rows itself. Each entry is a row
+        Terra manages, its current state, and the action applying would take; rows Terra does not manage
+        are not listed. has_existing is true when applying would replace a URL that points elsewhere.
+        locked is true for a few minutes after any save, while Garmin applies it. The fingerprint, also
+        the ETag, identifies what was read; send it to the apply. This makes one sign-in per app, so allow
+        up to a minute. No saved Garmin keys is a 404, and a redirect not on a custom domain is a 422
+        unsupported_operation. Keys Garmin rejects are a 422 provider_credentials_rejected, and an unreachable
+        Garmin is a 503 dependency_failed.
+      security:
+      - adminToken:
+        - providers:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: provider
+        x-terra-help: Provider slug; only garmin has webhook endpoints Terra manages.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider this applies to, as a slug. Only garmin is supported; an unrecognised
+          provider is a 400 and any other provider a 422.
+  /environments/{dev_id}/unified-api/sources/{provider}/webhook-endpoints/apply:
+    post:
+      operationId: applySourceWebhookEndpoints
+      x-terra-mcp-annotations:
+        idempotentHint: true
+      x-terra-confirmation-reason: Rewrites the webhook URLs in your Garmin developer app. URLs set there
+        by anyone else are replaced.
+      x-terra-mcp-help: Point the Garmin app's webhook rows at the custom domain. Read the webhook endpoints
+        first, show the user the entries, and pass the fingerprint; preview with dry_run to show what
+        would change.
+      x-terra-help: Point the Garmin app's webhook rows at the custom domain. Read the webhook endpoints
+        first, show the user the entries, and pass the fingerprint; preview with dry_run to show what
+        would change.
+      tags:
+      - sources
+      responses:
+        '200':
+          description: Nothing to change, so nothing was written (or DryRunResult when ?dry_run=true).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                - $ref: '#/components/schemas/AppliedWebhookEndpoints'
+                - $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: update
+                preview:
+                  app_ids:
+                  - '123'
+                  entries:
+                  - app_id: '123'
+                    id: dailiesUrl
+                    target: https://garmin.acme.com/hooks/garmin/push/dailies
+                    current:
+                      url: https://old.example.com/garmin
+                      enabled: true
+                      on_hold: false
+                      upload_type: push
+                    action: restore
+        '202':
+          description: Garmin accepted the writes. Garmin can accept a write before applying it, so read
+            the webhook endpoints again to confirm.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppliedWebhookEndpoints'
+              example:
+                provider: garmin
+                applied_app_ids:
+                - '123'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: Apply Garmin webhook endpoints
+      description: Reads the rows again and writes each Garmin app's whole row list back, with the rows
+        Terra manages pointed at the custom domain and every other row kept. The fingerprint you reviewed
+        is required, in the body or as If-Match; a configuration that changed since is a 412 precondition_failed,
+        so read and review again. When the review's has_existing is true, acknowledge_replacing_existing
+        must be true or the call is a 400. While Garmin is applying an earlier change the call is a 409
+        not_ready, also when the lock appears with the write; retry in a few minutes. An apply that fails
+        after writing some apps reports them in the problem's applied_app_ids. When every row is already
+        right, nothing is written and the call is a 200 with an empty applied_app_ids. The dry run makes
+        the same reads and checks and writes nothing to Garmin. Allow up to a minute.
+      security:
+      - adminToken:
+        - providers:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: provider
+        x-terra-help: Provider slug; only garmin has webhook endpoints Terra manages.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider this applies to, as a slug. Only garmin is supported; an unrecognised
+          provider is a 400 and any other provider a 422.
+      - name: If-Match
+        x-terra-help: The fingerprint from the review, quoted, instead of the body field.
+        in: header
+        required: false
+        schema:
+          type: string
+        description: The ETag of the review, as an alternative to the fingerprint body field. When both
+          are sent they must match.
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyWebhookEndpointsRequest'
+            examples:
+              apply:
+                summary: Apply after reviewing a diff that replaces existing URLs
+                value:
+                  fingerprint: 9f2c4e0b7a1d
+                  acknowledge_replacing_existing: true
   /environments/{dev_id}/unified-api/sources/{provider}/scopes:
     get:
       operationId: getSourceScopes
       x-terra-mcp-annotations:
         openWorldHint: false
-      x-terra-help: Get custom provider OAuth scopes. An empty array means provider defaults are in use.
+      x-terra-help: List every OAuth scope a provider can request, which are required, and which this
+        environment requests.
       tags:
       - sources
       responses:
@@ -2201,10 +2831,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProviderScopes'
               example:
-                provider: garmin
+                provider: fitbit
+                customised: true
                 scopes:
-                - read:activity
-                - read:sleep
+                - scope: activity
+                  name: Activity
+                  description: Steps and workouts
+                  required: true
+                  enabled: true
+                - scope: heartrate
+                  name: Heart rate
+                  description: Continuous heart rate
+                  required: false
+                  enabled: true
+                - scope: location
+                  name: Location
+                  description: GPS routes
+                  required: false
+                  enabled: false
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -2215,28 +2859,30 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/RateLimited'
-      summary: Custom OAuth scopes
-      description: Only the custom scopes this environment has set, never the provider's own defaults.
-        The array is empty rather than null when nothing custom is configured, which is how the provider's
-        default scopes read.
+      summary: Provider OAuth scopes
+      description: Every scope the provider can request, sorted by scope. A required scope is always requested.
+        enabled says whether a new connection's OAuth request asks for the scope today, which is the environment's
+        own choice when customised is true and otherwise the scopes its selected data types need. The
+        provider must be enabled; otherwise this is a 404.
       security:
       - adminToken:
         - providers:read
       parameters:
       - $ref: '#/components/parameters/DevId'
       - name: provider
-        x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
+        x-terra-help: Provider slug, e.g. garmin or apple_health. Unknown providers return 400.
         in: path
         required: true
         schema:
           type: string
-        description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is
-          a 400.
+        description: The provider this applies to, as a slug, e.g. garmin or apple_health. Case does not
+          matter. An unrecognised provider is a 400.
     put:
       operationId: setSourceScopes
       x-terra-mcp-annotations:
         openWorldHint: false
-      x-terra-help: Replace all custom provider OAuth scopes. An empty array restores provider defaults.
+      x-terra-help: Choose the optional OAuth scopes to request. Required scopes are always kept; an empty
+        array requests only those.
       tags:
       - sources
       responses:
@@ -2250,11 +2896,24 @@ paths:
                 - $ref: '#/components/schemas/ProviderScopes'
                 - $ref: '#/components/schemas/DryRunResult'
               example:
-                provider: garmin
+                provider: fitbit
+                customised: true
                 scopes:
-                - read:activity
-                - read:sleep
-                - read:body
+                - scope: activity
+                  name: Activity
+                  description: Steps and workouts
+                  required: true
+                  enabled: true
+                - scope: heartrate
+                  name: Heart rate
+                  description: Continuous heart rate
+                  required: false
+                  enabled: true
+                - scope: location
+                  name: Location
+                  description: GPS routes
+                  required: false
+                  enabled: true
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -2266,22 +2925,24 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Set custom OAuth scopes
-      description: 'A full replace of the environment''s custom scope set for this provider: whatever
-        is not in the body is removed. An empty array clears the custom scopes entirely, which puts the
-        provider''s defaults back in use.'
+      description: Sets the scopes this environment requests from the provider to its required scopes
+        plus the optional ones in the body, replacing any earlier choice. An empty array requests only
+        the required scopes. Every scope the provider does not accept is named in a 400, and then nothing
+        is stored. The provider must be enabled. Returns the provider's scopes as GET reads them. To go
+        back to the scopes the selected data types need, DELETE this path.
       security:
       - adminToken:
         - providers:write
       parameters:
       - $ref: '#/components/parameters/DevId'
       - name: provider
-        x-terra-help: Provider slug, e.g. garmin. Unknown providers return 400.
+        x-terra-help: Provider slug, e.g. garmin or apple_health. Unknown providers return 400.
         in: path
         required: true
         schema:
           type: string
-        description: The provider this applies to, as a slug, e.g. garmin. An unrecognised provider is
-          a 400.
+        description: The provider this applies to, as a slug, e.g. garmin or apple_health. Case does not
+          matter. An unrecognised provider is a 400.
       - $ref: '#/components/parameters/DryRun'
       - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
@@ -2290,6 +2951,75 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ScopesRequest'
+    delete:
+      operationId: resetSourceScopes
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Drop the custom OAuth scopes so the provider asks for what the selected data types
+        need. Use dry_run to preview.
+      tags:
+      - sources
+      responses:
+        '200':
+          description: Dry-run preview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: delete
+                preview:
+                  provider: fitbit
+                  customised: false
+                  scopes:
+                  - scope: activity
+                    name: Activity
+                    description: Steps and workouts
+                    required: true
+                    enabled: true
+                  - scope: heartrate
+                    name: Heart rate
+                    description: Continuous heart rate
+                    required: false
+                    enabled: false
+                  - scope: location
+                    name: Location
+                    description: GPS routes
+                    required: false
+                    enabled: false
+        '204':
+          description: Reset, or there was nothing to reset.
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: Reset custom OAuth scopes
+      description: Removes this environment's own scope choice for the provider, so new connections request
+        the scopes its selected data types need. Existing connections keep the scopes they consented to.
+        Resetting a provider with no custom scopes succeeds and changes nothing; its preview says noop.
+        The provider must be enabled. Pass ?dry_run=true for a preview of the scopes GET will then report.
+      security:
+      - adminToken:
+        - providers:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: provider
+        x-terra-help: Provider slug, e.g. garmin or apple_health. Unknown providers return 400.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The provider this applies to, as a slug, e.g. garmin or apple_health. Case does not
+          matter. An unrecognised provider is a 400.
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
   /environments/{dev_id}/unified-api/destinations:
     get:
       operationId: listDestinations
@@ -7058,6 +7788,19 @@ components:
             instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin
             code: token_limit_reached
             remediation: Revoke unused tokens, then retry.
+    PreconditionFailed:
+      description: The state the request was conditioned on has changed since it was read.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: precondition failed
+            detail: your Garmin configuration changed since you reviewed it
+            instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin/webhook-endpoints/apply
+            code: precondition_failed
+            remediation: Read the webhook endpoints again, review them, and apply with the new fingerprint.
     ServiceUnavailable:
       description: A required subsystem is not available on this deployment.
       content:
@@ -7284,7 +8027,8 @@ components:
         providers:
           type: array
           description: 'The providers to enable, as slugs, e.g. garmin: at least 1 and at most 100, each
-            listed once. An unrecognised or repeated provider is a 400 naming its position, and then nothing
+            listed once. An unrecognised or repeated provider is a 400, and one in private preview for
+            which this environment has no preview is a 422, each naming its position, and then nothing
             is enabled.'
           items:
             type: string
@@ -7303,7 +8047,7 @@ components:
           type: array
           description: One entry per requested provider, in request order.
           items:
-            $ref: '#/components/schemas/ProviderEnabled'
+            $ref: '#/components/schemas/Source'
       required:
       - data
     CompanyProfile:
@@ -9105,6 +9849,25 @@ components:
           x-terra-help: Replace all contributor weights as JSON (name to integer, 0-200). Include every
             contributor; empty is rejected.
       minProperties: 1
+    PatchSourceRequest:
+      type: object
+      properties:
+        active:
+          type: boolean
+          description: false pauses the provider and true resumes it. Omitted leaves it as it is.
+          x-terra-help: Pause (false) or resume (true) the provider. Omitted leaves it unchanged.
+        auth_variant:
+          type: string
+          enum:
+          - standard
+          - byo
+          description: standard connects users through Terra's OAuth app and byo through your own, which
+            the provider must support. Omitted leaves it as it is.
+          x-terra-help: 'Default connection path: standard (Terra''s OAuth app) or byo (your own). Omitted
+            leaves it unchanged.'
+      x-terra-most-common:
+      - active
+      - auth_variant
     PatchTeamMemberRequest:
       type: object
       description: Partial update of a teammate's dashboard user. Every property is optional; at least
@@ -9187,6 +9950,8 @@ components:
           - not_claimable
           - not_found
           - not_ready
+          - precondition_failed
+          - provider_credentials_rejected
           - rate_limited
           - rotation_conflict
           - rotation_expired
@@ -9243,6 +10008,70 @@ components:
           type: string
         provider_client_secret_masked:
           type: string
+        redirect_url:
+          type:
+          - string
+          - 'null'
+          description: The OAuth redirect URL users return to. Null when the provider has none.
+        sandbox:
+          type: boolean
+          description: Whether auth runs against the provider's sandbox.
+        oauth_version:
+          type:
+          - string
+          - 'null'
+          enum:
+          - '1'
+          - '2'
+          - null
+          description: The OAuth version the stored app uses. Null for providers that do not sign in with
+            OAuth.
+        has_verification_secret:
+          type: boolean
+          description: Whether a webhook verification secret is stored. The secret itself is never returned.
+      required:
+      - provider_client_id
+      - provider_client_secret_masked
+      - redirect_url
+      - sandbox
+      - oauth_version
+      - has_verification_secret
+    ProviderCredentialPatch:
+      type: object
+      properties:
+        client_id:
+          type: string
+          description: The customer's OAuth client id. Omit to keep the stored one.
+          x-terra-help: Your OAuth client ID. Omit to keep the stored one.
+        client_secret:
+          type: string
+          description: A new OAuth client secret (write-only). Omit to keep the stored one; an empty string
+            is rejected.
+          x-terra-help: New OAuth client secret (write-only). Omit to keep the stored one.
+        redirect_url:
+          type:
+          - string
+          - 'null'
+          description: A new OAuth redirect URL, whose host must be Terra's or a custom domain set up
+            for this provider. Null resets it to the provider default; omit to keep it.
+          x-terra-help: New OAuth redirect URL; null resets it to the provider default. The host must
+            be Terra's or your custom domain for this provider.
+        verification_secret:
+          type:
+          - string
+          - 'null'
+          description: A new webhook verification secret (write-only). Null clears it; omit to keep it.
+            Not accepted for an OAuth 1.0 app.
+          x-terra-help: New webhook verification secret; null clears it.
+        sandbox:
+          type: boolean
+          description: Use the provider's sandbox environment. Omit to keep the stored setting. Not accepted
+            for an OAuth 1.0 app.
+          x-terra-help: Use the provider sandbox.
+      minProperties: 1
+      x-terra-most-common:
+      - client_secret
+      - redirect_url
     ProviderCredentialWrite:
       type: object
       properties:
@@ -9256,15 +10085,17 @@ components:
           x-terra-help: Your OAuth client secret (write-only; reads are masked).
         redirect_url:
           type: string
-          description: Override the OAuth redirect URL (defaults to the provider default).
-          x-terra-help: 'Override the OAuth redirect URL (default: provider default).'
+          description: Override the OAuth redirect URL (defaults to the provider default). Its host must
+            be Terra's or a custom domain set up for this provider.
+          x-terra-help: 'Override the OAuth redirect URL (default: provider default). The host must be
+            Terra''s or your custom domain for this provider.'
         verification_secret:
           type: string
-          description: Optional webhook verification secret.
+          description: Optional webhook verification secret. Not accepted for an OAuth 1.0 app.
           x-terra-help: Webhook verification secret.
         sandbox:
           type: boolean
-          description: Use the provider's sandbox environment.
+          description: Use the provider's sandbox environment. Not accepted for an OAuth 1.0 app.
           x-terra-help: Use the provider sandbox.
       required:
       - client_id
@@ -9279,21 +10110,30 @@ components:
           type: string
         has_credentials:
           type: boolean
+          description: Whether this environment has its own OAuth app for the provider.
         terra_owned:
           type: boolean
+          description: Whether the provider runs on Terra's own OAuth app.
         credential:
+          description: Your own OAuth app, with its secret masked. Null when none is set or Terra's app
+            is in use.
           oneOf:
           - $ref: '#/components/schemas/ProviderCredentialMaterial'
           - type: 'null'
       required:
       - provider
       - has_credentials
+      - terra_owned
+      - credential
       x-terra-operations:
       - method_name: retrieve
         operation: get
         path: /environments/{dev_id}/unified-api/sources/{provider}/credentials
       - method_name: replace
         operation: put
+        path: /environments/{dev_id}/unified-api/sources/{provider}/credentials
+      - method_name: update
+        operation: patch
         path: /environments/{dev_id}/unified-api/sources/{provider}/credentials
       x-terra-summary: Your own OAuth credentials for a provider, used instead of Terra's
       x-terra-resource: unified-api.sources.credentials
@@ -9372,28 +10212,51 @@ components:
         - custom_scopes_supported
       x-terra-summary: Browse the providers an environment can enable
       x-terra-resource: unified-api.providers
-    ProviderEnabled:
+    ProviderScope:
       type: object
+      description: One OAuth scope a provider can request.
       properties:
-        provider:
+        scope:
           type: string
-        active:
+          description: The scope as the provider names it.
+        name:
+          type: string
+          description: A display name, or an empty string when there is none.
+        description:
+          type: string
+          description: What the scope grants, or an empty string when there is no description.
+        required:
           type: boolean
+          description: Whether the scope is always requested. A required scope cannot be switched off.
+        enabled:
+          type: boolean
+          description: Whether a new connection's OAuth request asks for this scope.
       required:
-      - provider
-      - active
+      - scope
+      - name
+      - description
+      - required
+      - enabled
     ProviderScopes:
       type: object
+      description: Every OAuth scope a provider can request, and which of them this environment requests.
       properties:
         provider:
           type: string
+          description: The provider's slug, e.g. fitbit.
+        customised:
+          type: boolean
+          description: Whether this environment has chosen its own scopes. false means it requests the
+            scopes its selected data types need.
         scopes:
           type: array
-          description: Empty when the provider has no custom scopes — never null.
+          description: Every scope the provider can request, sorted by scope. Empty, never null, for a
+            provider with none.
           items:
-            type: string
+            $ref: '#/components/schemas/ProviderScope'
       required:
       - provider
+      - customised
       - scopes
       x-terra-operations:
       - method_name: retrieve
@@ -9402,39 +10265,11 @@ components:
       - method_name: replace
         operation: put
         path: /environments/{dev_id}/unified-api/sources/{provider}/scopes
-      x-terra-summary: Which data types a provider is asked for
-      x-terra-resource: unified-api.sources.scopes
-    ProviderSummary:
-      type: object
-      properties:
-        provider:
-          type: string
-        active:
-          type: boolean
-        auth_redirect_url:
-          type: string
-      x-terra-operations:
-      - method_name: list
-        operation: get
-        path: /environments/{dev_id}/unified-api/sources
-        columns:
-        - provider
-        - active
-        - auth_redirect_url
-      - method_name: enable
-        operation: put
-        path: /environments/{dev_id}/unified-api/sources/{provider}
-      - method_name: batch-enable
-        operation: post
-        path: /environments/{dev_id}/unified-api/sources/batch-enable
-      - method_name: disable
+      - method_name: reset
         operation: delete
-        path: /environments/{dev_id}/unified-api/sources/{provider}
-      - method_name: batch-disable
-        operation: post
-        path: /environments/{dev_id}/unified-api/sources/batch-disable
-      x-terra-summary: Enable and configure wearable providers
-      x-terra-resource: unified-api.sources
+        path: /environments/{dev_id}/unified-api/sources/{provider}/scopes
+      x-terra-summary: Which OAuth scopes a provider is asked for
+      x-terra-resource: unified-api.sources.scopes
     PutWorkoutMetadataRequest:
       type: object
       description: 'Upsert semantics on an existing workout: an absent or null pace_units preserves whatever
@@ -9525,11 +10360,13 @@ components:
       properties:
         scopes:
           type: array
-          description: Empty clears the provider's custom scopes.
+          description: The optional scopes to request. The provider's required scopes are always requested,
+            whether listed or not, so an empty array requests only those. A scope the provider does not
+            accept is a 400.
           items:
             type: string
-          x-terra-help: Replace the full provider scope list; repeat for each scope. Empty restores provider
-            defaults.
+          x-terra-help: Optional scope to request; repeat for each one. Required scopes are always kept;
+            empty requests only those.
       required:
       - scopes
     ScoreAnalytics:
@@ -9700,6 +10537,308 @@ components:
           x-terra-help: 'Normalization output format for the whole environment: json, fit or fhir.'
       required:
       - type
+    SetSourceDomainRequest:
+      type: object
+      properties:
+        hostname:
+          type: string
+          description: A subdomain you own, e.g. whoop.acme.com. Use a different one for each provider.
+          x-terra-help: Subdomain you own, e.g. whoop.acme.com; one per provider.
+      required:
+      - hostname
+      x-terra-most-common:
+      - hostname
+    Source:
+      type: object
+      description: A provider enabled for an environment, as every sources operation returns it.
+      properties:
+        provider:
+          type: string
+          description: The provider's slug, e.g. garmin or apple_health.
+        active:
+          type: boolean
+          description: Whether the provider accepts new connections. A paused provider is false and stays
+            listed with its credentials and scopes.
+        auth_redirect_url:
+          type:
+          - string
+          - 'null'
+          description: Where the provider sends users back after they authorize, or null when it has none.
+        auth_variant:
+          type: string
+          enum:
+          - standard
+          - byo
+          description: 'How users connect by default: standard through Terra''s OAuth app, or byo through
+            your own.'
+      required:
+      - provider
+      - active
+      - auth_redirect_url
+      - auth_variant
+      x-terra-operations:
+      - method_name: list
+        operation: get
+        path: /environments/{dev_id}/unified-api/sources
+        columns:
+        - provider
+        - active
+        - auth_variant
+        - auth_redirect_url
+      - method_name: enable
+        operation: put
+        path: /environments/{dev_id}/unified-api/sources/{provider}
+      - method_name: batch-enable
+        operation: post
+        path: /environments/{dev_id}/unified-api/sources/batch-enable
+      - method_name: update
+        operation: patch
+        path: /environments/{dev_id}/unified-api/sources/{provider}
+      - method_name: disable
+        operation: delete
+        path: /environments/{dev_id}/unified-api/sources/{provider}
+      - method_name: batch-disable
+        operation: post
+        path: /environments/{dev_id}/unified-api/sources/batch-disable
+      x-terra-summary: Enable and configure wearable providers
+      x-terra-resource: unified-api.sources
+    SourceDomain:
+      type: object
+      description: A subdomain you own that a provider's OAuth redirect, and for some providers its webhooks,
+        run through.
+      properties:
+        provider:
+          type: string
+          description: The provider's slug, e.g. whoop.
+        hostname:
+          type: string
+          description: The subdomain, lower-cased.
+        state:
+          type: string
+          enum:
+          - PROVISIONING
+          - ACTIVE
+          - FAILED
+          description: PROVISIONING until the certificate is issued, then ACTIVE. FAILED needs the DNS
+            record or CAA fixed; reason and detail say which.
+        reason:
+          type:
+          - string
+          - 'null'
+          description: Why issuance is failing, as a machine-readable reason such as CAA. Null while nothing
+            is wrong.
+        detail:
+          type:
+          - string
+          - 'null'
+          description: What to fix, in words. Null while nothing is wrong.
+        dns_record:
+          description: The DNS record to publish at your DNS provider.
+          $ref: '#/components/schemas/SourceDomainDnsRecord'
+        resolved_ip:
+          type:
+          - string
+          - 'null'
+          description: The address the hostname resolves to now, preferring one of Terra's edge addresses.
+            Null when it does not resolve.
+        resolved_ips:
+          type: array
+          description: Every address the hostname publishes, both families. Empty when it does not resolve.
+          items:
+            type: string
+        serving:
+          type: boolean
+          description: Whether Terra's edge answers TLS for the hostname. Only true once ACTIVE, and only
+            then is the domain live.
+        expires_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the certificate expires, as an ISO 8601 timestamp. Null until it is first
+            issued.
+        shared:
+          type: boolean
+          description: Whether another of your environments holds the certificate and this one reuses
+            it.
+        redirect_served:
+          type: boolean
+          description: Whether this environment's stored redirect for the provider is on this hostname.
+      required:
+      - provider
+      - hostname
+      - state
+      - reason
+      - detail
+      - dns_record
+      - resolved_ip
+      - resolved_ips
+      - serving
+      - expires_at
+      - shared
+      - redirect_served
+      x-terra-operations:
+      - method_name: retrieve
+        operation: get
+        path: /environments/{dev_id}/unified-api/sources/{provider}/domain
+      - method_name: set
+        operation: put
+        path: /environments/{dev_id}/unified-api/sources/{provider}/domain
+      - method_name: delete
+        operation: delete
+        path: /environments/{dev_id}/unified-api/sources/{provider}/domain
+      x-terra-summary: Your own subdomain for a provider's OAuth redirect and webhooks
+      x-terra-resource: unified-api.sources.domain
+    SourceDomainDnsRecord:
+      type: object
+      description: The single record that points a subdomain at Terra's edge.
+      properties:
+        type:
+          type: string
+          enum:
+          - A
+        name:
+          type: string
+          description: The record name, which is the hostname.
+        value:
+          type: string
+          description: The address to point it at.
+      required:
+      - type
+      - name
+      - value
+    GarminWebhookEndpoints:
+      type: object
+      description: Every webhook row Terra manages in your own Garmin apps, and what applying would change.
+      properties:
+        provider:
+          type: string
+          description: The provider's slug, garmin.
+        host:
+          type: string
+          description: The custom domain the rows are pointed at, from the stored redirect.
+        locked:
+          type: boolean
+          description: Whether Garmin is still applying an earlier change. Applying is refused until it
+            is false.
+        fingerprint:
+          type: string
+          description: A digest of the rows as read now. Send it back to apply, so a change made since
+            you reviewed is refused. Also the ETag.
+        has_existing:
+          type: boolean
+          description: Whether some row points somewhere else now, so applying replaces it and needs acknowledge_replacing_existing.
+        entries:
+          type: array
+          description: One entry per managed row across your Garmin apps.
+          items:
+            $ref: '#/components/schemas/GarminWebhookEndpointEntry'
+      required:
+      - provider
+      - host
+      - locked
+      - fingerprint
+      - has_existing
+      - entries
+      x-terra-operations:
+      - method_name: retrieve
+        operation: get
+        path: /environments/{dev_id}/unified-api/sources/{provider}/webhook-endpoints
+        slow: true
+        timeout: 60s
+      - method_name: apply
+        operation: post
+        path: /environments/{dev_id}/unified-api/sources/{provider}/webhook-endpoints/apply
+        slow: true
+        timeout: 60s
+      x-terra-summary: The webhook URLs in your own Garmin app, which Terra sets for you
+      x-terra-resource: unified-api.sources.webhook-endpoints
+    GarminWebhookEndpointEntry:
+      type: object
+      description: A webhook row Terra manages and what applying would do to it.
+      properties:
+        app_id:
+          type: string
+          description: Which of your saved Garmin apps the row belongs to.
+        id:
+          type: string
+          description: Garmin's name for the row, e.g. dailiesUrl.
+        target:
+          type: string
+          description: The URL applying sets.
+        current:
+          description: The row as Garmin holds it now.
+          $ref: '#/components/schemas/GarminWebhookEndpointState'
+        action:
+          type: string
+          enum:
+          - ok
+          - set
+          - restore
+          - enable
+          - retype
+          description: ok leaves the row as it is. set fills an empty URL, restore replaces a URL pointing
+            elsewhere, enable switches the row on, and retype sets its upload type to push.
+      required:
+      - app_id
+      - id
+      - target
+      - current
+      - action
+    GarminWebhookEndpointState:
+      type: object
+      description: A webhook row as Garmin holds it.
+      properties:
+        url:
+          type: string
+          description: The URL, or an empty string when none is set.
+        enabled:
+          type: boolean
+        on_hold:
+          type: boolean
+        upload_type:
+          type:
+          - string
+          - 'null'
+          description: push or ping. Null for rows without an upload type.
+      required:
+      - url
+      - enabled
+      - on_hold
+      - upload_type
+    ApplyWebhookEndpointsRequest:
+      type: object
+      properties:
+        fingerprint:
+          type: string
+          description: The fingerprint of the endpoints you reviewed. Required unless sent as If-Match;
+            when both are sent they must match.
+          x-terra-help: Fingerprint from the review; the apply is refused if Garmin changed since.
+        acknowledge_replacing_existing:
+          type: boolean
+          description: 'Must be true when the review''s has_existing is true: applying replaces URLs that
+            point elsewhere.'
+          x-terra-help: Replace webhook URLs that point elsewhere; needed when the review has existing
+            ones.
+      x-terra-most-common:
+      - fingerprint
+      - acknowledge_replacing_existing
+    AppliedWebhookEndpoints:
+      type: object
+      description: The Garmin apps whose webhook rows were written. Garmin can accept a write before it
+        applies it, so read the webhook endpoints again to confirm.
+      properties:
+        provider:
+          type: string
+          description: The provider's slug, garmin.
+        applied_app_ids:
+          type: array
+          description: The apps written, in order. Empty when nothing needed changing.
+          items:
+            type: string
+      required:
+      - provider
+      - applied_app_ids
     SubscribeRequest:
       type: object
       properties:

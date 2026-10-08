@@ -1,4 +1,14 @@
 {
+  "applySourceWebhookEndpoints": {
+    "confirmation_reason": "Rewrites the webhook URLs in your Garmin developer app. URLs set there by anyone else are replaced.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "providers:write"
+    ],
+    "sensitive": false
+  },
   "askDocs": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -84,6 +94,16 @@
     "method": "delete",
     "scopes": [
       "destinations:write"
+    ],
+    "sensitive": false
+  },
+  "deleteSourceDomain": {
+    "confirmation_reason": "OAuth redirects and webhooks on this hostname stop working when its certificate is released.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "delete",
+    "scopes": [
+      "providers:write"
     ],
     "sensitive": false
   },
@@ -225,7 +245,27 @@
     ],
     "sensitive": false
   },
+  "getSourceDomain": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "providers:read"
+    ],
+    "sensitive": false
+  },
   "getSourceScopes": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "providers:read"
+    ],
+    "sensitive": false
+  },
+  "getSourceWebhookEndpoints": {
     "confirmation_reason": null,
     "dangerous": false,
     "dry_run": false,
@@ -715,6 +755,16 @@
     ],
     "sensitive": false
   },
+  "resetSourceScopes": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "delete",
+    "scopes": [
+      "providers:write"
+    ],
+    "sensitive": false
+  },
   "retrieveDestination": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -813,6 +863,16 @@
     ],
     "sensitive": false
   },
+  "setSourceDomain": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "put",
+    "scopes": [
+      "providers:write"
+    ],
+    "sensitive": false
+  },
   "setSourceScopes": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -890,6 +950,26 @@
     "method": "post",
     "scopes": [
       "billing:write"
+    ],
+    "sensitive": false
+  },
+  "updateSource": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "providers:write"
+    ],
+    "sensitive": false
+  },
+  "updateSourceCredentials": {
+    "confirmation_reason": "Changes the sign-in settings for this wearable or app. Your users can't connect until the new ones are right.",
+    "dangerous": false,
+    "dry_run": true,
+    "method": "patch",
+    "scopes": [
+      "providers:write"
     ],
     "sensitive": false
   }
