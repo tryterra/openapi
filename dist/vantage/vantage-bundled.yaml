@@ -6,7 +6,7 @@ info:
 
     **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. An unsupported value returns 400 with code `invalid_api_version`. Supported versions: `2026-10-15` (latest; string IDs and enums, the `data`/`has_more`/`next_cursor` list envelope, 200 on an idempotent replay, error types on the docs site), `2026-10-01` (typed catalogue variants) and `2026-09-27` (catalogue attribute bags and integer availability). This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.10.08.3
+  version: 2026.10.08.4
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -2568,6 +2568,8 @@ components:
             - AT_HOME
             - GO_TO_LAB
           description: Determines the required address field — shipping_address for AT_HOME, requested_lab_address for GO_TO_LAB. A GO_TO_LAB variant whose collection_visit is `clinic` also needs shipping_address, where its kit is posted; any other GO_TO_LAB order must not send one.
+        dna:
+          $ref: '#/components/schemas/DNADetails'
         items:
           description: Only need product_variant_id and quantity completely define what was ordered
           type: array
@@ -2589,6 +2591,223 @@ components:
         - collection_type
         - items
         - recipient
+    DNADetails:
+      description: 'What the DNA test needs to know about its end user, so the end user never deals with the supplier. Which details an order must carry depends on the variant ordered: each DNA variant lists them, by the JSON paths used here, in required_dna_details. A DNA order missing one, or with an invalid field, is rejected with 400 before payment, and invalid_fields names each field by its JSON path (for example dna.health_measurements.height_cm) with tag required, type, range, pair, enum, unexpected, words, item, rfc3339, future, max, iso_date or recipient_mismatch. Details the variant does not require may still be sent and are validated the same way. A person who answers true to an eligibility question is rejected with 400 and tag ineligible. Sex at birth is taken from recipient.gender_at_birth. Errors never echo the submitted values. Ignored when no item is a DNA product (product_type_id 2). Stored per DNA order item and never returned by the API.'
+      type: object
+      properties:
+        health_measurements:
+          $ref: '#/components/schemas/DNAHealthMeasurements'
+        ancestry:
+          $ref: '#/components/schemas/DNAAncestry'
+        lifestyle:
+          $ref: '#/components/schemas/DNALifestyle'
+        medical_history:
+          $ref: '#/components/schemas/DNAMedicalHistory'
+        eligibility:
+          $ref: '#/components/schemas/DNAEligibility'
+        consent:
+          $ref: '#/components/schemas/DNAConsent'
+    DNAHealthMeasurements:
+      description: The end user's most recent measurements, in the units named by each key. Send a key when the variant's required_dna_details lists it; for a lab measurement, send null when the end user does not know the value (height and weight cannot be null). Ranges are the narrowest any DNA supplier accepts.
+      type: object
+      properties:
+        height_cm:
+          description: Height in centimetres (5 ft 6 in is 167.64).
+          type: number
+          minimum: 31
+          maximum: 272
+          example: 167.6
+        weight_kg:
+          description: Weight in kilograms.
+          type: number
+          minimum: 20
+          maximum: 600
+          example: 68
+        total_cholesterol_mg_dl:
+          description: Total cholesterol from the last blood test, mg/dL.
+          type:
+            - number
+            - 'null'
+          exclusiveMinimum: 0
+          maximum: 1000
+          example: 185
+        systolic_blood_pressure_mmhg:
+          description: Systolic blood pressure, mmHg. Null or left out exactly when diastolic is.
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+          maximum: 999
+          example: 120
+        diastolic_blood_pressure_mmhg:
+          description: Diastolic blood pressure, mmHg. Null or left out exactly when systolic is.
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+          maximum: 999
+          example: 80
+        fasting_glucose_mg_dl:
+          description: Fasting blood glucose, mg/dL.
+          type:
+            - number
+            - 'null'
+          minimum: 20
+          maximum: 500
+          example: 92
+        hba1c_percent:
+          description: HbA1c (A1C), percent.
+          type:
+            - number
+            - 'null'
+          exclusiveMinimum: 0
+          maximum: 50
+          example: 5.4
+    DNAAncestry:
+      type: object
+      required:
+        - groups
+        - ethnicity
+      properties:
+        groups:
+          description: Every ancestry that applies. Duplicates are ignored.
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum:
+              - african_american
+              - afro_caribbean
+              - sub_saharan_african
+              - african
+              - alaska_native
+              - central_asian
+              - east_asian
+              - hispanic
+              - jewish_ashkenazi
+              - jewish_sephardic_mizrahi_other
+              - latino
+              - middle_eastern_west_asian_north_african
+              - native_american_indigenous_canadian
+              - pacific_islander_oceanian
+              - south_asian
+              - southeast_asian
+              - white_european
+              - other
+          example:
+            - south_asian
+        other:
+          description: Required when groups includes other, rejected otherwise. Letters, spaces and ' ( ) * + , - . / " only, at most 100 characters.
+          type: string
+          maxLength: 100
+          example: Basque
+        ethnicity:
+          description: Regional origin or ethnic roots, for example Persian. Letters, spaces and ' ( ) * + , - . / " only, at most 100 characters.
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Gujarati
+    DNALifestyle:
+      type: object
+      required:
+        - smoking
+        - alcohol
+      properties:
+        smoking:
+          $ref: '#/components/schemas/DNASmoking'
+        alcohol:
+          type: string
+          enum:
+            - never
+            - couple_per_month
+            - one_to_seven_per_week
+            - eight_to_fourteen_per_week
+            - more_than_fourteen_per_week
+          description: How often the end user drinks alcohol (a couple of drinks per month, 1-7, 8-14 or more than 14 drinks per week).
+          example: one_to_seven_per_week
+    DNASmoking:
+      description: years_since_quit is required for former and cigarettes_per_day for trying_to_quit and current; each is rejected for any other status.
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - never
+            - former
+            - trying_to_quit
+            - current
+          example: former
+        years_since_quit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 3
+        cigarettes_per_day:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 10
+    DNAMedicalHistory:
+      type: object
+      required:
+        - diagnosed_conditions
+      properties:
+        diagnosed_conditions:
+          description: Diseases or conditions the end user has or has had, in their own words; [] when none.
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+          example:
+            - Asthma
+    DNAEligibility:
+      description: A DNA test cannot be run for a person who answers true to either question (donor DNA can be in the sample); such an order is rejected with tag ineligible.
+      type: object
+      required:
+        - bone_marrow_or_stem_cell_recipient
+        - blood_transfusion_last_two_weeks
+      properties:
+        bone_marrow_or_stem_cell_recipient:
+          type: boolean
+          example: false
+        blood_transfusion_last_two_weeks:
+          type: boolean
+          example: false
+    DNAConsent:
+      description: The end user's consent to the DNA test, collected in your app before ordering.
+      type: object
+      required:
+        - accepted_at
+        - signature_name
+        - date_of_birth
+        - document_version
+      properties:
+        accepted_at:
+          description: When the end user accepted, RFC 3339. Must not be later than the server time.
+          type: string
+          format: date-time
+          example: '2026-10-05T10:30:00Z'
+        signature_name:
+          description: The full name the end user typed as their signature.
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Jane Smith
+        date_of_birth:
+          description: The date of birth the end user confirmed when signing. Must equal recipient.date_of_birth.
+          type: string
+          format: date
+          example: '1990-05-15'
+        document_version:
+          description: The version of the consent document the end user was shown.
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: dna-consent-2026-10
     OrderFinancialDTO:
       description: Price breakdown including subtotal, tax, shipping, discounts
       type: object
@@ -3274,6 +3493,28 @@ components:
           example:
             - carrier
             - disease_risk
+        required_dna_details:
+          type: array
+          description: 'DNA tests only: what an order for this variant must tell Terra about the end user, as JSON paths into the create-order request (recipient.gender_at_birth, or a key of dna). Empty when the variant needs nothing; omitted for other product types. An order missing any of them is rejected with 400 before payment. Non-exhaustive: new values may be added without a new API version.'
+          items:
+            type: string
+            enum:
+              - recipient.gender_at_birth
+              - dna.health_measurements.height_cm
+              - dna.health_measurements.weight_kg
+              - dna.health_measurements.total_cholesterol_mg_dl
+              - dna.health_measurements.systolic_blood_pressure_mmhg
+              - dna.health_measurements.diastolic_blood_pressure_mmhg
+              - dna.health_measurements.fasting_glucose_mg_dl
+              - dna.health_measurements.hba1c_percent
+              - dna.ancestry
+              - dna.lifestyle
+              - dna.medical_history
+              - dna.eligibility
+              - dna.consent
+          example:
+            - dna.health_measurements.height_cm
+            - dna.health_measurements.weight_kg
         available_collection_types:
           type: array
           items:
