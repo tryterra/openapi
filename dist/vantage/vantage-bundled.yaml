@@ -6,7 +6,7 @@ info:
 
     **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. An unsupported value returns 400 with code `invalid_api_version`. Supported versions: `2026-10-15` (latest; string IDs and enums, the `data`/`has_more`/`next_cursor` list envelope, 200 on an idempotent replay, error types on the docs site), `2026-10-01` (typed catalogue variants) and `2026-09-27` (catalogue attribute bags and integer availability). This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.10.08
+  version: 2026.10.08.1
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -2636,6 +2636,8 @@ components:
           type: string
           description: Supplier-side item identifier (kit ID once assigned). Recoverable here even if the webhook that carried it was missed.
           example: BXTWP00362
+        collection_visit:
+          $ref: '#/components/schemas/OrderItemCollectionVisit'
         quantity:
           type: integer
           example: 1
@@ -2650,6 +2652,35 @@ components:
         - product_type_id
         - price_per_item_cents
         - quantity
+    OrderItemCollectionVisit:
+      description: The clinician visit Vantage arranged for this item's sample. Present only for a variant with a `collection_visit`.
+      type: object
+      required:
+        - type
+        - status
+      properties:
+        type:
+          $ref: '#/components/schemas/CollectionVisit'
+        status:
+          type: string
+          description: Where arranging the visit stands. New statuses may be added; treat an unknown value as in progress.
+          enum:
+            - booking
+            - requested
+            - booking_failed
+          x-enum-varnames:
+            - CollectionVisitStatus_BOOKING
+            - CollectionVisitStatus_REQUESTED
+            - CollectionVisitStatus_BOOKING_FAILED
+          x-enum-descriptions:
+            - The order is placed and the visit is being requested. Read the order again for the outcome; retrying the create with the same Idempotency-Key resumes a request that was interrupted.
+            - The visit is requested. The test-taker picks a slot through `scheduling_url`, which the provider can issue shortly after the order is created - read the order again if it is absent; the provider also contacts them on the recipient's phone number.
+            - The kit is ordered but the visit could not be requested. Terra support arranges it; nothing is needed from you.
+          example: requested
+        scheduling_url:
+          type: string
+          description: Where the test-taker books the visit slot. Present once the provider has issued it, which can be shortly after the order is created; reading the order fetches it if it is still missing. Pass it on to the test-taker.
+          example: https://provider.example.com/schedule/abc123
     CreateOrderResponse:
       description: Response containing the created order details including tracking information
       type: object
@@ -3062,7 +3093,7 @@ components:
         - CollectionVisit_HOME_PHLEBOTOMY
         - CollectionVisit_CLINIC
       x-enum-descriptions:
-        - A phlebotomist visits the test-taker to draw the sample.
+        - 'A phlebotomist visits the order''s shipping address to draw the sample. Order with collection_type AT_HOME and the test-taker''s phone number on the recipient: it must be a valid UK or Isle of Man number (a Guernsey or Jersey number is refused with 400, tag `home_visit_phone`), as the provider contacts them on it. The order item''s `collection_visit` says how booking the visit stands.'
         - A draw at one of the supplier's clinics.
       example: home_phlebotomy
     TurnaroundDays:
