@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.08
+  version: 2026.10.08.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -627,6 +627,8 @@ paths:
                   learn_about_us: search
                   onboarded: true
                   user_flow_done: true
+                billing:
+                  linked: true
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -634,7 +636,7 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Account summary
-      description: 'The customer id, how many dev-ids the account has, and the company profile. `company` is null when the account has no company record yet, and the profile never carries the billing columns. dev_id_count is only a count: the environments list endpoint is where the dev-ids themselves are.'
+      description: 'The customer id, how many dev-ids the account has, and the company profile. `company` is null when the account has no company record yet, and the profile never carries the billing columns. `billing` reports only whether a billing account is linked, never its identifiers, and is null exactly when `company` is null. dev_id_count is only a count: the environments list endpoint is where the dev-ids themselves are.'
       security:
         - adminToken:
             - account:read
@@ -6035,6 +6037,13 @@ components:
           type: integer
         company:
           $ref: '#/components/schemas/CompanyProfile'
+        billing:
+          description: Whether the account has a billing account. Never carries its identifiers. null exactly when `company` is null.
+          oneOf:
+            - $ref: '#/components/schemas/AccountBilling'
+            - type: 'null'
+      required:
+        - billing
     PayInvoiceRequest:
       type: object
       properties:
@@ -8989,6 +8998,14 @@ components:
         - type
         - title
         - instance
+    AccountBilling:
+      type: object
+      properties:
+        linked:
+          type: boolean
+          description: true when a Stripe customer is linked to the account. Billing reads on an unlinked account answer 404.
+      required:
+        - linked
     SubscriptionPauseSummary:
       type: object
       properties:
