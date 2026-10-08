@@ -3,7 +3,7 @@ info:
   description: |
     The Terra API (v2 surface, served at access.tryterra.co/api/v2). Protected product operations require a current product entitlement in addition to valid credentials and token scopes. Missing access returns HTTP 403 with code entitlement_required; disabled environments return environment_disabled. Unavailable current authorization returns HTTP 503 with code authorization_unavailable. Billing, configuration and recovery remain available under their existing permissions. Completed Health Scores stay with the caller's own authorized data. Pass recipients require their own Health Scores entitlement; otherwise enrichment fields retain null values. New score computation requires Health Scores access. Retained lab reports remain readable through the report endpoints with valid credentials and ownership, without a current Lab Reports entitlement. New uploads and reprocessing require it.
   title: TerraAPI
-  version: 2026.10.08
+  version: 2026.10.08.1
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -59,7 +59,7 @@ paths:
                   enum:
                     - avengers
                     - grip
-                  description: Which Terra reference app an APPLE_HEALTH authentication link hands the end user to. Omit to use Terra Avengers. Sending this for any other resource has no effect.
+                  description: Which Terra reference app an SDK authentication link hands the end user to. For APPLE_HEALTH, omit to use Terra Avengers. For HEALTH_CONNECT and SAMSUNG, "grip" is required; any other value or omitting it is rejected with a 400. The link carries a resource query parameter (APPLE, HEALTH_CONNECT or SAMSUNG) naming the connection the app opens. Sending this for any other resource has no effect.
         required: false
       responses:
         '200':
