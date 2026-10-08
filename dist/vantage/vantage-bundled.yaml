@@ -6,7 +6,7 @@ info:
 
     **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. An unsupported value returns 400 with code `invalid_api_version`. Supported versions: `2026-10-15` (latest; string IDs and enums, the `data`/`has_more`/`next_cursor` list envelope, 200 on an idempotent replay, error types on the docs site), `2026-10-01` (typed catalogue variants) and `2026-09-27` (catalogue attribute bags and integer availability). This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.10.08.2
+  version: 2026.10.08.3
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -422,7 +422,7 @@ paths:
       summary: Create a new order
       tags:
         - orders
-      description: Create a new blood, DNA, or device test order. Products that are disabled in your catalog cannot be ordered and are rejected with 403. Payment is authorized then captured as part of order creation; if authorization fails, nothing is created and a 402 is returned.
+      description: Create a new blood, DNA, or device test order. Products that are disabled in your catalog cannot be ordered and are rejected with 403; so are products not offered in the environment you call, with code `product_unavailable`. Payment is authorized then captured as part of order creation; if authorization fails, nothing is created and a 402 is returned.
       x-required-token-scope: vantage:write
       security:
         - BasicAuth: []
@@ -496,7 +496,7 @@ paths:
               $ref: '#/components/headers/ApiVersion'
             X-Request-Id:
               $ref: '#/components/headers/RequestId'
-          description: A requested product is not enabled in your catalog
+          description: A requested product is not enabled in your catalog, or is not offered in this environment (code `product_unavailable`, for example a DNA product in Production). Nothing is created or charged.
           content:
             application/json:
               schema:
@@ -1227,7 +1227,7 @@ paths:
       summary: Get presigned URL for test results
       tags:
         - results
-      description: 'Returns a time-limited presigned URL to download normalized test results in FHIR format (JSON). The URL is valid for 15 minutes before credential validation is configured. Validated requests receive a URL bounded by token expiry and the original authorization deadline (at most 45 seconds), even when product policy is off; request a fresh URL when starting each download. Note: Every orderItemID can only be associated with maximum 1 panel, hence results can be uniquely identified by orderItemID.'
+      description: 'Returns a time-limited presigned URL to download normalized test results (JSON): a FHIR R4 bundle for blood tests, a Terra DNA result for DNA tests. `result_type` says which, and `result_version` which version of the result the URL serves. The URL is valid for 15 minutes before credential validation is configured. Validated requests receive a URL bounded by token expiry and the original authorization deadline (at most 45 seconds), even when product policy is off; request a fresh URL when starting each download. Note: Every orderItemID can only be associated with maximum 1 panel, hence results can be uniquely identified by orderItemID.'
       parameters:
         - $ref: '#/components/parameters/ApiVersion'
         - name: orderItemID
@@ -2145,7 +2145,7 @@ components:
       properties:
         event:
           type: string
-          description: Lifecycle event to apply.
+          description: Lifecycle event to apply. `genome_processing`, `sample_reanalysis` and `reanalysed` apply to DNA order items only; `reanalysed` stores the next version of the item's result before its webhook fires.
           enum:
             - payment_complete
             - payment_failed
@@ -2161,6 +2161,9 @@ components:
             - results_ready
             - lab_processing_error
             - escalation_raised
+            - genome_processing
+            - sample_reanalysis
+            - reanalysed
         order_item_id:
           type: string
           description: Narrow a results event to one order item.
@@ -2992,6 +2995,10 @@ components:
                 - results.results_ready
                 - results.lab_processing_error
                 - results.escalation_raised
+                - results.genome_processing
+                - results.sample_reanalysis
+                - results.reanalysed
+              description: 'Non-exhaustive: new statuses may be added without a new API version, so treat an unknown value as an in-progress state. `genome_processing`, `sample_reanalysis` and `reanalysed` are DNA-only.'
             test_taker:
               type: object
               required:
@@ -3032,6 +3039,12 @@ components:
               type: string
               description: Present on sample_rejected.
               example: blood contaminated
+            result_version:
+              type: integer
+              format: int32
+              minimum: 1
+              description: 'Present on results_ready and reanalysed: the version of the result now served, 1 for the first result and bumped by every re-analysis. Fetch the result again when it changes.'
+              example: 1
     GetResultsURLResponse:
       description: Response containing a presigned URL to download test results
       type: object
@@ -3047,6 +3060,22 @@ components:
           enum:
             - json
           example: json
+        result_type:
+          type: string
+          description: 'How to parse the downloaded file. `fhir_bundle` is a FHIR R4 Bundle (blood tests); `dna_result` is a Terra DNA result, plain JSON (DNA tests), described by the `DNAResult` schema. Non-exhaustive: new representations may be added without a new API version.'
+          enum:
+            - fhir_bundle
+            - dna_result
+          example: fhir_bundle
+        result_version:
+          type: integer
+          format: int32
+          minimum: 1
+          description: 'Version of the result the URL serves: 1 for the first result, bumped by every re-analysis (DNA). Matches `result_version` on the `results.results_ready` and `results.reanalysed` webhooks.'
+          example: 1
+    DNAResult:
+      description: 'The file a `dna_result` download URL serves: one DNA result for one order item, the same shape for every DNA supplier. Not an API response; fetch it from `GET /api/v1/results/{orderItemID}`''s `download_url`.'
+      $ref: '#/components/schemas/dna_result.schema'
     AcknowledgeResultsResponse:
       description: Confirmation that results were acknowledged
       type: object
@@ -3077,14 +3106,17 @@ components:
         - finger_prick
         - venous_draw
         - automatic_capillary
+        - cheek_swab
       x-enum-varnames:
         - CollectionMethod_FINGER_PRICK
         - CollectionMethod_VENOUS_DRAW
         - CollectionMethod_AUTOMATIC_CAPILLARY
+        - CollectionMethod_CHEEK_SWAB
       x-enum-descriptions:
         - Self-collected capillary sample from a lancet.
         - Phlebotomy draw, taken by a clinician.
         - Self-collected capillary sample from a push-button device (Tasso), no lancet.
+        - Self-collected buccal swab, for DNA tests.
       example: finger_prick
     CollectionVisit:
       type: string
@@ -3099,6 +3131,18 @@ components:
         - 'A phlebotomist visits the order''s shipping address to draw the sample. Order with collection_type AT_HOME and the test-taker''s phone number on the recipient: it must be a valid UK or Isle of Man number (a Guernsey or Jersey number is refused with 400, tag `home_visit_phone`), as the provider contacts them on it. The order item''s `collection_visit` says how booking the visit stands.'
         - 'A draw at one of the supplier''s clinics. Order with collection_type GO_TO_LAB and both addresses: the kit is posted to shipping_address for the test-taker to take along, and requested_lab_address says where they want the clinic. The supplier emails the test-taker an invite to book; the order item''s `collection_visit` says how that stands.'
       example: home_phlebotomy
+    DNAReport:
+      type: string
+      description: 'A report category a DNA test''s bundle includes; the same vocabulary as the DNA result''s finding categories. Non-exhaustive: new categories may be added without a new API version.'
+      enum:
+        - carrier
+        - monogenic
+        - disease_risk
+        - pgx
+        - trait
+        - longevity
+        - ancestry
+      example: carrier
     TurnaroundDays:
       type: object
       description: The supplier's stated lab turnaround in days, from sample received to results. A single stated figure has `min` == `max`.
@@ -3222,6 +3266,14 @@ components:
           description: Biomarkers measured by this variant. Empty when the panel is not catalogued or could not be read.
           items:
             $ref: '#/components/schemas/Biomarker'
+        reports:
+          type: array
+          description: 'DNA tests only: the reports this variant''s bundle includes. A DNA product''s variants are report bundles; pick one at order time by its variant id. Omitted for other product types.'
+          items:
+            $ref: '#/components/schemas/DNAReport'
+          example:
+            - carrier
+            - disease_risk
         available_collection_types:
           type: array
           items:
@@ -3597,3 +3649,1001 @@ components:
         event_created_at:
           type: string
           format: date-time
+    nullable_string:
+      type:
+        - string
+        - 'null'
+    date_or_date_time:
+      description: An RFC 3339 date-time, or a full date when the supplier reports only the day.
+      anyOf:
+        - type: string
+          format: date-time
+        - type: string
+          format: date
+    category:
+      description: What kind of finding (DECISIONS.md R4).
+      type: string
+      enum:
+        - carrier
+        - monogenic
+        - disease_risk
+        - pgx
+        - trait
+        - longevity
+        - ancestry
+    method:
+      description: 'How a finding was screened: snv_indel (sequence variants), cnv (copy number), repeat_expansion, polygenic_score, star_allele (pharmacogenomic haplotypes).'
+      type: string
+      enum:
+        - snv_indel
+        - cnv
+        - repeat_expansion
+        - polygenic_score
+        - star_allele
+    system:
+      description: A body system the finding touches (DECISIONS.md R5).
+      type: string
+      enum:
+        - performance
+        - metabolic
+        - cognitive
+        - immune
+        - detox
+        - hormone
+    outcome:
+      description: 'The supplier''s band for this result: a display label, a colour, and its position among the supplier''s bands (1 is the lowest).'
+      type: object
+      additionalProperties: false
+      required:
+        - label
+        - color
+        - position
+        - of
+      properties:
+        label:
+          type: string
+          minLength: 1
+        color:
+          description: 'Terra''s semantic colour for the band: green (favourable), amber (watch), red (unfavourable), grey (neutral).'
+          type: string
+          enum:
+            - green
+            - amber
+            - red
+            - grey
+        position:
+          type: integer
+          minimum: 1
+        of:
+          type: integer
+          minimum: 1
+    score:
+      type: object
+      additionalProperties: false
+      required:
+        - value
+        - type
+        - ancestry_adjusted
+      if:
+        properties:
+          type:
+            enum:
+              - percentile
+              - percentage
+        required:
+          - type
+      then:
+        properties:
+          value:
+            minimum: 0
+            maximum: 100
+      properties:
+        value:
+          type: number
+        type:
+          description: percentile (0-100), percentage (0-100), or z_score (standard deviations from the population mean).
+          type: string
+          enum:
+            - percentile
+            - percentage
+            - z_score
+        ancestry_adjusted:
+          description: Whether the score is standardised against the person's genetic ancestry. Null when the supplier does not say.
+          type:
+            - boolean
+            - 'null'
+    risk:
+      type: object
+      additionalProperties: false
+      required:
+        - value
+        - unit
+        - applies_to
+      if:
+        properties:
+          unit:
+            const: fraction
+        required:
+          - unit
+      then:
+        properties:
+          value:
+            maximum: 1
+      else:
+        properties:
+          value:
+            maximum: 100
+      properties:
+        value:
+          type: number
+          minimum: 0
+        unit:
+          description: fraction (0-1) or percent (0-100).
+          type: string
+          enum:
+            - fraction
+            - percent
+        applies_to:
+          description: The horizon the risk covers, e.g. lifetime or 10_years.
+          type: string
+          minLength: 1
+    variant:
+      type: object
+      additionalProperties: false
+      required:
+        - rsid
+        - genotype
+        - effect_allele
+        - gene
+        - transcript
+        - hgvs_c
+        - hgvs_p
+        - genomic_location
+        - zygosity
+        - inheritance
+        - classification
+      properties:
+        rsid:
+          anyOf:
+            - type: string
+              pattern: ^rs[0-9]+$
+            - type: 'null'
+        genotype:
+          description: This person's alleles, e.g. C/T.
+          $ref: '#/components/schemas/nullable_string'
+        effect_allele:
+          description: The allele that raises the score or risk.
+          $ref: '#/components/schemas/nullable_string'
+        gene:
+          $ref: '#/components/schemas/nullable_string'
+        transcript:
+          $ref: '#/components/schemas/nullable_string'
+        hgvs_c:
+          $ref: '#/components/schemas/nullable_string'
+        hgvs_p:
+          $ref: '#/components/schemas/nullable_string'
+        genomic_location:
+          description: chromosome:position:ref-alt as the supplier reports it (GRCh38 unless the supplier says otherwise).
+          $ref: '#/components/schemas/nullable_string'
+        zygosity:
+          type:
+            - string
+            - 'null'
+          enum:
+            - heterozygous
+            - homozygous
+            - hemizygous
+            - null
+        inheritance:
+          type:
+            - string
+            - 'null'
+          enum:
+            - autosomal_dominant
+            - autosomal_recessive
+            - x_linked
+            - x_linked_dominant
+            - x_linked_recessive
+            - mitochondrial
+            - null
+        classification:
+          description: ACMG/AMP tier.
+          type:
+            - string
+            - 'null'
+          enum:
+            - pathogenic
+            - likely_pathogenic
+            - uncertain_significance
+            - likely_benign
+            - benign
+            - null
+    copy_number:
+      type: object
+      additionalProperties: false
+      required:
+        - gene
+        - copies
+      properties:
+        gene:
+          type: string
+          minLength: 1
+        copies:
+          type: integer
+          minimum: 0
+    drug:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - guidance
+        - source
+      properties:
+        name:
+          type: string
+          minLength: 1
+        guidance:
+          $ref: '#/components/schemas/nullable_string'
+        source:
+          description: The guideline the guidance comes from, e.g. CPIC.
+          $ref: '#/components/schemas/nullable_string'
+    recommendation:
+      type: object
+      additionalProperties: false
+      required:
+        - text
+        - kind
+      properties:
+        text:
+          type: string
+          minLength: 1
+        kind:
+          description: The supplier's grouping, e.g. lifestyle, diet, supplement, screening.
+          $ref: '#/components/schemas/nullable_string'
+    extensions:
+      description: Supplier-only extras, keyed by supplier name (DECISIONS.md R6). Their shape is the supplier's and is not covered by API versioning.
+      type: object
+      propertyNames:
+        pattern: ^[a-z][a-z0-9_]*$
+      additionalProperties:
+        type: object
+    report:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - ordering_physician
+        - specimen_received_at
+        - released_at
+        - url
+      properties:
+        version:
+          description: The supplier's pipeline or report version.
+          $ref: '#/components/schemas/nullable_string'
+        ordering_physician:
+          $ref: '#/components/schemas/nullable_string'
+        specimen_received_at:
+          anyOf:
+            - $ref: '#/components/schemas/date_or_date_time'
+            - type: 'null'
+        released_at:
+          anyOf:
+            - $ref: '#/components/schemas/date_or_date_time'
+            - type: 'null'
+        url:
+          description: Where the full supplier report can be read. Clinical findings that stay with the supplier are read here.
+          anyOf:
+            - type: string
+              format: uri
+            - type: 'null'
+    supplier_capabilities:
+      description: What this supplier can report at all, so a category missing from screening and findings reads as 'not offered' rather than 'clear'.
+      type: object
+      additionalProperties: false
+      required:
+        - categories
+        - methods
+      properties:
+        categories:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/category'
+        methods:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/method'
+    screening:
+      description: Counts for one category and method. positive and undetermined apply to detected/not-detected screens (carrier, monogenic); above_average, average and below_average apply to banded scores (disease_risk). A count that does not apply is null.
+      type: object
+      additionalProperties: false
+      required:
+        - category
+        - method
+        - tested
+        - positive
+        - undetermined
+        - above_average
+        - average
+        - below_average
+      properties:
+        category:
+          $ref: '#/components/schemas/category'
+        method:
+          $ref: '#/components/schemas/method'
+        tested:
+          type: integer
+          minimum: 0
+        positive:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+        undetermined:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+        above_average:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+        average:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+        below_average:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+    finding:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - category
+        - systems
+        - name
+        - description
+        - supplier_label
+        - status
+        - outcome
+        - score
+        - absolute_risk
+        - typical_risk
+        - variants
+        - copy_number
+        - drugs
+        - recommendations
+        - requires_counseling
+        - sensitivity
+      properties:
+        id:
+          description: <category>:<the supplier's report id>. Unique within the result and stable across result versions.
+          type: string
+          pattern: ^[a-z_]+:.+$
+        category:
+          $ref: '#/components/schemas/category'
+        systems:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/system'
+        name:
+          type: string
+          minLength: 1
+        description:
+          description: What the condition or trait is, in the supplier's words. Not specific to this person.
+          $ref: '#/components/schemas/nullable_string'
+        supplier_label:
+          description: The supplier's own wording of this person's result, verbatim (e.g. elevated, carrier, Slow metabolizer).
+          $ref: '#/components/schemas/nullable_string'
+        status:
+          description: 'For detected/not-detected findings (carrier, monogenic, pgx): detected, not_detected, possible (the supplier cannot rule it out) or undetermined. Null for scored findings.'
+          type:
+            - string
+            - 'null'
+          enum:
+            - detected
+            - not_detected
+            - possible
+            - undetermined
+            - null
+        outcome:
+          anyOf:
+            - $ref: '#/components/schemas/outcome'
+            - type: 'null'
+        score:
+          anyOf:
+            - $ref: '#/components/schemas/score'
+            - type: 'null'
+        absolute_risk:
+          description: This person's risk.
+          anyOf:
+            - $ref: '#/components/schemas/risk'
+            - type: 'null'
+        typical_risk:
+          description: The risk of a typical person of the same sex and age band, for comparison.
+          anyOf:
+            - $ref: '#/components/schemas/risk'
+            - type: 'null'
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/variant'
+        copy_number:
+          description: Copy-number calls. A list because one finding can involve several genes (SMN1 and SMN2 for SMA, HBA1 and HBA2 for alpha thalassemia).
+          type: array
+          items:
+            $ref: '#/components/schemas/copy_number'
+        drugs:
+          type: array
+          items:
+            $ref: '#/components/schemas/drug'
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/recommendation'
+        requires_counseling:
+          description: 'Set by Terra''s rules, not the supplier: a detected carrier, a detected clinical (monogenic) finding, or a result the supplier gates behind a counsellor (DECISIONS.md R12).'
+          type: boolean
+        sensitivity:
+          description: Set when the finding needs the customer's opt-in to be shown (DECISIONS.md R11).
+          type:
+            - string
+            - 'null'
+          enum:
+            - mental_health
+            - null
+        extensions:
+          $ref: '#/components/schemas/extensions'
+    raw_data:
+      type: object
+      additionalProperties: false
+      required:
+        - format
+        - size_bytes
+        - availability
+      properties:
+        format:
+          description: e.g. vcf, sv_vcf, cnv_vcf, cram, fastq, genotype_array.
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+        size_bytes:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+        availability:
+          description: api (Terra serves it), portal (the person downloads it from the supplier), on_request (the supplier sends it when asked).
+          type: string
+          enum:
+            - api
+            - portal
+            - on_request
+    dna_result.schema:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      $id: https://api.tryterra.co/vantage/schemas/dna-result.schema.json
+      title: Terra DNA result
+      description: 'One supplier-neutral DNA result per order item. Every supplier adapter produces this shape (DECISIONS.md R1-R13). Every declared key is always present: an unknown value is null and an empty list is [], so a client can tell ''not reported'' from a missing key. Enum lists are non-exhaustive: new values are additive.'
+      type: object
+      additionalProperties: false
+      required:
+        - supplier
+        - result_version
+        - report
+        - supplier_capabilities
+        - screening
+        - findings
+        - raw_data
+      properties:
+        supplier:
+          description: The lab supplier that produced the result, e.g. nucleus or selfdecode.
+          type: string
+          pattern: ^[a-z][a-z0-9_]*$
+        result_version:
+          description: Starts at 1 and goes up each time the supplier re-analyses the sample (DECISIONS.md L3).
+          type: integer
+          minimum: 1
+        report:
+          $ref: '#/components/schemas/report'
+        supplier_capabilities:
+          $ref: '#/components/schemas/supplier_capabilities'
+        screening:
+          description: 'One summary per category and method, so a negative result is explicit: a category with tested > 0 and positive = 0 was screened clear, while a category missing here was not screened (DECISIONS.md R8).'
+          type: array
+          items:
+            $ref: '#/components/schemas/screening'
+        findings:
+          description: Every reported finding. Carrier findings sort first (DECISIONS.md R9).
+          type: array
+          items:
+            $ref: '#/components/schemas/finding'
+        raw_data:
+          description: Raw genome files the supplier holds. They never travel through the API (DECISIONS.md R13).
+          type: array
+          items:
+            $ref: '#/components/schemas/raw_data'
+        extensions:
+          $ref: '#/components/schemas/extensions'
+      $defs:
+        category:
+          description: What kind of finding (DECISIONS.md R4).
+          type: string
+          enum:
+            - carrier
+            - monogenic
+            - disease_risk
+            - pgx
+            - trait
+            - longevity
+            - ancestry
+        system:
+          description: A body system the finding touches (DECISIONS.md R5).
+          type: string
+          enum:
+            - performance
+            - metabolic
+            - cognitive
+            - immune
+            - detox
+            - hormone
+        method:
+          description: 'How a finding was screened: snv_indel (sequence variants), cnv (copy number), repeat_expansion, polygenic_score, star_allele (pharmacogenomic haplotypes).'
+          type: string
+          enum:
+            - snv_indel
+            - cnv
+            - repeat_expansion
+            - polygenic_score
+            - star_allele
+        date_or_date_time:
+          description: An RFC 3339 date-time, or a full date when the supplier reports only the day.
+          anyOf:
+            - type: string
+              format: date-time
+            - type: string
+              format: date
+        nullable_string:
+          type:
+            - string
+            - 'null'
+        extensions:
+          description: Supplier-only extras, keyed by supplier name (DECISIONS.md R6). Their shape is the supplier's and is not covered by API versioning.
+          type: object
+          propertyNames:
+            pattern: ^[a-z][a-z0-9_]*$
+          additionalProperties:
+            type: object
+        report:
+          type: object
+          additionalProperties: false
+          required:
+            - version
+            - ordering_physician
+            - specimen_received_at
+            - released_at
+            - url
+          properties:
+            version:
+              description: The supplier's pipeline or report version.
+              $ref: '#/components/schemas/nullable_string'
+            ordering_physician:
+              $ref: '#/components/schemas/nullable_string'
+            specimen_received_at:
+              anyOf:
+                - $ref: '#/components/schemas/date_or_date_time'
+                - type: 'null'
+            released_at:
+              anyOf:
+                - $ref: '#/components/schemas/date_or_date_time'
+                - type: 'null'
+            url:
+              description: Where the full supplier report can be read. Clinical findings that stay with the supplier are read here.
+              anyOf:
+                - type: string
+                  format: uri
+                - type: 'null'
+        supplier_capabilities:
+          description: What this supplier can report at all, so a category missing from screening and findings reads as 'not offered' rather than 'clear'.
+          type: object
+          additionalProperties: false
+          required:
+            - categories
+            - methods
+          properties:
+            categories:
+              type: array
+              uniqueItems: true
+              items:
+                $ref: '#/components/schemas/category'
+            methods:
+              type: array
+              uniqueItems: true
+              items:
+                $ref: '#/components/schemas/method'
+        screening:
+          description: Counts for one category and method. positive and undetermined apply to detected/not-detected screens (carrier, monogenic); above_average, average and below_average apply to banded scores (disease_risk). A count that does not apply is null.
+          type: object
+          additionalProperties: false
+          required:
+            - category
+            - method
+            - tested
+            - positive
+            - undetermined
+            - above_average
+            - average
+            - below_average
+          properties:
+            category:
+              $ref: '#/components/schemas/category'
+            method:
+              $ref: '#/components/schemas/method'
+            tested:
+              type: integer
+              minimum: 0
+            positive:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+            undetermined:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+            above_average:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+            average:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+            below_average:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+        finding:
+          type: object
+          additionalProperties: false
+          required:
+            - id
+            - category
+            - systems
+            - name
+            - description
+            - supplier_label
+            - status
+            - outcome
+            - score
+            - absolute_risk
+            - typical_risk
+            - variants
+            - copy_number
+            - drugs
+            - recommendations
+            - requires_counseling
+            - sensitivity
+          properties:
+            id:
+              description: <category>:<the supplier's report id>. Unique within the result and stable across result versions.
+              type: string
+              pattern: ^[a-z_]+:.+$
+            category:
+              $ref: '#/components/schemas/category'
+            systems:
+              type: array
+              uniqueItems: true
+              items:
+                $ref: '#/components/schemas/system'
+            name:
+              type: string
+              minLength: 1
+            description:
+              description: What the condition or trait is, in the supplier's words. Not specific to this person.
+              $ref: '#/components/schemas/nullable_string'
+            supplier_label:
+              description: The supplier's own wording of this person's result, verbatim (e.g. elevated, carrier, Slow metabolizer).
+              $ref: '#/components/schemas/nullable_string'
+            status:
+              description: 'For detected/not-detected findings (carrier, monogenic, pgx): detected, not_detected, possible (the supplier cannot rule it out) or undetermined. Null for scored findings.'
+              type:
+                - string
+                - 'null'
+              enum:
+                - detected
+                - not_detected
+                - possible
+                - undetermined
+                - null
+            outcome:
+              anyOf:
+                - $ref: '#/components/schemas/outcome'
+                - type: 'null'
+            score:
+              anyOf:
+                - $ref: '#/components/schemas/score'
+                - type: 'null'
+            absolute_risk:
+              description: This person's risk.
+              anyOf:
+                - $ref: '#/components/schemas/risk'
+                - type: 'null'
+            typical_risk:
+              description: The risk of a typical person of the same sex and age band, for comparison.
+              anyOf:
+                - $ref: '#/components/schemas/risk'
+                - type: 'null'
+            variants:
+              type: array
+              items:
+                $ref: '#/components/schemas/variant'
+            copy_number:
+              description: Copy-number calls. A list because one finding can involve several genes (SMN1 and SMN2 for SMA, HBA1 and HBA2 for alpha thalassemia).
+              type: array
+              items:
+                $ref: '#/components/schemas/copy_number'
+            drugs:
+              type: array
+              items:
+                $ref: '#/components/schemas/drug'
+            recommendations:
+              type: array
+              items:
+                $ref: '#/components/schemas/recommendation'
+            requires_counseling:
+              description: 'Set by Terra''s rules, not the supplier: a detected carrier, a detected clinical (monogenic) finding, or a result the supplier gates behind a counsellor (DECISIONS.md R12).'
+              type: boolean
+            sensitivity:
+              description: Set when the finding needs the customer's opt-in to be shown (DECISIONS.md R11).
+              type:
+                - string
+                - 'null'
+              enum:
+                - mental_health
+                - null
+            extensions:
+              $ref: '#/components/schemas/extensions'
+        outcome:
+          description: 'The supplier''s band for this result: a display label, a colour, and its position among the supplier''s bands (1 is the lowest).'
+          type: object
+          additionalProperties: false
+          required:
+            - label
+            - color
+            - position
+            - of
+          properties:
+            label:
+              type: string
+              minLength: 1
+            color:
+              description: 'Terra''s semantic colour for the band: green (favourable), amber (watch), red (unfavourable), grey (neutral).'
+              type: string
+              enum:
+                - green
+                - amber
+                - red
+                - grey
+            position:
+              type: integer
+              minimum: 1
+            of:
+              type: integer
+              minimum: 1
+        score:
+          type: object
+          additionalProperties: false
+          required:
+            - value
+            - type
+            - ancestry_adjusted
+          if:
+            properties:
+              type:
+                enum:
+                  - percentile
+                  - percentage
+            required:
+              - type
+          then:
+            properties:
+              value:
+                minimum: 0
+                maximum: 100
+          properties:
+            value:
+              type: number
+            type:
+              description: percentile (0-100), percentage (0-100), or z_score (standard deviations from the population mean).
+              type: string
+              enum:
+                - percentile
+                - percentage
+                - z_score
+            ancestry_adjusted:
+              description: Whether the score is standardised against the person's genetic ancestry. Null when the supplier does not say.
+              type:
+                - boolean
+                - 'null'
+        risk:
+          type: object
+          additionalProperties: false
+          required:
+            - value
+            - unit
+            - applies_to
+          if:
+            properties:
+              unit:
+                const: fraction
+            required:
+              - unit
+          then:
+            properties:
+              value:
+                maximum: 1
+          else:
+            properties:
+              value:
+                maximum: 100
+          properties:
+            value:
+              type: number
+              minimum: 0
+            unit:
+              description: fraction (0-1) or percent (0-100).
+              type: string
+              enum:
+                - fraction
+                - percent
+            applies_to:
+              description: The horizon the risk covers, e.g. lifetime or 10_years.
+              type: string
+              minLength: 1
+        variant:
+          type: object
+          additionalProperties: false
+          required:
+            - rsid
+            - genotype
+            - effect_allele
+            - gene
+            - transcript
+            - hgvs_c
+            - hgvs_p
+            - genomic_location
+            - zygosity
+            - inheritance
+            - classification
+          properties:
+            rsid:
+              anyOf:
+                - type: string
+                  pattern: ^rs[0-9]+$
+                - type: 'null'
+            genotype:
+              description: This person's alleles, e.g. C/T.
+              $ref: '#/components/schemas/nullable_string'
+            effect_allele:
+              description: The allele that raises the score or risk.
+              $ref: '#/components/schemas/nullable_string'
+            gene:
+              $ref: '#/components/schemas/nullable_string'
+            transcript:
+              $ref: '#/components/schemas/nullable_string'
+            hgvs_c:
+              $ref: '#/components/schemas/nullable_string'
+            hgvs_p:
+              $ref: '#/components/schemas/nullable_string'
+            genomic_location:
+              description: chromosome:position:ref-alt as the supplier reports it (GRCh38 unless the supplier says otherwise).
+              $ref: '#/components/schemas/nullable_string'
+            zygosity:
+              type:
+                - string
+                - 'null'
+              enum:
+                - heterozygous
+                - homozygous
+                - hemizygous
+                - null
+            inheritance:
+              type:
+                - string
+                - 'null'
+              enum:
+                - autosomal_dominant
+                - autosomal_recessive
+                - x_linked
+                - x_linked_dominant
+                - x_linked_recessive
+                - mitochondrial
+                - null
+            classification:
+              description: ACMG/AMP tier.
+              type:
+                - string
+                - 'null'
+              enum:
+                - pathogenic
+                - likely_pathogenic
+                - uncertain_significance
+                - likely_benign
+                - benign
+                - null
+        copy_number:
+          type: object
+          additionalProperties: false
+          required:
+            - gene
+            - copies
+          properties:
+            gene:
+              type: string
+              minLength: 1
+            copies:
+              type: integer
+              minimum: 0
+        drug:
+          type: object
+          additionalProperties: false
+          required:
+            - name
+            - guidance
+            - source
+          properties:
+            name:
+              type: string
+              minLength: 1
+            guidance:
+              $ref: '#/components/schemas/nullable_string'
+            source:
+              description: The guideline the guidance comes from, e.g. CPIC.
+              $ref: '#/components/schemas/nullable_string'
+        recommendation:
+          type: object
+          additionalProperties: false
+          required:
+            - text
+            - kind
+          properties:
+            text:
+              type: string
+              minLength: 1
+            kind:
+              description: The supplier's grouping, e.g. lifestyle, diet, supplement, screening.
+              $ref: '#/components/schemas/nullable_string'
+        raw_data:
+          type: object
+          additionalProperties: false
+          required:
+            - format
+            - size_bytes
+            - availability
+          properties:
+            format:
+              description: e.g. vcf, sv_vcf, cnv_vcf, cram, fastq, genotype_array.
+              type: string
+              pattern: ^[a-z][a-z0-9_]*$
+            size_bytes:
+              type:
+                - integer
+                - 'null'
+              minimum: 0
+            availability:
+              description: api (Terra serves it), portal (the person downloads it from the supplier), on_request (the supplier sends it when asked).
+              type: string
+              enum:
+                - api
+                - portal
+                - on_request
