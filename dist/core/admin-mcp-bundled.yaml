@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.08.1
+  version: 2026.10.08.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -1697,6 +1697,96 @@ paths:
       security:
       - adminToken:
         - keys:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+  /environments/{dev_id}/unified-api/providers:
+    get:
+      operationId: listProviders
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: List the providers you can enable, with how users connect and what each one supports.
+      tags:
+      - sources
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProviderCatalogueEntry'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+                required:
+                - data
+                - has_more
+                - next_cursor
+              example:
+                data:
+                - provider: apple_health
+                  display_name: Apple Health
+                  icon: https://api.tryterra.co/v2/static/icons/apple.webp
+                  auth_type: sdk
+                  setup: sdk
+                  data_types:
+                  - activity
+                  - athlete
+                  - body
+                  - daily
+                  - health_observation
+                  - menstruation
+                  - nutrition
+                  - sleep
+                  deprecated: false
+                  byo_supported: false
+                  custom_scopes_supported: false
+                  customer_credentials_required: false
+                  custom_credentials_allowed: true
+                - provider: garmin
+                  display_name: Garmin
+                  icon: https://api.tryterra.co/v2/static/icons/garmin.webp
+                  auth_type: oauth1
+                  setup: api_keys_managed
+                  data_types:
+                  - activity
+                  - athlete
+                  - body
+                  - daily
+                  - planned_workout
+                  - sleep
+                  deprecated: false
+                  byo_supported: false
+                  custom_scopes_supported: false
+                  customer_credentials_required: false
+                  custom_credentials_allowed: true
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      summary: List available providers
+      description: Every unified-api provider this environment can enable, described by its provider configuration,
+        sorted by slug. Each row names the provider by the slug sources use, so a source joins its catalogue
+        entry on provider. Whether the environment has enabled a provider, and how, is on sources. A provider
+        being retired is listed only for environments with access to it. The list is complete in one response.
+      security:
+      - adminToken:
+        - providers:read
       parameters:
       - $ref: '#/components/parameters/DevId'
   /environments/{dev_id}/unified-api/sources:
@@ -9207,6 +9297,81 @@ components:
         path: /environments/{dev_id}/unified-api/sources/{provider}/credentials
       x-terra-summary: Your own OAuth credentials for a provider, used instead of Terra's
       x-terra-resource: unified-api.sources.credentials
+    ProviderCatalogueEntry:
+      type: object
+      properties:
+        provider:
+          type: string
+          description: The provider's slug, e.g. apple_health. Sources and every other route name the
+            provider by this value.
+        display_name:
+          type: string
+          description: The provider's name as shown to end users.
+        icon:
+          type: string
+          description: URL of the provider's icon.
+        auth_type:
+          type: string
+          enum:
+          - oauth2
+          - oauth1
+          - login
+          - sdk
+          description: 'How end users connect: oauth2 or oauth1 through the provider''s consent screen,
+            login with their provider username and password, or sdk through the mobile SDK on their device.'
+        setup:
+          type:
+          - string
+          - 'null'
+          description: What setting the provider up involves, from its configuration, e.g. setup_not_required
+            or api_keys_required. Null when the configuration does not say.
+        data_types:
+          type: array
+          description: The data types the provider can supply, as slugs.
+          items:
+            type: string
+        deprecated:
+          type: boolean
+          description: Whether the provider is being retired. A deprecated provider is listed only for
+            environments with access to it.
+        byo_supported:
+          type: boolean
+          description: Whether users can connect through your own provider app instead of Terra's.
+        custom_scopes_supported:
+          type: boolean
+          description: Whether the provider has OAuth scopes you can switch on or off, through the source's
+            scopes.
+        customer_credentials_required:
+          type: boolean
+          description: Whether you must add your own provider credentials before users can connect, because
+            Terra has no app for this provider.
+        custom_credentials_allowed:
+          type: boolean
+          description: Whether you may set your own provider credentials.
+      required:
+      - provider
+      - display_name
+      - icon
+      - auth_type
+      - setup
+      - data_types
+      - deprecated
+      - byo_supported
+      - custom_scopes_supported
+      - customer_credentials_required
+      - custom_credentials_allowed
+      x-terra-operations:
+      - method_name: list
+        operation: get
+        path: /environments/{dev_id}/unified-api/providers
+        columns:
+        - provider
+        - display_name
+        - auth_type
+        - byo_supported
+        - custom_scopes_supported
+      x-terra-summary: Browse the providers an environment can enable
+      x-terra-resource: unified-api.providers
     ProviderEnabled:
       type: object
       properties:
