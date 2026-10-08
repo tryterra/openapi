@@ -6,7 +6,7 @@ info:
 
     **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. An unsupported value returns 400 with code `invalid_api_version`. Supported versions: `2026-10-15` (latest; string IDs and enums, the `data`/`has_more`/`next_cursor` list envelope, 200 on an idempotent replay, error types on the docs site), `2026-10-01` (typed catalogue variants) and `2026-09-27` (catalogue attribute bags and integer availability). This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.10.02
+  version: 2026.10.08
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -3038,17 +3038,33 @@ components:
       example: in_stock
     CollectionMethod:
       type: string
-      description: How the sample is taken. Omitted when the supplier states a method outside this vocabulary.
+      description: How the sample is taken. Omitted when the supplier states a method outside this vocabulary. New methods may be added; treat an unknown value as unstated.
       enum:
         - finger_prick
         - venous_draw
+        - automatic_capillary
       x-enum-varnames:
         - CollectionMethod_FINGER_PRICK
         - CollectionMethod_VENOUS_DRAW
+        - CollectionMethod_AUTOMATIC_CAPILLARY
       x-enum-descriptions:
         - Self-collected capillary sample from a lancet.
         - Phlebotomy draw, taken by a clinician.
+        - Self-collected capillary sample from a push-button device (Tasso), no lancet.
       example: finger_prick
+    CollectionVisit:
+      type: string
+      description: The clinician visit the sample is taken at. Omitted for a self-collected kit. New visits may be added; treat an unknown value as a visit you cannot offer.
+      enum:
+        - home_phlebotomy
+        - clinic
+      x-enum-varnames:
+        - CollectionVisit_HOME_PHLEBOTOMY
+        - CollectionVisit_CLINIC
+      x-enum-descriptions:
+        - A phlebotomist visits the test-taker to draw the sample.
+        - A draw at one of the supplier's clinics.
+      example: home_phlebotomy
     TurnaroundDays:
       type: object
       description: The supplier's stated lab turnaround in days, from sample received to results. A single stated figure has `min` == `max`.
@@ -3157,6 +3173,8 @@ components:
           example: Good starter panel
         collection_method:
           $ref: '#/components/schemas/CollectionMethod'
+        collection_visit:
+          $ref: '#/components/schemas/CollectionVisit'
         turnaround_days:
           $ref: '#/components/schemas/TurnaroundDays'
         requires_activation:
