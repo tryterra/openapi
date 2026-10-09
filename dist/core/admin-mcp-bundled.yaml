@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.08.3
+  version: 2026.10.09
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -2195,6 +2195,7 @@ paths:
                   sandbox: false
                   oauth_version: '2'
                   has_verification_secret: false
+                  secret_ref: null
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -2239,8 +2240,11 @@ paths:
         redirect_url, verification secret or sandbox flag goes back to its default; PATCH changes some
         fields and keeps the rest. A redirect_url must be on a Terra domain or on a custom domain set
         up for this provider in this or another of your environments within the token''s audience, or
-        the call is a 400; a 503 means the custom domain could not be checked. Idempotent; the secret
-        is write-only and masked on read.
+        the call is a 400; a 503 means the custom domain could not be checked. secret_ref reads the secret,
+        and optionally the client_id, from a secret store you own instead of client_secret. Terra test-reads
+        it before saving; a setup it cannot read is a 400 saying which step failed, an unreachable store
+        is a 503, and a source or deployment without the option is a 422. Idempotent; the secret is write-only
+        and masked on read.
       security:
       - adminToken:
         - providers:write
@@ -2283,6 +2287,7 @@ paths:
                   sandbox: false
                   oauth_version: '1'
                   has_verification_secret: false
+                  secret_ref: null
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -2314,9 +2319,11 @@ paths:
         omit it to keep the stored value. redirect_url null resets the redirect to the provider default,
         and verification_secret null clears it. The merged credential passes every check the PUT on this
         path runs, including, for Garmin, a check against Garmin with the stored secret; the redirect
-        host check runs when redirect_url is sent. When the merged credential equals the stored one, nothing
-        is written. A provider without your own credentials is a 404; set them with the PUT first. The
-        response is the masked credential as the GET returns it.
+        host check runs when redirect_url is sent. secret_ref moves the secret to a secret store and client_secret
+        moves it back, with or without secret_ref null; a credential read from a store keeps reading it
+        there when neither is sent. When the merged credential equals the stored one, nothing is written.
+        A provider without your own credentials is a 404; set them with the PUT first. The response is
+        the masked credential as the GET returns it.
       security:
       - adminToken:
         - providers:write
@@ -2368,6 +2375,7 @@ paths:
                   sandbox: false
                   oauth_version: '2'
                   has_verification_secret: true
+                  secret_ref: null
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -10007,7 +10015,11 @@ components:
         provider_client_id:
           type: string
         provider_client_secret_masked:
-          type: string
+          type:
+          - string
+          - 'null'
+          description: The client secret with all but its last four characters masked. Null when secret_ref
+            reads it from a secret store.
         redirect_url:
           type:
           - string
@@ -10029,6 +10041,12 @@ components:
         has_verification_secret:
           type: boolean
           description: Whether a webhook verification secret is stored. The secret itself is never returned.
+        secret_ref:
+          description: Where the client secret is read from in a secret store, or null when Terra stores
+            it.
+          oneOf:
+          - $ref: '#/components/schemas/ProviderSecretRefDetails'
+          - type: 'null'
       required:
       - provider_client_id
       - provider_client_secret_masked
@@ -10036,6 +10054,7 @@ components:
       - sandbox
       - oauth_version
       - has_verification_secret
+      - secret_ref
     ProviderCredentialPatch:
       type: object
       properties:
@@ -10068,6 +10087,39 @@ components:
           description: Use the provider's sandbox environment. Omit to keep the stored setting. Not accepted
             for an OAuth 1.0 app.
           x-terra-help: Use the provider sandbox.
+        secret_ref:
+          description: Read the client secret from a secret store you own from now on. Not allowed with
+            client_secret. Null, sent with client_secret, moves the secret back to Terra, as client_secret
+            alone does.
+          oneOf:
+          - $ref: '#/components/schemas/ProviderSecretRef'
+          - type: 'null'
+          x-terra-help: Read the client secret from a secret store you own; null with client_secret moves
+            it back to Terra.
+      not:
+        anyOf:
+        - properties:
+            secret_ref:
+              type: object
+          required:
+          - client_secret
+          - secret_ref
+        - properties:
+            secret_ref:
+              type: object
+              required:
+              - client_id_field
+          required:
+          - client_id
+          - secret_ref
+        - properties:
+            secret_ref:
+              type: 'null'
+          required:
+          - secret_ref
+          not:
+            required:
+            - client_secret
       minProperties: 1
       x-terra-most-common:
       - client_secret
@@ -10077,12 +10129,21 @@ components:
       properties:
         client_id:
           type: string
-          description: The customer's OAuth client id for this provider.
+          description: The customer's OAuth client id for this provider. Required unless secret_ref.client_id_field
+            reads it.
           x-terra-help: Your OAuth client ID for this provider.
         client_secret:
           type: string
-          description: The customer's OAuth client secret (write-only; reads are masked).
+          description: The customer's OAuth client secret (write-only; reads are masked). Required unless
+            secret_ref is sent.
           x-terra-help: Your OAuth client secret (write-only; reads are masked).
+        secret_ref:
+          description: Read the client secret from a secret store you own instead of sending it. Not allowed
+            with client_secret; null keeps the secret with Terra.
+          oneOf:
+          - $ref: '#/components/schemas/ProviderSecretRef'
+          - type: 'null'
+          x-terra-help: Read the client secret from a secret store you own; null keeps it with Terra.
         redirect_url:
           type: string
           description: Override the OAuth redirect URL (defaults to the provider default). Its host must
@@ -10097,9 +10158,41 @@ components:
           type: boolean
           description: Use the provider's sandbox environment. Not accepted for an OAuth 1.0 app.
           x-terra-help: Use the provider sandbox.
-      required:
-      - client_id
-      - client_secret
+      oneOf:
+      - required:
+        - client_id
+        - client_secret
+        not:
+          properties:
+            secret_ref:
+              type: object
+          required:
+          - secret_ref
+      - properties:
+          secret_ref:
+            type: object
+            not:
+              required:
+              - client_id_field
+        required:
+        - client_id
+        - secret_ref
+        not:
+          required:
+          - client_secret
+      - properties:
+          secret_ref:
+            type: object
+            required:
+            - client_id_field
+        required:
+        - secret_ref
+        not:
+          anyOf:
+          - required:
+            - client_secret
+          - required:
+            - client_id
       x-terra-most-common:
       - redirect_url
       - sandbox
@@ -10137,6 +10230,57 @@ components:
         path: /environments/{dev_id}/unified-api/sources/{provider}/credentials
       x-terra-summary: Your own OAuth credentials for a provider, used instead of Terra's
       x-terra-resource: unified-api.sources.credentials
+    ProviderSecretRef:
+      type: object
+      description: A provider secret kept in a secret store you own, which Terra reads instead of storing
+        it. Only the sources the store lists accept it.
+      properties:
+        store:
+          type: string
+          description: The secret store to read from, e.g. aws. An unrecognised store is a 400.
+          minLength: 1
+        config:
+          description: Where in the store the secret is.
+          $ref: '#/components/schemas/SecretRefConfig'
+        client_secret_field:
+          type: string
+          description: The key to read the client secret from when the secret is a JSON object or an env
+            file. Omit to use the whole value.
+          minLength: 1
+        client_id_field:
+          type: string
+          description: The key to read the client_id from in the same JSON object or env file. Omit to
+            send client_id yourself.
+          minLength: 1
+      required:
+      - store
+      - config
+      additionalProperties: false
+      x-terra-help: Read the client secret from a secret store you own.
+    ProviderSecretRefDetails:
+      type: object
+      description: Where a provider secret is read from in a secret store.
+      properties:
+        store:
+          type: string
+          description: The secret store the secret is read from, as its type, e.g. aws.
+        config:
+          $ref: '#/components/schemas/SecretRefConfigView'
+        client_secret_field:
+          type:
+          - string
+          - 'null'
+          description: The key the client secret is read from. Null when the whole value is the secret.
+        client_id_field:
+          type:
+          - string
+          - 'null'
+          description: The key the client_id is read from. Null when the client_id is stored with Terra.
+      required:
+      - store
+      - config
+      - client_secret_field
+      - client_id_field
     ProviderCatalogueEntry:
       type: object
       properties:
@@ -12427,6 +12571,42 @@ components:
       type: object
       unevaluatedProperties:
         $ref: '#/components/schemas/UsageMeter'
+    AwsSecretRefConfigView:
+      type: object
+      properties:
+        role_arn:
+          type: string
+          description: The IAM role Terra assumes.
+        secret_arn:
+          type: string
+          description: The Secrets Manager secret, SSM parameter or S3 object holding the secret.
+      required:
+      - role_arn
+      - secret_arn
+    SecretRefConfigView:
+      description: Where in the store the secret is, by store type.
+      anyOf:
+      - $ref: '#/components/schemas/AwsSecretRefConfigView'
+    AwsSecretRefConfig:
+      type: object
+      properties:
+        role_arn:
+          type: string
+          description: The IAM role Terra assumes, whose trust policy requires the External ID Terra gives
+            your account.
+          minLength: 1
+        secret_arn:
+          type: string
+          description: The Secrets Manager secret, SSM parameter or S3 object holding the secret.
+          minLength: 1
+      required:
+      - role_arn
+      - secret_arn
+      additionalProperties: false
+    SecretRefConfig:
+      description: Where in the store the secret is, by store type.
+      anyOf:
+      - $ref: '#/components/schemas/AwsSecretRefConfig'
     WebhookDestinationConfig:
       type: object
       properties:
