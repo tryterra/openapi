@@ -465,16 +465,6 @@
     ],
     "sensitive": false
   },
-  "listProviders": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "get",
-    "scopes": [
-      "providers:read"
-    ],
-    "sensitive": false
-  },
   "listScores": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -492,6 +482,16 @@
     "method": "get",
     "scopes": [
       "scores:read"
+    ],
+    "sensitive": false
+  },
+  "listSourceTypes": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "providers:read"
     ],
     "sensitive": false
   },

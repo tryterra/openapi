@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.09
+  version: 2026.10.09.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -1699,12 +1699,12 @@ paths:
         - keys:read
       parameters:
       - $ref: '#/components/parameters/DevId'
-  /environments/{dev_id}/unified-api/providers:
+  /environments/{dev_id}/unified-api/source-types:
     get:
-      operationId: listProviders
+      operationId: listSourceTypes
       x-terra-mcp-annotations:
         openWorldHint: false
-      x-terra-help: List the providers you can enable, with how users connect and what each one supports.
+      x-terra-help: List the source types you can enable, with how users connect and what each one supports.
       tags:
       - sources
       responses:
@@ -1718,7 +1718,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ProviderCatalogueEntry'
+                      $ref: '#/components/schemas/SourceType'
                   has_more:
                     type: boolean
                   next_cursor:
@@ -1779,10 +1779,10 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-      summary: List available providers
+      summary: List source types
       description: Every unified-api provider this environment can enable, described by its provider configuration,
-        sorted by slug. Each row names the provider by the slug sources use, so a source joins its catalogue
-        entry on provider. Whether the environment has enabled a provider, and how, is on sources. A provider
+        sorted by slug. Each row names the provider by the slug sources use, so a source joins its source
+        type on provider. Whether the environment has enabled a provider, and how, is on sources. A provider
         being retired is listed only for environments with access to it. The list is complete in one response.
       security:
       - adminToken:
@@ -1840,13 +1840,13 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/RateLimited'
-      summary: List enabled providers
+      summary: List sources
       description: Covers unified-api providers only. Each row gives the provider's slug, whether it is
         active (a paused provider is listed with active false), its auth redirect URL, and whether users
         connect through Terra's OAuth app or your own by default. Every enabled provider you can address
         under sources/{provider} is listed, deprecated ones included; internal providers are not. Credentials
-        and custom scopes are on their own sub-resources; provider capabilities and deprecation are in
-        the provider catalogue.
+        and custom scopes are on their own sub-resources; provider capabilities and deprecation are on
+        the source type.
       security:
       - adminToken:
         - providers:read
@@ -2081,12 +2081,12 @@ paths:
       description: 'Pausing a provider (active false) refuses new connections to it but keeps it listed
         with its credentials, scopes and existing connections; active true resumes it. DELETE on this
         path removes the provider instead. auth_variant byo makes users connect through your own OAuth
-        app by default, which needs byo_supported in the provider catalogue, or the call is a 422; standard
-        goes back to Terra''s. Send at least one field; an omitted one is left as it is. A provider that
-        is not enabled is a 404: enable it first with the PUT on this path. A deprecated provider can
-        always be paused, but resuming it or changing its auth variant needs its private preview on this
-        environment, or the call is a 422. When nothing would change, the preview''s would is noop and
-        nothing is written. The response is the source as the list returns it.'
+        app by default, which needs byo_supported on its source type, or the call is a 422; standard goes
+        back to Terra''s. Send at least one field; an omitted one is left as it is. A provider that is
+        not enabled is a 404: enable it first with the PUT on this path. A deprecated provider can always
+        be paused, but resuming it or changing its auth variant needs its private preview on this environment,
+        or the call is a 422. When nothing would change, the preview''s would is noop and nothing is written.
+        The response is the source as the list returns it.'
       security:
       - adminToken:
         - providers:write
@@ -10281,7 +10281,7 @@ components:
       - config
       - client_secret_field
       - client_id_field
-    ProviderCatalogueEntry:
+    SourceType:
       type: object
       properties:
         provider:
@@ -10347,15 +10347,15 @@ components:
       x-terra-operations:
       - method_name: list
         operation: get
-        path: /environments/{dev_id}/unified-api/providers
+        path: /environments/{dev_id}/unified-api/source-types
         columns:
         - provider
         - display_name
         - auth_type
         - byo_supported
         - custom_scopes_supported
-      x-terra-summary: Browse the providers an environment can enable
-      x-terra-resource: unified-api.providers
+      x-terra-summary: Browse the source types an environment can enable
+      x-terra-resource: unified-api.source-types
     ProviderScope:
       type: object
       description: One OAuth scope a provider can request.
