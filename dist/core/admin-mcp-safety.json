@@ -1,14 +1,4 @@
 {
-  "applySourceWebhookEndpoints": {
-    "confirmation_reason": "Rewrites the webhook URLs in your Garmin developer app. URLs set there by anyone else are replaced.",
-    "dangerous": false,
-    "dry_run": true,
-    "method": "post",
-    "scopes": [
-      "providers:write"
-    ],
-    "sensitive": false
-  },
   "askDocs": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -256,16 +246,6 @@
     "sensitive": false
   },
   "getSourceScopes": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": false,
-    "method": "get",
-    "scopes": [
-      "providers:read"
-    ],
-    "sensitive": false
-  },
-  "getSourceWebhookEndpoints": {
     "confirmation_reason": null,
     "dangerous": false,
     "dry_run": false,

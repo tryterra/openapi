@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.09.2
+  version: 2026.10.09.3
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -1699,6 +1699,73 @@ paths:
         - keys:read
       parameters:
       - $ref: '#/components/parameters/DevId'
+  /environments/{dev_id}/unified-api/destination-types:
+    get:
+      operationId: listDestinationTypes
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: List destination types with the config fields each takes. The catalogue is the same
+        for every environment.
+      tags:
+      - destinations
+      summary: List destination types
+      description: Every type a destination can be created as, with the configuration fields it takes,
+        which of them it needs to deliver and which are secrets. Identical for every environment.
+      security:
+      - adminToken:
+        - destinations:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      responses:
+        '200':
+          description: The destination types.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DestinationType'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+                required:
+                - data
+                - has_more
+                - next_cursor
+              example:
+                data:
+                - type: webhook
+                  display_name: Webhook
+                  icon_url: https://api.tryterra.co/static/assets/img/destination_icons/webhook.webp
+                  config_fields:
+                  - name: url
+                    type: string
+                    required: true
+                    secret: false
+                    enum: null
+                  - name: delivery
+                    type: string
+                    required: false
+                    secret: false
+                    enum:
+                    - push
+                    - ping
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /environments/{dev_id}/unified-api/source-types:
     get:
       operationId: listSourceTypes
@@ -2635,193 +2702,6 @@ paths:
           strava and garmin) is a 422.
       - $ref: '#/components/parameters/DryRun'
       - $ref: '#/components/parameters/IdempotencyKey'
-  /environments/{dev_id}/unified-api/sources/{provider}/webhook-endpoints:
-    get:
-      operationId: getSourceWebhookEndpoints
-      x-terra-help: 'Review the webhook URLs in your Garmin apps and what applying would change. Slow:
-        Terra signs in to each app.'
-      tags:
-      - sources
-      responses:
-        '200':
-          description: OK
-          headers:
-            ETag:
-              description: The fingerprint, quoted, for If-Match on the apply.
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GarminWebhookEndpoints'
-              example:
-                provider: garmin
-                host: garmin.acme.com
-                locked: false
-                fingerprint: 9f2c4e0b7a1d
-                has_existing: true
-                entries:
-                - app_id: '123'
-                  id: dailiesUrl
-                  target: https://garmin.acme.com/hooks/garmin/push/dailies
-                  current:
-                    url: https://old.example.com/garmin
-                    enabled: true
-                    on_hold: false
-                    upload_type: push
-                  action: restore
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Garmin webhook endpoints
-      description: Garmin's developer portal has no field for a webhook URL, so Terra signs in to each
-        of your saved Garmin apps with its keys and reads the webhook rows itself. Each entry is a row
-        Terra manages, its current state, and the action applying would take; rows Terra does not manage
-        are not listed. has_existing is true when applying would replace a URL that points elsewhere.
-        locked is true for a few minutes after any save, while Garmin applies it. The fingerprint, also
-        the ETag, identifies what was read; send it to the apply. This makes one sign-in per app, so allow
-        up to a minute. No saved Garmin keys is a 404, and a redirect not on a custom domain is a 422
-        unsupported_operation. Keys Garmin rejects are a 422 provider_credentials_rejected, and an unreachable
-        Garmin is a 503 dependency_failed.
-      security:
-      - adminToken:
-        - providers:read
-      parameters:
-      - $ref: '#/components/parameters/DevId'
-      - name: provider
-        x-terra-help: Provider slug; only garmin has webhook endpoints Terra manages.
-        in: path
-        required: true
-        schema:
-          type: string
-        description: The provider this applies to, as a slug. Only garmin is supported; an unrecognised
-          provider is a 400 and any other provider a 422.
-  /environments/{dev_id}/unified-api/sources/{provider}/webhook-endpoints/apply:
-    post:
-      operationId: applySourceWebhookEndpoints
-      x-terra-mcp-annotations:
-        idempotentHint: true
-      x-terra-confirmation-reason: Rewrites the webhook URLs in your Garmin developer app. URLs set there
-        by anyone else are replaced.
-      x-terra-mcp-help: Point the Garmin app's webhook rows at the custom domain. Read the webhook endpoints
-        first, show the user the entries, and pass the fingerprint; preview with dry_run to show what
-        would change.
-      x-terra-help: Point the Garmin app's webhook rows at the custom domain. Read the webhook endpoints
-        first, show the user the entries, and pass the fingerprint; preview with dry_run to show what
-        would change.
-      tags:
-      - sources
-      responses:
-        '200':
-          description: Nothing to change, so nothing was written (or DryRunResult when ?dry_run=true).
-          content:
-            application/json:
-              schema:
-                type: object
-                anyOf:
-                - $ref: '#/components/schemas/AppliedWebhookEndpoints'
-                - $ref: '#/components/schemas/DryRunResult'
-              example:
-                dry_run: true
-                would: update
-                preview:
-                  app_ids:
-                  - '123'
-                  entries:
-                  - app_id: '123'
-                    id: dailiesUrl
-                    target: https://garmin.acme.com/hooks/garmin/push/dailies
-                    current:
-                      url: https://old.example.com/garmin
-                      enabled: true
-                      on_hold: false
-                      upload_type: push
-                    action: restore
-        '202':
-          description: Garmin accepted the writes. Garmin can accept a write before applying it, so read
-            the webhook endpoints again to confirm.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AppliedWebhookEndpoints'
-              example:
-                provider: garmin
-                applied_app_ids:
-                - '123'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '412':
-          $ref: '#/components/responses/PreconditionFailed'
-        '422':
-          $ref: '#/components/responses/UnprocessableEntity'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Apply Garmin webhook endpoints
-      description: Reads the rows again and writes each Garmin app's whole row list back, with the rows
-        Terra manages pointed at the custom domain and every other row kept. The fingerprint you reviewed
-        is required, in the body or as If-Match; a configuration that changed since is a 412 precondition_failed,
-        so read and review again. When the review's has_existing is true, acknowledge_replacing_existing
-        must be true or the call is a 400. While Garmin is applying an earlier change the call is a 409
-        not_ready, also when the lock appears with the write; retry in a few minutes. An apply that fails
-        after writing some apps reports them in the problem's applied_app_ids. When every row is already
-        right, nothing is written and the call is a 200 with an empty applied_app_ids. The dry run makes
-        the same reads and checks and writes nothing to Garmin. Allow up to a minute.
-      security:
-      - adminToken:
-        - providers:write
-      parameters:
-      - $ref: '#/components/parameters/DevId'
-      - name: provider
-        x-terra-help: Provider slug; only garmin has webhook endpoints Terra manages.
-        in: path
-        required: true
-        schema:
-          type: string
-        description: The provider this applies to, as a slug. Only garmin is supported; an unrecognised
-          provider is a 400 and any other provider a 422.
-      - name: If-Match
-        x-terra-help: The fingerprint from the review, quoted, instead of the body field.
-        in: header
-        required: false
-        schema:
-          type: string
-        description: The ETag of the review, as an alternative to the fingerprint body field. When both
-          are sent they must match.
-      - $ref: '#/components/parameters/DryRun'
-      - $ref: '#/components/parameters/IdempotencyKey'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApplyWebhookEndpointsRequest'
-            examples:
-              apply:
-                summary: Apply after reviewing a diff that replaces existing URLs
-                value:
-                  fingerprint: 9f2c4e0b7a1d
-                  acknowledge_replacing_existing: true
   /environments/{dev_id}/unified-api/sources/{provider}/scopes:
     get:
       operationId: getSourceScopes
@@ -3152,12 +3032,12 @@ paths:
           $ref: '#/components/responses/RateLimited'
       summary: Create a destination
       description: 'The server translates `config` into what delivery reads, so the caller needs only
-        the fields GET /destination-types lists for the type. An active destination must be complete,
-        and each missing field is a 400 naming it; `active: false` saves a draft to finish with a PATCH.
-        For a webhook, the 201 body is the only place its signing_secret appears, so store it now, or
-        pass `signing_secret_source: environment` to sign with the environment''s secret instead. Secrets
-        in the response are masked. `url` and `metadata` are the deprecated stored form and cannot be
-        combined with `config`.'
+        the fields GET unified-api/destination-types lists for the type. An active destination must be
+        complete, and each missing field is a 400 naming it; `active: false` saves a draft to finish with
+        a PATCH. For a webhook, the 201 body is the only place its signing_secret appears, so store it
+        now, or pass `signing_secret_source: environment` to sign with the environment''s secret instead.
+        Secrets in the response are masked. `url` and `metadata` are the deprecated stored form and cannot
+        be combined with `config`.'
       security:
       - adminToken:
         - destinations:write
@@ -7126,70 +7006,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '429':
           $ref: '#/components/responses/RateLimited'
-  /destination-types:
-    get:
-      operationId: listDestinationTypes
-      x-terra-mcp-annotations:
-        openWorldHint: false
-      x-terra-help: List destination types with the config fields each takes. The catalogue is the same
-        for every account.
-      tags:
-      - destinations
-      summary: List destination types
-      description: Every type a destination can be created as, with the configuration fields it takes,
-        which of them it needs to deliver and which are secrets. Account-level and identical for every
-        caller.
-      security:
-      - adminToken:
-        - destinations:read
-      responses:
-        '200':
-          description: The destination types.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/DestinationType'
-                  has_more:
-                    type: boolean
-                  next_cursor:
-                    type:
-                    - string
-                    - 'null'
-                required:
-                - data
-                - has_more
-                - next_cursor
-              example:
-                data:
-                - type: webhook
-                  display_name: Webhook
-                  icon_url: https://api.tryterra.co/static/assets/img/destination_icons/webhook.webp
-                  config_fields:
-                  - name: url
-                    type: string
-                    required: true
-                    secret: false
-                    enum: null
-                  - name: delivery
-                    type: string
-                    required: false
-                    secret: false
-                    enum:
-                    - push
-                    - ping
-                has_more: false
-                next_cursor: null
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '429':
-          $ref: '#/components/responses/RateLimited'
   /team/invitations:
     post:
       operationId: createTeamInvitation
@@ -7854,19 +7670,6 @@ components:
             instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin
             code: token_limit_reached
             remediation: Revoke unused tokens, then retry.
-    PreconditionFailed:
-      description: The state the request was conditioned on has changed since it was read.
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-          example:
-            type: about:blank
-            title: precondition failed
-            detail: your Garmin configuration changed since you reviewed it
-            instance: /api/v3/admin/environments/prod-app-x81LmQ/unified-api/sources/garmin/webhook-endpoints/apply
-            code: precondition_failed
-            remediation: Read the webhook endpoints again, review them, and apply with the new fingerprint.
     ServiceUnavailable:
       description: A required subsystem is not available on this deployment.
       content:
@@ -8032,9 +7835,9 @@ components:
           default: webhook
           x-terra-help: 'Destination type, e.g. webhook, s3 or gcs (default: webhook).'
         config:
-          description: The type's configuration; GET /destination-types lists each type's fields. An active
-            destination needs every required field, and each missing one is a 400 naming it. An inactive
-            destination may be saved incomplete as a draft and finished with a PATCH.
+          description: The type's configuration; GET unified-api/destination-types lists each type's fields.
+            An active destination needs every required field, and each missing one is a 400 naming it.
+            An inactive destination may be saved incomplete as a draft and finished with a PATCH.
           anyOf:
           - $ref: '#/components/schemas/WebhookDestinationConfig'
           - $ref: '#/components/schemas/S3DestinationConfig'
@@ -8046,7 +7849,8 @@ components:
           - $ref: '#/components/schemas/KafkaDestinationConfig'
           - $ref: '#/components/schemas/SqlDestinationConfig'
           - $ref: '#/components/schemas/AzureblobDestinationConfig'
-          x-terra-help: Configuration JSON for the type; see destination-types list for its fields.
+          x-terra-help: Configuration JSON for the type; see unified-api destination-types list for its
+            fields.
         event_types:
           type: array
           description: Which events to deliver here, as a list of event-type names. Omitted or empty delivers
@@ -8134,9 +7938,9 @@ components:
           default: webhook
           x-terra-help: 'Destination type, e.g. webhook, s3 or gcs (default: webhook).'
         config:
-          description: The type's configuration; GET /destination-types lists each type's fields. An active
-            destination needs every required field, and each missing one is a 400 naming it. An inactive
-            destination may be saved incomplete as a draft and finished with a PATCH.
+          description: The type's configuration; GET unified-api/destination-types lists each type's fields.
+            An active destination needs every required field, and each missing one is a 400 naming it.
+            An inactive destination may be saved incomplete as a draft and finished with a PATCH.
           anyOf:
           - $ref: '#/components/schemas/WebhookDestinationConfig'
           - $ref: '#/components/schemas/S3DestinationConfig'
@@ -8148,7 +7952,8 @@ components:
           - $ref: '#/components/schemas/KafkaDestinationConfig'
           - $ref: '#/components/schemas/SqlDestinationConfig'
           - $ref: '#/components/schemas/AzureblobDestinationConfig'
-          x-terra-help: Configuration JSON for the type; see destination-types list for its fields.
+          x-terra-help: Configuration JSON for the type; see unified-api destination-types list for its
+            fields.
         event_types:
           type: array
           description: Which events to deliver here, as a list of event-type names. Omitted or empty delivers
@@ -8503,12 +8308,12 @@ components:
       x-terra-operations:
       - method_name: list
         operation: get
-        path: /destination-types
+        path: /environments/{dev_id}/unified-api/destination-types
         columns:
         - type
         - display_name
       x-terra-summary: Destination types and their configuration fields
-      x-terra-resource: destination-types
+      x-terra-resource: unified-api.destination-types
     DestinationSecrets:
       type: object
       description: A destination's stored secrets in plaintext.
@@ -10924,138 +10729,6 @@ components:
       - type
       - name
       - value
-    GarminWebhookEndpoints:
-      type: object
-      description: Every webhook row Terra manages in your own Garmin apps, and what applying would change.
-      properties:
-        provider:
-          type: string
-          description: The provider's slug, garmin.
-        host:
-          type: string
-          description: The custom domain the rows are pointed at, from the stored redirect.
-        locked:
-          type: boolean
-          description: Whether Garmin is still applying an earlier change. Applying is refused until it
-            is false.
-        fingerprint:
-          type: string
-          description: A digest of the rows as read now. Send it back to apply, so a change made since
-            you reviewed is refused. Also the ETag.
-        has_existing:
-          type: boolean
-          description: Whether some row points somewhere else now, so applying replaces it and needs acknowledge_replacing_existing.
-        entries:
-          type: array
-          description: One entry per managed row across your Garmin apps.
-          items:
-            $ref: '#/components/schemas/GarminWebhookEndpointEntry'
-      required:
-      - provider
-      - host
-      - locked
-      - fingerprint
-      - has_existing
-      - entries
-      x-terra-operations:
-      - method_name: retrieve
-        operation: get
-        path: /environments/{dev_id}/unified-api/sources/{provider}/webhook-endpoints
-        slow: true
-        timeout: 60s
-      - method_name: apply
-        operation: post
-        path: /environments/{dev_id}/unified-api/sources/{provider}/webhook-endpoints/apply
-        slow: true
-        timeout: 60s
-      x-terra-summary: The webhook URLs in your own Garmin app, which Terra sets for you
-      x-terra-resource: unified-api.sources.webhook-endpoints
-    GarminWebhookEndpointEntry:
-      type: object
-      description: A webhook row Terra manages and what applying would do to it.
-      properties:
-        app_id:
-          type: string
-          description: Which of your saved Garmin apps the row belongs to.
-        id:
-          type: string
-          description: Garmin's name for the row, e.g. dailiesUrl.
-        target:
-          type: string
-          description: The URL applying sets.
-        current:
-          description: The row as Garmin holds it now.
-          $ref: '#/components/schemas/GarminWebhookEndpointState'
-        action:
-          type: string
-          enum:
-          - ok
-          - set
-          - restore
-          - enable
-          - retype
-          description: ok leaves the row as it is. set fills an empty URL, restore replaces a URL pointing
-            elsewhere, enable switches the row on, and retype sets its upload type to push.
-      required:
-      - app_id
-      - id
-      - target
-      - current
-      - action
-    GarminWebhookEndpointState:
-      type: object
-      description: A webhook row as Garmin holds it.
-      properties:
-        url:
-          type: string
-          description: The URL, or an empty string when none is set.
-        enabled:
-          type: boolean
-        on_hold:
-          type: boolean
-        upload_type:
-          type:
-          - string
-          - 'null'
-          description: push or ping. Null for rows without an upload type.
-      required:
-      - url
-      - enabled
-      - on_hold
-      - upload_type
-    ApplyWebhookEndpointsRequest:
-      type: object
-      properties:
-        fingerprint:
-          type: string
-          description: The fingerprint of the endpoints you reviewed. Required unless sent as If-Match;
-            when both are sent they must match.
-          x-terra-help: Fingerprint from the review; the apply is refused if Garmin changed since.
-        acknowledge_replacing_existing:
-          type: boolean
-          description: 'Must be true when the review''s has_existing is true: applying replaces URLs that
-            point elsewhere.'
-          x-terra-help: Replace webhook URLs that point elsewhere; needed when the review has existing
-            ones.
-      x-terra-most-common:
-      - fingerprint
-      - acknowledge_replacing_existing
-    AppliedWebhookEndpoints:
-      type: object
-      description: The Garmin apps whose webhook rows were written. Garmin can accept a write before it
-        applies it, so read the webhook endpoints again to confirm.
-      properties:
-        provider:
-          type: string
-          description: The provider's slug, garmin.
-        applied_app_ids:
-          type: array
-          description: The apps written, in order. Empty when nothing needed changing.
-          items:
-            type: string
-      required:
-      - provider
-      - applied_app_ids
     SubscribeRequest:
       type: object
       properties:
@@ -12644,6 +12317,36 @@ components:
       type: object
       unevaluatedProperties:
         $ref: '#/components/schemas/UsageMeter'
+    DestinationConfigField:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - string
+          - integer
+          - object
+        required:
+          type: boolean
+          description: Needed for the destination to deliver. A draft saved inactive may leave it unset.
+        secret:
+          type: boolean
+          description: 'Write-only: reads return it masked.'
+        enum:
+          type:
+          - array
+          - 'null'
+          description: The values the field accepts, or null when it is free text.
+          items:
+            type: string
+      required:
+      - name
+      - type
+      - required
+      - secret
+      - enum
     AwsSecretRefConfigView:
       type: object
       properties:
@@ -13218,36 +12921,6 @@ components:
           description: The destination's own webhook signing secret. Null when it signs with the environment's
             signing secret.
           x-terra-secret: true
-    DestinationConfigField:
-      type: object
-      properties:
-        name:
-          type: string
-        type:
-          type: string
-          enum:
-          - string
-          - integer
-          - object
-        required:
-          type: boolean
-          description: Needed for the destination to deliver. A draft saved inactive may leave it unset.
-        secret:
-          type: boolean
-          description: 'Write-only: reads return it masked.'
-        enum:
-          type:
-          - array
-          - 'null'
-          description: The values the field accepts, or null when it is free text.
-          items:
-            type: string
-      required:
-      - name
-      - type
-      - required
-      - secret
-      - enum
 x-terra-nodes:
   billing: Subscriptions, invoices, payment method and usage
   models: The catalog of generally-available models, and the per-environment history of model runs
