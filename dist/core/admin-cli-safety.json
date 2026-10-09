@@ -485,6 +485,16 @@
     ],
     "sensitive": false
   },
+  "listSelectableDataTypes": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "dataconfig:read"
+    ],
+    "sensitive": false
+  },
   "listSourceTypes": {
     "confirmation_reason": null,
     "dangerous": false,

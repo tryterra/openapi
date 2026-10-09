@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.09.1
+  version: 2026.10.09.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -3890,6 +3890,64 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SupabaseProvisionRequest'
+  /environments/{dev_id}/unified-api/data-types:
+    get:
+      operationId: listSelectableDataTypes
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: List the data types you can select with the scopes PUT. Types your account is not
+        entitled to are omitted.
+      tags:
+      - dataconfig
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SelectableDataType'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+                required:
+                - data
+                - has_more
+                - next_cursor
+              example:
+                data:
+                - data_type: activity
+                - data_type: body
+                - data_type: daily
+                - data_type: sleep
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+      summary: List selectable data types
+      description: Every data type the PUT on unified-api/scopes accepts for this environment, in data-type
+        order. ATHLETE is omitted because it is always selected, and a type gated behind an entitlement
+        the account does not hold is omitted rather than flagged, so the list is exactly what a PUT can
+        select without a 403. Which types are currently selected is on unified-api/scopes. The list is
+        complete in one response.
+      security:
+      - adminToken:
+        - dataconfig:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
   /environments/{dev_id}/unified-api/scopes:
     get:
       operationId: listUnifiedApiScopes
@@ -10613,6 +10671,21 @@ components:
           type: object
           additionalProperties:
             type: integer
+    SelectableDataType:
+      type: object
+      properties:
+        data_type:
+          type: string
+          description: A data type the PUT on unified-api/scopes accepts for this environment, e.g. activity.
+            Upper-case it to send it there.
+      required:
+      - data_type
+      x-terra-operations:
+      - method_name: list
+        operation: get
+        path: /environments/{dev_id}/unified-api/data-types
+      x-terra-summary: Which data types the environment can collect
+      x-terra-resource: unified-api.data.data-types
     SelectedDataField:
       type: object
       properties:
