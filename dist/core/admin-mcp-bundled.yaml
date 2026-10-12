@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.09.3
+  version: 2026.10.12
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -4412,12 +4412,12 @@ paths:
       summary: Delivery-history debug surface
       description: 'Delivery metadata, not payloads: each row is one dispatch with its HTTP status, latency
         and size, while the body that was sent is a separate payloads:read-gated sub-resource. Keyset
-        cursor pagination over a bounded window: the default is the trailing 7 days, since and until move
-        it, and nothing older than the 14 days a payload is retained for is worth querying. Filter by
-        outcome (delivered or failed), provider, data_type, destination_type, destination, destination_url,
-        summary_id, user_id, reference_id, or event_id for one exact event. An event_id widens the default
-        window to 14 days. No matching deliveries returns an empty page; an unknown user_id or reference_id
-        returns 404.'
+        cursor pagination over a bounded window, newest first unless order_by and order say otherwise:
+        the default is the trailing 7 days, since and until move it, and nothing older than the 14 days
+        a payload is retained for is worth querying. Filter by outcome (delivered or failed), provider,
+        data_type, destination_type, destination, destination_url, summary_id, user_id, reference_id,
+        or event_id for one exact event. An event_id widens the default window to 14 days. No matching
+        deliveries returns an empty page; an unknown user_id or reference_id returns 404.'
       security:
       - adminToken:
         - events:read
@@ -4556,6 +4556,26 @@ paths:
           type: string
         description: Exact event id. An id is identity-keyed rather than time-keyed, so it widens the
           default window from 7 days to the 14 days a payload is retained for.
+      - name: order_by
+        x-terra-help: 'Sort field: sent_at (default), http_status, provider, data_type, destination_type
+          or response_time_ms. Ties fall back to sent_at.'
+        in: query
+        schema:
+          type: string
+          enum:
+          - sent_at
+          - http_status
+          - provider
+          - data_type
+          - destination_type
+          - response_time_ms
+          default: sent_at
+        description: Field to sort by. Rows that tie fall back to sent_at, then event_id, in the same
+          direction, so every page is a stable slice. response_time_ms sorts on the whole milliseconds
+          the response carries; a delivery with no recorded response time sorts as -1. A cursor keeps
+          the order its first page was read in, so order_by is ignored while cursor is set, though it
+          must still be valid.
+      - $ref: '#/components/parameters/Order'
   /environments/{dev_id}/webhook-events/resend:
     post:
       operationId: resendWebhookEvent
@@ -7578,6 +7598,19 @@ components:
       description: When true the operation commits nothing and answers 200 with a DryRunResult — {dry_run,
         would, preview} — whatever its live success code is. Operations whose live success is also 200
         publish both the live response and DryRunResult in the response schema.
+    Order:
+      name: order
+      x-terra-help: 'Sort direction for order_by: desc (default) or asc.'
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+        default: desc
+      description: Direction of the order_by sort. Defaults to desc. A cursor keeps the order its first
+        page was read in, so order is ignored while cursor is set, though it must still be valid.
     PayloadSamples:
       name: samples
       x-terra-help: Set to false to leave out the time-series sample arrays, which keeps the payload small.
