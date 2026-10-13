@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.13
+  version: 2026.10.13.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -4082,12 +4082,19 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: List end-user connections
-      description: A page of the environment's end-user connections, newest first (created-time desc), each with the scopes the user granted the provider, with keyset cursor pagination. Filter by provider, active, user_id, reference_id and a created_since/created_until window.
+      description: A page of the environment's end-user connections, newest first (created-time desc), each with the scopes the user granted the provider, with keyset cursor pagination. Filter by provider, active, user_id, reference_id and a created_since/created_until window. With `q` it is a search instead, for a search box. It matches reference_id by case-insensitive prefix, and when `q` is a full UUID also user_id exactly, with the user_id match first. A search has no cursor; `has_more` means more connections match and `q` should be refined.
       security:
         - adminToken:
             - connections:read
       parameters:
         - $ref: '#/components/parameters/DevId'
+        - name: q
+          in: query
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 128
+          description: Text to search for, trimmed, 3 to 128 characters. Matches reference_id by case-insensitive prefix. When it is a full hyphenated UUID it also matches user_id exactly; a partial UUID is treated as a reference prefix only. Combines with provider and active; combining it with cursor, user_id, reference_id or a creation-time bound is a 400. The user_id match comes first, then reference_id matches in reference order; limit defaults to 10 and is clamped to 20, and next_cursor is always null.
         - name: provider
           in: query
           schema:
@@ -4139,12 +4146,12 @@ paths:
             type: integer
             default: 50
             minimum: 1
-          description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
+          description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused. With q, defaults to 10 and is clamped to 20.
         - name: cursor
           in: query
           schema:
             type: string
-          description: The previous page's next_cursor. It carries the window the first page resolved, so the creation-time bounds are ignored while it is set.
+          description: The previous page's next_cursor. It carries the window the first page resolved, so the creation-time bounds are ignored while it is set. Not accepted with q.
   /environments/{dev_id}/users/stats:
     get:
       operationId: getUserStats
@@ -5864,7 +5871,7 @@ paths:
       tags:
         - models
       summary: Model-run history
-      description: A page of the environment's model runs (one per GET /v2/models/run), newest first, from the 30-day run log. user_id filters the stored Terra user UUID directly; an unknown model yields an empty page. status filters by run outcome; run_id matches an exact run within the selected window. Both browsing and run_id lookups default to the last 30 days; since, until and cursor still apply.
+      description: A page of the environment's model runs (one per GET /v2/models/run), newest first, from the 30-day run log. user_id filters the stored Terra user UUID directly; an unknown model yields an empty page. status filters by run outcome; run_id matches an exact run within the selected window. q searches user_id, run_id and error for a case-insensitive substring. Both browsing and run_id lookups default to the last 30 days; since, until and cursor still apply.
       security:
         - adminToken:
             - models:read
@@ -5894,6 +5901,13 @@ paths:
           schema:
             type: string
           description: Exact run id within the selected window. Defaults to the last 30 days, as browsing does; since, until and cursor still apply.
+        - name: q
+          in: query
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 128
+          description: A case-insensitive substring to find in the run's user_id, run_id or error, trimmed, 3 to 128 characters. Combines with every other filter and with cursor paging, except run_id, which is a 400.
         - name: since
           in: query
           schema:
