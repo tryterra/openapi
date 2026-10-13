@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.12.1
+  version: 2026.10.13
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -9352,7 +9352,7 @@ components:
       properties:
         store:
           type: string
-          description: The secret store to read from, e.g. aws. An unrecognised store is a 400.
+          description: 'The secret store to read from: aws or gcp. An unrecognised store is a 400.'
           minLength: 1
         config:
           description: Where in the store the secret is.
@@ -9376,7 +9376,7 @@ components:
       properties:
         store:
           type: string
-          description: The secret store the secret is read from, as its type, e.g. aws.
+          description: 'The secret store the secret is read from, as its type: aws or gcp.'
         config:
           $ref: '#/components/schemas/SecretRefConfigView'
         client_secret_field:
@@ -11837,10 +11837,19 @@ components:
       required:
         - role_arn
         - secret_arn
+    GcpSecretRefConfigView:
+      type: object
+      properties:
+        secret_name:
+          type: string
+          description: The Secret Manager secret holding the secret, as projects/{project}/secrets/{secret}, with /versions/{version} when pinned.
+      required:
+        - secret_name
     SecretRefConfigView:
       description: Where in the store the secret is, by store type.
       anyOf:
         - $ref: '#/components/schemas/AwsSecretRefConfigView'
+        - $ref: '#/components/schemas/GcpSecretRefConfigView'
     AwsSecretRefConfig:
       type: object
       properties:
@@ -11856,10 +11865,21 @@ components:
         - role_arn
         - secret_arn
       additionalProperties: false
+    GcpSecretRefConfig:
+      type: object
+      properties:
+        secret_name:
+          type: string
+          description: The Secret Manager secret, as projects/{project}/secrets/{secret}. Add /versions/{version} to pin one; otherwise Terra reads the latest. The secret must carry the label your secret store type names, set to your External ID.
+          minLength: 1
+      required:
+        - secret_name
+      additionalProperties: false
     SecretRefConfig:
       description: Where in the store the secret is, by store type.
       anyOf:
         - $ref: '#/components/schemas/AwsSecretRefConfig'
+        - $ref: '#/components/schemas/GcpSecretRefConfig'
     WebhookDestinationConfig:
       type: object
       properties:
