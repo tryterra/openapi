@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.13.1
+  version: 2026.10.14
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -4649,18 +4649,23 @@ paths:
       x-terra-mcp-annotations:
         destructiveHint: false
       x-terra-help: Generate a synthetic event in the selected environment and deliver it to its destinations
-        (testdata:write). Use dry_run to see the payload without delivering.
+        (testdata:write). Use dispatch=false to only build the payload, which needs no destination; dry_run
+        previews what a delivery would do.
       tags:
       - webhookevents
       responses:
         '200':
-          description: DryRunResult when ?dry_run=true. The preview is the GenerateEventResult that a
-            real call would return, with dispatched false; nothing is stored or delivered, and the preview's
-            event_id is not a real event.
+          description: The built payload when dispatch is false, as a GenerateEventResult with dispatched
+            false; or DryRunResult when ?dry_run=true, whose preview is the GenerateEventResult a real
+            call would return. Either way nothing is stored or delivered, and the event_id is not a real
+            event.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DryRunResult'
+                type: object
+                anyOf:
+                - $ref: '#/components/schemas/GenerateEventResult'
+                - $ref: '#/components/schemas/DryRunResult'
               example:
                 dry_run: true
                 would: dispatch
@@ -4709,16 +4714,17 @@ paths:
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Generate a synthetic test event
-      description: Builds a realistic payload of the requested type for a made-up user, normalises it
+      description: 'Builds a realistic payload of the requested type for a made-up user, normalises it
         exactly as live provider data is, stores it, and queues it to every destination the dispatcher
         would deliver it to (active, deliverable type, event_types admit the type), or to the one named
         by destination_id. Register the receiver as a destination first; there is no ad-hoc URL, and having
         no eligible destination (or naming an inactive or non-accepting one) is a 422 on real and dry-run
         calls alike. The payload is returned in the response so the caller sees what the destination will
         receive. Pass samples false to leave time-series samples out of the generated event. The event
-        is marked synthetic end to end and never touches a real connection. Pass ?dry_run=true to get
-        the payload without storing or delivering anything. Requires the environment to be entitled to
-        the Unified API.
+        is marked synthetic end to end and never touches a real connection. Pass dispatch false to only
+        build and return the payload: nothing is stored or delivered and no destination is consulted,
+        so it answers without one. Pass ?dry_run=true to preview what a dispatching call would do, failing
+        as it would. Requires the environment to be entitled to the Unified API.'
       security:
       - adminToken:
         - testdata:write
@@ -8752,6 +8758,14 @@ components:
             it.
           default: true
           x-terra-help: Set to false to leave time-series samples out of the generated event.
+        dispatch:
+          type: boolean
+          description: 'Whether to store the event and queue it for delivery. False only builds and returns
+            the payload: no destination is consulted, so it answers whether or not one is registered,
+            and destination_id is a 400.'
+          default: true
+          x-terra-help: Set to false to only build and return the payload, without delivering it. Needs
+            no destination.
       required:
       - type
       x-terra-most-common:
