@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.14
+  version: 2026.10.20
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -6376,6 +6376,286 @@ paths:
           $ref: '#/components/responses/InternalError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/{mode}/events:
+    get:
+      operationId: listVantageEvents
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: List Vantage webhook events and how their delivery ended, in production or sandbox
+        (events:read). Defaults to the last 30 days, newest first. Payloads are separate.
+      tags:
+      - vantage
+      summary: List Vantage webhook events
+      description: 'Webhook events Vantage sent this environment in one mode, with how delivery ended:
+        the outcome, the last HTTP status and the attempt count. Keyset cursor pagination over a bounded
+        window, newest first unless order_by and order say otherwise; the default window is the trailing
+        30 days and since and until move it. Filters combine, and a row must match every one given. The
+        order_id and client_order_reference_id filters reach through the event''s order, so they never
+        match a test event. No product grant is needed: this is delivery metadata, and the body is a separate
+        payloads:read sub-resource.'
+      security:
+      - adminToken:
+        - events:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/VantageMode'
+      - name: outcome
+        x-terra-help: One outcome, or failed for rejected, invalid and dead_lettered together.
+        in: query
+        schema:
+          type: string
+          enum:
+          - delivered
+          - rejected
+          - invalid
+          - dead_lettered
+          - replayed
+          - suppressed
+          - failed
+        description: Only events whose delivery ended this way. failed matches rejected, invalid and dead_lettered.
+      - name: event_type
+        x-terra-help: Webhook event types, e.g. order.status_changed. Repeat to match any type.
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        description: Webhook event types, e.g. order.status_changed or order_item.results_status_change.
+          An event matching any of them is returned; an unknown type is a 400.
+      - name: order_id
+        x-terra-help: Exact Vantage order IDs. Repeat to match any order.
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        description: Only events about these orders, matched exactly. Repeat the parameter or join the
+          ids with commas; an event about any of them is returned.
+      - name: client_order_reference_id
+        x-terra-help: Exact reference you set when creating the order.
+        in: query
+        schema:
+          type: string
+        description: Only events about the order with this reference, matched exactly.
+      - name: since
+        x-terra-help: 'Inclusive oldest event_created_at (RFC3339). Default: 30 days before until.'
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Oldest event_created_at to return, inclusive, as RFC3339. Defaults to 30 days before
+          until.
+      - name: until
+        x-terra-help: 'Inclusive newest event_created_at (RFC3339). Default: now.'
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Newest event_created_at to return, inclusive, as RFC3339. Defaults to now.
+      - name: limit
+        x-terra-help: 'Positive rows per page: default 50, clamped to 200. Pass the previous page''s next_cursor
+          as cursor for the next page.'
+        x-terra-mcp-help: 'Positive rows per page: default 50, clamped to 200. Pass the previous page''s
+          next_cursor as cursor for the next page.'
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 50
+        description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
+      - name: cursor
+        x-terra-help: Previous next_cursor, in the same mode; its window and sort override since/until/order_by.
+        in: query
+        schema:
+          type: string
+        description: The previous page's next_cursor. It carries the window and sort the first page resolved,
+          so since, until, order_by and order are ignored while it is set, though supplied values must
+          still be valid. A cursor from the other mode is a 400.
+      - name: order_by
+        x-terra-help: 'Sort field: event_created_at (default) or completed_at. Ties fall back to event_id.'
+        in: query
+        schema:
+          type: string
+          enum:
+          - event_created_at
+          - completed_at
+          default: event_created_at
+        description: Field to sort by. Rows that tie fall back to event_id in the same direction, so every
+          page is a stable slice.
+      - $ref: '#/components/parameters/Order'
+      responses:
+        '200':
+          description: A page of Vantage webhook events (keyset cursor).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VantageEvent'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+                required:
+                - data
+                - has_more
+                - next_cursor
+              example:
+                data:
+                - event_id: '249956485092777984'
+                  event_type: order.status_changed
+                  order_id: '333410942627700736'
+                  order_item_id: null
+                  client_order_reference_id: acme-order-1042
+                  outcome: rejected
+                  final_status_code: 500
+                  attempts: 5
+                  completed_at: '2026-10-19T09:14:03.220Z'
+                  event_created_at: '2026-10-19T08:58:41.107Z'
+                has_more: true
+                next_cursor: MTc2MDg2MzkyMTEwNzAwMDAwMHwxNzU4MjcxOTIxMTA3MDAwMDAwfDE3NjA4NjM5MjExMDcwMDAwMDB8fHxjSEp2WkhWamRHbHZiZ3wyNDk5NTY0ODUwOTI3Nzc5ODQ
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/{mode}/events/{event_id}:
+    get:
+      operationId: getVantageEvent
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Read one Vantage webhook event and the URL it was sent to, in production or sandbox
+        (events:read). Unknown returns 404; the payload is separate.
+      tags:
+      - vantage
+      summary: Fetch a Vantage webhook event
+      description: One Vantage webhook event, as the list returns it, plus the URL it was sent to. An
+        event that does not belong to this environment in this mode is a 404. The body is a separate payloads:read
+        sub-resource.
+      security:
+      - adminToken:
+        - events:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/VantageMode'
+      - name: event_id
+        x-terra-help: Vantage event ID from vantage events list, in the same mode; unknown or another
+          environment's returns 404.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The event to read, by the event_id the list returns. An id this environment's events
+          in this mode do not include is a 404.
+      responses:
+        '200':
+          description: The Vantage webhook event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VantageEventDetail'
+              example:
+                event_id: '249956485092777984'
+                event_type: order.status_changed
+                order_id: '333410942627700736'
+                order_item_id: null
+                client_order_reference_id: acme-order-1042
+                outcome: rejected
+                final_status_code: 500
+                attempts: 5
+                completed_at: '2026-10-19T09:14:03.220Z'
+                event_created_at: '2026-10-19T08:58:41.107Z'
+                webhook_url: https://api.acme.com/terra/vantage
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/{mode}/events/{event_id}/payload:
+    get:
+      operationId: getVantageEventPayload
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Read the body a Vantage webhook event carries, in production or sandbox (payloads:read).
+        Needs a current Vantage grant or a verified purchase of the order; kept 30 days.
+      tags:
+      - vantage
+      summary: Fetch a Vantage webhook event's payload
+      description: 'The body the event''s webhook carries, rebuilt from the stored event and rendered
+        in the environment''s pinned Vantage API version. It names the test taker, so it takes the same
+        access as reading the order: a current Vantage grant for the mode, or a verified purchase of the
+        order. A test event names no order and needs a current grant. Without either it is a 403. The
+        body is kept for 30 days after delivery; an older event is a 404 whose remediation says so.'
+      security:
+      - adminToken:
+        - payloads:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/VantageMode'
+      - name: event_id
+        x-terra-help: Vantage event ID from vantage events list, in the same mode; unknown or another
+          environment's returns 404.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The event to read, by the event_id the list returns. An id this environment's events
+          in this mode do not include is a 404.
+      responses:
+        '200':
+          description: The webhook body.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                event_id: '249956485092777984'
+                event_type: order.status_changed
+                timestamp: 1792513330
+                data:
+                  order_id: '333410942627700736'
+                  status: order.delivery_fulfilled
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /environments/{dev_id}/workouts/metadata:
     get:
       operationId: listWorkoutMetadata
@@ -7650,6 +7930,18 @@ components:
         default: desc
       description: Direction of the order_by sort. Defaults to desc. A cursor keeps the order its first
         page was read in, so order is ignored while cursor is set, though it must still be valid.
+    VantageMode:
+      name: mode
+      x-terra-help: 'Vantage deployment: production or sandbox. Each holds its own events.'
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+        - production
+        - sandbox
+      description: The Vantage deployment to read, production or sandbox. They are separate deployments
+        with separate events, so an event id from one is not found in the other.
     PayloadSamples:
       name: samples
       x-terra-help: Set to false to leave out the time-series sample arrays, which keeps the payload small.
@@ -11698,6 +11990,167 @@ components:
       required:
       - version
       - summary
+    VantageEvent:
+      type: object
+      description: One Vantage webhook event and how its delivery ended. Production and sandbox are separate
+        Vantage deployments with their own events, so every path names its mode.
+      properties:
+        event_id:
+          type: string
+          description: The event's id, as the webhook's event_id carries it.
+        event_type:
+          type: string
+          description: The webhook's event type, e.g. order.status_changed or order_item.results_status_change.
+        order_id:
+          type:
+          - string
+          - 'null'
+          description: The order the event is about. null for a test event, which has no order.
+        order_item_id:
+          type:
+          - string
+          - 'null'
+          description: The order item the event is about. null when the event is about the whole order.
+        client_order_reference_id:
+          type:
+          - string
+          - 'null'
+          description: Your reference for the order, as set when it was created. null when there is none,
+            and for a test event.
+        outcome:
+          type: string
+          enum:
+          - delivered
+          - rejected
+          - invalid
+          - dead_lettered
+          - replayed
+          - suppressed
+          description: 'How delivery ended: delivered, rejected (a non-2xx response), invalid (the URL
+            could not be delivered to), dead_lettered (retries exhausted), replayed or suppressed.'
+        final_status_code:
+          type:
+          - integer
+          - 'null'
+          description: The last HTTP status your endpoint returned. null when no response was recorded.
+          minimum: -2147483648
+          maximum: 2147483647
+        attempts:
+          type: integer
+          description: How many delivery attempts were made.
+          minimum: -2147483648
+          maximum: 2147483647
+        completed_at:
+          type: string
+          format: date-time
+          description: When delivery finished.
+        event_created_at:
+          type: string
+          format: date-time
+          description: When the event was created. since and until filter on this.
+      required:
+      - event_id
+      - event_type
+      - order_id
+      - order_item_id
+      - client_order_reference_id
+      - outcome
+      - final_status_code
+      - attempts
+      - completed_at
+      - event_created_at
+      x-terra-operations:
+      - method_name: list
+        operation: get
+        path: /environments/{dev_id}/vantage/{mode}/events
+        columns:
+        - event_id
+        - event_type
+        - order_id
+        - outcome
+        - final_status_code
+        - attempts
+        - event_created_at
+      - method_name: retrieve
+        operation: get
+        path: /environments/{dev_id}/vantage/{mode}/events/{event_id}
+      - method_name: retrieve-payload
+        operation: get
+        path: /environments/{dev_id}/vantage/{mode}/events/{event_id}/payload
+      x-terra-summary: Inspect Vantage webhook events and their payloads
+      x-terra-resource: vantage.events
+    VantageEventDetail:
+      type: object
+      description: A Vantage webhook event and the URL it was sent to.
+      properties:
+        event_id:
+          type: string
+          description: The event's id, as the webhook's event_id carries it.
+        event_type:
+          type: string
+          description: The webhook's event type, e.g. order.status_changed or order_item.results_status_change.
+        order_id:
+          type:
+          - string
+          - 'null'
+          description: The order the event is about. null for a test event, which has no order.
+        order_item_id:
+          type:
+          - string
+          - 'null'
+          description: The order item the event is about. null when the event is about the whole order.
+        client_order_reference_id:
+          type:
+          - string
+          - 'null'
+          description: Your reference for the order, as set when it was created. null when there is none,
+            and for a test event.
+        outcome:
+          type: string
+          enum:
+          - delivered
+          - rejected
+          - invalid
+          - dead_lettered
+          - replayed
+          - suppressed
+          description: 'How delivery ended: delivered, rejected (a non-2xx response), invalid (the URL
+            could not be delivered to), dead_lettered (retries exhausted), replayed or suppressed.'
+        final_status_code:
+          type:
+          - integer
+          - 'null'
+          description: The last HTTP status your endpoint returned. null when no response was recorded.
+          minimum: -2147483648
+          maximum: 2147483647
+        attempts:
+          type: integer
+          description: How many delivery attempts were made.
+          minimum: -2147483648
+          maximum: 2147483647
+        completed_at:
+          type: string
+          format: date-time
+          description: When delivery finished.
+        event_created_at:
+          type: string
+          format: date-time
+          description: When the event was created. since and until filter on this.
+        webhook_url:
+          type: string
+          description: The URL the event was sent to.
+      required:
+      - event_id
+      - event_type
+      - order_id
+      - order_item_id
+      - client_order_reference_id
+      - outcome
+      - final_status_code
+      - attempts
+      - completed_at
+      - event_created_at
+      - webhook_url
     SetVantageApiVersionRequest:
       type: object
       properties:

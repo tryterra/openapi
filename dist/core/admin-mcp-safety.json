@@ -315,6 +315,26 @@
     ],
     "sensitive": false
   },
+  "getVantageEvent": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "events:read"
+    ],
+    "sensitive": false
+  },
+  "getVantageEventPayload": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "payloads:read"
+    ],
+    "sensitive": true
+  },
   "getWebhookEvent": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -572,6 +592,16 @@
     "method": "get",
     "scopes": [
       "connections:read"
+    ],
+    "sensitive": false
+  },
+  "listVantageEvents": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "events:read"
     ],
     "sensitive": false
   },
