@@ -665,16 +665,6 @@
     ],
     "sensitive": false
   },
-  "patchEnvironmentProfile": {
-    "confirmation_reason": null,
-    "dangerous": false,
-    "dry_run": true,
-    "method": "patch",
-    "scopes": [
-      "account:write"
-    ],
-    "sensitive": false
-  },
   "patchMe": {
     "confirmation_reason": null,
     "dangerous": false,

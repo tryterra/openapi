@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.21.1
+  version: 2026.10.21.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -1293,65 +1293,6 @@ paths:
             - account:read
       parameters:
         - $ref: '#/components/parameters/DevId'
-    patch:
-      operationId: patchEnvironmentProfile
-      tags:
-        - environments
-      responses:
-        '200':
-          description: Updated (or DryRunResult when ?dry_run=true).
-          content:
-            application/json:
-              schema:
-                type: object
-                anyOf:
-                  - type: object
-                    properties:
-                      profile:
-                        $ref: '#/components/schemas/EnvironmentProfile'
-                    required:
-                      - profile
-                  - $ref: '#/components/schemas/DryRunResult'
-              example:
-                profile:
-                  dev_id: prod-app-x81LmQ
-                  company_id: cus_9f3k2m
-                  name: Production (EU)
-                  billable: true
-                  widget_config: null
-                  widget_name: null
-                  app_logo: null
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/ServiceUnavailable'
-      summary: Update the environment profile's display fields
-      description: 'Display fields only, `name` and `billable`, at least one of them, with omitted fields left unchanged. The widget config and the data-type selection have their own endpoints, and `active` is deliberately not writable here: setting it would mean round-tripping the credential''s whole data-type set, which could lose a concurrent change.'
-      security:
-        - adminToken:
-            - account:write
-      parameters:
-        - $ref: '#/components/parameters/DevId'
-        - $ref: '#/components/parameters/DryRun'
-        - $ref: '#/components/parameters/IdempotencyKey'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchEnvironmentProfileRequest'
   /environments/{dev_id}/unified-api/widget/config:
     get:
       operationId: getWidgetConfig
@@ -8544,18 +8485,6 @@ components:
             - $ref: '#/components/schemas/KafkaDestinationConfig'
             - $ref: '#/components/schemas/SqlDestinationConfig'
             - $ref: '#/components/schemas/AzureblobDestinationConfig'
-    PatchEnvironmentProfileRequest:
-      type: object
-      description: 'Display fields only; the widget columns and the data-type selection have their own PUT surfaces. `active` is deliberately absent: writing it means round-tripping the credential''s whole data-type set, so a second writer here would silently lose a concurrent data-type change. It stays on the v2 route until a field-level RPC exists. Every field is optional and an omitted one is left unchanged; at least one is required.'
-      properties:
-        name:
-          type: string
-          description: 'Display name for the environment. Cannot be cleared: null is rejected.'
-        billable:
-          type: boolean
-          description: Whether usage on this environment is billable.
-      additionalProperties: false
-      minProperties: 1
     PatchMeRequest:
       type: object
       description: Partial update of the calling principal's own dashboard user. Every property is optional; at least one is required. Gated on account:write (in the default mint set); the write is strictly self-scoped. Requires the token to resolve to an own user (see DashboardUser) — otherwise 404 not_found.
