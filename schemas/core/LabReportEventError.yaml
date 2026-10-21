@@ -4,14 +4,21 @@ properties:
   code:
     type: string
     examples:
-      - extraction_failed
-    description: "Finite code: file_unreadable, extraction_failed, standardization_failed, internal."
+      - unsupported_report_type
+    description: "Machine-readable failure code. An open set: handle codes you do not recognise like internal. unsupported_report_type: the file is not a lab report or DXA scan (see document_class). file_unreadable: the file could not be read, e.g. a blurry or cropped photo, or an image that does not decode; ask the user for a clearer one. file_too_large: the files together exceed what one report can be read from; upload fewer or smaller files. no_results_found: the report was readable but has no results in it. extraction_failed: the results could not be extracted from the file. standardization_failed: the extracted results could not be standardized. internal: a fault on our side."
   message:
     type: string
+    description: Human-readable explanation. Not stable; branch on code.
   retriable:
     type: boolean
+    description: "Whether POST …/reprocess may succeed with no change to the input. False means the input must change first: upload a different file."
+  document_class:
+    type: string
+    examples:
+      - other_medical
+    description: "For unsupported_report_type only: what the file was judged to be instead of a lab report or scan. other_medical (another medical document, e.g. a DNA test or an imaging report) or non_medical. An open set."
 required:
   - code
   - message
   - retriable
-description: Structured failure reason. retriable tells you whether re-submitting the same input could succeed (a transient internal fault) or the input must change first (e.g. an unreadable file).
+description: Structured failure reason, on the lab_report.failed webhook and on a failed session.

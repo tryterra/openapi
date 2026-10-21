@@ -1,0 +1,21 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  data:
+    type: array
+    items:
+      $ref: LabReportSession.yaml
+    description: This page's sessions, summary fields only.
+  has_more:
+    type: boolean
+    description: Whether another page follows.
+  next_cursor:
+    anyOf:
+      - type: string
+      - type: "null"
+    description: Opaque cursor for the next page; send it back as cursor with the same filters. null on the last page.
+required:
+  - data
+  - has_more
+  - next_cursor
+description: One page of the report list, newest first, as API version 2026-10-21 and later serve it.

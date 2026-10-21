@@ -14,3 +14,4 @@ properties:
 required:
   - upload_id
   - current_status
+description: Returned by the upload endpoint. Every file of an upload belongs to one report, read in the order the files were sent.

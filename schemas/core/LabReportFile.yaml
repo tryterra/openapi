@@ -5,6 +5,11 @@ properties:
     type: string
   presigned_url:
     type: string
+  content_type:
+    type: string
+    examples:
+      - image/heic
+    description: An uploaded file's content type. Present on files only.
 required:
   - presigned_url
 description: One downloadable object with a presigned URL.

@@ -19,7 +19,7 @@ properties:
     type: string
     examples:
       - sent
-    description: Current status as a clean lowercase string (open enum), e.g. processing, sent, partially_sent, failed.
+    description: "Current status as a clean lowercase string (open enum — handle unknown values gracefully). In flight: processing, processed, standardizing, standardized, sending, and retry_scheduled (waiting to retry after a temporary model-provider error; the report is still being worked on). Terminal: sent, partially_sent (delivered to some destinations), delivery_failed (processed and results available, but no destination accepted the delivery), failed (see error), cancelled, deleted."
   uploaded_at:
     type: string
     format: date-time
@@ -76,6 +76,9 @@ properties:
     description: Report-level panels that results reference by panel_id. Omitted if the report has no panel grouping.
   report_notes:
     type: string
+  error:
+    $ref: LabReportEventError.yaml
+    description: "Why the report failed: the same object the lab_report.failed webhook carries. Present only while current_status is failed."
 required:
   - session_id
   - report_type

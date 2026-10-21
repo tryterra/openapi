@@ -2,8 +2,10 @@ openapi: 3.1.0
 info:
   description: |
     The Terra API (v2 surface, served at access.tryterra.co/api/v2). Protected product operations require a current product entitlement in addition to valid credentials and token scopes. Missing access returns HTTP 403 with code entitlement_required; disabled environments return environment_disabled. Unavailable current authorization returns HTTP 503 with code authorization_unavailable. Billing, configuration and recovery remain available under their existing permissions. Completed Health Scores stay with the caller's own authorized data. Pass recipients require their own Health Scores entitlement; otherwise enrichment fields retain null values. New score computation requires Health Scores access. Retained lab reports remain readable through the report endpoints with valid credentials and ownership, without a current Lab Reports entitlement. New uploads and reprocessing require it.
+
+    **Lab reports versioning.** The report endpoints (`/reports`, and the deprecated `/lab-reports`) are versioned by date. Send `X-Terra-Version: <date>` to choose the version a request is served in: the newest version on or before that date. Without the header a request gets the environment's pinned version, or the latest for an environment without a pin; change the pin through the admin API (`PUT /api/v3/admin/environments/{dev_id}/lab-reports/api-version`). Every authenticated response carries `X-Terra-Version` stating the version it was served in. A malformed or future date returns 400 with code `invalid_api_version`. Versions are `2026-10-21` (latest: the report list is paginated) and `2026-03-24` (the list returns up to 500 reports in `sessions`). This document describes the latest version. Webhooks are not versioned.
   title: TerraAPI
-  version: 2026.10.20
+  version: 2026.10.21
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -1372,11 +1374,12 @@ paths:
   /reports:
     post:
       summary: Upload a report
-      description: Upload a single report file (PDF, PNG, JPEG, GIF, or WebP) as multipart form data. Both clinical lab reports and DXA body-composition/bone-density scans go to this endpoint — Terra identifies which it is from the file, so there is no parameter to declare the type; read `report_type` off the session or the webhook. Returns an `upload_id`; a single upload may fan out to multiple sessions, so learn the `session_id`(s) from the webhook events or from `GET /reports?upload_id=...`.
+      description: 'Upload one report as multipart form data: one `file` part, or one per page for a report photographed page by page, sent in page order. Each file may be a PDF or a PNG, JPEG, GIF, WebP or HEIC/HEIF image, and is identified by its contents rather than its name or declared type. All the files of an upload are read as one report and produce one session, so upload separate reports separately. Both clinical lab reports and DXA body-composition/bone-density scans go to this endpoint — Terra identifies which it is from the file, so there is no parameter to declare the type; read `report_type` off the session or the webhook. Returns an `upload_id`; learn the `session_id` from the webhook events or from `GET /reports?upload_id=...`.'
       tags:
         - LabReports
       operationId: Reports_Upload
       parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
         - name: reference_id
           in: query
           required: false
@@ -1396,7 +1399,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: The lab report file (PDF, PNG, JPEG, GIF, or WebP; max 20 MB).
+                  description: 'A file of the report: a PDF or a PNG, JPEG, GIF, WebP or HEIC/HEIF image. Repeat the `file` part, up to 20 times, to send a report''s pages as separate files, in the order of the pages. At most 20 MB per file and 50 MB per upload, of which at most 22.5 MB PDF. Files are stored as uploaded, so a HEIC photo keeps its EXIF metadata, location included; strip it before uploading if that matters.'
       responses:
         '202':
           description: Upload accepted for processing.
@@ -1405,7 +1408,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LabReportUploadResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/UploadInvalid'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1421,6 +1424,21 @@ paths:
         - LabReports
       operationId: Reports_List
       parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
+        - name: limit
+          in: query
+          required: false
+          description: Page size; defaults to 50, and a larger value than 200 is served as 200. From API version 2026-10-21.
+          schema:
+            type: integer
+            minimum: 1
+            default: 50
+        - name: cursor
+          in: query
+          required: false
+          description: The previous page's `next_cursor`, sent with the same filters it was issued for; with different filters it is a 400 with code `validation_failed`. From API version 2026-10-21.
+          schema:
+            type: string
         - name: reference_id
           in: query
           required: false
@@ -1473,11 +1491,16 @@ paths:
             format: date
       responses:
         '200':
-          description: A list of lab report sessions.
+          description: 'One page of sessions, newest first (`LabReportListPage`). An environment served API version 2026-03-24 gets `LabReportListResponse` instead: up to 500 sessions in `sessions`, with `limit` and `cursor` ignored.'
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/LabReportsApiVersion'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LabReportListResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/LabReportListPage'
+                  - $ref: '#/components/schemas/LabReportListResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1485,7 +1508,11 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '503':
-          $ref: '#/components/responses/AuthorizationUnavailable'
+          description: Current product authorization or the environment's API version pin is unavailable (code `authorization_unavailable`), or paging is briefly unavailable while a deploy rolls out (code `service_unavailable`). Retry.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /reports/{session_id}:
     get:
       summary: Retrieve a lab report session
@@ -1494,6 +1521,7 @@ paths:
         - LabReports
       operationId: Reports_Get
       parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
         - name: session_id
           in: path
           required: true
@@ -1520,11 +1548,12 @@ paths:
           $ref: '#/components/responses/AuthorizationUnavailable'
     delete:
       summary: Delete a lab report session
-      description: Soft-delete a session. It is marked deleted immediately; associated storage is cleaned up by a background process.
+      description: 'Delete a session. It is removed from the API immediately: every read of it returns 404. Its files, results and Terra''s copies of them are erased from active systems within 30 days (target 24 hours), and backups expire within 10 days. Works without Lab Reports access.'
       tags:
         - LabReports
       operationId: Reports_Delete
       parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
         - name: session_id
           in: path
           required: true
@@ -1549,6 +1578,7 @@ paths:
         - LabReports
       operationId: Reports_ListDeliveries
       parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
         - name: session_id
           in: path
           required: true
@@ -1581,6 +1611,7 @@ paths:
         - LabReports
       operationId: Reports_ListFiles
       parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
         - name: session_id
           in: path
           required: true
@@ -1605,15 +1636,57 @@ paths:
           $ref: '#/components/responses/NotFound'
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
+  /reports/{session_id}/reprocess:
+    post:
+      summary: Reprocess a session
+      description: 'Re-run extraction and standardization on an existing session from its stored input files. The session re-enters the processing flow, its stored results are replaced, and a new delivery to the environment''s current destinations occurs on completion. Only a session that was delivered (`sent`, `partially_sent`, `delivery_failed`) or has failed can be reprocessed. Re-running a failed report helps when its `error.retriable` is true; otherwise the input must change first. A report is metered once: reprocessing a session that was already metered does not meter it again. Each session can be reprocessed at most 3 times; a further request is refused with 409 and problem code `reprocess_limit_reached`.'
+      tags:
+        - LabReports
+      operationId: Reports_Reprocess
+      parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
+        - name: session_id
+          in: path
+          required: true
+          description: The session's snowflake ID.
+          schema:
+            type: string
+          example: '297405620317847552'
+        - name: legacy_format
+          in: query
+          required: false
+          description: Deliver the re-run in the pre-v6 webhook shape. Only needed for a session uploaded on the pre-v6 surface before the upload's shape was recorded with the session; otherwise the recorded shape is used.
+          schema:
+            type: boolean
+      responses:
+        '202':
+          description: Reprocessing accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabReportReprocessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ReportNotReprocessable'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   /lab-reports:
     post:
       deprecated: true
       summary: Upload a report
-      description: Upload a single report file (PDF, PNG, JPEG, GIF, or WebP) as multipart form data. Both clinical lab reports and DXA body-composition/bone-density scans go to this endpoint — Terra identifies which it is from the file, so there is no parameter to declare the type; read `report_type` off the session or the webhook. Returns an `upload_id`; a single upload may fan out to multiple sessions, so learn the `session_id`(s) from the webhook events or from `GET /lab-reports?upload_id=...`.
+      description: 'Upload one report as multipart form data: one `file` part, or one per page for a report photographed page by page, sent in page order. Each file may be a PDF or a PNG, JPEG, GIF, WebP or HEIC/HEIF image, and is identified by its contents rather than its name or declared type. All the files of an upload are read as one report and produce one session, so upload separate reports separately. Both clinical lab reports and DXA body-composition/bone-density scans go to this endpoint — Terra identifies which it is from the file, so there is no parameter to declare the type; read `report_type` off the session or the webhook. Returns an `upload_id`; learn the `session_id` from the webhook events or from `GET /lab-reports?upload_id=...`.'
       tags:
         - LabReports
       operationId: LabReports_Upload
       parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
         - name: reference_id
           in: query
           required: false
@@ -1633,7 +1706,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: The lab report file (PDF, PNG, JPEG, GIF, or WebP; max 20 MB).
+                  description: 'A file of the report: a PDF or a PNG, JPEG, GIF, WebP or HEIC/HEIF image. Repeat the `file` part, up to 20 times, to send a report''s pages as separate files, in the order of the pages. At most 20 MB per file and 50 MB per upload, of which at most 22.5 MB PDF. Files are stored as uploaded, so a HEIC photo keeps its EXIF metadata, location included; strip it before uploading if that matters.'
       responses:
         '202':
           description: Upload accepted for processing.
@@ -1642,7 +1715,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LabReportUploadResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/UploadInvalid'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1659,6 +1732,21 @@ paths:
         - LabReports
       operationId: LabReports_List
       parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
+        - name: limit
+          in: query
+          required: false
+          description: Page size; defaults to 50, and a larger value than 200 is served as 200. From API version 2026-10-21.
+          schema:
+            type: integer
+            minimum: 1
+            default: 50
+        - name: cursor
+          in: query
+          required: false
+          description: The previous page's `next_cursor`, sent with the same filters it was issued for; with different filters it is a 400 with code `validation_failed`. From API version 2026-10-21.
+          schema:
+            type: string
         - name: reference_id
           in: query
           required: false
@@ -1711,11 +1799,16 @@ paths:
             format: date
       responses:
         '200':
-          description: A list of lab report sessions.
+          description: 'One page of sessions, newest first (`LabReportListPage`). An environment served API version 2026-03-24 gets `LabReportListResponse` instead: up to 500 sessions in `sessions`, with `limit` and `cursor` ignored.'
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/LabReportsApiVersion'
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LabReportListResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/LabReportListPage'
+                  - $ref: '#/components/schemas/LabReportListResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1723,7 +1816,11 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '503':
-          $ref: '#/components/responses/AuthorizationUnavailable'
+          description: Current product authorization or the environment's API version pin is unavailable (code `authorization_unavailable`), or paging is briefly unavailable while a deploy rolls out (code `service_unavailable`). Retry.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
   /lab-reports/{session_id}:
     get:
       deprecated: true
@@ -1733,6 +1830,7 @@ paths:
         - LabReports
       operationId: LabReports_Get
       parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
         - name: session_id
           in: path
           required: true
@@ -1760,11 +1858,12 @@ paths:
     delete:
       deprecated: true
       summary: Delete a lab report session
-      description: Soft-delete a session. It is marked deleted immediately; associated storage is cleaned up by a background process.
+      description: 'Delete a session. It is removed from the API immediately: every read of it returns 404. Its files, results and Terra''s copies of them are erased from active systems within 30 days (target 24 hours), and backups expire within 10 days. Works without Lab Reports access.'
       tags:
         - LabReports
       operationId: LabReports_Delete
       parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
         - name: session_id
           in: path
           required: true
@@ -1790,6 +1889,7 @@ paths:
         - LabReports
       operationId: LabReports_ListDeliveries
       parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
         - name: session_id
           in: path
           required: true
@@ -1823,6 +1923,7 @@ paths:
         - LabReports
       operationId: LabReports_ListFiles
       parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
         - name: session_id
           in: path
           required: true
@@ -1845,6 +1946,48 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+  /lab-reports/{session_id}/reprocess:
+    post:
+      deprecated: true
+      summary: Reprocess a session
+      description: 'Re-run extraction and standardization on an existing session from its stored input files. The session re-enters the processing flow, its stored results are replaced, and a new delivery to the environment''s current destinations occurs on completion. Only a session that was delivered (`sent`, `partially_sent`, `delivery_failed`) or has failed can be reprocessed. Re-running a failed report helps when its `error.retriable` is true; otherwise the input must change first. A report is metered once: reprocessing a session that was already metered does not meter it again. Each session can be reprocessed at most 3 times; a further request is refused with 409 and problem code `reprocess_limit_reached`.'
+      tags:
+        - LabReports
+      operationId: LabReports_Reprocess
+      parameters:
+        - $ref: '#/components/parameters/LabReportsApiVersion'
+        - name: session_id
+          in: path
+          required: true
+          description: The session's snowflake ID.
+          schema:
+            type: string
+          example: '297405620317847552'
+        - name: legacy_format
+          in: query
+          required: false
+          description: Deliver the re-run in the pre-v6 webhook shape. Only needed for a session uploaded on the pre-v6 surface before the upload's shape was recorded with the session; otherwise the recorded shape is used.
+          schema:
+            type: boolean
+      responses:
+        '202':
+          description: Reprocessing accepted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabReportReprocessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ReportNotReprocessable'
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
 webhooks:
@@ -2561,8 +2704,22 @@ webhooks:
                     reference_id: your-patient-123
                     error:
                       code: file_unreadable
-                      message: The uploaded file could not be read.
+                      message: the file could not be read; upload a clearer photo or the original document
                       retriable: false
+              failed_not_a_report:
+                summary: Upload is not a lab report or scan
+                value:
+                  type: lab_report.failed
+                  event_id: evt_1b9e44d0-6a1f-4f0e-9a51-3c0d2f7e8b12
+                  occurred_at: '2026-07-01T09:16:40Z'
+                  data:
+                    session_id: '297405620317847553'
+                    reference_id: your-patient-123
+                    error:
+                      code: unsupported_report_type
+                      message: the file is not a lab report or a DXA scan; only those are accepted
+                      retriable: false
+                      document_class: other_medical
       responses:
         '200':
           description: Successful lab_report response
@@ -2571,6 +2728,23 @@ webhooks:
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
 components:
+  parameters:
+    LabReportsApiVersion:
+      name: X-Terra-Version
+      in: header
+      required: false
+      description: 'The lab-reports API version to serve this request in, as a YYYY-MM-DD date: the newest version on or before it, or 2026-03-24 for an earlier date. Defaults to the environment''s pinned version, else the latest. A malformed or future date is a 400 with code `invalid_api_version`.'
+      schema:
+        type: string
+        format: date
+  headers:
+    LabReportsApiVersion:
+      description: The lab-reports API version this response was served in.
+      schema:
+        type: string
+        enum:
+          - '2026-03-24'
+          - '2026-10-21'
   securitySchemes:
     ApiKeyAuth:
       type: apiKey
@@ -2629,15 +2803,27 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     ReportNotReprocessable:
-      description: The session is still being processed, or was cancelled or deleted.
+      description: 'The session cannot be reprocessed: it is still being processed, was cancelled, or has used its 3 re-runs (problem code `reprocess_limit_reached`). A deleted session is 404.'
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
-    PayloadTooLarge:
-      description: The uploaded payload exceeds the size limit.
+    UploadInvalid:
+      description: 'The upload was refused. `code` says why: `validation_failed` (no `file` part, an empty file, a part without a filename, or a malformed form), `unsupported_file_type` (a file is not a PDF or a supported image; `detail` names the type its contents show), or `too_many_files` (more than 20 files).'
       content:
-        application/json:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: bad request
+            instance: /api/v2/reports
+            detail: file 0 is text/plain; upload a PDF or a PNG, JPEG, GIF, WebP or HEIC image
+            code: unsupported_file_type
+    PayloadTooLarge:
+      description: '`code: payload_too_large`: a file is over 20 MB, the upload is over 50 MB in total, or its PDFs are over 22.5 MB together, more than can be read as one report.'
+      content:
+        application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
   schemas:
@@ -2839,7 +3025,7 @@ components:
           example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
         code:
           type: string
-          description: Stable error classification. Product gates return entitlement_required (403), environment_disabled (403), or authorization_unavailable (503).
+          description: Stable error classification. Product gates return entitlement_required (403), environment_disabled (403), or authorization_unavailable (503). Report uploads return validation_failed, unsupported_file_type or too_many_files (400), and payload_too_large (413).
         product:
           type: string
           description: The product checked by the authorization gate, when classified.
@@ -3623,6 +3809,7 @@ components:
       required:
         - upload_id
         - current_status
+      description: Returned by the upload endpoint. Every file of an upload belongs to one report, read in the order the files were sent.
     LabReportReprocessResponse:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -3648,6 +3835,29 @@ components:
             $ref: '#/components/schemas/LabReportSession'
       required:
         - sessions
+      description: 'The report list as API version 2026-03-24 serves it: up to 500 sessions, newest first, with no pagination.'
+    LabReportListPage:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabReportSession'
+          description: This page's sessions, summary fields only.
+        has_more:
+          type: boolean
+          description: Whether another page follows.
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: 'null'
+          description: Opaque cursor for the next page; send it back as cursor with the same filters. null on the last page.
+      required:
+        - data
+        - has_more
+        - next_cursor
+      description: One page of the report list, newest first, as API version 2026-10-21 and later serve it.
     LabReportSession:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -3670,7 +3880,7 @@ components:
           type: string
           examples:
             - sent
-          description: Current status as a clean lowercase string (open enum), e.g. processing, sent, partially_sent, failed.
+          description: 'Current status as a clean lowercase string (open enum — handle unknown values gracefully). In flight: processing, processed, standardizing, standardized, sending, and retry_scheduled (waiting to retry after a temporary model-provider error; the report is still being worked on). Terminal: sent, partially_sent (delivered to some destinations), delivery_failed (processed and results available, but no destination accepted the delivery), failed (see error), cancelled, deleted.'
         uploaded_at:
           type: string
           format: date-time
@@ -3727,6 +3937,9 @@ components:
           description: Report-level panels that results reference by panel_id. Omitted if the report has no panel grouping.
         report_notes:
           type: string
+        error:
+          $ref: '#/components/schemas/LabReportEventError'
+          description: 'Why the report failed: the same object the lab_report.failed webhook carries. Present only while current_status is failed.'
       required:
         - session_id
         - report_type
@@ -4033,6 +4246,11 @@ components:
           type: string
         presigned_url:
           type: string
+        content_type:
+          type: string
+          examples:
+            - image/heic
+          description: An uploaded file's content type. Present on files only.
       required:
         - presigned_url
       description: One downloadable object with a presigned URL.
@@ -10916,7 +11134,7 @@ components:
         - lab
         - dexa
         - unspecified
-      description: Returned by the upload endpoint. A single upload may fan out to multiple sessions.
+      description: 'What kind of report a session holds. Closed set: a session is classified on upload and lands in exactly one of these.'
     AnatomicalRegion:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: string
@@ -10985,6 +11203,31 @@ components:
         - forearm_total_left
         - forearm_total_right
       description: 'Canonical anatomical site keys for site-scoped (DXA) results. Closed vocabulary: the extractor may only emit a member of this set, and anything else is discarded before storage. Ordered anatomy-first, laterality-last, so a prefix match ("femur_neck") is a valid family query.'
+    LabReportEventError:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        code:
+          type: string
+          examples:
+            - unsupported_report_type
+          description: 'Machine-readable failure code. An open set: handle codes you do not recognise like internal. unsupported_report_type: the file is not a lab report or DXA scan (see document_class). file_unreadable: the file could not be read, e.g. a blurry or cropped photo, or an image that does not decode; ask the user for a clearer one. file_too_large: the files together exceed what one report can be read from; upload fewer or smaller files. no_results_found: the report was readable but has no results in it. extraction_failed: the results could not be extracted from the file. standardization_failed: the extracted results could not be standardized. internal: a fault on our side.'
+        message:
+          type: string
+          description: Human-readable explanation. Not stable; branch on code.
+        retriable:
+          type: boolean
+          description: 'Whether POST …/reprocess may succeed with no change to the input. False means the input must change first: upload a different file.'
+        document_class:
+          type: string
+          examples:
+            - other_medical
+          description: 'For unsupported_report_type only: what the file was judged to be instead of a lab report or scan. other_medical (another medical document, e.g. a DNA test or an imaging report) or non_medical. An open set.'
+      required:
+        - code
+        - message
+        - retriable
+      description: Structured failure reason, on the lab_report.failed webhook and on a failed session.
     WebhookEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -11566,24 +11809,6 @@ components:
         - occurred_at
         - data
       description: 'Lab report completed event: a report finished processing; its normalized results are delivered under `data`.'
-    LabReportEventError:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      type: object
-      properties:
-        code:
-          type: string
-          examples:
-            - extraction_failed
-          description: 'Finite code: file_unreadable, extraction_failed, standardization_failed, internal.'
-        message:
-          type: string
-        retriable:
-          type: boolean
-      required:
-        - code
-        - message
-        - retriable
-      description: Structured failure reason. retriable tells you whether re-submitting the same input could succeed (a transient internal fault) or the input must change first (e.g. an unreadable file).
     LabReportFailureData:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
