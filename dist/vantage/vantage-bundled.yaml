@@ -6,7 +6,7 @@ info:
 
     **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. A date between versions is served the version before it, and a date before the first version the oldest; a malformed or future date returns 400 with code `invalid_api_version`. Supported versions are `2026-10-15` (latest), `2026-10-01` and `2026-09-27`; the [changelog](https://docs.tryterra.co/vantage-api/changelog) lists what each one changed. This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.10.21
+  version: 2026.10.21.1
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -2233,6 +2233,7 @@ components:
         administrative_area:
           type: string
           maxLength: 50
+          description: State, province or county. For US addresses (`country_code` US) this must be the two-letter USPS state code, for example `TX`.
           example: Greater London
         city:
           type: string
@@ -2479,6 +2480,7 @@ components:
         administrative_area:
           type: string
           maxLength: 50
+          description: State, province or county. For US addresses (`country_code` US) this must be the two-letter USPS state code, for example `TX`.
           example: Greater Manchester
         city:
           type: string
