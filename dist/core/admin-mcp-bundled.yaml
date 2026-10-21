@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.20
+  version: 2026.10.21
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -6518,6 +6518,7 @@ paths:
                   client_order_reference_id: acme-order-1042
                   outcome: rejected
                   final_status_code: 500
+                  no_status_reason: null
                   attempts: 5
                   completed_at: '2026-10-19T09:14:03.220Z'
                   event_created_at: '2026-10-19T08:58:41.107Z'
@@ -6580,6 +6581,7 @@ paths:
                 client_order_reference_id: acme-order-1042
                 outcome: rejected
                 final_status_code: 500
+                no_status_reason: null
                 attempts: 5
                 completed_at: '2026-10-19T09:14:03.220Z'
                 event_created_at: '2026-10-19T08:58:41.107Z'
@@ -12032,9 +12034,47 @@ components:
           type:
           - integer
           - 'null'
-          description: The last HTTP status your endpoint returned. null when no response was recorded.
+          description: The last HTTP status your endpoint returned, including a non-2xx one. null exactly
+            when no_status_reason is set.
           minimum: -2147483648
           maximum: 2147483647
+        no_status_reason:
+          type:
+          - string
+          - 'null'
+          enum:
+          - no_destination
+          - no_access
+          - catalogue_restricted
+          - order_missing
+          - environment_missing
+          - source_mismatch
+          - owner_changed
+          - recipient_changed
+          - invalid_url
+          - host_not_found
+          - connection_failed
+          - not_recorded
+          - null
+          description: 'Why final_status_code is null; null whenever it is set, so exactly one of the
+            two is non-null.
+
+            Never sent, because current access suppressed the delivery: no_destination (no webhook URL
+            or signing secret is set for the environment), no_access (the environment does not hold Vantage
+            for this mode), catalogue_restricted (the order item''s product is disabled in your catalogue),
+            order_missing (the order no longer exists), environment_missing (the environment no longer
+            exists), source_mismatch (the event''s ids do not match the order), owner_changed (the environment
+            or customer that owns the work changed), recipient_changed (an event queued before account
+            snapshots whose original URL or signing secret is no longer current).
+
+            No response: invalid_url (the URL can never be delivered to: it does not parse, has no host,
+            or is not http or https; the outcome is invalid and it is not retried), host_not_found (retries
+            ran out and the last attempt found no DNS record for the URL''s host), connection_failed (retries
+            ran out and the last attempt got no HTTP response, for example a refused connection, TLS failure
+            or timeout).
+
+            not_recorded: no attempt result is known, either because the event was recorded before the
+            reason was stored or because it was dead-lettered without one.'
         attempts:
           type: integer
           description: How many delivery attempts were made.
@@ -12056,6 +12096,7 @@ components:
       - client_order_reference_id
       - outcome
       - final_status_code
+      - no_status_reason
       - attempts
       - completed_at
       - event_created_at
@@ -12120,9 +12161,47 @@ components:
           type:
           - integer
           - 'null'
-          description: The last HTTP status your endpoint returned. null when no response was recorded.
+          description: The last HTTP status your endpoint returned, including a non-2xx one. null exactly
+            when no_status_reason is set.
           minimum: -2147483648
           maximum: 2147483647
+        no_status_reason:
+          type:
+          - string
+          - 'null'
+          enum:
+          - no_destination
+          - no_access
+          - catalogue_restricted
+          - order_missing
+          - environment_missing
+          - source_mismatch
+          - owner_changed
+          - recipient_changed
+          - invalid_url
+          - host_not_found
+          - connection_failed
+          - not_recorded
+          - null
+          description: 'Why final_status_code is null; null whenever it is set, so exactly one of the
+            two is non-null.
+
+            Never sent, because current access suppressed the delivery: no_destination (no webhook URL
+            or signing secret is set for the environment), no_access (the environment does not hold Vantage
+            for this mode), catalogue_restricted (the order item''s product is disabled in your catalogue),
+            order_missing (the order no longer exists), environment_missing (the environment no longer
+            exists), source_mismatch (the event''s ids do not match the order), owner_changed (the environment
+            or customer that owns the work changed), recipient_changed (an event queued before account
+            snapshots whose original URL or signing secret is no longer current).
+
+            No response: invalid_url (the URL can never be delivered to: it does not parse, has no host,
+            or is not http or https; the outcome is invalid and it is not retried), host_not_found (retries
+            ran out and the last attempt found no DNS record for the URL''s host), connection_failed (retries
+            ran out and the last attempt got no HTTP response, for example a refused connection, TLS failure
+            or timeout).
+
+            not_recorded: no attempt result is known, either because the event was recorded before the
+            reason was stored or because it was dead-lettered without one.'
         attempts:
           type: integer
           description: How many delivery attempts were made.
@@ -12147,6 +12226,7 @@ components:
       - client_order_reference_id
       - outcome
       - final_status_code
+      - no_status_reason
       - attempts
       - completed_at
       - event_created_at
