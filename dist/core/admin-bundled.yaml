@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.22
+  version: 2026.10.22.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -6547,7 +6547,7 @@ components:
             datalinks:write: 'Data plane: create and delete data links.'
             graphs:read: 'Data plane: read graph sessions.'
             graphs:write: 'Data plane: create and manage graph sessions (public renders of health data).'
-            vantage:read: 'Data plane: read Vantage orders, results, labs and configuration.'
+            vantage:read: See your Vantage orders and results, including who they are for.
             vantage:write: 'Data plane: create Vantage orders, simulate orders and update configuration or result acknowledgments. Includes vantage:read.'
             agents:read: 'Data plane: read agents, bundles, jobs, and schedules.'
             agents:write: 'Data plane: create, update, and delete agents and their configuration.'
@@ -6595,7 +6595,7 @@ components:
             datalinks:write: data
             graphs:read: data
             graphs:write: data
-            vantage:read: data
+            vantage:read: both
             vantage:write: data
             agents:read: data
             agents:write: data
@@ -6615,6 +6615,7 @@ components:
           x-scope-sensitive:
             - keys:read
             - payloads:read
+            - vantage:read
           x-scope-account-level:
             - account:read
             - account:write
@@ -6651,8 +6652,9 @@ components:
                 - team:read
                 - testdata:write
                 - tokens:read
+                - vantage:read
             - name: Read only
-              summary: Auditing, onboarding a teammate, or a demo. Every read except credential material and payload bodies.
+              summary: Auditing, onboarding a teammate, or a demo. Every read except credential material, payload bodies and Vantage orders and results.
               scopes:
                 - account:read
                 - billing:read
@@ -6695,6 +6697,7 @@ components:
                 - tokens:admin
                 - tokens:read
                 - tokens:write
+                - vantage:read
           x-not-a-real-flow: Scope registry only. Token issuance is the device flow or the authorizationCode flow (see scheme description); this tokenUrl does not accept client_credentials grants.
         authorizationCode:
           authorizationUrl: /api/v3/admin/auth/authorize
@@ -6736,7 +6739,7 @@ components:
             datalinks:write: 'Data plane: create and delete data links.'
             graphs:read: 'Data plane: read graph sessions.'
             graphs:write: 'Data plane: create and manage graph sessions (public renders of health data).'
-            vantage:read: 'Data plane: read Vantage orders, results, labs and configuration.'
+            vantage:read: See your Vantage orders and results, including who they are for.
             vantage:write: 'Data plane: create Vantage orders, simulate orders and update configuration or result acknowledgments. Includes vantage:read.'
             agents:read: 'Data plane: read agents, bundles, jobs, and schedules.'
             agents:write: 'Data plane: create, update, and delete agents and their configuration.'
