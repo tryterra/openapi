@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.21.2
+  version: 2026.10.22
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -729,6 +729,7 @@ paths:
                     label: prod
                     active: true
                     billable: true
+                    is_production: true
                     profile:
                       dev_id: prod-app-x81LmQ
                       company_id: cus_9f3k2m
@@ -741,6 +742,7 @@ paths:
                     name: Staging
                     active: true
                     billable: false
+                    is_production: false
                     profile: null
                 has_more: false
                 next_cursor: null
@@ -1268,6 +1270,7 @@ paths:
                 name: Production
                 active: true
                 billable: true
+                is_production: true
                 profile:
                   dev_id: prod-app-x81LmQ
                   company_id: cus_9f3k2m
@@ -5472,19 +5475,18 @@ paths:
           $ref: '#/components/responses/InternalError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-  /environments/{dev_id}/vantage/{mode}/events:
+  /environments/{dev_id}/vantage/events:
     get:
       operationId: listVantageEvents
       tags:
         - vantage
       summary: List Vantage webhook events
-      description: 'Webhook events Vantage sent this environment in one mode, with how delivery ended: the outcome, the last HTTP status and the attempt count. Keyset cursor pagination over a bounded window, newest first unless order_by and order say otherwise; the default window is the trailing 30 days and since and until move it. Filters combine, and a row must match every one given. The order_id and client_order_reference_id filters reach through the event''s order, so they never match a test event. No product grant is needed: this is delivery metadata, and the body is a separate payloads:read sub-resource.'
+      description: 'Webhook events Vantage sent this environment, with how delivery ended: the outcome, the last HTTP status and the attempt count. Keyset cursor pagination over a bounded window, newest first unless order_by and order say otherwise; the default window is the trailing 30 days and since and until move it. Filters combine, and a row must match every one given. The order_id and client_order_reference_id filters reach through the event''s order, so they never match a test event. No product grant is needed: this is delivery metadata, and the body is a separate payloads:read sub-resource.'
       security:
         - adminToken:
             - events:read
       parameters:
         - $ref: '#/components/parameters/DevId'
-        - $ref: '#/components/parameters/VantageMode'
         - name: outcome
           in: query
           schema:
@@ -5544,7 +5546,7 @@ paths:
           in: query
           schema:
             type: string
-          description: The previous page's next_cursor. It carries the window and sort the first page resolved, so since, until, order_by and order are ignored while it is set, though supplied values must still be valid. A cursor from the other mode is a 400.
+          description: The previous page's next_cursor. It carries the window and sort the first page resolved, so since, until, order_by and order are ignored while it is set, though supplied values must still be valid. A cursor read before the environment's production setting changed is a 400.
         - name: order_by
           in: query
           schema:
@@ -5606,25 +5608,24 @@ paths:
           $ref: '#/components/responses/InternalError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-  /environments/{dev_id}/vantage/{mode}/events/{event_id}:
+  /environments/{dev_id}/vantage/events/{event_id}:
     get:
       operationId: getVantageEvent
       tags:
         - vantage
       summary: Fetch a Vantage webhook event
-      description: One Vantage webhook event, as the list returns it, plus the URL it was sent to. An event that does not belong to this environment in this mode is a 404. The body is a separate payloads:read sub-resource.
+      description: One Vantage webhook event, as the list returns it, plus the URL it was sent to. An event that does not belong to this environment is a 404. The body is a separate payloads:read sub-resource.
       security:
         - adminToken:
             - events:read
       parameters:
         - $ref: '#/components/parameters/DevId'
-        - $ref: '#/components/parameters/VantageMode'
         - name: event_id
           in: path
           required: true
           schema:
             type: string
-          description: The event to read, by the event_id the list returns. An id this environment's events in this mode do not include is a 404.
+          description: The event to read, by the event_id the list returns. An id this environment's events do not include is a 404.
       responses:
         '200':
           description: The Vantage webhook event.
@@ -5659,25 +5660,24 @@ paths:
           $ref: '#/components/responses/InternalError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-  /environments/{dev_id}/vantage/{mode}/events/{event_id}/payload:
+  /environments/{dev_id}/vantage/events/{event_id}/payload:
     get:
       operationId: getVantageEventPayload
       tags:
         - vantage
       summary: Fetch a Vantage webhook event's payload
-      description: 'The body the event''s webhook carries, rebuilt from the stored event and rendered in the environment''s pinned Vantage API version. It names the test taker, so it takes the same access as reading the order: a current Vantage grant for the mode, or a verified purchase of the order. A test event names no order and needs a current grant. Without either it is a 403. The body is kept for 30 days after delivery; an older event is a 404 whose remediation says so.'
+      description: 'The body the event''s webhook carries, rebuilt from the stored event and rendered in the environment''s pinned Vantage API version. It names the test taker, so it takes the same access as reading the order: a current Vantage grant, or a verified purchase of the order. A test event names no order and needs a current grant. Without either it is a 403. The body is kept for 30 days after delivery; an older event is a 404 whose remediation says so.'
       security:
         - adminToken:
             - payloads:read
       parameters:
         - $ref: '#/components/parameters/DevId'
-        - $ref: '#/components/parameters/VantageMode'
         - name: event_id
           in: path
           required: true
           schema:
             type: string
-          description: The event to read, by the event_id the list returns. An id this environment's events in this mode do not include is a 404.
+          description: The event to read, by the event_id the list returns. An id this environment's events do not include is a 404.
       responses:
         '200':
           description: The webhook body.
@@ -6794,16 +6794,6 @@ components:
           - desc
         default: desc
       description: Direction of the order_by sort. Defaults to desc. A cursor keeps the order its first page was read in, so order is ignored while cursor is set, though it must still be valid.
-    VantageMode:
-      name: mode
-      in: path
-      required: true
-      schema:
-        type: string
-        enum:
-          - production
-          - sandbox
-      description: The Vantage deployment to read, production or sandbox. They are separate deployments with separate events, so an event id from one is not found in the other.
     PayloadSamples:
       name: samples
       in: query
@@ -7397,6 +7387,9 @@ components:
           type: boolean
         billable:
           type: boolean
+        is_production:
+          type: boolean
+          description: Whether this is a production environment. Production environments use production Vantage; every other environment uses sandbox. Set when the environment is created.
         profile:
           $ref: '#/components/schemas/EnvironmentProfile'
         api_key_masked:
@@ -7406,6 +7399,8 @@ components:
         user_limit:
           type: integer
           format: int64
+      required:
+        - is_production
     DevKeys:
       type: object
       properties:
@@ -7430,8 +7425,13 @@ components:
           type: boolean
         billable:
           type: boolean
+        is_production:
+          type: boolean
+          description: Whether this is a production environment. Production environments use production Vantage; every other environment uses sandbox. Set when the environment is created.
         profile:
           $ref: '#/components/schemas/EnvironmentProfile'
+      required:
+        - is_production
     DeviceStartFormRequest:
       type: object
       description: RFC 8628 §3.1 device authorization request (form-encoded wire mode).
@@ -10011,7 +10011,7 @@ components:
         - versions
     VantageEvent:
       type: object
-      description: One Vantage webhook event and how its delivery ended. Production and sandbox are separate Vantage deployments with their own events, so every path names its mode.
+      description: One Vantage webhook event and how its delivery ended. Production and sandbox are separate Vantage deployments with their own events; a production environment's events are in production Vantage, and every other environment's are in sandbox.
       properties:
         event_id:
           type: string
@@ -10071,7 +10071,7 @@ components:
             - null
           description: |-
             Why final_status_code is null; null whenever it is set, so exactly one of the two is non-null.
-            Never sent, because current access suppressed the delivery: no_destination (no webhook URL or signing secret is set for the environment), no_access (the environment does not hold Vantage for this mode), catalogue_restricted (the order item's product is disabled in your catalogue), order_missing (the order no longer exists), environment_missing (the environment no longer exists), source_mismatch (the event's ids do not match the order), owner_changed (the environment or customer that owns the work changed), recipient_changed (an event queued before account snapshots whose original URL or signing secret is no longer current).
+            Never sent, because current access suppressed the delivery: no_destination (no webhook URL or signing secret is set for the environment), no_access (the environment does not hold Vantage, or is not served by this deployment), catalogue_restricted (the order item's product is disabled in your catalogue), order_missing (the order no longer exists), environment_missing (the environment no longer exists), source_mismatch (the event's ids do not match the order), owner_changed (the environment or customer that owns the work changed), recipient_changed (an event queued before account snapshots whose original URL or signing secret is no longer current).
             No response: invalid_url (the URL can never be delivered to: it does not parse, has no host, or is not http or https; the outcome is invalid and it is not retried), host_not_found (retries ran out and the last attempt found no DNS record for the URL's host), connection_failed (retries ran out and the last attempt got no HTTP response, for example a refused connection, TLS failure or timeout).
             not_recorded: no attempt result is known, either because the event was recorded before the reason was stored or because it was dead-lettered without one.
         attempts:
@@ -10161,7 +10161,7 @@ components:
             - null
           description: |-
             Why final_status_code is null; null whenever it is set, so exactly one of the two is non-null.
-            Never sent, because current access suppressed the delivery: no_destination (no webhook URL or signing secret is set for the environment), no_access (the environment does not hold Vantage for this mode), catalogue_restricted (the order item's product is disabled in your catalogue), order_missing (the order no longer exists), environment_missing (the environment no longer exists), source_mismatch (the event's ids do not match the order), owner_changed (the environment or customer that owns the work changed), recipient_changed (an event queued before account snapshots whose original URL or signing secret is no longer current).
+            Never sent, because current access suppressed the delivery: no_destination (no webhook URL or signing secret is set for the environment), no_access (the environment does not hold Vantage, or is not served by this deployment), catalogue_restricted (the order item's product is disabled in your catalogue), order_missing (the order no longer exists), environment_missing (the environment no longer exists), source_mismatch (the event's ids do not match the order), owner_changed (the environment or customer that owns the work changed), recipient_changed (an event queued before account snapshots whose original URL or signing secret is no longer current).
             No response: invalid_url (the URL can never be delivered to: it does not parse, has no host, or is not http or https; the outcome is invalid and it is not retried), host_not_found (retries ran out and the last attempt found no DNS record for the URL's host), connection_failed (retries ran out and the last attempt got no HTTP response, for example a refused connection, TLS failure or timeout).
             not_recorded: no attempt result is known, either because the event was recorded before the reason was stored or because it was dead-lettered without one.
         attempts:
