@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Terra API Team-Based API
   description: API to manage and retrieve data from team-based fitness tracking devices used in sports training and monitoring.
-  version: 2026.07.06
+  version: 2026.10.23
 servers:
   - url: https://api.tryterra.co/v2/teams
     description: Main teams API base URL
@@ -83,6 +83,8 @@ paths:
                       - success
                       - error
                     description: indicates that an error happened (value is error)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           description: Returned when credentials (dev ID and API key) are invalid
           content:
@@ -99,6 +101,8 @@ paths:
                       - success
                       - error
                     description: indicates that an error happened (value is error)
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   /integrations/detailed:
     get:
       operationId: getDetailedIntegrations
@@ -125,6 +129,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CoachesReturned'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Coaches
     post:
@@ -146,8 +154,12 @@ paths:
                 $ref: '#/components/schemas/Coach'
         '400':
           description: Invalid input, object invalid
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '409':
           description: The coach already exists for your dev-id
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Coaches
   /coaches/{coachId}:
@@ -165,12 +177,16 @@ paths:
       responses:
         '204':
           description: Coach deleted successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           description: Coach not found.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Coaches
   /coaches/{coachId}/athletes:
@@ -197,6 +213,10 @@ paths:
                         type: array
                         items:
                           $ref: '#/components/schemas/Athlete'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Coaches
   /coaches/{coachId}/activities:
@@ -255,6 +275,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataSentToDestination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Coaches
   /coaches/{coachId}/activities/metrics/schema:
@@ -299,12 +323,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataSentToDestination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           description: Coach not found.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Coaches
   /coaches/{coachId}/tests:
@@ -363,6 +391,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataSentToDestination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Coaches
   /coaches/{coachId}/tests/search:
@@ -412,6 +444,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataSentToDestination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Coaches
   /athletes:
@@ -425,6 +461,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AthletesReturned'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Athletes
     patch:
@@ -482,12 +522,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           description: Unauthorized. Invalid credentials provided.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   /athletes/{athleteId}:
     get:
       operationId: getAthlete
@@ -505,6 +549,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Athlete'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Athletes
     patch:
@@ -525,6 +573,10 @@ paths:
       responses:
         '200':
           description: Athlete updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Athletes
 webhooks:
@@ -593,6 +645,31 @@ components:
       in: header
       name: dev-id
       description: Your developer ID for authentication and tracking
+  responses:
+    Unauthorized:
+      description: The credential is missing, invalid, expired or revoked (code `unauthorized`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedProblem'
+          example:
+            type: about:blank
+            title: unauthorized
+            instance: /activity
+            detail: dev-id or x-api-key headers are missing
+            code: unauthorized
+    AuthorizationUnavailable:
+      description: The credential or the product access could not be checked (code `authorization_unavailable`). Retry after the service recovers.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: service unavailable
+            instance: /activity
+            detail: Authorization is temporarily unavailable.
+            code: authorization_unavailable
   schemas:
     DataSentToDestination:
       type: object
@@ -2725,6 +2802,68 @@ components:
         error:
           type: string
           description: Error message.
+    UnauthorizedProblem:
+      type: object
+      description: A refused credential, always with its code.
+      properties:
+        type:
+          type: string
+          description: A URI reference identifying the problem type. Defaults to `about:blank`.
+          example: about:blank
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type (the lowercased HTTP status text).
+          example: unauthorized
+        instance:
+          type: string
+          description: The request path, including any query string, that produced this problem.
+          example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
+        code:
+          type: string
+          description: 'Stable error classification: branch on this, not on `detail`. A refused credential returns unauthorized (401: missing, invalid, expired or revoked), scope_missing (403: the credential lacks the scope the operation requires) or audience_restricted (403: the credential is not granted for this dev-id). authorization_unavailable (503) means the credential or the product access could not be checked; retry later. Product gates return entitlement_required (403) or environment_disabled (403). service_unavailable (503) means the request never reached the service; dependency_failed (502 or 504) means the service did not complete it, though it may already have acted on it. Report uploads return validation_failed, unsupported_file_type or too_many_files (400), and payload_too_large (413).'
+        product:
+          type: string
+          description: The product checked by the authorization gate, when classified.
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+          example: dev-id or x-api-key headers are missing
+      required:
+        - type
+        - title
+        - instance
+        - code
+    Problem:
+      type: object
+      description: |
+        An error response, following RFC 9457 (Problem Details for HTTP APIs, which obsoletes RFC 7807). Returned with `Content-Type: application/problem+json` on every 4xx/5xx response. The HTTP status line carries the status code; it is intentionally not repeated in the body. `type`, `title` and `instance` are always present; `detail` is included when a specific explanation is available.
+      properties:
+        type:
+          type: string
+          description: A URI reference identifying the problem type. Defaults to `about:blank`.
+          example: about:blank
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type (the lowercased HTTP status text).
+          example: unauthorized
+        instance:
+          type: string
+          description: The request path, including any query string, that produced this problem.
+          example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
+        code:
+          type: string
+          description: 'Stable error classification: branch on this, not on `detail`. A refused credential returns unauthorized (401: missing, invalid, expired or revoked), scope_missing (403: the credential lacks the scope the operation requires) or audience_restricted (403: the credential is not granted for this dev-id). authorization_unavailable (503) means the credential or the product access could not be checked; retry later. Product gates return entitlement_required (403) or environment_disabled (403). service_unavailable (503) means the request never reached the service; dependency_failed (502 or 504) means the service did not complete it, though it may already have acted on it. Report uploads return validation_failed, unsupported_file_type or too_many_files (400), and payload_too_large (413).'
+        product:
+          type: string
+          description: The product checked by the authorization gate, when classified.
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+          example: dev-id or x-api-key headers are missing
+      required:
+        - type
+        - title
+        - instance
   examples:
     ErrorCoachNotFound:
       summary: Resource Not Found

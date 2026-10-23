@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.22.1
+  version: 2026.10.23
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -10491,7 +10491,7 @@ components:
           example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
         code:
           type: string
-          description: Stable error classification. Product gates return entitlement_required (403), environment_disabled (403), or authorization_unavailable (503). Report uploads return validation_failed, unsupported_file_type or too_many_files (400), and payload_too_large (413).
+          description: 'Stable error classification: branch on this, not on `detail`. A refused credential returns unauthorized (401: missing, invalid, expired or revoked), scope_missing (403: the credential lacks the scope the operation requires) or audience_restricted (403: the credential is not granted for this dev-id). authorization_unavailable (503) means the credential or the product access could not be checked; retry later. Product gates return entitlement_required (403) or environment_disabled (403). service_unavailable (503) means the request never reached the service; dependency_failed (502 or 504) means the service did not complete it, though it may already have acted on it. Report uploads return validation_failed, unsupported_file_type or too_many_files (400), and payload_too_large (413).'
         product:
           type: string
           description: The product checked by the authorization gate, when classified.

@@ -5,7 +5,7 @@ info:
 
     **Lab reports versioning.** The report endpoints (`/reports`, and the deprecated `/lab-reports`) are versioned by date. Send `X-Terra-Version: <date>` to choose the version a request is served in: the newest version on or before that date. Without the header a request gets the environment's pinned version. An environment without a pin is pinned to the latest version on its first request; change the pin through the admin API (`PUT /api/v3/admin/environments/{dev_id}/lab-reports/api-version`). Every authenticated response carries `X-Terra-Version` stating the version it was served in, and every `lab_report` webhook delivery carries the environment's version. A malformed or future date returns 400 with code `invalid_api_version`. Versions are `2026-10-21` (latest: the report list is paginated) and `2026-03-24` (the list returns up to 500 reports in `sessions`). This document describes the latest version.
   title: TerraAPI
-  version: 2026.10.21.1
+  version: 2026.10.23
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -88,6 +88,8 @@ paths:
                     example: https://www.fitbit.com/oauth2/authorize?response_type=code&client_id=23BBG9&scope=settings+nutrition+sleep+heartrate+electrocardiogram+weight+respiratory_rate+oxygen_saturation+profile+temperature+cardio_fitness+activity+location&state=bLqqjPie9ptwoWm6VBxHCu6JkkoWJp
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -141,6 +143,8 @@ paths:
                     description: present when part of the request could not be honoured, such as requested providers that are unknown or not enabled
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '410':
@@ -179,8 +183,12 @@ paths:
                       - error
                     description: indicates that the deauthentication was successful (value is success)
                     type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   /auth/tokens:
     post:
       tags:
@@ -220,6 +228,8 @@ paths:
                     type: integer
                     example: 180
                     default: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -265,6 +275,8 @@ paths:
                     type: integer
                     example: 180
                     default: 0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -891,6 +903,8 @@ paths:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   /workouts/{workout_id}/plan:
     post:
       tags:
@@ -1165,6 +1179,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   /userInfo:
     get:
       tags:
@@ -1230,8 +1246,12 @@ paths:
                       $ref: '#/components/schemas/TerraUser'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   /subscriptions:
     get:
       tags:
@@ -1286,6 +1306,10 @@ paths:
                       $ref: '#/components/schemas/TerraUser'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   /bulkUserInfo:
     post:
       tags:
@@ -1314,8 +1338,12 @@ paths:
                   $ref: '#/components/schemas/TerraUser'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   /integrations:
     get:
       summary: List available integrations
@@ -1570,6 +1598,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   /reports/{session_id}/deliveries:
     get:
       summary: List delivery outcomes
@@ -1880,6 +1910,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   /lab-reports/{session_id}/deliveries:
     get:
       deprecated: true
@@ -2769,16 +2801,17 @@ components:
             instance: /activity
             detail: invalid start_date
     Unauthorized:
-      description: Authentication credentials are missing or invalid.
+      description: The credential is missing, invalid, expired or revoked (code `unauthorized`).
       content:
         application/problem+json:
           schema:
-            $ref: '#/components/schemas/Problem'
+            $ref: '#/components/schemas/UnauthorizedProblem'
           example:
             type: about:blank
             title: unauthorized
             instance: /activity
             detail: dev-id or x-api-key headers are missing
+            code: unauthorized
     NotFound:
       description: A referenced resource does not exist on Terra's end.
       content:
@@ -2791,17 +2824,23 @@ components:
             instance: /activity
             detail: user not found
     Forbidden:
-      description: The credential is not authorized, the environment is disabled, or the required product entitlement is missing.
+      description: The credential is not authorized (code scope_missing or audience_restricted), the environment is disabled (environment_disabled), or the required product entitlement is missing (entitlement_required).
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
     AuthorizationUnavailable:
-      description: Current product authorization is unavailable; retry after the service recovers.
+      description: The credential or the product access could not be checked (code `authorization_unavailable`). Retry after the service recovers.
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: service unavailable
+            instance: /activity
+            detail: Authorization is temporarily unavailable.
+            code: authorization_unavailable
     ReportNotReprocessable:
       description: 'The session cannot be reprocessed: it is still being processed, was cancelled, or has used its 3 re-runs (problem code `reprocess_limit_reached`). A deleted session is 404.'
       content:
@@ -3025,7 +3064,7 @@ components:
           example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
         code:
           type: string
-          description: Stable error classification. Product gates return entitlement_required (403), environment_disabled (403), or authorization_unavailable (503). Report uploads return validation_failed, unsupported_file_type or too_many_files (400), and payload_too_large (413).
+          description: 'Stable error classification: branch on this, not on `detail`. A refused credential returns unauthorized (401: missing, invalid, expired or revoked), scope_missing (403: the credential lacks the scope the operation requires) or audience_restricted (403: the credential is not granted for this dev-id). authorization_unavailable (503) means the credential or the product access could not be checked; retry later. Product gates return entitlement_required (403) or environment_disabled (403). service_unavailable (503) means the request never reached the service; dependency_failed (502 or 504) means the service did not complete it, though it may already have acted on it. Report uploads return validation_failed, unsupported_file_type or too_many_files (400), and payload_too_large (413).'
         product:
           type: string
           description: The product checked by the authorization gate, when classified.
@@ -4254,6 +4293,37 @@ components:
       required:
         - presigned_url
       description: One downloadable object with a presigned URL.
+    UnauthorizedProblem:
+      type: object
+      description: A refused credential, always with its code.
+      properties:
+        type:
+          type: string
+          description: A URI reference identifying the problem type. Defaults to `about:blank`.
+          example: about:blank
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type (the lowercased HTTP status text).
+          example: unauthorized
+        instance:
+          type: string
+          description: The request path, including any query string, that produced this problem.
+          example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
+        code:
+          type: string
+          description: 'Stable error classification: branch on this, not on `detail`. A refused credential returns unauthorized (401: missing, invalid, expired or revoked), scope_missing (403: the credential lacks the scope the operation requires) or audience_restricted (403: the credential is not granted for this dev-id). authorization_unavailable (503) means the credential or the product access could not be checked; retry later. Product gates return entitlement_required (403) or environment_disabled (403). service_unavailable (503) means the request never reached the service; dependency_failed (502 or 504) means the service did not complete it, though it may already have acted on it. Report uploads return validation_failed, unsupported_file_type or too_many_files (400), and payload_too_large (413).'
+        product:
+          type: string
+          description: The product checked by the authorization gate, when classified.
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+          example: dev-id or x-api-key headers are missing
+      required:
+        - type
+        - title
+        - instance
+        - code
     TerraUser:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object

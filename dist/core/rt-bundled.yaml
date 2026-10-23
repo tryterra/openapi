@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Real Time Streaming API
-  version: 2026.07.07
+  version: 2026.10.23
   description: |
     Token issuance for the Terra real-time streaming WebSocket. Call one of the
     endpoints below with your developer credentials to mint a single-use,
@@ -17,6 +17,15 @@ info:
     handshake, heartbeats, and close codes — is documented separately in the
     AsyncAPI document `rt.asyncapi.yaml` (OpenAPI cannot express a bidirectional
     socket protocol).
+
+    A refused credential is answered as an `application/problem+json` Problem
+    whose `code` says why: `unauthorized` (401), `scope_missing` or
+    `audience_restricted` (403), or `authorization_unavailable` (503) when the
+    credential could not be checked. When the credential cannot be checked
+    before the request is handled, the earlier `application/json`
+    `{"message": ...}` answers still occur: 400 for missing or malformed
+    authentication headers, 403 for invalid credentials and 503 when
+    validation failed. Branch on the status code first.
 servers:
   - url: https://ws.tryterra.co
 security:
@@ -45,10 +54,21 @@ paths:
                     example: cG9RvLY5.yvKm778XMIPm1ig93BJEoRCVGHzlrBNjzWdeXePTaMM
         '400':
           description: Missing or malformed authentication headers.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          description: Invalid developer credentials.
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (`audience_restricted`); or, as a message, invalid, inactive or not enabled for streaming.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
         '500':
           description: Token generation failed.
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   /auth/user:
     post:
       summary: Stream - Generate user token
@@ -81,10 +101,21 @@ paths:
                     example: OTYwNWFi5ZWQMTAxMjg0Y2Qw.gzrPzZcS3Gy8QDOxbiPRwu30PTB3VxW0eE
         '400':
           description: Missing `id` parameter, or missing/malformed authentication headers.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
-          description: Invalid credentials, or the user does not belong to this developer.
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (`audience_restricted`); or, as a message, invalid, inactive or not enabled for streaming, or the user does not belong to this developer.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
         '500':
           description: Token generation failed.
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -105,3 +136,96 @@ components:
         key as the password (`Authorization: Basic base64(dev-id:api-key)`). An
         alternative to the dev-id / x-api-key header pair on the streaming token
         endpoints.
+  schemas:
+    Problem:
+      type: object
+      description: |
+        An error response, following RFC 9457 (Problem Details for HTTP APIs, which obsoletes RFC 7807). Returned with `Content-Type: application/problem+json` on every 4xx/5xx response. The HTTP status line carries the status code; it is intentionally not repeated in the body. `type`, `title` and `instance` are always present; `detail` is included when a specific explanation is available.
+      properties:
+        type:
+          type: string
+          description: A URI reference identifying the problem type. Defaults to `about:blank`.
+          example: about:blank
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type (the lowercased HTTP status text).
+          example: unauthorized
+        instance:
+          type: string
+          description: The request path, including any query string, that produced this problem.
+          example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
+        code:
+          type: string
+          description: 'Stable error classification: branch on this, not on `detail`. A refused credential returns unauthorized (401: missing, invalid, expired or revoked), scope_missing (403: the credential lacks the scope the operation requires) or audience_restricted (403: the credential is not granted for this dev-id). authorization_unavailable (503) means the credential or the product access could not be checked; retry later. Product gates return entitlement_required (403) or environment_disabled (403). service_unavailable (503) means the request never reached the service; dependency_failed (502 or 504) means the service did not complete it, though it may already have acted on it. Report uploads return validation_failed, unsupported_file_type or too_many_files (400), and payload_too_large (413).'
+        product:
+          type: string
+          description: The product checked by the authorization gate, when classified.
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+          example: dev-id or x-api-key headers are missing
+      required:
+        - type
+        - title
+        - instance
+    Message:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: invalid credentials
+    UnauthorizedProblem:
+      type: object
+      description: A refused credential, always with its code.
+      properties:
+        type:
+          type: string
+          description: A URI reference identifying the problem type. Defaults to `about:blank`.
+          example: about:blank
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type (the lowercased HTTP status text).
+          example: unauthorized
+        instance:
+          type: string
+          description: The request path, including any query string, that produced this problem.
+          example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
+        code:
+          type: string
+          description: 'Stable error classification: branch on this, not on `detail`. A refused credential returns unauthorized (401: missing, invalid, expired or revoked), scope_missing (403: the credential lacks the scope the operation requires) or audience_restricted (403: the credential is not granted for this dev-id). authorization_unavailable (503) means the credential or the product access could not be checked; retry later. Product gates return entitlement_required (403) or environment_disabled (403). service_unavailable (503) means the request never reached the service; dependency_failed (502 or 504) means the service did not complete it, though it may already have acted on it. Report uploads return validation_failed, unsupported_file_type or too_many_files (400), and payload_too_large (413).'
+        product:
+          type: string
+          description: The product checked by the authorization gate, when classified.
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+          example: dev-id or x-api-key headers are missing
+      required:
+        - type
+        - title
+        - instance
+        - code
+  responses:
+    Unauthorized:
+      description: The credential is missing, invalid, expired or revoked (code `unauthorized`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedProblem'
+          example:
+            type: about:blank
+            title: unauthorized
+            instance: /activity
+            detail: dev-id or x-api-key headers are missing
+            code: unauthorized
+    AuthorizationUnavailable:
+      description: Authorization is temporarily unavailable (code `authorization_unavailable`), or credential validation failed (a message). Retry later.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Message'
