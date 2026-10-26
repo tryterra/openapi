@@ -5,7 +5,7 @@ info:
 
     **Lab reports versioning.** The report endpoints (`/reports`, and the deprecated `/lab-reports`) are versioned by date. Send `X-Terra-Version: <date>` to choose the version a request is served in: the newest version on or before that date. Without the header a request gets the environment's pinned version. An environment without a pin is pinned to the latest version on its first request; change the pin through the admin API (`PUT /api/v3/admin/environments/{dev_id}/lab-reports/api-version`). Every authenticated response carries `X-Terra-Version` stating the version it was served in, and every `lab_report` webhook delivery carries the environment's version. A malformed or future date returns 400 with code `invalid_api_version`. Versions are `2026-10-21` (latest: the report list is paginated) and `2026-03-24` (the list returns up to 500 reports in `sessions`). This document describes the latest version.
   title: TerraAPI
-  version: 2026.10.23
+  version: 2026.10.26
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -864,6 +864,76 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+    put:
+      tags:
+        - Workouts
+      summary: Update a workout template
+      description: |
+        Replaces the template and re-sends it to every upcoming planned workout made from it, each under its existing provider id. Completed and past planned workouts keep the version they were sent. An Apple Health planned workout already on the device is queued to fetch the new version, as a reschedule is. Each re-send to a provider is billed like a reschedule. The response lists every planned workout's outcome; `skipped` ones cannot be re-sent (for example, the user has disconnected), and a `failed` one is re-sent by repeating the request.
+      operationId: Workouts_UpdateWorkout
+      parameters:
+        - name: workout_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkoutTemplate'
+      responses:
+        '200':
+          description: Template saved and re-sent to every upcoming planned workout that could be reached
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                  workout_id:
+                    type: string
+                  planned_workouts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlannedWorkoutUpdateResult'
+        '207':
+          description: |
+            Template saved, but some re-sends failed. Repeat the request to re-send them.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  workout_id:
+                    type: string
+                  planned_workouts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PlannedWorkoutUpdateResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: The workout has more planned workouts than one update can re-send to.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
     delete:
@@ -2983,6 +3053,31 @@ components:
         - path
         - message
       description: A non-fatal adjustment made while converting a workout between Terra's template model and a provider's
+    PlannedWorkoutUpdateResult:
+      type: object
+      required:
+        - planned_workout_id
+        - status
+      properties:
+        planned_workout_id:
+          type: string
+        provider_workout_id:
+          type: string
+          description: The planned workout's id at the provider after the update.
+        status:
+          type: string
+          enum:
+            - updated
+            - failed
+            - skipped
+        error:
+          type: string
+          description: Why the planned workout was not updated.
+        warnings:
+          type: array
+          description: What the provider could not take from the new template, as when planning.
+          items:
+            $ref: '#/components/schemas/CoercionWarning'
     PlannedWorkoutBody:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
