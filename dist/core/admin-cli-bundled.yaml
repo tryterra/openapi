@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.23
+  version: 2026.10.26
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -5681,8 +5681,9 @@ paths:
               - dead_lettered
               - replayed
               - suppressed
+              - retry_scheduled
               - failed
-          description: Only events whose delivery ended this way. failed matches rejected, invalid and dead_lettered.
+          description: Only events whose delivery ended this way, or retry_scheduled for events still being retried. failed matches rejected, invalid and dead_lettered.
         - name: event_type
           x-terra-help: Webhook event types, e.g. order.status_changed. Repeat to match any type.
           in: query
@@ -11432,7 +11433,8 @@ components:
             - dead_lettered
             - replayed
             - suppressed
-          description: 'How delivery ended: delivered, rejected (a non-2xx response), invalid (the URL could not be delivered to), dead_lettered (retries exhausted), replayed or suppressed.'
+            - retry_scheduled
+          description: 'How delivery ended: delivered, rejected (a non-2xx response), invalid (the URL could not be delivered to), dead_lettered (retries exhausted), replayed or suppressed. retry_scheduled means it has not ended: the last attempt failed and Terra will retry it, so final_status_code or no_status_reason is that attempt''s.'
         final_status_code:
           type:
             - integer
@@ -11469,9 +11471,11 @@ components:
           minimum: -2147483648
           maximum: 2147483647
         completed_at:
-          type: string
+          type:
+            - string
+            - 'null'
           format: date-time
-          description: When delivery finished.
+          description: When delivery finished. null while the outcome is retry_scheduled.
         event_created_at:
           type: string
           format: date-time
@@ -11577,7 +11581,8 @@ components:
             - dead_lettered
             - replayed
             - suppressed
-          description: 'How delivery ended: delivered, rejected (a non-2xx response), invalid (the URL could not be delivered to), dead_lettered (retries exhausted), replayed or suppressed.'
+            - retry_scheduled
+          description: 'How delivery ended: delivered, rejected (a non-2xx response), invalid (the URL could not be delivered to), dead_lettered (retries exhausted), replayed or suppressed. retry_scheduled means it has not ended: the last attempt failed and Terra will retry it, so final_status_code or no_status_reason is that attempt''s.'
         final_status_code:
           type:
             - integer
@@ -11614,9 +11619,11 @@ components:
           minimum: -2147483648
           maximum: 2147483647
         completed_at:
-          type: string
+          type:
+            - string
+            - 'null'
           format: date-time
-          description: When delivery finished.
+          description: When delivery finished. null while the outcome is retry_scheduled.
         event_created_at:
           type: string
           format: date-time
