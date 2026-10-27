@@ -5,7 +5,7 @@ info:
 
     **Lab reports versioning.** The report endpoints (`/reports`, and the deprecated `/lab-reports`) are versioned by date. Send `X-Terra-Version: <date>` to choose the version a request is served in: the newest version on or before that date. Without the header a request gets the environment's pinned version. An environment without a pin is pinned to the latest version on its first request; change the pin through the admin API (`PUT /api/v3/admin/environments/{dev_id}/lab-reports/api-version`). Every authenticated response carries `X-Terra-Version` stating the version it was served in, and every `lab_report` webhook delivery carries the environment's version. A malformed or future date returns 400 with code `invalid_api_version`. Versions are `2026-10-21` (latest: the report list is paginated) and `2026-03-24` (the list returns up to 500 reports in `sessions`). This document describes the latest version.
   title: TerraAPI
-  version: 2026.10.26
+  version: 2026.10.27
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -892,34 +892,14 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum:
-                      - success
-                  workout_id:
-                    type: string
-                  planned_workouts:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/PlannedWorkoutUpdateResult'
+                $ref: '#/components/schemas/WorkoutUpdateResponse'
         '207':
           description: |
             Template saved, but some re-sends failed. Repeat the request to re-send them.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                  workout_id:
-                    type: string
-                  planned_workouts:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/PlannedWorkoutUpdateResult'
+                $ref: '#/components/schemas/WorkoutUpdateResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -3053,6 +3033,26 @@ components:
         - path
         - message
       description: A non-fatal adjustment made while converting a workout between Terra's template model and a provider's
+    WorkoutUpdateResponse:
+      type: object
+      required:
+        - workout_id
+        - planned_workouts
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+          description: Present when every reachable planned workout was updated (200).
+        message:
+          type: string
+          description: Present when some re-sends failed (207). Repeat the request to re-send them.
+        workout_id:
+          type: string
+        planned_workouts:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlannedWorkoutUpdateResult'
     PlannedWorkoutUpdateResult:
       type: object
       required:
