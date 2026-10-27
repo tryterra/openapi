@@ -6,7 +6,7 @@ info:
 
     **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. A date between versions is served the version before it, and a date before the first version the oldest; a malformed or future date returns 400 with code `invalid_api_version`. Supported versions are `2026-10-15` (latest), `2026-10-01` and `2026-09-27`; the [changelog](https://docs.tryterra.co/vantage-api/changelog) lists what each one changed. This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.10.23.1
+  version: 2026.10.27
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -1897,7 +1897,7 @@ webhooks:
       security: []
       summary: Order fulfilment status changed
       description: |-
-        Sent when an order's fulfilment status changes. `data.status` uses the same `order.*` vocabulary as REST reads of the order.
+        Sent when an order's fulfilment status changes, including `order.payment_processing` and `order.payment_complete` when the order is created. `data.status` uses the same `order.*` vocabulary as REST reads of the order.
 
         Deliveries carry `X-Terra-Signature: t=<unix_seconds>,v1=<hex>` where `v1 = HMAC-SHA256(signing_secret, "<t>.<raw_body>")` — verify against the raw body before trusting the payload — plus `X-Terra-Trace-Id` (the event_id), `X-Terra-Version` (the API version the payload is rendered in: your account's pinned version, or the latest) and `X-Terra-Ordering-Timestamp` (Unix milliseconds when Terra emitted the event, identical on every retry of it; omitted when unknown). Retries can reorder deliveries, so when two events for the same order arrive out of order, the higher `X-Terra-Ordering-Timestamp` is the newer one. The body `timestamp` is when the delivery was built and can differ between retries. Delivery is at-least-once: dedupe on `event_id`. On network errors/408/429/5xx an event gets up to 5 HTTP attempts with exponential backoff (~1s, 2s, 4s, 8s) on first delivery, then single re-attempts with growing delays (5s doubling, capped at 10 minutes) for up to 10 deliveries in total — at most ~14 calls spread over ~30 minutes — before dead-lettering. Other 4xx responses are recorded as rejected and not retried at all.
 

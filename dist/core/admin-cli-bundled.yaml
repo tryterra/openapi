@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.26
+  version: 2026.10.27
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -5659,31 +5659,27 @@ paths:
   /environments/{dev_id}/vantage/events:
     get:
       operationId: listVantageEvents
-      x-terra-help: List Vantage webhook events and how their delivery ended (events:read). Defaults to the last 30 days, newest first. Payloads are separate.
+      x-terra-help: List Vantage webhook events and where their delivery stands (events:read). Defaults to the last 30 days, newest first. Payloads are separate.
       tags:
         - vantage
       summary: List Vantage webhook events
-      description: 'Webhook events Vantage sent this environment, with how delivery ended: the outcome, the last HTTP status and the attempt count. Keyset cursor pagination over a bounded window, newest first unless order_by and order say otherwise; the default window is the trailing 30 days and since and until move it. Filters combine, and a row must match every one given. The order_id and client_order_reference_id filters reach through the event''s order, so they never match a test event. No product grant is needed: this is delivery metadata, and the body is a separate payloads:read sub-resource.'
+      description: 'Webhook events Vantage raised for this environment, with where delivery stands: the status, the latest HTTP status and the attempt count. An event is listed as soon as it happens, as pending until it is delivered; a pending event whose last attempt failed carries next_attempt_at, when Terra retries it. Keyset cursor pagination over a bounded window, newest first unless order_by and order say otherwise; the default window is the trailing 30 days and since and until move it. Filters combine, and a row must match every one given. The order_id and client_order_reference_id filters reach through the event''s order, so they never match a test event. No product grant is needed: this is delivery metadata, and the body is a separate payloads:read sub-resource.'
       security:
         - adminToken:
             - events:read
       parameters:
         - $ref: '#/components/parameters/DevId'
-        - name: outcome
-          x-terra-help: One outcome, or failed for rejected, invalid and dead_lettered together.
+        - name: status
+          x-terra-help: 'Delivery status: pending, delivered, failed or canceled.'
           in: query
           schema:
             type: string
             enum:
+              - pending
               - delivered
-              - rejected
-              - invalid
-              - dead_lettered
-              - replayed
-              - suppressed
-              - retry_scheduled
               - failed
-          description: Only events whose delivery ended this way, or retry_scheduled for events still being retried. failed matches rejected, invalid and dead_lettered.
+              - canceled
+          description: Only events with this status. pending is an event not delivered yet, including one Terra will retry; delivered is a 2xx response; failed is an event Terra stopped trying to deliver; canceled is an event current access suppressed, so it was never sent.
         - name: event_type
           x-terra-help: Webhook event types, e.g. order.status_changed. Repeat to match any type.
           in: query
@@ -5778,10 +5774,11 @@ paths:
                     order_id: '333410942627700736'
                     order_item_id: null
                     client_order_reference_id: acme-order-1042
-                    outcome: rejected
-                    final_status_code: 500
+                    status: failed
+                    last_status_code: 500
                     no_status_reason: null
-                    attempts: 5
+                    attempt_count: 5
+                    next_attempt_at: null
                     completed_at: '2026-10-19T09:14:03.220Z'
                     event_created_at: '2026-10-19T08:58:41.107Z'
                 has_more: true
@@ -5803,11 +5800,11 @@ paths:
   /environments/{dev_id}/vantage/events/{event_id}:
     get:
       operationId: getVantageEvent
-      x-terra-help: Read one Vantage webhook event and the URL it was sent to (events:read). Unknown returns 404; the payload is separate.
+      x-terra-help: Read one Vantage webhook event and each attempt to deliver it (events:read). Unknown returns 404; the payload is separate.
       tags:
         - vantage
       summary: Fetch a Vantage webhook event
-      description: One Vantage webhook event, as the list returns it, plus the URL it was sent to. An event that does not belong to this environment is a 404. The body is a separate payloads:read sub-resource.
+      description: One Vantage webhook event, as the list returns it, plus the URL of its latest attempt and each attempt to deliver it, newest first. Attempts are kept for 30 days, so an older event lists none. An event that does not belong to this environment is a 404. The body is a separate payloads:read sub-resource.
       security:
         - adminToken:
             - events:read
@@ -5833,13 +5830,25 @@ paths:
                 order_id: '333410942627700736'
                 order_item_id: null
                 client_order_reference_id: acme-order-1042
-                outcome: rejected
-                final_status_code: 500
+                status: pending
+                last_status_code: 500
                 no_status_reason: null
-                attempts: 5
-                completed_at: '2026-10-19T09:14:03.220Z'
+                attempt_count: 2
+                next_attempt_at: '2026-10-19T09:30:00.000Z'
+                completed_at: null
                 event_created_at: '2026-10-19T08:58:41.107Z'
                 webhook_url: https://api.acme.com/terra/vantage
+                attempts:
+                  - attempted_at: '2026-10-19T09:14:03.220Z'
+                    url: https://api.acme.com/terra/vantage
+                    status_code: 500
+                    no_status_reason: null
+                    duration_ms: 412
+                  - attempted_at: '2026-10-19T08:58:41.893Z'
+                    url: https://api.acme.com/terra/vantage
+                    status_code: null
+                    no_status_reason: connection_failed
+                    duration_ms: 10000
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -5857,11 +5866,11 @@ paths:
   /environments/{dev_id}/vantage/events/{event_id}/payload:
     get:
       operationId: getVantageEventPayload
-      x-terra-help: Read the body a Vantage webhook event carries (payloads:read). Needs a current Vantage grant or a verified purchase of the order; kept 30 days.
+      x-terra-help: Read the body a Vantage webhook event carries (payloads:read). Needs a current Vantage grant or a verified purchase of the order; readable once the event exists, kept 30 days.
       tags:
         - vantage
       summary: Fetch a Vantage webhook event's payload
-      description: 'The body the event''s webhook carries, rebuilt from the stored event and rendered in the environment''s pinned Vantage API version. It names the test taker, so it takes the same access as reading the order: a current Vantage grant, or a verified purchase of the order. A test event names no order and needs a current grant. Without either it is a 403. The body is kept for 30 days after delivery; an older event is a 404 whose remediation says so.'
+      description: 'The body the event''s webhook carries, rebuilt from the stored event and rendered in the environment''s pinned Vantage API version. It names the test taker, so it takes the same access as reading the order: a current Vantage grant, or a verified purchase of the order. A test event names no order and needs a current grant. Without either it is a 403. The body is readable as soon as the event exists, before it is delivered, and is kept for 30 days after the event was created; an older event is a 404 whose remediation says so.'
       security:
         - adminToken:
             - payloads:read
@@ -11401,7 +11410,7 @@ components:
       x-terra-resource: vantage.api-version
     VantageEvent:
       type: object
-      description: One Vantage webhook event and how its delivery ended. Production and sandbox are separate Vantage deployments with their own events; a production environment's events are in production Vantage, and every other environment's are in sandbox.
+      description: One Vantage webhook event and where its delivery stands. Production and sandbox are separate Vantage deployments with their own events; a production environment's events are in production Vantage, and every other environment's are in sandbox.
       properties:
         event_id:
           type: string
@@ -11424,22 +11433,24 @@ components:
             - string
             - 'null'
           description: Your reference for the order, as set when it was created. null when there is none, and for a test event.
-        outcome:
+        status:
           type: string
           enum:
+            - pending
             - delivered
-            - rejected
-            - invalid
-            - dead_lettered
-            - replayed
-            - suppressed
-            - retry_scheduled
-          description: 'How delivery ended: delivered, rejected (a non-2xx response), invalid (the URL could not be delivered to), dead_lettered (retries exhausted), replayed or suppressed. retry_scheduled means it has not ended: the last attempt failed and Terra will retry it, so final_status_code or no_status_reason is that attempt''s.'
-        final_status_code:
+            - failed
+            - canceled
+          description: |-
+            Where delivery stands. An event exists as soon as it happens, before Terra first tries to deliver it.
+            pending: not delivered yet, either because no attempt has been made or because the last attempt failed and Terra will retry it at next_attempt_at.
+            delivered: your endpoint returned a 2xx response.
+            failed: Terra stopped trying, after a response it does not retry, a URL that can never be delivered to, or the last retry.
+            canceled: never sent, because current access suppressed it; no_status_reason says why.
+        last_status_code:
           type:
             - integer
             - 'null'
-          description: The last HTTP status your endpoint returned, including a non-2xx one. null exactly when no_status_reason is set.
+          description: The HTTP status your endpoint returned to the latest attempt, including a non-2xx one. null when no_status_reason is set, and before the first attempt.
           minimum: -2147483648
           maximum: 2147483647
         no_status_reason:
@@ -11461,21 +11472,27 @@ components:
             - not_recorded
             - null
           description: |-
-            Why final_status_code is null; null whenever it is set, so exactly one of the two is non-null.
-            Never sent, because current access suppressed the delivery: no_destination (no webhook URL or signing secret is set for the environment), no_access (the environment does not hold Vantage, or is not served by this deployment), catalogue_restricted (the order item's product is disabled in your catalogue), order_missing (the order no longer exists), environment_missing (the environment no longer exists), source_mismatch (the event's ids do not match the order), owner_changed (the environment or customer that owns the work changed), recipient_changed (an event queued before account snapshots whose original URL or signing secret is no longer current).
-            No response: invalid_url (the URL can never be delivered to: it does not parse, has no host, or is not http or https; the outcome is invalid and it is not retried), host_not_found (retries ran out and the last attempt found no DNS record for the URL's host), connection_failed (retries ran out and the last attempt got no HTTP response, for example a refused connection, TLS failure or timeout).
-            not_recorded: no attempt result is known, either because the event was recorded before the reason was stored or because it was dead-lettered without one.
-        attempts:
+            Why last_status_code is null. At most one of the two is non-null; both are null before the first attempt, while status is pending.
+            Never sent, because current access suppressed the delivery (status canceled): no_destination (no webhook URL or signing secret is set for the environment), no_access (the environment does not hold Vantage, or is not served by this deployment), catalogue_restricted (the order item's product is disabled in your catalogue), order_missing (the order no longer exists), environment_missing (the environment no longer exists), source_mismatch (the event's ids do not match the order), owner_changed (the environment or customer that owns the work changed), recipient_changed (an event queued before account snapshots whose original URL or signing secret is no longer current).
+            No response to the latest attempt: invalid_url (the URL can never be delivered to: it does not parse, has no host, or is not http or https; status is failed and it is not retried), host_not_found (the attempt found no DNS record for the URL's host), connection_failed (the attempt got no HTTP response, for example a refused connection, TLS failure or timeout).
+            not_recorded: no attempt result is known, either because the event was recorded before the reason was stored or because it failed without one.
+        attempt_count:
           type: integer
           description: How many delivery attempts were made.
           minimum: -2147483648
           maximum: 2147483647
+        next_attempt_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: When Terra next tries to deliver the event. Set only while status is pending with a retry scheduled.
         completed_at:
           type:
             - string
             - 'null'
           format: date-time
-          description: When delivery finished. null while the outcome is retry_scheduled.
+          description: When delivery reached its status. null while status is pending.
         event_created_at:
           type: string
           format: date-time
@@ -11486,10 +11503,11 @@ components:
         - order_id
         - order_item_id
         - client_order_reference_id
-        - outcome
-        - final_status_code
+        - status
+        - last_status_code
         - no_status_reason
-        - attempts
+        - attempt_count
+        - next_attempt_at
         - completed_at
         - event_created_at
       x-terra-operations:
@@ -11500,17 +11518,23 @@ components:
             - event_id
             - event_type
             - order_id
-            - outcome
-            - final_status_code
-            - attempts
+            - status
+            - last_status_code
+            - attempt_count
             - event_created_at
           examples:
             - summary: Find failed deliveries
               args:
                 - '--env'
                 - <dev-id>
-                - '--outcome'
+                - '--status'
                 - failed
+            - summary: Find events Terra has not delivered yet
+              args:
+                - '--env'
+                - <dev-id>
+                - '--status'
+                - pending
             - summary: Find events for one order
               args:
                 - '--env'
@@ -11549,7 +11573,7 @@ components:
       x-terra-resource: vantage.events
     VantageEventDetail:
       type: object
-      description: A Vantage webhook event and the URL it was sent to.
+      description: A Vantage webhook event with each attempt to deliver it.
       properties:
         event_id:
           type: string
@@ -11572,22 +11596,24 @@ components:
             - string
             - 'null'
           description: Your reference for the order, as set when it was created. null when there is none, and for a test event.
-        outcome:
+        status:
           type: string
           enum:
+            - pending
             - delivered
-            - rejected
-            - invalid
-            - dead_lettered
-            - replayed
-            - suppressed
-            - retry_scheduled
-          description: 'How delivery ended: delivered, rejected (a non-2xx response), invalid (the URL could not be delivered to), dead_lettered (retries exhausted), replayed or suppressed. retry_scheduled means it has not ended: the last attempt failed and Terra will retry it, so final_status_code or no_status_reason is that attempt''s.'
-        final_status_code:
+            - failed
+            - canceled
+          description: |-
+            Where delivery stands. An event exists as soon as it happens, before Terra first tries to deliver it.
+            pending: not delivered yet, either because no attempt has been made or because the last attempt failed and Terra will retry it at next_attempt_at.
+            delivered: your endpoint returned a 2xx response.
+            failed: Terra stopped trying, after a response it does not retry, a URL that can never be delivered to, or the last retry.
+            canceled: never sent, because current access suppressed it; no_status_reason says why.
+        last_status_code:
           type:
             - integer
             - 'null'
-          description: The last HTTP status your endpoint returned, including a non-2xx one. null exactly when no_status_reason is set.
+          description: The HTTP status your endpoint returned to the latest attempt, including a non-2xx one. null when no_status_reason is set, and before the first attempt.
           minimum: -2147483648
           maximum: 2147483647
         no_status_reason:
@@ -11609,41 +11635,56 @@ components:
             - not_recorded
             - null
           description: |-
-            Why final_status_code is null; null whenever it is set, so exactly one of the two is non-null.
-            Never sent, because current access suppressed the delivery: no_destination (no webhook URL or signing secret is set for the environment), no_access (the environment does not hold Vantage, or is not served by this deployment), catalogue_restricted (the order item's product is disabled in your catalogue), order_missing (the order no longer exists), environment_missing (the environment no longer exists), source_mismatch (the event's ids do not match the order), owner_changed (the environment or customer that owns the work changed), recipient_changed (an event queued before account snapshots whose original URL or signing secret is no longer current).
-            No response: invalid_url (the URL can never be delivered to: it does not parse, has no host, or is not http or https; the outcome is invalid and it is not retried), host_not_found (retries ran out and the last attempt found no DNS record for the URL's host), connection_failed (retries ran out and the last attempt got no HTTP response, for example a refused connection, TLS failure or timeout).
-            not_recorded: no attempt result is known, either because the event was recorded before the reason was stored or because it was dead-lettered without one.
-        attempts:
+            Why last_status_code is null. At most one of the two is non-null; both are null before the first attempt, while status is pending.
+            Never sent, because current access suppressed the delivery (status canceled): no_destination (no webhook URL or signing secret is set for the environment), no_access (the environment does not hold Vantage, or is not served by this deployment), catalogue_restricted (the order item's product is disabled in your catalogue), order_missing (the order no longer exists), environment_missing (the environment no longer exists), source_mismatch (the event's ids do not match the order), owner_changed (the environment or customer that owns the work changed), recipient_changed (an event queued before account snapshots whose original URL or signing secret is no longer current).
+            No response to the latest attempt: invalid_url (the URL can never be delivered to: it does not parse, has no host, or is not http or https; status is failed and it is not retried), host_not_found (the attempt found no DNS record for the URL's host), connection_failed (the attempt got no HTTP response, for example a refused connection, TLS failure or timeout).
+            not_recorded: no attempt result is known, either because the event was recorded before the reason was stored or because it failed without one.
+        attempt_count:
           type: integer
           description: How many delivery attempts were made.
           minimum: -2147483648
           maximum: 2147483647
+        next_attempt_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: When Terra next tries to deliver the event. Set only while status is pending with a retry scheduled.
         completed_at:
           type:
             - string
             - 'null'
           format: date-time
-          description: When delivery finished. null while the outcome is retry_scheduled.
+          description: When delivery reached its status. null while status is pending.
         event_created_at:
           type: string
           format: date-time
           description: When the event was created. since and until filter on this.
         webhook_url:
-          type: string
-          description: The URL the event was sent to.
+          type:
+            - string
+            - 'null'
+          description: The URL of the latest attempt. null before the first attempt.
+        attempts:
+          type: array
+          description: Each attempt to deliver the event, newest first. Attempts are kept for 30 days, so an older event has none listed.
+          items:
+            $ref: '#/components/schemas/VantageEventAttempt'
       required:
         - event_id
         - event_type
         - order_id
         - order_item_id
         - client_order_reference_id
-        - outcome
-        - final_status_code
+        - status
+        - last_status_code
         - no_status_reason
-        - attempts
+        - attempt_count
+        - next_attempt_at
         - completed_at
         - event_created_at
         - webhook_url
+        - attempts
     SetVantageApiVersionRequest:
       type: object
       properties:
@@ -12999,6 +13040,45 @@ components:
             - string
             - 'null'
           description: The destination's own webhook signing secret. Null when it signs with the environment's signing secret.
+    VantageEventAttempt:
+      type: object
+      description: One attempt to deliver a Vantage webhook event.
+      properties:
+        attempted_at:
+          type: string
+          format: date-time
+          description: When the attempt was made.
+        url:
+          type: string
+          description: The URL the attempt was sent to.
+        status_code:
+          type:
+            - integer
+            - 'null'
+          description: The HTTP status your endpoint returned. null exactly when no_status_reason is set.
+          minimum: -2147483648
+          maximum: 2147483647
+        no_status_reason:
+          type:
+            - string
+            - 'null'
+          enum:
+            - invalid_url
+            - host_not_found
+            - connection_failed
+            - null
+          description: 'Why status_code is null: invalid_url (the URL can never be delivered to), host_not_found (no DNS record for the URL''s host) or connection_failed (no HTTP response, for example a refused connection, TLS failure or timeout). null exactly when status_code is set.'
+        duration_ms:
+          type: integer
+          description: How long the attempt took, in milliseconds.
+          minimum: -2147483648
+          maximum: 2147483647
+      required:
+        - attempted_at
+        - url
+        - status_code
+        - no_status_reason
+        - duration_ms
 x-terra-nodes:
   billing: Subscriptions, invoices, payment method and usage
   lab-reports: Configure lab reports
