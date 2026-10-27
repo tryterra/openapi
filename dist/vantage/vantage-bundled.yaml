@@ -6,7 +6,7 @@ info:
 
     **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. A date between versions is served the version before it, and a date before the first version the oldest; a malformed or future date returns 400 with code `invalid_api_version`. Supported versions are `2026-10-15` (latest), `2026-10-01` and `2026-09-27`; the [changelog](https://docs.tryterra.co/vantage-api/changelog) lists what each one changed. This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.10.27
+  version: 2026.10.27.1
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -422,7 +422,7 @@ paths:
       summary: Create a new order
       tags:
         - orders
-      description: Create a new blood, DNA, or device test order. Products that are disabled in your catalog cannot be ordered and are rejected with 403; so are products not offered in the environment you call, with code `product_unavailable`. Payment is authorized then captured as part of order creation; if authorization fails, nothing is created and a 402 is returned.
+      description: Create a new blood, DNA, or device test order. Products that are disabled in your catalog cannot be ordered and are rejected with 403. Products not sold in the environment's markets (the UK or the US; testing environments choose theirs in the dashboard, and Terra sets production's) are rejected with 403 too. So are products not offered in the environment you call, with code `product_unavailable`. Payment is authorized then captured as part of order creation; if authorization fails, nothing is created and a 402 is returned.
       x-required-token-scope: vantage:write
       security:
         - BasicAuth: []
@@ -882,13 +882,13 @@ paths:
       summary: Get products by type ID
       tags:
         - products
-      description: Returns all products within a specific product type category
+      description: Returns all products within a specific product type category that are sold in the environment's markets. Vantage sells in the UK and the US, each with different products; an environment lists every market until its markets are set (testing environments choose theirs in the dashboard, and Terra sets production's).
       parameters:
         - $ref: '#/components/parameters/ApiVersion'
         - name: show_all
           in: query
           required: false
-          description: Return the full catalog with per-product enabled flags (curation view).
+          description: Return the full catalog with per-product enabled flags (curation view). Products outside the environment's markets are still left out.
           schema:
             type: boolean
             default: false
@@ -1007,7 +1007,7 @@ paths:
         - name: show_all
           in: query
           required: false
-          description: Include variants of catalog-disabled products (curation view). Disabled products remain non-orderable regardless.
+          description: Include variants of catalog-disabled products (curation view). Disabled products remain non-orderable regardless. A product outside the environment's markets is still a 404.
           schema:
             type: boolean
             default: false

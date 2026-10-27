@@ -345,6 +345,16 @@
     ],
     "sensitive": true
   },
+  "getVantageMarkets": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "dataconfig:read"
+    ],
+    "sensitive": false
+  },
   "getWebhookEvent": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -914,6 +924,16 @@
     "sensitive": false
   },
   "setVantageApiVersion": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "put",
+    "scopes": [
+      "dataconfig:write"
+    ],
+    "sensitive": false
+  },
+  "setVantageMarkets": {
     "confirmation_reason": null,
     "dangerous": false,
     "dry_run": true,

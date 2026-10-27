@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.27
+  version: 2026.10.27.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -5650,6 +5650,105 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/markets:
+    get:
+      operationId: getVantageMarkets
+      x-terra-help: Show the markets the environment's Vantage catalogue and orders cover, and every market Vantage sells in.
+      tags:
+        - vantage
+      summary: Get the environment's Vantage markets
+      description: Vantage sells in the UK and the US, and each market offers different products. The environment's catalogue lists, and its orders accept, only products sold in markets. markets is null until markets are chosen, while the environment has every market. editable is false for a production environment, whose markets Terra sets during account setup; testing and staging environments choose their own.
+      security:
+        - adminToken:
+            - dataconfig:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+      responses:
+        '200':
+          description: The environment's markets and every market Vantage sells in.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VantageMarkets'
+              example:
+                markets:
+                  - uk
+                editable: true
+                available:
+                  - market: uk
+                    name: United Kingdom
+                  - market: us
+                    name: United States
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    put:
+      operationId: setVantageMarkets
+      x-terra-help: Choose the markets a testing or staging environment's Vantage catalogue and orders cover. Replaces the full set. Use --dry-run to preview.
+      tags:
+        - vantage
+      summary: Change the environment's Vantage markets
+      description: Replaces the markets a testing or staging environment's Vantage catalogue lists and its orders accept, from its next request. Send at least one market, each one GET lists; products sold only in other markets leave the catalogue, and ordering one is refused. Send null as markets to clear the choice, so the environment has every market again. A production environment's markets are set by Terra, so changing them here is a 422. Supports ?dry_run=true. Returns the same shape as the GET.
+      security:
+        - adminToken:
+            - dataconfig:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetVantageMarketsRequest'
+            example:
+              markets:
+                - uk
+      responses:
+        '200':
+          description: Updated (or DryRunResult when ?dry_run=true).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/VantageMarkets'
+                  - $ref: '#/components/schemas/DryRunResult'
+              example:
+                markets:
+                  - uk
+                editable: true
+                available:
+                  - market: uk
+                    name: United Kingdom
+                  - market: us
+                    name: United States
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -11408,6 +11507,88 @@ components:
                 - '2026-10-01'
       x-terra-summary: View and change the Vantage API version
       x-terra-resource: vantage.api-version
+    VantageMarkets:
+      type: object
+      description: The markets whose products the environment's Vantage catalogue lists and its orders accept. Vantage sells in the UK and the US, and each market offers different products. Testing and staging environments choose their own markets; Terra sets a production environment's during account setup.
+      properties:
+        markets:
+          type:
+            - array
+            - 'null'
+          description: The markets the environment's catalogue lists and its orders accept, ordered by identifier. null until markets are chosen, while the environment has every market, including any added later.
+          items:
+            type: string
+          minItems: 1
+          uniqueItems: true
+        editable:
+          type: boolean
+          description: Whether this environment can change its own markets. false for a production environment, whose markets Terra sets.
+        available:
+          type: array
+          description: Every market Vantage sells in.
+          items:
+            $ref: '#/components/schemas/VantageMarketEntry'
+      required:
+        - markets
+        - editable
+        - available
+      x-terra-operations:
+        - method_name: retrieve
+          operation: get
+          path: /environments/{dev_id}/vantage/markets
+          examples:
+            - summary: View the environment's Vantage markets
+              args:
+                - '--env'
+                - <dev-id>
+        - method_name: update
+          operation: put
+          path: /environments/{dev_id}/vantage/markets
+          examples:
+            - summary: Sell only UK products in a testing environment
+              args:
+                - '--env'
+                - <dev-id>
+                - '--markets'
+                - uk
+            - summary: Sell UK and US products in a testing environment
+              args:
+                - '--env'
+                - <dev-id>
+                - '--markets'
+                - uk
+                - '--markets'
+                - us
+      x-terra-summary: View and change the markets Vantage sells in for an environment
+      x-terra-resource: vantage.markets
+    VantageMarketEntry:
+      type: object
+      properties:
+        market:
+          type: string
+          description: The market's identifier, as sent in markets.
+        name:
+          type: string
+          description: The market's display name.
+      required:
+        - market
+        - name
+    SetVantageMarketsRequest:
+      type: object
+      properties:
+        markets:
+          type:
+            - array
+            - 'null'
+          description: The full set of markets to sell in, at least one, each one of the markets GET lists; replaces the current set. null clears the choice, so the environment has every market.
+          items:
+            type: string
+          minItems: 1
+          uniqueItems: true
+          x-terra-help: Market to sell in, uk or us; repeat for each one. Replaces the full set; at least one is required.
+      required:
+        - markets
+      additionalProperties: false
     VantageEvent:
       type: object
       description: One Vantage webhook event and where its delivery stands. Production and sandbox are separate Vantage deployments with their own events; a production environment's events are in production Vantage, and every other environment's are in sandbox.
