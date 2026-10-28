@@ -6,7 +6,7 @@ info:
 
     **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. A date between versions is served the version before it, and a date before the first version the oldest; a malformed or future date returns 400 with code `invalid_api_version`. Supported versions are `2026-10-15` (latest), `2026-10-01` and `2026-09-27`; the [changelog](https://docs.tryterra.co/vantage-api/changelog) lists what each one changed. This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.10.28
+  version: 2026.10.28.1
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -3449,21 +3449,6 @@ components:
         - longevity
         - ancestry
       example: carrier
-    TurnaroundDays:
-      type: object
-      description: The supplier's stated lab turnaround in days, from sample received to results. A single stated figure has `min` == `max`.
-      required:
-        - min
-        - max
-      properties:
-        min:
-          type: integer
-          format: int32
-          example: 3
-        max:
-          type: integer
-          format: int32
-          example: 5
     Currency:
       type: string
       description: ISO 4217 alphabetic currency code. Omitted when the stored currency is not one of these. Versions before 2026-10-15 serve the ISO 4217 numeric code (840, 978, 826) instead.
@@ -3559,8 +3544,6 @@ components:
           $ref: '#/components/schemas/CollectionMethod'
         collection_visit:
           $ref: '#/components/schemas/CollectionVisit'
-        turnaround_days:
-          $ref: '#/components/schemas/TurnaroundDays'
         requires_activation:
           type: boolean
           description: Whether the kit has to be activated before the lab will process its sample. When true, call the kit activation endpoint as part of your flow; the sample is not processed without it.
