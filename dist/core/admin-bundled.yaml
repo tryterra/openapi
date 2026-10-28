@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.28
+  version: 2026.10.28.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -6536,6 +6536,7 @@ paths:
                     test_taker_id: '333410942627700738'
                     kit_id: KIT-8F3K2Q
                     collection_visit: null
+                    product_type_id: '1'
                 status_history:
                   - status: order.delivery_fulfilled
                     changed_at: '2026-10-22T14:31:07.881Z'
@@ -6610,6 +6611,146 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/orders/{order_id}/simulate:
+    post:
+      operationId: simulateVantageOrder
+      tags:
+        - vantage
+      summary: Simulate a Vantage order event
+      description: 'Applies one lifecycle event to a sandbox order exactly as a supplier update would: the status history records it and its signed webhook is sent to the environment''s webhook URL. Only an event the order''s current status accepts is applied; GET /environments/{dev_id}/vantage/simulation lists them. An order event moves the order''s status. A results event moves the results status of the item order_item_id names, or of every item when it is omitted, and is refused unless each of them accepts it. results_ready also stores a sample result, so the result can be read and acknowledged. A production environment cannot simulate and gets a 422. Pass ?dry_run=true to check the event without applying it.'
+      security:
+        - adminToken:
+            - testdata:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The order to move. An id this environment's orders do not include is a 404.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateVantageOrderRequest'
+            example:
+              event: kit_activated
+              order_item_id: '333410942627700737'
+      responses:
+        '200':
+          description: The event applied, or DryRunResult when ?dry_run=true, whose preview is the result a real call would return. A dry run applies nothing and sends no webhook.
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/VantageSimulateResult'
+                  - $ref: '#/components/schemas/DryRunResult'
+              example:
+                order_id: '333410942627700736'
+                applied_event: kit_activated
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: The event is not one the current status accepts, with current_status and the valid_events it does accept; or the environment is in production, where orders cannot be simulated.
+          content:
+            application/problem+json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Problem'
+                  - type: object
+                    properties:
+                      current_status:
+                        type: string
+                        description: The status the event was checked against, the item's results status for a results event.
+                      valid_events:
+                        type: array
+                        description: The events that status accepts, sorted.
+                        items:
+                          type: string
+              example:
+                type: about:blank
+                title: unprocessable entity
+                detail: event "results_ready" is not a valid transition from item 333410942627700737's current results status
+                instance: /api/v3/admin/environments/dev-a/vantage/orders/333410942627700736/simulate
+                code: unsupported_operation
+                remediation: Send one of valid_events, or read GET /environments/{dev_id}/vantage/simulation for every status's events.
+                current_status: results.sample_processing_in_lab
+                valid_events:
+                  - escalation_raised
+                  - genome_processing
+                  - lab_processing_error
+                  - sample_rejected
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/simulation:
+    get:
+      operationId: getVantageSimulation
+      tags:
+        - vantage
+      summary: Fetch the Vantage simulation transitions
+      description: The events POST /environments/{dev_id}/vantage/orders/{order_id}/simulate accepts from each status, the rules it enforces. Order transitions are the same for every order. Results transitions depend on the item's product type, which each order item carries as product_type_id; a DNA item passes through genome_processing on its way to results_ready. A status that accepts no event is absent. These rules are the sandbox simulator's; production status updates come from suppliers. A production environment gets a 422.
+      security:
+        - adminToken:
+            - vantage:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+      responses:
+        '200':
+          description: The simulation transitions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VantageSimulation'
+              example:
+                order:
+                  transitions:
+                    order.payment_processing:
+                      - cancelled
+                      - payment_complete
+                      - payment_failed
+                    order.delivery_fulfilled:
+                      - completed
+                results:
+                  - product_type_id: '1'
+                    transitions:
+                      results.sample_processing_in_lab:
+                        - escalation_raised
+                        - lab_processing_error
+                        - partial_results_ready
+                        - results_ready
+                        - sample_rejected
+                  - product_type_id: '2'
+                    transitions:
+                      results.sample_processing_in_lab:
+                        - escalation_raised
+                        - genome_processing
+                        - lab_processing_error
+                        - sample_rejected
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /environments/{dev_id}/vantage/results:
@@ -11407,6 +11548,79 @@ components:
         RecordUnknown:
           type: object
           unevaluatedProperties: {}
+    SimulateVantageOrderRequest:
+      type: object
+      properties:
+        event:
+          type: string
+          description: The lifecycle event to apply, e.g. processing or results_ready. GET /environments/{dev_id}/vantage/simulation lists the events each status accepts. Required.
+        order_item_id:
+          type: string
+          description: The item a results event applies to. Omitted, a results event applies to every item of the order, and is refused unless every item accepts it. Ignored for an order event.
+      required:
+        - event
+      additionalProperties: false
+    VantageSimulateResult:
+      type: object
+      properties:
+        order_id:
+          type: string
+        applied_event:
+          type: string
+          description: The event applied, or that would be in a dry-run preview.
+      required:
+        - order_id
+        - applied_event
+    VantageSimulation:
+      type: object
+      description: The events the sandbox order simulator accepts from each status. Simulation steps through these one event at a time; production status updates come from suppliers and are not bound to them.
+      properties:
+        order:
+          description: Order status transitions, the same for every order.
+          $ref: '#/components/schemas/VantageSimulationTransitions'
+        results:
+          type: array
+          description: Results status transitions per product type. A product type that produces no result, such as a supplement, is absent.
+          items:
+            $ref: '#/components/schemas/VantageResultsSimulation'
+      required:
+        - order
+        - results
+    VantageSimulationTransitions:
+      type: object
+      description: The events accepted from each status. A status that accepts none is absent.
+      properties:
+        transitions:
+          description: Keyed by status; each value lists the events accepted from it, sorted.
+          $ref: '#/components/schemas/RecordArrayString'
+      required:
+        - transitions
+      $defs:
+        RecordArrayString:
+          type: object
+          unevaluatedProperties:
+            type: array
+            items:
+              type: string
+    VantageResultsSimulation:
+      type: object
+      properties:
+        transitions:
+          description: Keyed by status; each value lists the events accepted from it, sorted.
+          $ref: '#/components/schemas/RecordArrayString'
+        product_type_id:
+          type: string
+          description: The product type these results transitions apply to, as order items carry it.
+      required:
+        - transitions
+        - product_type_id
+      $defs:
+        RecordArrayString:
+          type: object
+          unevaluatedProperties:
+            type: array
+            items:
+              type: string
     VantageEvent:
       type: object
       description: One Vantage webhook event and where its delivery stands. Production and sandbox are separate Vantage deployments with their own events; a production environment's events are in production Vantage, and every other environment's are in sandbox.
@@ -13479,6 +13693,9 @@ components:
           anyOf:
             - $ref: '#/components/schemas/VantageCollectionVisit'
             - type: 'null'
+        product_type_id:
+          type: string
+          description: The id of the product's type, as the catalogue lists it. GET /environments/{dev_id}/vantage/simulation keys its results transitions on it.
       required:
         - order_item_id
         - variant_id
@@ -13491,6 +13708,7 @@ components:
         - test_taker_id
         - kit_id
         - collection_visit
+        - product_type_id
     VantageOrderStatusChange:
       type: object
       properties:
@@ -13508,6 +13726,12 @@ components:
         - status
         - changed_at
         - event_id
+    RecordArrayString:
+      type: object
+      unevaluatedProperties:
+        type: array
+        items:
+          type: string
     VantageResultStatusChange:
       type: object
       properties:

@@ -445,6 +445,16 @@
     ],
     "sensitive": true
   },
+  "getVantageSimulation": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "vantage:read"
+    ],
+    "sensitive": true
+  },
   "getVantageWebhook": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -1110,6 +1120,16 @@
     "method": "put",
     "scopes": [
       "dataconfig:write"
+    ],
+    "sensitive": false
+  },
+  "simulateVantageOrder": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "testdata:write"
     ],
     "sensitive": false
   },
