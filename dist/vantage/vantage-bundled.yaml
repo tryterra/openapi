@@ -6,7 +6,7 @@ info:
 
     **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. A date between versions is served the version before it, and a date before the first version the oldest; a malformed or future date returns 400 with code `invalid_api_version`. Supported versions are `2026-10-15` (latest), `2026-10-01` and `2026-09-27`; the [changelog](https://docs.tryterra.co/vantage-api/changelog) lists what each one changed. This document describes the latest version.
   title: Terra Vantage API
-  version: 2026.10.27.1
+  version: 2026.10.28
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -200,7 +200,8 @@ paths:
         - clients
       description: |
         Update or clear the webhook URL for the authenticated client. The
-        webhook URL must use HTTPS if provided, or can be empty to clear it.
+        webhook URL must use HTTPS and carry no credentials if provided, or
+        can be empty to clear it.
         Note this means webhooks will no longer be sent to your previous
         endpoint.
 
@@ -296,7 +297,7 @@ paths:
       summary: List orders
       tags:
         - orders
-      description: Keyset-paginated index of your orders, newest first. Pass the returned next_cursor to fetch the following page; has_more is false and next_cursor null on the last page.
+      description: 'Keyset-paginated index of your orders, newest first unless order says otherwise. Pass the returned next_cursor, with the same order and filters, to fetch the following page; has_more is false and next_cursor null on the last page. Filters combine: an order must match every one given, and any of a list filter''s values.'
       x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
@@ -350,9 +351,11 @@ paths:
         - name: status
           in: query
           required: false
-          description: Filter by order status string (e.g. order.processing)
+          description: Only orders in these statuses (e.g. order.processing). Repeat the parameter or join the statuses with commas; an unknown status is a 400.
           schema:
-            type: string
+            type: array
+            items:
+              type: string
         - name: collection_type
           in: query
           required: false
@@ -361,6 +364,38 @@ paths:
             enum:
               - AT_HOME
               - GO_TO_LAB
+        - name: order_id
+          in: query
+          required: false
+          description: Only these orders. Repeat the parameter or join the ids with commas; at most 100.
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              example: '333410942627700736'
+        - name: variant_id
+          in: query
+          required: false
+          description: Only orders with an item of one of these product variants. Repeat the parameter or join the ids with commas; at most 100.
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+        - name: recipient_name
+          in: query
+          required: false
+          description: Only orders whose recipient's full name, first then last, contains this text, ignoring case.
+          schema:
+            type: string
+        - name: recipient_email
+          in: query
+          required: false
+          description: Only orders whose recipient's email contains this text, ignoring case.
+          schema:
+            type: string
+        - $ref: '#/components/parameters/ListOrder'
       responses:
         '200':
           headers:
@@ -1120,7 +1155,7 @@ paths:
       summary: List results
       tags:
         - results
-      description: Keyset-paginated index of order items with result activity, newest first.
+      description: 'Keyset-paginated index of order items with result activity, newest first unless order says otherwise. Pass the returned next_cursor, with the same order and filters, to fetch the following page. Filters combine: a result must match every one given, and any of a list filter''s values.'
       x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
@@ -1146,9 +1181,28 @@ paths:
         - name: status
           in: query
           required: false
-          description: Filter by results status string (e.g. results.results_ready)
+          description: Only results in these results statuses (e.g. results.results_ready). Repeat the parameter or join the statuses with commas; an unknown status is a 400. Acknowledgement is is_acknowledged, not a status.
+          schema:
+            type: array
+            items:
+              type: string
+        - name: variant_id
+          in: query
+          required: false
+          description: Only results for these product variants. Repeat the parameter or join the ids with commas; at most 100.
+          schema:
+            type: array
+            maxItems: 100
+            items:
+              type: string
+        - name: client_order_reference_id
+          in: query
+          required: false
+          description: Only results of the order with exactly this client_order_reference_id.
           schema:
             type: string
+            example: ORDER-2024-001
+        - $ref: '#/components/parameters/ListOrder'
         - name: is_acknowledged
           in: query
           required: false
@@ -1158,10 +1212,13 @@ paths:
         - name: order_id
           in: query
           required: false
-          description: Only items of this order.
+          description: Only items of these orders. Repeat the parameter or join the ids with commas; at most 100. An id that is no order matches nothing.
           schema:
-            type: string
-            example: '333410942627700736'
+            type: array
+            maxItems: 100
+            items:
+              type: string
+              example: '333410942627700736'
         - name: since
           in: query
           required: false
@@ -1931,6 +1988,17 @@ webhooks:
           description: Return any 2xx quickly to acknowledge receipt.
 components:
   parameters:
+    ListOrder:
+      name: order
+      in: query
+      required: false
+      description: desc for newest first, asc for oldest first. Send the same order with every page's cursor.
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+        default: desc
     ApiVersion:
       name: X-Terra-Version
       in: header

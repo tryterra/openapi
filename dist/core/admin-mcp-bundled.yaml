@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.27.1
+  version: 2026.10.28
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -6332,7 +6332,7 @@ paths:
         version, newest first.
       security:
       - adminToken:
-        - dataconfig:read
+        - vantageconfig:read
       parameters:
       - $ref: '#/components/parameters/DevId'
       responses:
@@ -6378,7 +6378,7 @@ paths:
         ?dry_run=true. Returns the same shape as the GET.
       security:
       - adminToken:
-        - dataconfig:write
+        - vantageconfig:write
       parameters:
       - $ref: '#/components/parameters/DevId'
       - $ref: '#/components/parameters/DryRun'
@@ -6441,7 +6441,7 @@ paths:
         choose their own.
       security:
       - adminToken:
-        - dataconfig:read
+        - vantageconfig:read
       parameters:
       - $ref: '#/components/parameters/DevId'
       responses:
@@ -6489,7 +6489,7 @@ paths:
         as the GET.
       security:
       - adminToken:
-        - dataconfig:write
+        - vantageconfig:write
       parameters:
       - $ref: '#/components/parameters/DevId'
       - $ref: '#/components/parameters/DryRun'
@@ -6536,6 +6536,461 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '500':
           $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/webhook:
+    get:
+      operationId: getVantageWebhook
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: View the URL Vantage webhook events are delivered to (destinations:read). Deliveries
+        are signed with the environment's signing secret.
+      tags:
+      - vantage
+      summary: Fetch the Vantage webhook
+      description: The HTTPS URL the environment's Vantage webhook events are delivered to, from the deployment
+        its production setting selects; url is null when none is set, and then events are not delivered.
+        Vantage keeps one webhook URL per environment, apart from unified-api destinations. Every delivery
+        is signed with the environment's shared signing secret, the one GET /environments/{dev_id}/api-key
+        reveals under keys:read, as a destination created with signing_secret_source environment is; Vantage
+        webhooks have no secret of their own.
+      security:
+      - adminToken:
+        - destinations:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      responses:
+        '200':
+          description: The Vantage webhook.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VantageWebhook'
+              example:
+                url: https://api.acme.com/terra/vantage
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    put:
+      operationId: setVantageWebhook
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-confirmation-reason: Vantage events go to the new URL straight away; null stops delivery,
+        and events raised meanwhile are not delivered.
+      x-terra-help: Replace the URL Vantage webhook events are delivered to (destinations:write). Pass
+        null to stop delivery. Use dry_run to preview.
+      tags:
+      - vantage
+      summary: Replace the Vantage webhook
+      description: Replaces the HTTPS URL the environment's Vantage webhook events are delivered to, production
+        included; null stops delivery, and events raised while no URL is set are recorded as canceled
+        with no_status_reason no_destination. The next event is sent to the new URL, and a resend goes
+        to it too. A URL that is not HTTPS, or carries credentials, is a 400. Deliveries are signed with
+        the environment's shared signing secret, the one GET /environments/{dev_id}/api-key reveals under
+        keys:read; setting the URL does not change it. Setting the URL it already has is a noop and writes
+        nothing. Pass ?dry_run=true for a preview that validates the URL and writes nothing.
+      security:
+      - adminToken:
+        - destinations:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetVantageWebhookRequest'
+            example:
+              url: https://api.acme.com/terra/vantage
+      responses:
+        '200':
+          description: The updated webhook, or DryRunResult when ?dry_run=true, whose preview is the webhook
+            the write would leave.
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                - $ref: '#/components/schemas/VantageWebhook'
+                - $ref: '#/components/schemas/DryRunResult'
+              example:
+                url: https://api.acme.com/terra/vantage
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/catalogue:
+    get:
+      operationId: listVantageCatalogue
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: List every Vantage product with the markets it is sold in (vantageconfig:read). The
+        same whatever the environment's markets.
+      tags:
+      - vantage
+      summary: List the Vantage catalogue
+      description: 'Every product in Vantage''s catalogue, from the deployment the environment''s production
+        setting selects, ordered by product_id. It is the same catalogue whatever the environment''s markets:
+        markets says where each product is sold, and the environment can enable and order a product only
+        when one of those is among its markets, which GET /environments/{dev_id}/vantage/markets lists.
+        The products the environment has enabled are GET /environments/{dev_id}/vantage/products, which
+        joins the catalogue on product_id. The list is complete in one response.'
+      security:
+      - adminToken:
+        - vantageconfig:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      responses:
+        '200':
+          description: The catalogue.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VantageCatalogueProduct'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+                required:
+                - data
+                - has_more
+                - next_cursor
+              example:
+                data:
+                - product_id: '100010'
+                  name: General Health
+                  description: A broad blood panel covering heart, liver, kidney and thyroid health.
+                  product_type_id: '1'
+                  product_type: Blood Tests
+                  markets:
+                  - uk
+                - product_id: '200020'
+                  name: Ancestry
+                  description: A DNA test of ancestry and inherited traits.
+                  product_type_id: '2'
+                  product_type: DNA Tests
+                  markets:
+                  - us
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/products:
+    get:
+      operationId: listVantageProducts
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: List the Vantage products the environment lists and orders (vantageconfig:read). Names,
+        types and markets are on the catalogue.
+      tags:
+      - vantage
+      summary: List enabled Vantage products
+      description: 'The products the environment''s Vantage catalogue lists and its orders accept: those
+        sold in one of its markets that it has not disabled, ordered by product_id. Every product in the
+        environment''s markets is enabled unless the environment disables it, including products added
+        to the catalogue later. A product outside its markets is never listed, enabled or not; GET /environments/{dev_id}/vantage/catalogue
+        lists every product with its markets, and joins this list on product_id. The list is complete
+        in one response.'
+      security:
+      - adminToken:
+        - vantageconfig:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      responses:
+        '200':
+          description: The enabled products.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VantageProduct'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+                required:
+                - data
+                - has_more
+                - next_cursor
+              example:
+                data:
+                - product_id: '100010'
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/products/batch-enable:
+    post:
+      operationId: batchEnableVantageProducts
+      x-terra-mcp-annotations:
+        destructiveHint: false
+        idempotentHint: true
+        openWorldHint: false
+      x-terra-help: Enable several Vantage products in one call. Either every product is enabled or none
+        is; repeated calls are safe.
+      tags:
+      - vantage
+      summary: Enable several Vantage products
+      description: 'Enables up to 100 products in one transaction, so either every product is enabled
+        or none is. Each product is enabled exactly as the single enable does it: an already-enabled one
+        is left as it is, so a repeat call is safe. Products added to the catalogue later are enabled
+        until disabled. Every product is checked before anything is written; an unrecognised or repeated
+        one is a 400, and one not sold in the environment''s markets is a 422, each with errors naming
+        its position in product_ids. The response lists each product in request order. The preview''s
+        would is noop when every product is already enabled, and nothing is written.'
+      security:
+      - adminToken:
+        - vantageconfig:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchEnableVantageProductsRequest'
+            example:
+              product_ids:
+              - '100010'
+              - '100011'
+      responses:
+        '200':
+          description: Enabled (or DryRunResult when ?dry_run=true).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                - $ref: '#/components/schemas/BatchEnabledVantageProducts'
+                - $ref: '#/components/schemas/DryRunResult'
+              example:
+                data:
+                - product_id: '100010'
+                - product_id: '100011'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/products/batch-disable:
+    post:
+      operationId: batchDisableVantageProducts
+      x-terra-mcp-annotations:
+        idempotentHint: true
+        openWorldHint: false
+      x-terra-help: Disable several Vantage products in one call. Either every product is disabled or
+        none is. Use dry_run to preview.
+      tags:
+      - vantage
+      summary: Disable several Vantage products
+      description: 'Disables up to 100 products in one transaction, so either every product is disabled
+        or none is. Each product is disabled exactly as the single disable does it: the catalogue stops
+        listing it and orders for it are refused. Orders already placed still exist, but an environment
+        without a current Vantage grant no longer sees orders containing a disabled product in its order
+        lists. Every product is checked before anything is written; an unrecognised or repeated one is
+        a 400 and one that is not enabled is a 404, each with errors naming its position in product_ids.
+        Pass ?dry_run=true for a preview that commits nothing; POST products/batch-enable is the inverse.'
+      security:
+      - adminToken:
+        - vantageconfig:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchDisableVantageProductsRequest'
+            example:
+              product_ids:
+              - '100010'
+              - '100011'
+      responses:
+        '200':
+          description: Dry-run preview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: disable
+                preview:
+                  data:
+                  - product_id: '100010'
+                  - product_id: '100011'
+        '204':
+          description: Disabled.
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/products/{product_id}:
+    parameters:
+    - $ref: '#/components/parameters/DevId'
+    - name: product_id
+      in: path
+      required: true
+      x-terra-help: Vantage product ID from the catalogue.
+      schema:
+        type: string
+      description: The product's id, as GET /environments/{dev_id}/vantage/catalogue lists it. An unknown
+        product is a 404.
+    put:
+      operationId: enableVantageProduct
+      x-terra-mcp-annotations:
+        destructiveHint: false
+        openWorldHint: false
+      x-terra-help: Enable a Vantage product, so the catalogue lists it and orders accept it. Repeated
+        calls are safe.
+      tags:
+      - vantage
+      summary: Enable a Vantage product
+      description: Enables one product, so the environment's Vantage catalogue lists it and its orders
+        accept it. The product must be sold in one of the environment's markets; one that is not is a
+        422, and an unknown product is a 404. Enabling a product that is already enabled is a noop and
+        writes nothing, so a repeat call is safe. Every product in the environment's markets is enabled
+        unless the environment disables it, and products added to the catalogue later are enabled until
+        disabled. Pass ?dry_run=true for a preview that commits nothing.
+      security:
+      - adminToken:
+        - vantageconfig:write
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: The enabled product (or DryRunResult when ?dry_run=true).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                - $ref: '#/components/schemas/VantageProduct'
+                - $ref: '#/components/schemas/DryRunResult'
+              example:
+                product_id: '100010'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      operationId: disableVantageProduct
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Disable a Vantage product, so the catalogue stops listing it and orders for it are
+        refused. Use dry_run to preview.
+      tags:
+      - vantage
+      summary: Disable a Vantage product
+      description: Disables one product, so the environment's Vantage catalogue stops listing it and orders
+        for it are refused with a 403. Orders already placed still exist, but an environment without a
+        current Vantage grant no longer sees orders containing a disabled product in its order lists.
+        A product that is not enabled, including one outside the environment's markets, is a 404. Pass
+        ?dry_run=true for a preview that commits nothing; PUT on the same path is the inverse.
+      security:
+      - adminToken:
+        - vantageconfig:write
+      parameters:
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Dry-run preview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: disable
+                preview:
+                  product_id: '100010'
+        '204':
+          description: Disabled.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /environments/{dev_id}/vantage/events:
@@ -6826,6 +7281,810 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/events/resend:
+    post:
+      operationId: resendVantageEvent
+      x-terra-mcp-annotations:
+        destructiveHint: false
+      x-terra-help: Send a Vantage webhook event again, to the current webhook URL (events:write). Acceptance
+        is asynchronous; your endpoint may receive the event twice.
+      tags:
+      - vantage
+      summary: Resend a Vantage webhook event
+      description: 'Asynchronous: a 202 with dispatched true means the event was queued, not that it arrived,
+        so re-read the event to see the outcome, where the resend replaces its earlier one. The event
+        goes to the environment''s current webhook URL, signed with its current signing secret and rendered
+        in its pinned API version. Its body is rebuilt from the stored event, so it carries the status
+        the event originally announced, not the order''s current one, and keeps its event_id: an endpoint
+        that dedupes on event_id treats it as the event it already processed. An event can be resent for
+        30 days; an older one and an unknown one are 404s, and one still being sent is a 409 not_ready
+        until its delivery has an outcome. Without a webhook URL it is a 422. Pass ?dry_run=true to check
+        the event can be resent without sending it.'
+      security:
+      - adminToken:
+        - events:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendVantageEventRequest'
+            example:
+              event_id: '249956485092777984'
+      responses:
+        '200':
+          description: DryRunResult when ?dry_run=true. Every check a live resend makes has run; nothing
+            is queued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: resend
+                preview:
+                  event_id: '249956485092777984'
+                  event_type: order.status_changed
+                  dispatched: false
+        '202':
+          description: Queued for redelivery. Dispatch is asynchronous, so a 202 means the event was accepted
+            rather than delivered; re-read the event to see the outcome.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VantageResendResult'
+              example:
+                event_id: '249956485092777984'
+                event_type: order.status_changed
+                dispatched: true
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/events/generate:
+    post:
+      operationId: generateVantageEvent
+      x-terra-mcp-annotations:
+        destructiveHint: false
+      x-terra-help: Send a test Vantage webhook event of one type to the current webhook URL (testdata:write).
+        dry_run returns the payload without sending it.
+      tags:
+      - vantage
+      summary: Send a test Vantage webhook event
+      description: 'Sends a generated event of one webhook type to the environment''s current webhook
+        URL, through the same delivery as real events: signed with the environment''s signing secret,
+        rendered in its pinned API version and retried the same way, and listed among its events. A generated
+        event carries test true and describes no real order: every order, order item, variant and test-taker
+        id in it is "0". It changes no order or result. It is delivered only while the environment has
+        a current Vantage grant. Without a webhook URL it is a 422. The response carries the payload in
+        the latest API version. Pass ?dry_run=true to get the payload without sending it.'
+      security:
+      - adminToken:
+        - testdata:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateVantageEventRequest'
+            example:
+              event_type: order_item.results_status_change
+              status: results.results_ready
+      responses:
+        '200':
+          description: DryRunResult when ?dry_run=true, whose preview is the VantageGenerateResult a real
+            call would return with dispatched false. Nothing is stored or sent, and the event_id is not
+            a real event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: dispatch
+                preview:
+                  event_id: '249956485092777990'
+                  event_type: order.status_changed
+                  dispatched: false
+                  payload:
+                    event_id: '249956485092777990'
+                    event_type: order.status_changed
+                    test: true
+                    order_id: '0'
+                    status: order.delivery_fulfilled
+        '202':
+          description: Queued for delivery. Dispatch is asynchronous, so the event is accepted rather
+            than delivered; it is listed among the environment's events under event_id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VantageGenerateResult'
+              example:
+                event_id: '249956485092777990'
+                event_type: order.status_changed
+                dispatched: true
+                payload:
+                  event_id: '249956485092777990'
+                  event_type: order.status_changed
+                  test: true
+                  order_id: '0'
+                  status: order.delivery_fulfilled
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/orders:
+    get:
+      operationId: listVantageOrders
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: List Vantage orders, newest first (vantage:read). Filters combine; details and the
+        API body are separate.
+      tags:
+      - vantage
+      summary: List Vantage orders
+      description: 'The environment''s Vantage orders, from the deployment its production setting selects.
+        Keyset cursor pagination, newest first unless order says otherwise, over every order unless since
+        and until bound it. Filters combine, and a row must match every one given. Vantage applies the
+        order read''s access rule before paging: a current Vantage grant lists every order, and without
+        one only orders with a verified purchase are listed.'
+      security:
+      - adminToken:
+        - vantage:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: status
+        x-terra-help: Order statuses, e.g. order.processing. Repeat to match any status.
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/VantageOrderStatus'
+        style: form
+        explode: false
+        description: Only orders in these statuses. An order in any of them is returned; an unknown status
+          is a 400.
+      - name: collection_type
+        x-terra-help: AT_HOME for home test kits or GO_TO_LAB for walk-in labs.
+        in: query
+        schema:
+          type: string
+          enum:
+          - AT_HOME
+          - GO_TO_LAB
+        description: Only home test kit (AT_HOME) or walk-in (GO_TO_LAB) orders.
+      - name: recipient_name
+        x-terra-help: Text the recipient's full name contains, ignoring case.
+        in: query
+        schema:
+          type: string
+        description: Only orders whose recipient's full name, first then last, contains this text, ignoring
+          case.
+      - name: recipient_email
+        x-terra-help: Text the recipient's email contains, ignoring case.
+        in: query
+        schema:
+          type: string
+        description: Only orders whose recipient's email contains this text, ignoring case.
+      - name: variant_id
+        x-terra-help: Product variant IDs from the catalogue. Repeat to match any, at most 100.
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        description: Only orders for these product variants, as the catalogue lists them. Repeat the parameter
+          or join the ids with commas; at most 100.
+      - name: order_id
+        x-terra-help: Exact Vantage order IDs. Repeat to match any, at most 100.
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        description: Only these orders, matched exactly. Repeat the parameter or join the ids with commas;
+          at most 100.
+      - name: client_order_reference_id
+        x-terra-help: Exact reference you set when creating the order.
+        in: query
+        schema:
+          type: string
+        description: Only orders for the order with this reference, matched exactly.
+      - name: since
+        x-terra-help: 'Inclusive oldest created_at (RFC3339). Default: no lower bound.'
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Oldest created_at to return, inclusive, as RFC3339. Defaults to no lower bound.
+      - name: until
+        x-terra-help: 'Inclusive newest created_at (RFC3339). Default: now.'
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Newest created_at to return, inclusive, as RFC3339. Defaults to now.
+      - name: limit
+        x-terra-help: 'Positive rows per page: default 50, clamped to 200. Pass the previous page''s next_cursor
+          as cursor for the next page.'
+        x-terra-mcp-help: 'Positive rows per page: default 50, clamped to 200. Pass the previous page''s
+          next_cursor as cursor for the next page.'
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 50
+        description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
+      - name: cursor
+        x-terra-help: Previous next_cursor; its window and sort override since/until/order_by.
+        in: query
+        schema:
+          type: string
+        description: The previous page's next_cursor. It carries the window and sort the first page resolved,
+          so since, until, order_by and order are ignored while it is set, though supplied values must
+          still be valid. A cursor read before the environment's production setting changed is a 400.
+      - name: order_by
+        x-terra-help: 'Sort field: created_at, the only one.'
+        in: query
+        schema:
+          type: string
+          enum:
+          - created_at
+          default: created_at
+        description: Field to sort by. Only created_at, the order an index serves; filter by status and
+          date to narrow instead.
+      - $ref: '#/components/parameters/Order'
+      responses:
+        '200':
+          description: A page of VantageOrders (keyset cursor).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VantageOrder'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+                required:
+                - data
+                - has_more
+                - next_cursor
+              example:
+                data:
+                - order_id: '333410942627700736'
+                  client_order_reference_id: acme-order-1042
+                  status: order.delivery_fulfilled
+                  collection_type: AT_HOME
+                  created_at: '2026-10-19T08:58:41.107Z'
+                  total_cents: 9900
+                  currency: USD
+                  recipient:
+                    first_name: Sarah
+                    last_name: Johnson
+                    email: sarah.johnson@example.com
+                  items:
+                  - order_item_id: '333410942627700737'
+                    variant_id: '100011'
+                    product_name: General Health
+                    quantity: 1
+                has_more: false
+                next_cursor: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/orders/{order_id}:
+    get:
+      operationId: getVantageOrder
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Read one Vantage order with its recipient, shipping, items and status history (vantage:read).
+      tags:
+      - vantage
+      summary: Fetch a Vantage order
+      description: 'One order with its recipient, addresses, lab, shipping, items and the order''s own
+        status history. Results have their own status and history under results. It takes the order read''s
+        access: a current Vantage grant, or a verified purchase of the order; without either it is a 403.'
+      security:
+      - adminToken:
+        - vantage:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: order_id
+        x-terra-help: Vantage order ID from the orders list.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The order to read. An id this environment's orders do not include is a 404.
+      responses:
+        '200':
+          description: The order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VantageOrderDetail'
+              example:
+                order_id: '333410942627700736'
+                client_order_reference_id: acme-order-1042
+                status: order.delivery_fulfilled
+                collection_type: AT_HOME
+                created_at: '2026-10-19T08:58:41.107Z'
+                total_cents: 9900
+                currency: USD
+                recipient:
+                  first_name: Sarah
+                  last_name: Johnson
+                  email: sarah.johnson@example.com
+                  phone_number: '+14155550142'
+                  date_of_birth: '1988-04-12'
+                  gender_at_birth: female
+                shipping_address:
+                  country_code: US
+                  address_line_1: 120 Market Street
+                  address_line_2: Apt 4
+                  city: San Francisco
+                  administrative_area: CA
+                  postal_code: '94105'
+                requested_lab: null
+                confirmed_lab: null
+                shipping_carrier: USPS
+                tracking_number: '9400111899223197428490'
+                tracking_url: https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899223197428490
+                estimated_delivery_date: '2026-10-22T00:00:00.000Z'
+                items:
+                - order_item_id: '333410942627700737'
+                  variant_id: '100011'
+                  product_name: General Health
+                  quantity: 1
+                  price_per_item_cents: 9900
+                  shipping_status: delivered
+                  results_status: results.results_ready
+                  lab_tracking_number: null
+                  test_taker_id: '333410942627700738'
+                  kit_id: KIT-8F3K2Q
+                  collection_visit: null
+                status_history:
+                - status: order.delivery_fulfilled
+                  changed_at: '2026-10-22T14:31:07.881Z'
+                  event_id: '7312946805437530113'
+                - status: order.processing
+                  changed_at: '2026-10-19T09:02:10.004Z'
+                  event_id: '7311803116260720641'
+                - status: order.payment_complete
+                  changed_at: '2026-10-19T08:58:43.512Z'
+                  event_id: '7311802248899624961'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/orders/{order_id}/payload:
+    get:
+      operationId: getVantageOrderPayload
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Read a Vantage order as the Vantage API serves it, in the pinned version (payloads:read).
+      tags:
+      - vantage
+      summary: Fetch a Vantage order as the API serves it
+      description: 'The order exactly as Vantage''s GET /orders/{order_id} serves it, rendered in the
+        environment''s pinned Vantage API version. It names the recipient, so it takes payloads:read and
+        the order read''s access: a current Vantage grant, or a verified purchase of the order.'
+      security:
+      - adminToken:
+        - payloads:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: order_id
+        x-terra-help: Vantage order ID from the orders list.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The order to read. An id this environment's orders do not include is a 404.
+      responses:
+        '200':
+          description: The order body.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                order_id: '333410942627700736'
+                client_order_reference_id: acme-order-1042
+                order_status: order.delivery_fulfilled
+                collection_type: AT_HOME
+                recipient:
+                  first_name: Sarah
+                  last_name: Johnson
+                  email: sarah.johnson@example.com
+                items:
+                - order_item_id: '333410942627700737'
+                  variant_id: '100011'
+                  quantity: 1
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/results:
+    get:
+      operationId: listVantageResults
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: List Vantage results, newest first (vantage:read). Filters combine; details and files
+        are separate.
+      tags:
+      - vantage
+      summary: List Vantage results
+      description: The environment's Vantage results, one per order item that has a results status, from
+        the deployment its production setting selects. Keyset cursor pagination, newest order item first
+        unless order says otherwise. since and until bound when the results status last changed. Filters
+        combine. Vantage applies the result read's access rule before paging.
+      security:
+      - adminToken:
+        - vantage:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: status
+        x-terra-help: Result statuses, e.g. results.results_ready. Repeat to match any status.
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/VantageResultStatus'
+        style: form
+        explode: false
+        description: Only results whose latest stored results status is one of these, the same statuses
+          Vantage's own results list filters on. Acknowledgement is the is_acknowledged filter and acknowledged_at,
+          not a status. An unknown status is a 400.
+      - name: is_acknowledged
+        x-terra-help: true for results you have acknowledged, false for the rest.
+        in: query
+        schema:
+          type: boolean
+        description: Only results you have acknowledged (true) or not yet acknowledged (false), whatever
+          their status.
+      - name: variant_id
+        x-terra-help: Product variant IDs from the catalogue. Repeat to match any, at most 100.
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        description: Only results for these product variants, as the catalogue lists them. Repeat the
+          parameter or join the ids with commas; at most 100.
+      - name: order_id
+        x-terra-help: Exact Vantage order IDs. Repeat to match any, at most 100.
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        description: Only results for these orders, matched exactly. Repeat the parameter or join the
+          ids with commas; at most 100.
+      - name: client_order_reference_id
+        x-terra-help: Exact reference you set when creating the order.
+        in: query
+        schema:
+          type: string
+        description: Only results for the order with this reference, matched exactly.
+      - name: since
+        x-terra-help: 'Inclusive oldest updated_at (RFC3339). Default: no lower bound.'
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Oldest updated_at to return, inclusive, as RFC3339. Defaults to no lower bound.
+      - name: until
+        x-terra-help: 'Inclusive newest updated_at (RFC3339). Default: now.'
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Newest updated_at to return, inclusive, as RFC3339. Defaults to now.
+      - name: limit
+        x-terra-help: 'Positive rows per page: default 50, clamped to 200. Pass the previous page''s next_cursor
+          as cursor for the next page.'
+        x-terra-mcp-help: 'Positive rows per page: default 50, clamped to 200. Pass the previous page''s
+          next_cursor as cursor for the next page.'
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 50
+        description: Rows per page. Defaults to 50; a larger value is clamped to 200 rather than refused.
+      - name: cursor
+        x-terra-help: Previous next_cursor; its window and sort override since/until/order_by.
+        in: query
+        schema:
+          type: string
+        description: The previous page's next_cursor. It carries the window and sort the first page resolved,
+          so since, until, order_by and order are ignored while it is set, though supplied values must
+          still be valid. A cursor read before the environment's production setting changed is a 400.
+      - name: order_by
+        x-terra-help: 'Sort field: created_at, the only one.'
+        in: query
+        schema:
+          type: string
+          enum:
+          - created_at
+          default: created_at
+        description: Field to sort by. Only created_at; status and status-change times are each the newest
+          history row, so filter by status and date to narrow instead.
+      - $ref: '#/components/parameters/Order'
+      responses:
+        '200':
+          description: A page of VantageResults (keyset cursor).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VantageResult'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+                required:
+                - data
+                - has_more
+                - next_cursor
+              example:
+                data:
+                - order_item_id: '333410942627700737'
+                  order_id: '333410942627700736'
+                  client_order_reference_id: acme-order-1042
+                  variant_id: '100011'
+                  product_name: General Health
+                  status: results.results_ready
+                  created_at: '2026-10-19T08:58:41.107Z'
+                  updated_at: '2026-10-21T16:12:42.000Z'
+                  acknowledged_at: null
+                  test_taker_id: '333410942627700738'
+                has_more: false
+                next_cursor: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/results/{order_item_id}:
+    get:
+      operationId: getVantageResult
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Read one Vantage result with its test taker and status history (vantage:read).
+      tags:
+      - vantage
+      summary: Fetch a Vantage result
+      description: 'One result with its test taker, kit and results status history, including escalations
+        and failure causes. It takes the result read''s access: a current Vantage grant, or a verified
+        purchase of its order.'
+      security:
+      - adminToken:
+        - vantage:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: order_item_id
+        x-terra-help: Order item ID from the results list.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The order item whose result to read. One that has no results status, or is not this
+          environment's, is a 404.
+      responses:
+        '200':
+          description: The result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VantageResultDetail'
+              example:
+                order_item_id: '333410942627700737'
+                order_id: '333410942627700736'
+                client_order_reference_id: acme-order-1042
+                variant_id: '100011'
+                product_name: General Health
+                status: results.results_ready
+                created_at: '2026-10-19T08:58:41.107Z'
+                updated_at: '2026-10-21T16:12:42.000Z'
+                acknowledged_at: null
+                test_taker_id: '333410942627700738'
+                test_taker:
+                  first_name: Sarah
+                  last_name: Johnson
+                  email: sarah.johnson@example.com
+                  phone_number: null
+                  date_of_birth: '1988-04-12'
+                  gender_at_birth: female
+                result_type: fhir_bundle
+                result_version: 1
+                ready_at: '2026-10-21T16:12:42.000Z'
+                shipping_status: delivered
+                kit_id: KIT-8F3K2Q
+                lab_tracking_number: 1Z999AA10123456784
+                collection_visit: null
+                status_history:
+                - status: results.results_ready
+                  changed_at: '2026-10-21T16:12:42.000Z'
+                  escalation_level: not_escalated
+                  acknowledgment_due_by: '2026-10-24T16:12:42.000Z'
+                  failure_cause: null
+                - status: results.sample_processing_in_lab
+                  changed_at: '2026-10-20T11:05:31.000Z'
+                  escalation_level: null
+                  acknowledgment_due_by: null
+                  failure_cause: null
+                - status: results.kit_activated
+                  changed_at: '2026-10-19T18:40:12.000Z'
+                  escalation_level: null
+                  acknowledgment_due_by: null
+                  failure_cause: null
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/results/{order_item_id}/payload:
+    get:
+      operationId: getVantageResultPayload
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: Download a Vantage result's stored file, once its status is results.results_ready
+        (payloads:read).
+      tags:
+      - vantage
+      summary: Fetch a Vantage result file
+      description: 'The stored result file: a FHIR bundle, or a DNA result for a DNA product. Result files
+        are not versioned; this is the file the result download serves. It is health data, so it takes
+        payloads:read and the result read''s access. A 409 not_ready until the file is stored, which happens
+        when the item''s results status reaches results.results_ready.'
+      security:
+      - adminToken:
+        - payloads:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: order_item_id
+        x-terra-help: Order item ID from the results list.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The order item whose result file to read.
+      responses:
+        '200':
+          description: The result file.
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                resourceType: Bundle
+                type: collection
+                entry:
+                - resource:
+                    resourceType: Observation
+                    status: final
+                    code:
+                      text: Haemoglobin A1c
+                    valueQuantity:
+                      value: 5.4
+                      unit: '%'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -7807,6 +9066,10 @@ components:
               them.
             dataconfig:read: See which health data fields you get.
             dataconfig:write: Change which health data fields you get.
+            vantageconfig:read: See which Vantage products and markets are turned on, and the products
+              you can turn on.
+            vantageconfig:write: Turn Vantage products and markets on or off, and change the Vantage API
+              version.
             scores:read: See which scores are turned on, and their settings.
             scores:write: Turn scores on and change their settings.
             models:read: See the available models and their past results.
@@ -7859,6 +9122,8 @@ components:
             payloads:read: admin
             dataconfig:read: admin
             dataconfig:write: admin
+            vantageconfig:read: admin
+            vantageconfig:write: admin
             scores:read: admin
             scores:write: admin
             models:read: both
@@ -7944,6 +9209,8 @@ components:
             - testdata:write
             - tokens:read
             - vantage:read
+            - vantageconfig:read
+            - vantageconfig:write
           - name: Read only
             summary: Auditing, onboarding a teammate, or a demo. Every read except credential material,
               payload bodies and Vantage orders and results.
@@ -7960,6 +9227,7 @@ components:
             - scores:read
             - team:read
             - tokens:read
+            - vantageconfig:read
           - name: Full access
             summary: Every admin-grantable scope, dangerous ones included.
             scopes:
@@ -7990,6 +9258,8 @@ components:
             - tokens:read
             - tokens:write
             - vantage:read
+            - vantageconfig:read
+            - vantageconfig:write
           x-not-a-real-flow: Scope registry only. Token issuance is the device flow or the authorizationCode
             flow (see scheme description); this tokenUrl does not accept client_credentials grants.
         authorizationCode:
@@ -8011,6 +9281,10 @@ components:
               them.
             dataconfig:read: See which health data fields you get.
             dataconfig:write: Change which health data fields you get.
+            vantageconfig:read: See which Vantage products and markets are turned on, and the products
+              you can turn on.
+            vantageconfig:write: Turn Vantage products and markets on or off, and change the Vantage API
+              version.
             scores:read: See which scores are turned on, and their settings.
             scores:write: Turn scores on and change their settings.
             models:read: See the available models and their past results.
@@ -12262,6 +13536,235 @@ components:
       required:
       - markets
       additionalProperties: false
+    VantageWebhook:
+      type: object
+      description: Where the environment's Vantage webhook events are delivered. Vantage keeps one webhook
+        URL per environment; deliveries are signed with the environment's signing secret, the one GET
+        /environments/{dev_id}/api-key reveals.
+      properties:
+        url:
+          type:
+          - string
+          - 'null'
+          description: The HTTPS URL Vantage webhook events are delivered to. null when none is set, so
+            events are not delivered.
+      required:
+      - url
+      x-terra-operations:
+      - method_name: retrieve
+        operation: get
+        path: /environments/{dev_id}/vantage/webhook
+      - method_name: update
+        operation: put
+        path: /environments/{dev_id}/vantage/webhook
+      x-terra-summary: View and change where Vantage webhook events are delivered
+      x-terra-resource: vantage.webhook
+    SetVantageWebhookRequest:
+      type: object
+      properties:
+        url:
+          type:
+          - string
+          - 'null'
+          description: The HTTPS URL to deliver Vantage webhook events to, replacing the current one,
+            without credentials in it. null stops delivery.
+          x-terra-help: HTTPS URL to deliver Vantage webhook events to. Replaces the current one.
+      required:
+      - url
+      additionalProperties: false
+    VantageCatalogueProduct:
+      type: object
+      description: One product in Vantage's catalogue. The catalogue is the same whatever the environment's
+        markets; markets says where each product is sold.
+      properties:
+        product_id:
+          type: string
+          description: The product's id, as products and its variants name it.
+        name:
+          type: string
+          description: The product's name.
+        description:
+          type: string
+        product_type_id:
+          type: string
+          description: The id of the product's type, the category the Vantage API lists products under.
+        product_type:
+          type: string
+          description: The name of the product's type, e.g. Blood Tests.
+        markets:
+          type: array
+          description: The markets the product is sold in, e.g. uk or us, ordered by identifier. An environment
+            can enable and order it only when one of these is among its markets.
+          items:
+            type: string
+      required:
+      - product_id
+      - name
+      - description
+      - product_type_id
+      - product_type
+      - markets
+      x-terra-operations:
+      - method_name: list
+        operation: get
+        path: /environments/{dev_id}/vantage/catalogue
+        columns:
+        - product_id
+        - name
+        - product_type
+        - markets
+      x-terra-summary: List every Vantage product and the markets it is sold in
+      x-terra-resource: vantage.catalogue
+    VantageProduct:
+      type: object
+      description: A product the environment's Vantage catalogue lists and its orders accept. Its name,
+        type and markets are on the catalogue.
+      properties:
+        product_id:
+          type: string
+          description: The product's id, as the catalogue lists it.
+      required:
+      - product_id
+      x-terra-operations:
+      - method_name: list
+        operation: get
+        path: /environments/{dev_id}/vantage/products
+        columns:
+        - product_id
+      - method_name: enable
+        operation: put
+        path: /environments/{dev_id}/vantage/products/{product_id}
+      - method_name: batch-enable
+        operation: post
+        path: /environments/{dev_id}/vantage/products/batch-enable
+      - method_name: disable
+        operation: delete
+        path: /environments/{dev_id}/vantage/products/{product_id}
+      - method_name: batch-disable
+        operation: post
+        path: /environments/{dev_id}/vantage/products/batch-disable
+      x-terra-summary: Choose which Vantage products an environment lists and orders
+      x-terra-resource: vantage.products
+    BatchEnableVantageProductsRequest:
+      type: object
+      properties:
+        product_ids:
+          type: array
+          description: 'The products to enable, by id: at least 1 and at most 100, each listed once. An
+            unrecognised or repeated product is a 400, and one not sold in the environment''s markets
+            is a 422, each naming its position, and then nothing is enabled.'
+          items:
+            type: string
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          x-terra-help: Product ID to enable; repeat for each one, at most 100.
+      required:
+      - product_ids
+      additionalProperties: false
+      x-terra-most-common:
+      - product_ids
+    BatchDisableVantageProductsRequest:
+      type: object
+      properties:
+        product_ids:
+          type: array
+          description: 'The products to disable, by id: at least 1 and at most 100, each listed once.
+            An unrecognised or repeated product is a 400, and one that is not enabled is a 404, each naming
+            its position, and then nothing is disabled.'
+          items:
+            type: string
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          x-terra-help: Product ID to disable; repeat for each one, at most 100.
+      required:
+      - product_ids
+      additionalProperties: false
+      x-terra-most-common:
+      - product_ids
+    BatchEnabledVantageProducts:
+      type: object
+      properties:
+        data:
+          type: array
+          description: One entry per requested product, in request order.
+          items:
+            $ref: '#/components/schemas/VantageProduct'
+      required:
+      - data
+    ResendVantageEventRequest:
+      type: object
+      properties:
+        event_id:
+          type: string
+          description: The event to send again, by its event_id from the event list. An unknown event
+            is a 404, as is one Vantage no longer keeps the body of.
+          x-terra-help: Vantage event ID from the events list. An unknown or expired event returns 404.
+      required:
+      - event_id
+      additionalProperties: false
+    VantageResendResult:
+      type: object
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+          description: The webhook's event type, e.g. order.status_changed.
+        dispatched:
+          type: boolean
+          description: Whether the event was queued. false in a dry-run preview.
+      required:
+      - event_id
+      - event_type
+      - dispatched
+    GenerateVantageEventRequest:
+      type: object
+      properties:
+        event_type:
+          type: string
+          description: 'The webhook type to send: order.status_changed or order_item.results_status_change.
+            Required.'
+          x-terra-help: 'Webhook type: order.status_changed or order_item.results_status_change.'
+        status:
+          type:
+          - string
+          - 'null'
+          description: The status the event announces, one that type of webhook carries, e.g. order.delivery_fulfilled
+            or results.results_ready. Omitted or null, order.delivery_fulfilled for an order event and
+            results.results_ready for a results event.
+          x-terra-help: Status the event announces, e.g. results.results_ready. Defaults per event type.
+      required:
+      - event_type
+      additionalProperties: false
+      x-terra-most-common:
+      - event_type
+    VantageGenerateResult:
+      type: object
+      properties:
+        event_id:
+          type: string
+          description: The generated event's id, the one its delivery is listed under.
+        event_type:
+          type: string
+          description: The webhook's event type.
+        dispatched:
+          type: boolean
+          description: Whether the event was queued. false in a dry-run preview.
+        payload:
+          description: The body the webhook carries, in the latest Vantage API version. Its test field
+            is true, and every order, item, variant and test-taker id in it is "0".
+          $ref: '#/components/schemas/RecordUnknown'
+      required:
+      - event_id
+      - event_type
+      - dispatched
+      - payload
+      $defs:
+        RecordUnknown:
+          type: object
+          unevaluatedProperties: {}
     VantageEvent:
       type: object
       description: One Vantage webhook event and where its delivery stands. Production and sandbox are
@@ -12407,6 +13910,12 @@ components:
       - method_name: retrieve-payload
         operation: get
         path: /environments/{dev_id}/vantage/events/{event_id}/payload
+      - method_name: resend
+        operation: post
+        path: /environments/{dev_id}/vantage/events/resend
+      - method_name: generate
+        operation: post
+        path: /environments/{dev_id}/vantage/events/generate
       x-terra-summary: Inspect Vantage webhook events and their payloads
       x-terra-resource: vantage.events
     VantageEventDetail:
@@ -12547,6 +14056,400 @@ components:
       - event_created_at
       - webhook_url
       - attempts
+    VantageOrder:
+      type: object
+      description: One Vantage order, as the order list shows it. Production and sandbox are separate
+        Vantage deployments with their own orders; a production environment's orders are in production
+        Vantage, and every other environment's are in sandbox.
+      properties:
+        order_id:
+          type: string
+        client_order_reference_id:
+          type:
+          - string
+          - 'null'
+          description: Your reference for the order, as set when it was created. null when there is none.
+        status:
+          description: 'The order''s own status: payment, fulfilment and completion. Each item''s results
+            have their own status.'
+          $ref: '#/components/schemas/VantageOrderStatus'
+        collection_type:
+          type:
+          - string
+          - 'null'
+          enum:
+          - AT_HOME
+          - GO_TO_LAB
+          - null
+          description: AT_HOME for a home test kit, GO_TO_LAB for a walk-in lab visit.
+        created_at:
+          type: string
+          format: date-time
+          description: When the order was placed. since and until filter on this.
+        total_cents:
+          type: integer
+          description: The order total in the currency's minor unit.
+          minimum: -2147483648
+          maximum: 2147483647
+        currency:
+          type:
+          - string
+          - 'null'
+          description: ISO 4217 code. null when the order has no recorded total.
+        recipient:
+          description: null when the order has no recipient on record.
+          anyOf:
+          - $ref: '#/components/schemas/VantageOrderRecipient'
+          - type: 'null'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VantageOrderItem'
+      required:
+      - order_id
+      - client_order_reference_id
+      - status
+      - collection_type
+      - created_at
+      - total_cents
+      - currency
+      - recipient
+      - items
+      x-terra-operations:
+      - method_name: list
+        operation: get
+        path: /environments/{dev_id}/vantage/orders
+        columns:
+        - order_id
+        - client_order_reference_id
+        - status
+        - collection_type
+        - created_at
+      - method_name: retrieve
+        operation: get
+        path: /environments/{dev_id}/vantage/orders/{order_id}
+      - method_name: retrieve-payload
+        operation: get
+        path: /environments/{dev_id}/vantage/orders/{order_id}/payload
+      x-terra-summary: Browse Vantage orders and the body the API serves for each
+      x-terra-resource: vantage.orders
+    VantageOrderDetail:
+      type: object
+      description: 'One Vantage order with everything about it: recipient, addresses, lab, shipping, items
+        and the order''s status history.'
+      properties:
+        order_id:
+          type: string
+        client_order_reference_id:
+          type:
+          - string
+          - 'null'
+          description: Your reference for the order, as set when it was created. null when there is none.
+        status:
+          description: 'The order''s own status: payment, fulfilment and completion. Each item''s results
+            have their own status.'
+          $ref: '#/components/schemas/VantageOrderStatus'
+        collection_type:
+          type:
+          - string
+          - 'null'
+          enum:
+          - AT_HOME
+          - GO_TO_LAB
+          - null
+          description: AT_HOME for a home test kit, GO_TO_LAB for a walk-in lab visit.
+        created_at:
+          type: string
+          format: date-time
+          description: When the order was placed. since and until filter on this.
+        total_cents:
+          type: integer
+          description: The order total in the currency's minor unit.
+          minimum: -2147483648
+          maximum: 2147483647
+        currency:
+          type:
+          - string
+          - 'null'
+          description: ISO 4217 code. null when the order has no recorded total.
+        recipient:
+          anyOf:
+          - $ref: '#/components/schemas/VantagePerson'
+          - type: 'null'
+        shipping_address:
+          anyOf:
+          - $ref: '#/components/schemas/VantageAddress'
+          - type: 'null'
+        requested_lab:
+          anyOf:
+          - $ref: '#/components/schemas/VantageRequestedLab'
+          - type: 'null'
+        confirmed_lab:
+          anyOf:
+          - $ref: '#/components/schemas/VantageConfirmedLab'
+          - type: 'null'
+        shipping_carrier:
+          type:
+          - string
+          - 'null'
+        tracking_number:
+          type:
+          - string
+          - 'null'
+        tracking_url:
+          type:
+          - string
+          - 'null'
+        estimated_delivery_date:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VantageOrderItemDetail'
+        status_history:
+          type: array
+          description: The order's own status changes, newest first. Each result has its own history.
+          items:
+            $ref: '#/components/schemas/VantageOrderStatusChange'
+      required:
+      - order_id
+      - client_order_reference_id
+      - status
+      - collection_type
+      - created_at
+      - total_cents
+      - currency
+      - recipient
+      - shipping_address
+      - requested_lab
+      - confirmed_lab
+      - shipping_carrier
+      - tracking_number
+      - tracking_url
+      - estimated_delivery_date
+      - items
+      - status_history
+    VantageOrderStatus:
+      type: string
+      enum:
+      - order.payment_processing
+      - order.payment_complete
+      - order.payment_failed
+      - order.processing
+      - order.delayed
+      - order.delivery_fulfilled
+      - order.completed
+      - order.cancelled
+      description: A Vantage order's status, as its webhooks and Vantage's API spell it, in lifecycle
+        order.
+    VantageResult:
+      type: object
+      description: 'One Vantage result: an order item''s lab work. There is one per order item. Production
+        and sandbox are separate Vantage deployments with their own results.'
+      properties:
+        order_item_id:
+          type: string
+        order_id:
+          type: string
+        client_order_reference_id:
+          type:
+          - string
+          - 'null'
+          description: The order's reference, as set when it was created. null when there is none.
+        variant_id:
+          type: string
+        product_name:
+          type:
+          - string
+          - 'null'
+          description: The product's name. null when the catalogue no longer has it.
+        status:
+          $ref: '#/components/schemas/VantageResultStatus'
+        created_at:
+          type: string
+          format: date-time
+          description: When the order item was created. Results sort on this.
+        updated_at:
+          type: string
+          format: date-time
+          description: When the results status last changed. since and until filter on this.
+        acknowledged_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When you first acknowledged the result. null until then.
+        test_taker_id:
+          type:
+          - string
+          - 'null'
+          description: null until the kit is activated.
+      required:
+      - order_item_id
+      - order_id
+      - client_order_reference_id
+      - variant_id
+      - product_name
+      - status
+      - created_at
+      - updated_at
+      - acknowledged_at
+      - test_taker_id
+      x-terra-operations:
+      - method_name: list
+        operation: get
+        path: /environments/{dev_id}/vantage/results
+        columns:
+        - order_item_id
+        - order_id
+        - product_name
+        - status
+        - updated_at
+      - method_name: retrieve
+        operation: get
+        path: /environments/{dev_id}/vantage/results/{order_item_id}
+      - method_name: retrieve-payload
+        operation: get
+        path: /environments/{dev_id}/vantage/results/{order_item_id}/payload
+      x-terra-summary: Browse Vantage results and the files labs return
+      x-terra-resource: vantage.results
+    VantageResultDetail:
+      type: object
+      description: One Vantage result with its test taker, kit and results status history.
+      properties:
+        order_item_id:
+          type: string
+        order_id:
+          type: string
+        client_order_reference_id:
+          type:
+          - string
+          - 'null'
+          description: The order's reference, as set when it was created. null when there is none.
+        variant_id:
+          type: string
+        product_name:
+          type:
+          - string
+          - 'null'
+          description: The product's name. null when the catalogue no longer has it.
+        status:
+          $ref: '#/components/schemas/VantageResultStatus'
+        created_at:
+          type: string
+          format: date-time
+          description: When the order item was created. Results sort on this.
+        updated_at:
+          type: string
+          format: date-time
+          description: When the results status last changed. since and until filter on this.
+        acknowledged_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When you first acknowledged the result. null until then.
+        test_taker_id:
+          type:
+          - string
+          - 'null'
+          description: null until the kit is activated.
+        test_taker:
+          description: null until the kit is activated.
+          anyOf:
+          - $ref: '#/components/schemas/VantagePerson'
+          - type: 'null'
+        result_type:
+          type: string
+          enum:
+          - fhir_bundle
+          - dna_result
+          description: The payload's format.
+        result_version:
+          type:
+          - integer
+          - 'null'
+          description: The stored result's version, which rises when the lab amends it. null until a result
+            is stored.
+          minimum: -2147483648
+          maximum: 2147483647
+        ready_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the result first became ready, partially or fully. null until then.
+        shipping_status:
+          type:
+          - string
+          - 'null'
+          enum:
+          - pending_shipment
+          - in_transit
+          - delivery_attempted
+          - delivered
+          - null
+        kit_id:
+          type:
+          - string
+          - 'null'
+          description: The supplier's id for the kit or item.
+        lab_tracking_number:
+          type:
+          - string
+          - 'null'
+        collection_visit:
+          anyOf:
+          - $ref: '#/components/schemas/VantageCollectionVisit'
+          - type: 'null'
+        status_history:
+          type: array
+          description: Newest first.
+          items:
+            $ref: '#/components/schemas/VantageResultStatusChange'
+      required:
+      - order_item_id
+      - order_id
+      - client_order_reference_id
+      - variant_id
+      - product_name
+      - status
+      - created_at
+      - updated_at
+      - acknowledged_at
+      - test_taker_id
+      - test_taker
+      - result_type
+      - result_version
+      - ready_at
+      - shipping_status
+      - kit_id
+      - lab_tracking_number
+      - collection_visit
+      - status_history
+    VantageResultStatus:
+      type: string
+      enum:
+      - results.awaiting_sample
+      - results.kit_activated
+      - results.sample_processing_in_lab
+      - results.genome_processing
+      - results.partial_results_ready
+      - results.results_ready
+      - results.sample_reanalysis
+      - results.reanalysed
+      - results.sample_rejected
+      - results.lab_processing_error
+      - results.escalation_raised
+      - results.not_applicable
+      description: 'A Vantage result''s status: its latest stored results status, as Vantage''s API and
+        its status history spell it. Acknowledgement is not a status; see acknowledged_at.
+
+        genome_processing, sample_reanalysis and reanalysed are DNA only; not_applicable is an item that
+        never produces a result.'
     SetVantageApiVersionRequest:
       type: object
       properties:
@@ -13929,6 +15832,325 @@ components:
       - status_code
       - no_status_reason
       - duration_ms
+    RecordUnknown:
+      type: object
+      unevaluatedProperties: {}
+    VantageOrderRecipient:
+      type: object
+      description: Who an order is for, as the order list shows them.
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+      required:
+      - first_name
+      - last_name
+      - email
+    VantageOrderItem:
+      type: object
+      description: One line of an order.
+      properties:
+        order_item_id:
+          type: string
+        variant_id:
+          type: string
+          description: The product variant ordered, as the catalogue lists it.
+        product_name:
+          type:
+          - string
+          - 'null'
+          description: The product's name. null when the catalogue no longer has it.
+        quantity:
+          type: integer
+          minimum: -2147483648
+          maximum: 2147483647
+      required:
+      - order_item_id
+      - variant_id
+      - product_name
+      - quantity
+    VantagePerson:
+      type: object
+      description: 'A recipient or test taker. Personal data: shown as Vantage holds it.'
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type:
+          - string
+          - 'null'
+        phone_number:
+          type:
+          - string
+          - 'null'
+          description: E.164.
+        date_of_birth:
+          type:
+          - string
+          - 'null'
+          description: YYYY-MM-DD.
+        gender_at_birth:
+          type:
+          - string
+          - 'null'
+          enum:
+          - male
+          - female
+          - null
+      required:
+      - first_name
+      - last_name
+      - email
+      - phone_number
+      - date_of_birth
+      - gender_at_birth
+    VantageAddress:
+      type: object
+      properties:
+        country_code:
+          type: string
+          description: ISO 3166-1 alpha-2.
+        address_line_1:
+          type: string
+        address_line_2:
+          type:
+          - string
+          - 'null'
+        city:
+          type: string
+        administrative_area:
+          type:
+          - string
+          - 'null'
+        postal_code:
+          type: string
+      required:
+      - country_code
+      - address_line_1
+      - address_line_2
+      - city
+      - administrative_area
+      - postal_code
+    VantageRequestedLab:
+      type: object
+      description: The lab asked for when the order was placed.
+      properties:
+        code:
+          type:
+          - string
+          - 'null'
+        postal_code:
+          type:
+          - string
+          - 'null'
+        address:
+          anyOf:
+          - $ref: '#/components/schemas/VantageAddress'
+          - type: 'null'
+      required:
+      - code
+      - postal_code
+      - address
+    RecordString:
+      type: object
+      unevaluatedProperties:
+        type: string
+    VantageConfirmedLab:
+      type: object
+      description: The lab the supplier confirmed for a walk-in visit.
+      properties:
+        code:
+          type: string
+        name:
+          type:
+          - string
+          - 'null'
+        address:
+          anyOf:
+          - $ref: '#/components/schemas/VantageAddress'
+          - type: 'null'
+        phone:
+          type:
+          - string
+          - 'null'
+        hours:
+          description: Opening hours by day, as the supplier gives them.
+          $ref: '#/components/schemas/RecordString'
+        latitude:
+          type:
+          - number
+          - 'null'
+        longitude:
+          type:
+          - number
+          - 'null'
+        scheduling_open:
+          type: boolean
+          description: Whether the test taker can book an appointment.
+      required:
+      - code
+      - name
+      - address
+      - phone
+      - hours
+      - latitude
+      - longitude
+      - scheduling_open
+      $defs:
+        RecordString:
+          type: object
+          unevaluatedProperties:
+            type: string
+    VantageCollectionVisit:
+      type: object
+      description: A sample-collection visit booked for an item, such as a home phlebotomy or clinic appointment.
+      properties:
+        type:
+          type: string
+          description: home_phlebotomy or clinic.
+        status:
+          type: string
+        scheduling_url:
+          type:
+          - string
+          - 'null'
+          description: Where the test taker books the visit. null once it is booked or when the supplier
+            gives none.
+      required:
+      - type
+      - status
+      - scheduling_url
+    VantageOrderItemDetail:
+      type: object
+      properties:
+        order_item_id:
+          type: string
+        variant_id:
+          type: string
+          description: The product variant ordered, as the catalogue lists it.
+        product_name:
+          type:
+          - string
+          - 'null'
+          description: The product's name. null when the catalogue no longer has it.
+        quantity:
+          type: integer
+          minimum: -2147483648
+          maximum: 2147483647
+        price_per_item_cents:
+          type: integer
+          minimum: -2147483648
+          maximum: 2147483647
+        shipping_status:
+          type:
+          - string
+          - 'null'
+          enum:
+          - pending_shipment
+          - in_transit
+          - delivery_attempted
+          - delivered
+          - null
+          description: The kit's shipping status. null until it has one.
+        results_status:
+          description: The item's results status. null before it has one. Whether its result is acknowledged
+            is on the result.
+          anyOf:
+          - $ref: '#/components/schemas/VantageResultStatus'
+          - type: 'null'
+        lab_tracking_number:
+          type:
+          - string
+          - 'null'
+          description: The tracking number of the sample's return to the lab.
+        test_taker_id:
+          type:
+          - string
+          - 'null'
+          description: null until the kit is activated.
+        kit_id:
+          type:
+          - string
+          - 'null'
+          description: The supplier's id for the kit or item.
+        collection_visit:
+          anyOf:
+          - $ref: '#/components/schemas/VantageCollectionVisit'
+          - type: 'null'
+      required:
+      - order_item_id
+      - variant_id
+      - product_name
+      - quantity
+      - price_per_item_cents
+      - shipping_status
+      - results_status
+      - lab_tracking_number
+      - test_taker_id
+      - kit_id
+      - collection_visit
+    VantageOrderStatusChange:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/VantageOrderStatus'
+        changed_at:
+          type: string
+          format: date-time
+        event_id:
+          type:
+          - string
+          - 'null'
+          description: The `order.status_changed` webhook event sent for this change; null when the change
+            was recorded before event ids were kept.
+      required:
+      - status
+      - changed_at
+      - event_id
+    VantageResultStatusChange:
+      type: object
+      properties:
+        status:
+          description: The results status at that point. Acknowledgement is not a change; see acknowledged_at.
+          $ref: '#/components/schemas/VantageResultStatus'
+        changed_at:
+          type: string
+          format: date-time
+        escalation_level:
+          type:
+          - string
+          - 'null'
+          enum:
+          - very_high
+          - high
+          - medium
+          - low
+          - very_low
+          - not_escalated
+          - null
+          description: How urgent the lab rates an escalation. null on any other change.
+        acknowledgment_due_by:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When an escalated result should be acknowledged by.
+        failure_cause:
+          type:
+          - string
+          - 'null'
+          description: Why the lab could not process the sample, as the supplier gives it.
+      required:
+      - status
+      - changed_at
+      - escalation_level
+      - acknowledgment_due_by
+      - failure_cause
 x-terra-nodes:
   billing: Subscriptions, invoices, payment method and usage
   lab-reports: Configure lab reports
