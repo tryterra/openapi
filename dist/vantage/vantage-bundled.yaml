@@ -5,8 +5,10 @@ info:
     Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted). Selected product enforcement requires a current Vantage grant for orders, results and lab work. Missing grants or disabled environments return 403 with code entitlement_required or environment_disabled; unavailable current authorization returns 503 with code authorization_unavailable. Configuration, catalogue and recovery remain authenticated. Each environment uses one Vantage deployment: production environments use production Vantage, and every other environment uses the Vantage sandbox. A request from an environment of the other deployment returns 403 with code environment_mode_mismatch, on every route including configuration.
 
     **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. A date between versions is served the version before it, and a date before the first version the oldest; a malformed or future date returns 400 with code `invalid_api_version`. Supported versions are `2026-10-15` (latest), `2026-10-01` and `2026-09-27`; the [changelog](https://docs.tryterra.co/vantage-api/changelog) lists what each one changed. This document describes the latest version.
+
+    **Refusals.** Terra's edge refuses credentials in the platform Problem format (`application/problem+json`, schema `Refusal`), in every version: 401 with code `unauthorized`, 403 with `scope_missing` or `audience_restricted`, and 503 with `authorization_unavailable`. Branch on `code`. Vantage itself still answers in `application/json` (schema `ProblemDetail`) while the edge cannot check credentials, when your account's pinned version cannot be read, and for a scope an operation needs beyond the one its HTTP method implies, so choose the schema by `Content-Type`.
   title: Terra Vantage API
-  version: 2026.10.28.1
+  version: 2026.10.29
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -171,6 +173,34 @@ paths:
                 $ref: '#/components/schemas/ClientResponse'
         '400':
           $ref: '#/components/responses/InvalidApiVersion'
+        '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: Missing or invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '500':
           headers:
             X-Terra-Version:
@@ -193,6 +223,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
     patch:
       operationId: updateWebhookUrl
       summary: Update webhook URL
@@ -258,6 +291,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '404':
           headers:
             X-Terra-Version:
@@ -291,6 +341,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/orders:
     get:
       operationId: listOrders
@@ -430,6 +483,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '500':
           headers:
             X-Terra-Version:
@@ -452,6 +522,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
     post:
       operationId: createOrder
       summary: Create a new order
@@ -514,6 +587,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateOrderValidationError'
+        '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: Missing or invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '402':
           headers:
             X-Terra-Version:
@@ -536,6 +623,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '409':
           headers:
             X-Terra-Version:
@@ -580,6 +670,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/orders/{orderID}:
     get:
       operationId: getOrder
@@ -635,6 +728,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '404':
           headers:
             X-Terra-Version:
@@ -668,6 +778,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/orders/{orderID}/simulate:
     post:
       operationId: simulateOrder
@@ -717,6 +830,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: Missing or invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationError'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '403':
           headers:
             X-Terra-Version:
@@ -728,6 +855,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '404':
           headers:
             X-Terra-Version:
@@ -772,6 +902,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/products:
     get:
       operationId: listProductTypes
@@ -813,6 +946,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '500':
           headers:
             X-Terra-Version:
@@ -835,6 +985,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/products/selection:
     put:
       operationId: updateCatalogSelection
@@ -889,6 +1042,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '500':
           headers:
             X-Terra-Version:
@@ -911,6 +1081,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/products/{id}:
     get:
       operationId: getProductsByType
@@ -975,6 +1148,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '404':
           headers:
             X-Terra-Version:
@@ -1030,6 +1220,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/products/{id}/variants:
     get:
       operationId: listProductVariants
@@ -1094,6 +1287,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '404':
           headers:
             X-Terra-Version:
@@ -1149,6 +1359,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/results:
     get:
       operationId: listResults
@@ -1267,6 +1480,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '500':
           headers:
             X-Terra-Version:
@@ -1289,6 +1519,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/results/{orderItemID}:
     get:
       operationId: getResultsUrl
@@ -1351,6 +1584,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '404':
           headers:
             X-Terra-Version:
@@ -1384,6 +1634,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/results/{orderItemID}/acknowledge:
     post:
       operationId: acknowledgeResults
@@ -1446,6 +1699,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthenticationError'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '404':
           headers:
             X-Terra-Version:
@@ -1479,6 +1749,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/labs:
     get:
       operationId: listLabs
@@ -1534,6 +1807,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '500':
           headers:
             X-Terra-Version:
@@ -1556,6 +1846,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/overview:
     get:
       operationId: getOverview
@@ -1618,6 +1911,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '500':
           headers:
             X-Terra-Version:
@@ -1640,6 +1950,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/webhook-deliveries:
     get:
       operationId: listWebhookDeliveries
@@ -1716,6 +2029,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '500':
           headers:
             X-Terra-Version:
@@ -1738,6 +2068,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/webhook-events/resend:
     post:
       operationId: resendWebhookEvent
@@ -1804,6 +2137,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '404':
           headers:
             X-Terra-Version:
@@ -1848,6 +2198,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
   /api/v1/webhook-events/generate:
     post:
       operationId: generateWebhookEvent
@@ -1914,6 +2267,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
+        '403':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: The credential lacks the scope this operation requires (code `scope_missing`) or is not granted for this dev-id (code `audience_restricted`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
         '422':
           headers:
             X-Terra-Version:
@@ -1947,6 +2317,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Refusal'
 webhooks:
   order.status_changed:
     post:
@@ -2519,6 +2892,39 @@ components:
         - status
         - title
         - type
+    Refusal:
+      description: A credential refusal from Terra's edge, served as `application/problem+json` in every version. The HTTP status is not repeated in the body.
+      type: object
+      required:
+        - type
+        - title
+        - instance
+        - detail
+        - code
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+          description: The HTTP status text, lowercased.
+          example: unauthorized
+        instance:
+          type: string
+          description: The request path, with its query.
+          example: /api/v1/orders?limit=10
+        detail:
+          type: string
+          example: The credential is missing, invalid, expired or revoked.
+        code:
+          type: string
+          description: 'Why the credential was refused: `unauthorized` (401) for a missing, invalid, expired or revoked credential; `scope_missing` (403) for one that lacks the scope this operation requires; `audience_restricted` (403) for one not granted for this dev-id; `authorization_unavailable` (503) when the credential could not be checked, so retry later.'
+          enum:
+            - unauthorized
+            - scope_missing
+            - audience_restricted
+            - authorization_unavailable
+          example: unauthorized
     ActivateKitResponse:
       description: Confirmation that kit was activated successfully
       type: object
