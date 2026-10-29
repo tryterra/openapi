@@ -8,7 +8,7 @@ info:
 
     **Refusals.** Terra's edge refuses credentials in the platform Problem format (`application/problem+json`, schema `Refusal`), in every version: 401 with code `unauthorized`, 403 with `scope_missing` or `audience_restricted`, and 503 with `authorization_unavailable`. Branch on `code`. Vantage itself still answers in `application/json` (schema `ProblemDetail`) while the edge cannot check credentials, when your account's pinned version cannot be read, and for a scope an operation needs beyond the one its HTTP method implies, so choose the schema by `Content-Type`.
   title: Terra Vantage API
-  version: 2026.10.29.1
+  version: 2026.10.29.2
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -3907,6 +3907,9 @@ components:
       description: One measurement a kit includes.
       required:
         - name
+        - summary
+        - description
+        - source_url
       properties:
         name:
           type: string
@@ -3920,6 +3923,24 @@ components:
           type: string
           description: LOINC code for this analyte, when known.
           example: 2085-9
+        summary:
+          type:
+            - string
+            - 'null'
+          description: A one-line, plain-language explanation of the biomarker, for people without a medical background, copied verbatim from the page at `source_url`. Null when no source explains it, as are `description` and `source_url`.
+          example: A protein that binds to iron and stores it for use by the body. Ferritin is found in cells in the liver, spleen, bone marrow, and other tissues.
+        description:
+          description: A fuller plain-language explanation, copied verbatim from the page at `source_url`, as rich text. Null exactly when `summary` is.
+          anyOf:
+            - $ref: '#/components/schemas/RichText'
+            - type: 'null'
+        source_url:
+          type:
+            - string
+            - 'null'
+          format: uri
+          description: 'The page `summary` and `description` are copied from, for crediting it where they are shown: the National Cancer Institute''s Dictionary of Cancer Terms (cancer.gov) or MedlinePlus, U.S. National Library of Medicine (medlineplus.gov). Null exactly when `summary` is.'
+          example: https://www.cancer.gov/publications/dictionaries/cancer-terms/def/ferritin
     ProductVariant:
       type: object
       required:
