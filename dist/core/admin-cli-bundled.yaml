@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.28.1
+  version: 2026.10.29
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -5841,7 +5841,7 @@ paths:
       tags:
         - vantage
       summary: List the Vantage catalogue
-      description: 'Every product in Vantage''s catalogue, from the deployment the environment''s production setting selects, ordered by product_id. It is the same catalogue whatever the environment''s markets: markets says where each product is sold, and the environment can enable and order a product only when one of those is among its markets, which GET /environments/{dev_id}/vantage/markets lists. The products the environment has enabled are GET /environments/{dev_id}/vantage/products, which joins the catalogue on product_id. The list is complete in one response.'
+      description: 'Every product in Vantage''s catalogue, from the deployment the environment''s production setting selects, ordered by product_id. It is the same catalogue whatever the environment''s markets: markets says where each product is sold, and the environment can enable and order a product only when one of those is among its markets, which GET /environments/{dev_id}/vantage/markets lists. Each product lists its variants, the ways it is sold, such as a home kit or a nurse visit. The products the environment has enabled are GET /environments/{dev_id}/vantage/products, which joins the catalogue on product_id, and its enabled variants are GET /environments/{dev_id}/vantage/variants, which joins on variant_id. The list is complete in one response.'
       security:
         - adminToken:
             - vantageconfig:read
@@ -5878,6 +5878,11 @@ paths:
                     product_type: Blood Tests
                     markets:
                       - uk
+                    variants:
+                      - variant_id: '1000101'
+                        name: General Health - finger-prick kit
+                      - variant_id: '1000102'
+                        name: General Health - nurse visit at home
                   - product_id: '200020'
                     name: Ancestry
                     description: A DNA test of ancestry and inherited traits.
@@ -5885,6 +5890,9 @@ paths:
                     product_type: DNA Tests
                     markets:
                       - us
+                    variants:
+                      - variant_id: '2000201'
+                        name: Ancestry - cheek swab kit
                 has_more: false
                 next_cursor: null
         '401':
@@ -6133,6 +6141,257 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/variants:
+    get:
+      operationId: listVantageVariants
+      x-terra-help: List the Vantage variants the environment lists and orders, with their products (vantageconfig:read). Names are on the catalogue.
+      tags:
+        - vantage
+      summary: List enabled Vantage variants
+      description: 'The variants the environment''s Vantage catalogue lists and its orders accept: those of its enabled products that it has not disabled, ordered by variant_id. Every variant of an enabled product is enabled unless the environment disables it, including variants added to the catalogue later. A variant of a disabled product, or of one outside its markets, is never listed, enabled or not; GET /environments/{dev_id}/vantage/catalogue lists every product with its variants, and joins this list on variant_id. The list is complete in one response.'
+      security:
+        - adminToken:
+            - vantageconfig:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+      responses:
+        '200':
+          description: The enabled variants.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VantageVariant'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - variant_id: '400011'
+                    product_id: '40001'
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/variants/batch-enable:
+    post:
+      operationId: batchEnableVantageVariants
+      x-terra-help: Enable several Vantage variants in one call. Either every variant is enabled or none is; repeated calls are safe.
+      tags:
+        - vantage
+      summary: Enable several Vantage variants
+      description: 'Enables up to 100 variants in one transaction, so either every variant is enabled or none is. Each variant is enabled exactly as the single enable does it: an already-enabled one is left as it is, so a repeat call is safe. Every variant is checked before anything is written; an unrecognised or repeated one is a 400, and one whose product is not enabled or not sold in the environment''s markets is a 422, each with errors naming its position in variant_ids. The response lists each variant in request order. The preview''s would is noop when every variant is already enabled, and nothing is written.'
+      security:
+        - adminToken:
+            - vantageconfig:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchEnableVantageVariantsRequest'
+            example:
+              variant_ids:
+                - '400011'
+                - '400012'
+      responses:
+        '200':
+          description: Enabled (or DryRunResult when ?dry_run=true).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/BatchEnabledVantageVariants'
+                  - $ref: '#/components/schemas/DryRunResult'
+              example:
+                data:
+                  - variant_id: '400011'
+                    product_id: '40001'
+                  - variant_id: '400012'
+                    product_id: '40001'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/variants/batch-disable:
+    post:
+      operationId: batchDisableVantageVariants
+      x-terra-help: Disable several Vantage variants in one call. Either every variant is disabled or none is. Use --dry-run to preview.
+      tags:
+        - vantage
+      summary: Disable several Vantage variants
+      description: 'Disables up to 100 variants in one transaction, so either every variant is disabled or none is. Each variant is disabled exactly as the single disable does it: the catalogue stops listing it and orders for it are refused, while the product''s other variants stay as they are. Orders already placed still exist, but an environment without a current Vantage grant no longer sees orders containing a disabled variant in its order lists. A product keeps at least one enabled variant: disable the product instead. Every variant is checked before anything is written; an unrecognised or repeated one is a 400, one that is not enabled is a 404, and one whose product would be left with no enabled variant is a 422, each with errors naming its position in variant_ids. Pass ?dry_run=true for a preview that commits nothing; POST variants/batch-enable is the inverse.'
+      security:
+        - adminToken:
+            - vantageconfig:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchDisableVantageVariantsRequest'
+            example:
+              variant_ids:
+                - '400011'
+                - '400012'
+      responses:
+        '200':
+          description: Dry-run preview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: disable
+                preview:
+                  data:
+                    - variant_id: '400011'
+                      product_id: '40001'
+                    - variant_id: '400012'
+                      product_id: '40001'
+        '204':
+          description: Disabled.
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/variants/{variant_id}:
+    parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: variant_id
+        in: path
+        required: true
+        x-terra-help: Vantage variant ID from the catalogue.
+        schema:
+          type: string
+        description: The variant's id, as GET /environments/{dev_id}/vantage/catalogue lists it under its product. An unknown variant is a 404.
+    put:
+      operationId: enableVantageVariant
+      x-terra-help: Enable a Vantage variant, so the catalogue lists it and orders accept it. Repeated calls are safe.
+      tags:
+        - vantage
+      summary: Enable a Vantage variant
+      description: Enables one variant, so the environment's Vantage catalogue lists it and its orders accept it. Its product must be enabled and sold in one of the environment's markets; otherwise it is a 422, and an unknown variant is a 404. Enabling a variant that is already enabled is a noop and writes nothing, so a repeat call is safe. Every variant of an enabled product is enabled unless the environment disables it. Pass ?dry_run=true for a preview that commits nothing.
+      security:
+        - adminToken:
+            - vantageconfig:write
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: The enabled variant (or DryRunResult when ?dry_run=true).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                  - $ref: '#/components/schemas/VantageVariant'
+                  - $ref: '#/components/schemas/DryRunResult'
+              example:
+                variant_id: '400011'
+                product_id: '40001'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      operationId: disableVantageVariant
+      x-terra-help: Disable a Vantage variant, so the catalogue stops listing it and orders for it are refused. Use --dry-run to preview.
+      tags:
+        - vantage
+      summary: Disable a Vantage variant
+      description: 'Disables one variant, such as a product''s nurse visit, so the environment''s Vantage catalogue stops listing it and orders for it are refused with a 403; the product''s other variants stay as they are. Orders already placed still exist, but an environment without a current Vantage grant no longer sees orders containing a disabled variant in its order lists. A variant that is not enabled, including one whose product is disabled or outside the environment''s markets, is a 404, and the product''s last enabled variant is a 422: disable the product instead. Pass ?dry_run=true for a preview that commits nothing; PUT on the same path is the inverse.'
+      security:
+        - adminToken:
+            - vantageconfig:write
+      parameters:
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Dry-run preview.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DryRunResult'
+              example:
+                dry_run: true
+                would: disable
+                preview:
+                  variant_id: '400011'
+                  product_id: '40001'
+        '204':
+          description: Disabled.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/RateLimited'
         '503':
@@ -12919,6 +13178,11 @@ components:
           description: The markets the product is sold in, e.g. uk or us, ordered by identifier. An environment can enable and order it only when one of these is among its markets.
           items:
             type: string
+        variants:
+          type: array
+          description: The ways the product is sold, such as a home kit or a nurse visit, ordered by variant_id. An order names one by its variant_id.
+          items:
+            $ref: '#/components/schemas/VantageCatalogueVariant'
       required:
         - product_id
         - name
@@ -12926,6 +13190,7 @@ components:
         - product_type_id
         - product_type
         - markets
+        - variants
       x-terra-operations:
         - method_name: list
           operation: get
@@ -13048,6 +13313,132 @@ components:
           description: One entry per requested product, in request order.
           items:
             $ref: '#/components/schemas/VantageProduct'
+      required:
+        - data
+    VantageCatalogueVariant:
+      type: object
+      description: One way a catalogue product is sold.
+      properties:
+        variant_id:
+          type: string
+          description: The variant's id, as orders and the variant enablement routes name it.
+        name:
+          type: string
+          description: The variant's name, e.g. Men's Health - nurse visit at home.
+      required:
+        - variant_id
+        - name
+    VantageVariant:
+      type: object
+      description: 'A variant the environment''s Vantage catalogue lists and its orders accept: its product is enabled and the environment has not disabled the variant. Its name is on the catalogue.'
+      properties:
+        variant_id:
+          type: string
+          description: The variant's id, as the catalogue lists it.
+        product_id:
+          type: string
+          description: The id of the product the variant belongs to, as the catalogue lists it.
+      required:
+        - variant_id
+        - product_id
+      x-terra-operations:
+        - method_name: list
+          operation: get
+          path: /environments/{dev_id}/vantage/variants
+          columns:
+            - variant_id
+            - product_id
+          examples:
+            - summary: List the enabled variants
+              args:
+                - '--env'
+                - <dev-id>
+        - method_name: enable
+          operation: put
+          path: /environments/{dev_id}/vantage/variants/{variant_id}
+          examples:
+            - summary: Enable a variant
+              args:
+                - '--env'
+                - <dev-id>
+                - <variant-id>
+        - method_name: batch-enable
+          operation: post
+          path: /environments/{dev_id}/vantage/variants/batch-enable
+          examples:
+            - summary: Enable several variants at once
+              args:
+                - '--env'
+                - <dev-id>
+                - '--variant-ids'
+                - <variant-id>
+                - '--variant-ids'
+                - <variant-id>
+        - method_name: disable
+          operation: delete
+          path: /environments/{dev_id}/vantage/variants/{variant_id}
+          examples:
+            - summary: Disable a variant
+              args:
+                - '--env'
+                - <dev-id>
+                - <variant-id>
+        - method_name: batch-disable
+          operation: post
+          path: /environments/{dev_id}/vantage/variants/batch-disable
+          examples:
+            - summary: Disable several variants at once
+              args:
+                - '--env'
+                - <dev-id>
+                - '--variant-ids'
+                - <variant-id>
+                - '--variant-ids'
+                - <variant-id>
+      x-terra-summary: Choose which variants of its Vantage products an environment lists and orders
+      x-terra-resource: vantage.variants
+    BatchEnableVantageVariantsRequest:
+      type: object
+      properties:
+        variant_ids:
+          type: array
+          description: 'The variants to enable, by id: at least 1 and at most 100, each listed once. An unrecognised or repeated variant is a 400, and one whose product is not enabled or not sold in the environment''s markets is a 422, each naming its position, and then nothing is enabled.'
+          items:
+            type: string
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          x-terra-help: Variant ID to enable; repeat for each one, at most 100.
+      required:
+        - variant_ids
+      additionalProperties: false
+      x-terra-most-common:
+        - variant_ids
+    BatchDisableVantageVariantsRequest:
+      type: object
+      properties:
+        variant_ids:
+          type: array
+          description: 'The variants to disable, by id: at least 1 and at most 100, each listed once. An unrecognised or repeated variant is a 400, one that is not enabled is a 404, and one whose product would be left with no enabled variant is a 422, each naming its position, and then nothing is disabled.'
+          items:
+            type: string
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          x-terra-help: Variant ID to disable; repeat for each one, at most 100.
+      required:
+        - variant_ids
+      additionalProperties: false
+      x-terra-most-common:
+        - variant_ids
+    BatchEnabledVantageVariants:
+      type: object
+      properties:
+        data:
+          type: array
+          description: One entry per requested variant, in request order.
+          items:
+            $ref: '#/components/schemas/VantageVariant'
       required:
         - data
     ResendVantageEventRequest:

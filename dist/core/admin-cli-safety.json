@@ -37,6 +37,16 @@
     ],
     "sensitive": false
   },
+  "batchDisableVantageVariants": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "vantageconfig:write"
+    ],
+    "sensitive": false
+  },
   "batchEnableSources": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -48,6 +58,16 @@
     "sensitive": false
   },
   "batchEnableVantageProducts": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "vantageconfig:write"
+    ],
+    "sensitive": false
+  },
+  "batchEnableVantageVariants": {
     "confirmation_reason": null,
     "dangerous": false,
     "dry_run": true,
@@ -147,6 +167,16 @@
     ],
     "sensitive": false
   },
+  "disableVantageVariant": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "delete",
+    "scopes": [
+      "vantageconfig:write"
+    ],
+    "sensitive": false
+  },
   "enableSource": {
     "confirmation_reason": null,
     "dangerous": false,
@@ -158,6 +188,16 @@
     "sensitive": false
   },
   "enableVantageProduct": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "put",
+    "scopes": [
+      "vantageconfig:write"
+    ],
+    "sensitive": false
+  },
+  "enableVantageVariant": {
     "confirmation_reason": null,
     "dangerous": false,
     "dry_run": true,
@@ -774,6 +814,16 @@
       "vantage:read"
     ],
     "sensitive": true
+  },
+  "listVantageVariants": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "vantageconfig:read"
+    ],
+    "sensitive": false
   },
   "listWebhookEvents": {
     "confirmation_reason": null,
