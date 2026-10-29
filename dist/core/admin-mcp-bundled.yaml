@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.29
+  version: 2026.10.29.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -6685,7 +6685,17 @@ paths:
                 data:
                 - product_id: '100010'
                   name: General Health
-                  description: A broad blood panel covering heart, liver, kidney and thyroid health.
+                  description:
+                    type: root
+                    children:
+                    - type: paragraph
+                      children:
+                      - type: text
+                        value: A broad blood panel covering heart, liver, kidney and thyroid health.
+                        bold: false
+                        italic: false
+                        strikethrough: false
+                        code: false
                   product_type_id: '1'
                   product_type: Blood Tests
                   markets:
@@ -6697,7 +6707,17 @@ paths:
                     name: General Health - nurse visit at home
                 - product_id: '200020'
                   name: Ancestry
-                  description: A DNA test of ancestry and inherited traits.
+                  description:
+                    type: root
+                    children:
+                    - type: paragraph
+                      children:
+                      - type: text
+                        value: A DNA test of ancestry and inherited traits.
+                        bold: false
+                        italic: false
+                        strikethrough: false
+                        code: false
                   product_type_id: '2'
                   product_type: DNA Tests
                   markets:
@@ -14060,7 +14080,9 @@ components:
           type: string
           description: The product's name.
         description:
-          type: string
+          description: The product's description as rich text, exactly as the Vantage API's latest version
+            serves it.
+          $ref: '#/components/schemas/VantageRichText'
         product_type_id:
           type: string
           description: The id of the product's type, the category the Vantage API lists products under.
@@ -16462,6 +16484,333 @@ components:
           description: The destination's own webhook signing secret. Null when it signs with the environment's
             signing secret.
           x-terra-secret: true
+    VantageRichTextText:
+      type: object
+      description: A run of characters sharing one set of styles.
+      properties:
+        type:
+          type: string
+          enum:
+          - text
+        value:
+          type: string
+          description: The characters. A newline is a soft line break.
+          minLength: 1
+        bold:
+          type: boolean
+        italic:
+          type: boolean
+        strikethrough:
+          type: boolean
+        code:
+          type: boolean
+          description: Inline code.
+      required:
+      - type
+      - value
+      - bold
+      - italic
+      - strikethrough
+      - code
+    VantageRichTextImage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - image
+        url:
+          type: string
+          format: uri
+          description: An https URL.
+        alt:
+          type: string
+          description: Text describing the image; empty for a decorative image.
+        title:
+          type:
+          - string
+          - 'null'
+      required:
+      - type
+      - url
+      - alt
+      - title
+    VantageRichTextLineBreak:
+      type: object
+      description: A hard line break.
+      properties:
+        type:
+          type: string
+          enum:
+          - line_break
+      required:
+      - type
+    VantageRichTextUnknownNode:
+      type: object
+      description: A node type added after this description was written. Skip it, or, if it has a children
+        array, render its children instead.
+      properties:
+        type:
+          type: string
+      required:
+      - type
+      unevaluatedProperties: {}
+    VantageRichTextLinkContent:
+      description: 'An inline node inside a link: anything inline except another link.'
+      anyOf:
+      - $ref: '#/components/schemas/VantageRichTextText'
+      - $ref: '#/components/schemas/VantageRichTextImage'
+      - $ref: '#/components/schemas/VantageRichTextLineBreak'
+      - $ref: '#/components/schemas/VantageRichTextUnknownNode'
+    VantageRichTextLink:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - link
+        url:
+          type: string
+          format: uri
+          description: An https, http or mailto URL.
+        title:
+          type:
+          - string
+          - 'null'
+        children:
+          type: array
+          description: The linked content.
+          items:
+            $ref: '#/components/schemas/VantageRichTextLinkContent'
+      required:
+      - type
+      - url
+      - title
+      - children
+    VantageRichTextInline:
+      description: 'An inline node: it sits in a paragraph, heading or table cell.'
+      anyOf:
+      - $ref: '#/components/schemas/VantageRichTextText'
+      - $ref: '#/components/schemas/VantageRichTextLink'
+      - $ref: '#/components/schemas/VantageRichTextImage'
+      - $ref: '#/components/schemas/VantageRichTextLineBreak'
+      - $ref: '#/components/schemas/VantageRichTextUnknownNode'
+    VantageRichTextParagraph:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - paragraph
+        children:
+          type: array
+          description: Empty for an empty paragraph.
+          items:
+            $ref: '#/components/schemas/VantageRichTextInline'
+      required:
+      - type
+      - children
+    VantageRichTextHeading:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - heading
+        level:
+          type: integer
+          description: '1 is the most prominent, as in Markdown''s # to ######.'
+          minimum: 1
+          maximum: 6
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/VantageRichTextInline'
+      required:
+      - type
+      - level
+      - children
+    VantageRichTextBlock:
+      description: 'A block-level node: it sits in the document, a blockquote or a list item.'
+      anyOf:
+      - $ref: '#/components/schemas/VantageRichTextParagraph'
+      - $ref: '#/components/schemas/VantageRichTextHeading'
+      - $ref: '#/components/schemas/VantageRichTextBlockquote'
+      - $ref: '#/components/schemas/VantageRichTextList'
+      - $ref: '#/components/schemas/VantageRichTextCodeBlock'
+      - $ref: '#/components/schemas/VantageRichTextThematicBreak'
+      - $ref: '#/components/schemas/VantageRichTextTable'
+      - $ref: '#/components/schemas/VantageRichTextUnknownNode'
+    VantageRichTextBlockquote:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - blockquote
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/VantageRichTextBlock'
+      required:
+      - type
+      - children
+    VantageRichTextListItem:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - list_item
+        checked:
+          type:
+          - boolean
+          - 'null'
+          description: Whether a task list item is done; null for an item that is not a task.
+        children:
+          type: array
+          description: The item's blocks, including any nested list.
+          items:
+            $ref: '#/components/schemas/VantageRichTextBlock'
+      required:
+      - type
+      - checked
+      - children
+    VantageRichTextList:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - list
+        list_type:
+          type: string
+          description: ordered or unordered. Treat any other value as unordered.
+        start:
+          type:
+          - integer
+          - 'null'
+          description: The number of an ordered list's first item; null for an unordered list.
+          minimum: 0
+          maximum: 2147483647
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/VantageRichTextListItem'
+          minItems: 1
+      required:
+      - type
+      - list_type
+      - start
+      - children
+    VantageRichTextCodeBlock:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - code_block
+        language:
+          type:
+          - string
+          - 'null'
+          description: The language the code is in, e.g. json; null when none is stated.
+        value:
+          type: string
+          description: The code, verbatim.
+      required:
+      - type
+      - language
+      - value
+    VantageRichTextThematicBreak:
+      type: object
+      description: A horizontal rule between sections.
+      properties:
+        type:
+          type: string
+          enum:
+          - thematic_break
+      required:
+      - type
+    VantageRichTextTableCell:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - table_cell
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/VantageRichTextInline'
+      required:
+      - type
+      - children
+    VantageRichTextTableRow:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - table_row
+        header:
+          type: boolean
+          description: True on the first row only.
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/VantageRichTextTableCell'
+      required:
+      - type
+      - header
+      - children
+    VantageRichTextTable:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - table
+        align:
+          type: array
+          description: 'One entry per column: left, center, right, or null for the default. Treat any
+            other value as null.'
+          items:
+            type:
+            - string
+            - 'null'
+          minItems: 1
+        children:
+          type: array
+          description: The rows. The first is the header row, and every row has one cell per column.
+          items:
+            $ref: '#/components/schemas/VantageRichTextTableRow'
+          minItems: 1
+      required:
+      - type
+      - align
+      - children
+    VantageRichText:
+      type: object
+      description: 'A rich text document, exactly as the Vantage API serves product descriptions: a node
+        for every Markdown construct (CommonMark without raw HTML, plus GitHub Flavored Markdown tables,
+        strikethrough and task lists). Every field listed for a node type is always present; a field with
+        no value is null. New node types, fields and values are added without notice: ignore a field you
+        don''t know, skip a node type you don''t know (or show its children, if it has any), treat an
+        unknown list_type as unordered and use the default alignment for an unknown align.'
+      properties:
+        type:
+          type: string
+          enum:
+          - root
+        children:
+          type: array
+          description: The document's blocks in reading order. Empty when there is no text.
+          items:
+            $ref: '#/components/schemas/VantageRichTextBlock'
+      required:
+      - type
+      - children
     VantageEventAttempt:
       type: object
       description: One attempt to deliver a Vantage webhook event.

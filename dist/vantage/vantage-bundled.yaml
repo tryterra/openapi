@@ -4,11 +4,11 @@ info:
   description: |-
     Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted). Selected product enforcement requires a current Vantage grant for orders, results and lab work. Missing grants or disabled environments return 403 with code entitlement_required or environment_disabled; unavailable current authorization returns 503 with code authorization_unavailable. Configuration, catalogue and recovery remain authenticated. Each environment uses one Vantage deployment: production environments use production Vantage, and every other environment uses the Vantage sandbox. A request from an environment of the other deployment returns 403 with code environment_mode_mismatch, on every route including configuration.
 
-    **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. A date between versions is served the version before it, and a date before the first version the oldest; a malformed or future date returns 400 with code `invalid_api_version`. Supported versions are `2026-10-15` (latest), `2026-10-01` and `2026-09-27`; the [changelog](https://docs.tryterra.co/vantage-api/changelog) lists what each one changed. This document describes the latest version.
+    **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. A date between versions is served the version before it, and a date before the first version the oldest; a malformed or future date returns 400 with code `invalid_api_version`. Supported versions are `2026-10-29` (latest), `2026-10-15`, `2026-10-01` and `2026-09-27`; the [changelog](https://docs.tryterra.co/vantage-api/changelog) lists what each one changed. This document describes the latest version.
 
     **Refusals.** Terra's edge refuses credentials in the platform Problem format (`application/problem+json`, schema `Refusal`), in every version: 401 with code `unauthorized`, 403 with `scope_missing` or `audience_restricted`, and 503 with `authorization_unavailable`. Branch on `code`. Vantage itself still answers in `application/json` (schema `ProblemDetail`) while the edge cannot check credentials, when your account's pinned version cannot be read, and for a scope an operation needs beyond the one its HTTP method implies, so choose the schema by `Content-Type`.
   title: Terra Vantage API
-  version: 2026.10.29
+  version: 2026.10.29.1
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -2383,6 +2383,7 @@ components:
           - '2026-09-27'
           - '2026-10-01'
           - '2026-10-15'
+          - '2026-10-29'
     DryRun:
       name: dry_run
       in: query
@@ -2406,6 +2407,7 @@ components:
           - '2026-09-27'
           - '2026-10-01'
           - '2026-10-15'
+          - '2026-10-29'
   responses:
     InvalidApiVersion:
       description: Unsupported `X-Terra-Version`; the problem carries code `invalid_api_version` and lists the supported versions in `detail`.
@@ -4029,7 +4031,7 @@ components:
         currency:
           $ref: '#/components/schemas/Currency'
         description:
-          type: string
+          $ref: '#/components/schemas/RichText'
         id:
           type: string
           description: Decimal string.
@@ -4050,6 +4052,352 @@ components:
           description: The product's variants, on the same curation rules as GET /products/{id}/variants. Empty when the product has none.
           items:
             $ref: '#/components/schemas/ProductVariant'
+    RichText:
+      description: |-
+        Rich text: a document tree with a node for every Markdown construct (CommonMark, without raw HTML, plus the GitHub Flavored Markdown table, strikethrough and task list extensions). Versions before 2026-10-29 serve the plain text instead: each block's text, blocks separated by a blank line.
+
+        Every node has a `type`. Every field listed for a node type is always present; a field with no value is `null`.
+
+        We'll add to this format over time, for example new node types such as block-level images, or new text styles. These additions don't come with a new API version, so make sure your code copes with things it hasn't seen before:
+
+        - If a node has a field you don't know, ignore it.
+        - If you come across a node `type` you don't know, skip it. If it has `children`, you can show those instead.
+        - If `list_type` has a value you don't know, treat the list as unordered. If an `align` value is unknown, use the default alignment.
+
+        Changes that could break existing code, such as removing or renaming a field or node type, only happen in a new API version.
+      type: object
+      required:
+        - type
+        - children
+      properties:
+        type:
+          const: root
+        children:
+          type: array
+          description: The document's blocks in reading order. Empty when there is no text.
+          items:
+            $ref: '#/components/schemas/RichTextBlock'
+      example:
+        type: root
+        children:
+          - type: heading
+            level: 2
+            children:
+              - type: text
+                value: What it measures
+                bold: false
+                italic: false
+                strikethrough: false
+                code: false
+          - type: paragraph
+            children:
+              - type: text
+                value: 17 biomarkers
+                bold: true
+                italic: false
+                strikethrough: false
+                code: false
+              - type: text
+                value: ' from one finger-prick sample.'
+                bold: false
+                italic: false
+                strikethrough: false
+                code: false
+    RichTextBlock:
+      description: 'A block-level node. Blocks sit in the document, a blockquote or a list item. Other types may be added: skip one you don''t recognise.'
+      anyOf:
+        - $ref: '#/components/schemas/RichTextParagraph'
+        - $ref: '#/components/schemas/RichTextHeading'
+        - $ref: '#/components/schemas/RichTextBlockquote'
+        - $ref: '#/components/schemas/RichTextList'
+        - $ref: '#/components/schemas/RichTextCodeBlock'
+        - $ref: '#/components/schemas/RichTextThematicBreak'
+        - $ref: '#/components/schemas/RichTextTable'
+        - $ref: '#/components/schemas/RichTextUnknownNode'
+    RichTextInline:
+      description: 'An inline node. Inline nodes sit in a paragraph, heading or table cell. Other types may be added: skip one you don''t recognise.'
+      anyOf:
+        - $ref: '#/components/schemas/RichTextText'
+        - $ref: '#/components/schemas/RichTextLink'
+        - $ref: '#/components/schemas/RichTextImage'
+        - $ref: '#/components/schemas/RichTextLineBreak'
+        - $ref: '#/components/schemas/RichTextUnknownNode'
+    RichTextLinkContent:
+      description: 'An inline node inside a link: anything inline except another link. Other types may be added: skip one you don''t recognise.'
+      anyOf:
+        - $ref: '#/components/schemas/RichTextText'
+        - $ref: '#/components/schemas/RichTextImage'
+        - $ref: '#/components/schemas/RichTextLineBreak'
+        - $ref: '#/components/schemas/RichTextUnknownNode'
+    RichTextUnknownNode:
+      description: A node type added after this description was written. Skip it, or, if it has a `children` array, render its children instead.
+      type: object
+      required:
+        - type
+      additionalProperties: true
+      properties:
+        type:
+          type: string
+          not:
+            enum:
+              - root
+              - paragraph
+              - heading
+              - blockquote
+              - list
+              - list_item
+              - code_block
+              - thematic_break
+              - table
+              - table_row
+              - table_cell
+              - text
+              - link
+              - image
+              - line_break
+        children:
+          type: array
+    RichTextParagraph:
+      type: object
+      required:
+        - type
+        - children
+      properties:
+        type:
+          const: paragraph
+        children:
+          type: array
+          description: Empty for an empty paragraph.
+          items:
+            $ref: '#/components/schemas/RichTextInline'
+    RichTextHeading:
+      type: object
+      required:
+        - type
+        - level
+        - children
+      properties:
+        type:
+          const: heading
+        level:
+          type: integer
+          minimum: 1
+          maximum: 6
+          description: 1 is the most prominent, as in Markdown's `#` to `######`.
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/RichTextInline'
+    RichTextBlockquote:
+      type: object
+      required:
+        - type
+        - children
+      properties:
+        type:
+          const: blockquote
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/RichTextBlock'
+    RichTextList:
+      type: object
+      required:
+        - type
+        - list_type
+        - start
+        - children
+      properties:
+        type:
+          const: list
+        list_type:
+          type: string
+          description: '`ordered` or `unordered`. Treat any other value as `unordered`.'
+          example: ordered
+        start:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+          description: The number of an ordered list's first item; null for an unordered list.
+        children:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/RichTextListItem'
+    RichTextListItem:
+      type: object
+      required:
+        - type
+        - checked
+        - children
+      properties:
+        type:
+          const: list_item
+        checked:
+          type:
+            - boolean
+            - 'null'
+          description: Whether a task list item is done; null for an item that is not a task.
+        children:
+          type: array
+          description: The item's blocks, including any nested list.
+          items:
+            $ref: '#/components/schemas/RichTextBlock'
+    RichTextCodeBlock:
+      type: object
+      required:
+        - type
+        - language
+        - value
+      properties:
+        type:
+          const: code_block
+        language:
+          type:
+            - string
+            - 'null'
+          description: The language the code is in, e.g. json; null when none is stated.
+        value:
+          type: string
+          description: The code, verbatim, lines separated by `\n`.
+    RichTextThematicBreak:
+      description: A horizontal rule between sections.
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          const: thematic_break
+    RichTextTable:
+      type: object
+      required:
+        - type
+        - align
+        - children
+      properties:
+        type:
+          const: table
+        align:
+          type: array
+          description: 'One entry per column: `left`, `center`, `right`, or null for the default. Treat any other value as null.'
+          minItems: 1
+          items:
+            type:
+              - string
+              - 'null'
+        children:
+          type: array
+          description: The rows. The first is the header row, and every row has one cell per column.
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/RichTextTableRow'
+    RichTextTableRow:
+      type: object
+      required:
+        - type
+        - header
+        - children
+      properties:
+        type:
+          const: table_row
+        header:
+          type: boolean
+          description: True on the first row only.
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/RichTextTableCell'
+    RichTextTableCell:
+      type: object
+      required:
+        - type
+        - children
+      properties:
+        type:
+          const: table_cell
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/RichTextInline'
+    RichTextText:
+      description: A run of characters sharing one set of styles.
+      type: object
+      required:
+        - type
+        - value
+        - bold
+        - italic
+        - strikethrough
+        - code
+      properties:
+        type:
+          const: text
+        value:
+          type: string
+          minLength: 1
+          description: The characters. A `\n` is a soft line break.
+        bold:
+          type: boolean
+        italic:
+          type: boolean
+        strikethrough:
+          type: boolean
+        code:
+          type: boolean
+          description: Inline code.
+    RichTextLink:
+      type: object
+      required:
+        - type
+        - url
+        - title
+        - children
+      properties:
+        type:
+          const: link
+        url:
+          type: string
+          format: uri
+          description: An https, http or mailto URL.
+        title:
+          type:
+            - string
+            - 'null'
+        children:
+          type: array
+          description: The linked content.
+          items:
+            $ref: '#/components/schemas/RichTextLinkContent'
+    RichTextImage:
+      type: object
+      required:
+        - type
+        - url
+        - alt
+        - title
+      properties:
+        type:
+          const: image
+        url:
+          type: string
+          format: uri
+          description: An https URL.
+        alt:
+          type: string
+          description: Text describing the image; empty for a decorative image.
+        title:
+          type:
+            - string
+            - 'null'
+    RichTextLineBreak:
+      description: A hard line break.
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          const: line_break
     ProductType:
       type: object
       properties:
