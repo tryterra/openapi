@@ -8,7 +8,7 @@ info:
 
     **Refusals.** Terra's edge refuses credentials in the platform Problem format (`application/problem+json`, schema `Refusal`), in every version: 401 with code `unauthorized`, 403 with `scope_missing` or `audience_restricted`, and 503 with `authorization_unavailable`. Branch on `code`. Vantage itself still answers in `application/json` (schema `ProblemDetail`) while the edge cannot check credentials, when your account's pinned version cannot be read, and for a scope an operation needs beyond the one its HTTP method implies, so choose the schema by `Content-Type`.
   title: Terra Vantage API
-  version: 2026.10.29.2
+  version: 2026.10.30
 servers:
   - url: https://vantage.tryterra.co
 paths:
@@ -1855,7 +1855,7 @@ paths:
       summary: Analytics overview
       tags:
         - analytics
-      description: 'Client-scoped analytics summary for a time window: order totals with a by-status breakdown, results in vs. still missing, and webhook failures with a daily series.'
+      description: 'Client-scoped analytics summary for a time window: order totals with a by-status breakdown, results in vs. still missing, and webhook failures with a daily series. Like the orders and results lists, every count covers the environment''s current Vantage access or, without it, only its verified purchases.'
       x-required-token-scope: vantage:read
       security:
         - BasicAuth: []

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.29.1
+  version: 2026.10.30
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -7261,6 +7261,183 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/stats:
+    get:
+      operationId: getVantageStats
+      x-terra-help: Summarize Vantage orders, results and webhook failures (vantage:read). Defaults to the last 7 days; --view full adds a series, time to result and top products.
+      tags:
+        - vantage
+      summary: Vantage statistics
+      description: Vantage statistics over [since, until), from the deployment the environment's production setting selects. Orders count by when they were placed and by current status; results by when an item's first result arrived; failed webhooks by when delivery failed. current holds point-in-time counts as of its observed_at, independent of the window. timezone echoes the zone buckets are truncated in. Basic is the default; full adds every bucket (at most 1500), the median time to result and the ten products ordered most. compare=previous_period requires view=full and adds the preceding equal-duration window with its own series. Buckets are truncated in timezone (weeks start on Monday) and reported in UTC. Timestamps must be within 1900-2299 with at most millisecond precision. Like the orders and results lists, every count covers the environment's grant or, without one, only its verified purchases.
+      security:
+        - adminToken:
+            - vantage:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: since
+          in: query
+          x-terra-help: 'Inclusive start, RFC3339. Default: 7 days before until.'
+          description: Inclusive start in RFC3339 with at most millisecond precision. Defaults to 7 days before until.
+          schema:
+            type: string
+            format: date-time
+          example: '2026-10-23T00:00:00Z'
+        - name: until
+          in: query
+          x-terra-help: 'Exclusive end, RFC3339. Default: now.'
+          description: Exclusive end in RFC3339 with at most millisecond precision. Must be after since.
+          schema:
+            type: string
+            format: date-time
+          example: '2026-10-30T00:00:00Z'
+        - name: granularity
+          in: query
+          x-terra-help: 'Full view bucket size. Default: hour to 48h, day to 120d, else week.'
+          description: Only affects view=full. Bucket size. Defaults to hour for windows up to 48 hours, day for windows up to 120 days, and week otherwise. The full-view window must fit at most 1500 buckets.
+          schema:
+            type: string
+            enum:
+              - hour
+              - day
+              - week
+          example: day
+        - name: compare
+          in: query
+          x-terra-help: Requires --view full. previous_period adds the preceding equal-length window.
+          description: Requires view=full. Adds totals, time to result and a series for the previous equal-duration period.
+          schema:
+            type: string
+            enum:
+              - previous_period
+          example: previous_period
+        - name: timezone
+          in: query
+          x-terra-help: 'IANA time zone for buckets. Default: UTC.'
+          description: IANA time zone name the buckets are truncated in. Defaults to UTC.
+          schema:
+            type: string
+          example: America/New_York
+        - name: view
+          in: query
+          description: Response detail level. Basic returns totals and current counts. Full keeps them and adds the series, time to result and breakdowns. Defaults to basic.
+          x-terra-help: basic (default) or full, which adds graph and breakdown data.
+          schema:
+            type: string
+            enum:
+              - basic
+              - full
+            default: basic
+          example: full
+      responses:
+        '200':
+          description: Totals and current counts in both views; full adds documented detail sections.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VantageStats'
+              examples:
+                basic:
+                  summary: Default summary of the last 7 days
+                  value:
+                    since: '2026-10-23T00:00:00Z'
+                    until: '2026-10-30T00:00:00Z'
+                    view: basic
+                    timezone: UTC
+                    orders:
+                      total: 142
+                      by_status:
+                        order.completed: 72
+                        order.processing: 61
+                        order.delayed: 1
+                        order.payment_failed: 8
+                    results:
+                      total: 87
+                    webhooks:
+                      failed: 37
+                    current:
+                      observed_at: '2026-10-30T00:00:00Z'
+                      unacknowledged_results: 2
+                      delayed_orders: 1
+                      payment_failed_orders_last_7d: 1
+                      failed_webhooks_last_24h: 3
+                full:
+                  summary: Daily statistics compared with the previous period
+                  value:
+                    since: '2026-10-28T00:00:00Z'
+                    until: '2026-10-30T00:00:00Z'
+                    view: full
+                    timezone: UTC
+                    orders:
+                      total: 30
+                      by_status:
+                        order.completed: 12
+                        order.processing: 18
+                    results:
+                      total: 21
+                    webhooks:
+                      failed: 3
+                    current:
+                      observed_at: '2026-10-30T00:00:00Z'
+                      unacknowledged_results: 2
+                      delayed_orders: 1
+                      payment_failed_orders_last_7d: 1
+                      failed_webhooks_last_24h: 3
+                    granularity: day
+                    series:
+                      - bucket_start: '2026-10-28T00:00:00Z'
+                        orders: 18
+                        results: 10
+                        failed_webhooks: 2
+                      - bucket_start: '2026-10-29T00:00:00Z'
+                        orders: 12
+                        results: 11
+                        failed_webhooks: 1
+                    time_to_result:
+                      median_hours: 100.8
+                      samples: 21
+                    breakdowns:
+                      products:
+                        - product_id: '10002'
+                          name: Essential Blood Panel
+                          orders: 20
+                        - product_id: '10007'
+                          name: Thyroid Check
+                          orders: 10
+                    comparison:
+                      since: '2026-10-26T00:00:00Z'
+                      until: '2026-10-28T00:00:00Z'
+                      orders:
+                        total: 25
+                        by_status:
+                          order.completed: 25
+                      results:
+                        total: 19
+                      webhooks:
+                        failed: 0
+                      time_to_result:
+                        median_hours: null
+                        samples: 0
+                      series:
+                        - bucket_start: '2026-10-26T00:00:00Z'
+                          orders: 13
+                          results: 9
+                          failed_webhooks: 0
+                        - bucket_start: '2026-10-27T00:00:00Z'
+                          orders: 12
+                          results: 10
+                          failed_webhooks: 0
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /environments/{dev_id}/vantage/results:
     get:
       operationId: listVantageResults
@@ -13617,6 +13794,236 @@ components:
             type: array
             items:
               type: string
+    VantageStats:
+      type: object
+      description: Vantage order, result and webhook statistics for CLI output and dashboard charts.
+      properties:
+        since:
+          type: string
+          format: date-time
+          description: Inclusive requested start in UTC, with at most millisecond precision.
+        until:
+          type: string
+          format: date-time
+          description: Exclusive requested end in UTC, with at most millisecond precision.
+        view:
+          type: string
+          enum:
+            - basic
+            - full
+          description: Resolved response detail level. Defaults to basic.
+        timezone:
+          type: string
+          description: The IANA time zone buckets are truncated in, as requested. UTC by default.
+        orders:
+          $ref: '#/components/schemas/VantageStatsOrders'
+        results:
+          $ref: '#/components/schemas/VantageStatsResults'
+        webhooks:
+          $ref: '#/components/schemas/VantageStatsWebhooks'
+        current:
+          $ref: '#/components/schemas/VantageStatsCurrent'
+        granularity:
+          type: string
+          enum:
+            - hour
+            - day
+            - week
+          description: Present only in the full view. Bucket size, as requested or resolved from the window duration.
+        series:
+          type: array
+          description: Present only in the full view. Counts in ascending buckets, including empty ones. At most 1500 buckets.
+          items:
+            $ref: '#/components/schemas/VantageStatsBucket'
+        time_to_result:
+          description: Present only in the full view.
+          $ref: '#/components/schemas/VantageStatsTimeToResult'
+        breakdowns:
+          description: Present only in the full view.
+          $ref: '#/components/schemas/VantageStatsBreakdowns'
+        comparison:
+          description: Present only in the full view when compare=previous_period was requested.
+          $ref: '#/components/schemas/VantageStatsComparison'
+      required:
+        - since
+        - until
+        - view
+        - timezone
+        - orders
+        - results
+        - webhooks
+        - current
+      x-terra-operations:
+        - method_name: retrieve
+          operation: get
+          path: /environments/{dev_id}/vantage/stats
+          examples:
+            - summary: Summarize the last 7 days
+              args:
+                - '--env'
+                - <dev-id>
+            - summary: Compare daily statistics with the previous period in New York time
+              args:
+                - '--env'
+                - <dev-id>
+                - '--view'
+                - full
+                - '--granularity'
+                - day
+                - '--compare'
+                - previous_period
+                - '--timezone'
+                - America/New_York
+      x-terra-summary: Summarize Vantage orders, results and webhook failures
+      x-terra-resource: vantage.stats
+    VantageStatsBreakdowns:
+      type: object
+      properties:
+        products:
+          type: array
+          description: The ten products ordered most in the window, most first.
+          items:
+            $ref: '#/components/schemas/VantageStatsProduct'
+      required:
+        - products
+    VantageStatsBucket:
+      type: object
+      description: Counts within one bucket.
+      properties:
+        bucket_start:
+          type: string
+          format: date-time
+          description: Bucket start in UTC, truncated in the requested time zone. The first bucket may start before since.
+        orders:
+          type: integer
+        results:
+          type: integer
+        failed_webhooks:
+          type: integer
+      required:
+        - bucket_start
+        - orders
+        - results
+        - failed_webhooks
+    VantageStatsComparison:
+      type: object
+      description: The equal-duration window immediately preceding since.
+      properties:
+        since:
+          type: string
+          format: date-time
+          description: Inclusive start of the preceding window in UTC.
+        until:
+          type: string
+          format: date-time
+          description: Exclusive end of the preceding window, equal to the requested since.
+        orders:
+          $ref: '#/components/schemas/VantageStatsOrders'
+        results:
+          $ref: '#/components/schemas/VantageStatsResults'
+        webhooks:
+          $ref: '#/components/schemas/VantageStatsWebhooks'
+        time_to_result:
+          $ref: '#/components/schemas/VantageStatsTimeToResult'
+        series:
+          type: array
+          description: Counts in ascending buckets, including empty ones.
+          items:
+            $ref: '#/components/schemas/VantageStatsBucket'
+      required:
+        - since
+        - until
+        - orders
+        - results
+        - webhooks
+        - time_to_result
+        - series
+    VantageStatsCurrent:
+      type: object
+      description: Counts as of observed_at, independent of the window.
+      properties:
+        observed_at:
+          type: string
+          format: date-time
+          description: 'UTC time the counts were read: the request time.'
+        unacknowledged_results:
+          type: integer
+          description: Order items with a results status that are not acknowledged, as the results list shows with is_acknowledged=false.
+        delayed_orders:
+          type: integer
+          description: Orders whose current status is order.delayed.
+        payment_failed_orders_last_7d:
+          type: integer
+          description: Orders placed in the last 7 days whose current status is order.payment_failed.
+        failed_webhooks_last_24h:
+          type: integer
+          description: Webhook deliveries that failed in the last 24 hours.
+      required:
+        - observed_at
+        - unacknowledged_results
+        - delayed_orders
+        - payment_failed_orders_last_7d
+        - failed_webhooks_last_24h
+    VantageStatsOrders:
+      type: object
+      description: Orders placed in the window, by their current status.
+      properties:
+        total:
+          type: integer
+        by_status:
+          description: Order counts keyed by current status, such as order.completed.
+          $ref: '#/components/schemas/RecordInteger'
+      required:
+        - total
+        - by_status
+      $defs:
+        RecordInteger:
+          type: object
+          unevaluatedProperties:
+            type: integer
+    VantageStatsProduct:
+      type: object
+      properties:
+        product_id:
+          type: string
+        name:
+          type: string
+        orders:
+          type: integer
+          description: Orders in the window with at least one item of this product.
+      required:
+        - product_id
+        - name
+        - orders
+    VantageStatsResults:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Order items whose first result arrived in the window.
+      required:
+        - total
+    VantageStatsTimeToResult:
+      type: object
+      properties:
+        median_hours:
+          type:
+            - number
+            - 'null'
+          description: Median hours from order placement to an item's first result, over items whose result arrived in the window. Null without samples.
+        samples:
+          type: integer
+      required:
+        - median_hours
+        - samples
+    VantageStatsWebhooks:
+      type: object
+      properties:
+        failed:
+          type: integer
+          description: Webhook deliveries that failed in the window.
+      required:
+        - failed
     VantageEvent:
       type: object
       description: One Vantage webhook event and where its delivery stands. Production and sandbox are separate Vantage deployments with their own events; a production environment's events are in production Vantage, and every other environment's are in sandbox.
@@ -16394,6 +16801,10 @@ components:
         type: array
         items:
           type: string
+    RecordInteger:
+      type: object
+      unevaluatedProperties:
+        type: integer
     VantageResultStatusChange:
       type: object
       properties:
