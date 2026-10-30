@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.30
+  version: 2026.10.30.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -244,6 +244,41 @@ paths:
                 - $ref: '#/components/schemas/AuthorizationCodeFormRequest'
                 - $ref: '#/components/schemas/AuthorizationCodeAssertionFormRequest'
       description: 'Accepts authorization_code with code, S256 code_verifier, canonical MCP resource and optional exact redirect_uri, authenticated by the client''s declared method: none with a CIMD client_id, or private_key_jwt for CIMD clients that declare it, in which case client_id may be omitted. Requires ADMIN_OAUTH_ENABLED. Also accepts the standard RFC 8628 §3.4 device access token request: form-encoded body with grant_type urn:ietf:params:oauth:grant-type:device_code, RFC 6749 §5.1 token response, §5.2/§3.5 error envelope, Cache-Control: no-store. This endpoint speaks only the OAuth wire format. No refresh tokens are issued — rotate via POST /tokens/self/rotate.'
+  /auth/scopes:
+    get:
+      operationId: getScopeRegistry
+      x-terra-hand-written: true
+      tags:
+        - auth
+      summary: List the scopes a token can be granted
+      description: The scope registry this deployment grants from, the same vocabulary, planes, risk lists and presets securitySchemes.adminToken carries, so a client or approval page can show and request scopes without pinning a copy of this document. Needs no token.
+      security: []
+      responses:
+        '200':
+          description: The scope registry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScopeRegistry'
+              example:
+                scopes:
+                  account:read: See your account details and environment IDs.
+                  keys:write: Replace your API key. Anything using the old key will stop working.
+                  data:read: 'Data plane: read stored end-user health data (activity, sleep, body, …).'
+                planes:
+                  account:read: admin
+                  keys:write: admin
+                  data:read: data
+                dangerous:
+                  keys:write: access
+                sensitive: []
+                account_level:
+                  - account:read
+                presets:
+                  - name: Read only
+                    summary: Auditing, onboarding a teammate, or a demo.
+                    scopes:
+                      - account:read
   /docs/ask:
     post:
       operationId: askDocs
@@ -11741,6 +11776,79 @@ components:
       required:
         - dev_id
         - api_key
+    ScopePreset:
+      type: object
+      description: A named grant set the approval page offers, from x-scope-presets.
+      properties:
+        name:
+          type: string
+        summary:
+          type: string
+          description: What the preset is for, as the approval page shows it.
+        mcp_name:
+          type: string
+          description: The label an MCP client's approval page shows instead of name; present on exactly one preset.
+        mcp_summary:
+          type: string
+          description: The summary shown beside mcp_name.
+        scopes:
+          type: array
+          items:
+            type: string
+          x-scope-plane: admin
+      required:
+        - name
+        - summary
+        - scopes
+    ScopeRegistry:
+      type: object
+      description: 'The adminToken scope registry this deployment grants from: the same vocabulary and lists securitySchemes.adminToken publishes, served live so a client can read them without pinning a copy of the spec.'
+      properties:
+        scopes:
+          type: object
+          description: Every scope on both planes, keyed by name, each with the sentence an approval page shows the person granting it.
+          additionalProperties:
+            type: string
+        planes:
+          type: object
+          description: Which token kinds may hold each scope, as in x-scope-planes. POST /auth/device grants only `admin` and `both`.
+          additionalProperties:
+            type: string
+            enum:
+              - admin
+              - data
+              - both
+        dangerous:
+          type: object
+          description: Each dangerous scope and what it puts at stake, as in x-scope-dangerous. A default grant leaves these off.
+          additionalProperties:
+            type: string
+            enum:
+              - money
+              - access
+              - team
+        sensitive:
+          type: array
+          description: Scopes that disclose what the approver already sees in the dashboard, as in x-scope-sensitive. Granted by default, labeled.
+          items:
+            type: string
+        account_level:
+          type: array
+          description: Scopes that act on the whole account, as in x-scope-account-level. A token limited to environments cannot hold them.
+          items:
+            type: string
+        presets:
+          type: array
+          description: The named grant sets, in the order the approval page offers them. The first is the default.
+          items:
+            $ref: '#/components/schemas/ScopePreset'
+      required:
+        - scopes
+        - planes
+        - dangerous
+        - sensitive
+        - account_level
+        - presets
     ScopesRequest:
       type: object
       properties:
