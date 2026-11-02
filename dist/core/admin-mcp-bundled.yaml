@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.02
+  version: 2026.11.02.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -10677,6 +10677,8 @@ components:
           - string
           - 'null'
           format: date-time
+          description: When the token last authenticated a request; null if it never has. A data token
+            unused for 365 days is revoked, after email warnings 30 and 7 days before.
         revoked_at:
           type:
           - string
@@ -10740,6 +10742,8 @@ components:
           - string
           - 'null'
           format: date-time
+          description: When the token last authenticated a request; null if it never has. A data token
+            unused for 365 days is revoked, after email warnings 30 and 7 days before.
         revoked_at:
           type:
           - string
