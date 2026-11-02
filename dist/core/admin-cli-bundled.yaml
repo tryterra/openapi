@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.10.30.1
+  version: 2026.11.02
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -5306,10 +5306,13 @@ paths:
               example:
                 data:
                   - token_id: 2b3c4d5e-6f70-4a81-92b3-c4d5e6f70a81
+                    token_hint: terra_dt_…k9zA
                     dev_id: prod-app-x81LmQ
                     scopes:
                       - auth:write
                     name: sdk-auth-only
+                    created_via: admin_api
+                    revealable: false
                     created_at: '2026-07-03T09:15:00Z'
                     expires_at: '2028-07-03T09:15:00Z'
                     last_used_at: '2026-07-03T09:15:00Z'
@@ -5329,11 +5332,11 @@ paths:
     post:
       operationId: mintDataToken
       x-terra-confirmation-reason: Anyone with the new token can use the access it's given until it expires or you cancel it.
-      x-terra-help: Mint a scoped, long-lived data token. Returns the bearer, also retrievable with keys:read. Rotate by minting a replacement and revoking the old token.
+      x-terra-help: Mint a scoped, long-lived data token. Returns the bearer; a production environment's is shown only this once, a sandbox's stays retrievable with keys:read. Rotate by minting a replacement and revoking the old token.
       tags:
         - tokens
       summary: Create a data access token
-      description: Creates a dev-scoped, explicitly-scoped, long-lived data-plane token (e.g. auth:write only for SDK authentication). Multiple tokens coexist per dev-id, so rotation = mint new + revoke old — no shared-secret cutover. The bearer is returned at mint and retrievable later via the keys:read-gated /secret sub-resource (API-key DX parity).
+      description: Creates a dev-scoped, explicitly-scoped, long-lived data-plane token (e.g. auth:write only for SDK authentication). Multiple tokens coexist per dev-id, so rotation = mint new + revoke old — no shared-secret cutover. The bearer is returned at mint. A production environment's token is view-once (revealable false); its bearer is never stored, so save it now. A sandbox token's stays retrievable via the keys:read-gated /secret sub-resource (API-key DX parity). An environment whose production flag is unknown counts as production.
       security:
         - adminToken:
             - tokens:write
@@ -5366,6 +5369,7 @@ paths:
                   expires_at: '2026-09-22T10:00:00Z'
                   last_used_at: null
                   revoked_at: null
+                  revealable: false
                   will_return_token: true
         '201':
           description: The minted token (bearer shown once).
@@ -5374,12 +5378,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataToken'
               example:
-                token: terra_dt_Xp4…shown-once…9zA
+                token: terra_dt_Xp4…shown-once…k9zA
                 token_id: 2b3c4d5e-6f70-4a81-92b3-c4d5e6f70a81
+                token_hint: terra_dt_…k9zA
                 dev_id: prod-app-x81LmQ
                 scopes:
                   - auth:write
                 name: sdk-auth-only
+                created_via: admin_api
+                revealable: false
                 created_at: '2026-07-03T09:15:00Z'
                 expires_at: '2028-07-03T09:15:00Z'
                 last_used_at: null
@@ -5396,6 +5403,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         '429':
           $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /environments/{dev_id}/tokens/{token_id}:
     delete:
       operationId: revokeDataToken
@@ -5455,11 +5464,11 @@ paths:
   /environments/{dev_id}/tokens/{token_id}/secret:
     get:
       operationId: revealDataToken
-      x-terra-help: Reveal a data token bearer in plaintext (keys:read, audited). Tokens without a stored secret return 422.
+      x-terra-help: Reveal a data token bearer in plaintext (keys:read, audited). A token with revealable false was shown once at creation, so it returns 422.
       tags:
         - tokens
       summary: Re-show a token's bearer
-      description: 'Returns the token including its bearer. Deliberate API-key DX parity: the credential tokens succeed has always been retrievable, so tokens are too. Gated by keys:read (sensitive plaintext disclosure, same class as GET /api-key) and audited. An owned data token with no recoverable secret returns 422. Admin tokens and tokens outside this environment return 404.'
+      description: 'Returns the token including its bearer. API-key DX parity: the credential tokens succeed has always been retrievable, so sandbox tokens and legacy API keys are too. Gated by keys:read (sensitive plaintext disclosure, same class as GET /api-key) and audited. A token minted for a production environment since view-once tokens shipped is shown once at creation (revealable false) and returns 422 unsupported_operation; mint a replacement, then revoke it. Admin tokens and tokens outside this environment return 404.'
       security:
         - adminToken:
             - keys:read
@@ -5481,12 +5490,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/DataToken'
               example:
-                token: terra_dt_Xp4…full-bearer…9zA
+                token: terra_dt_Xp4…full-bearer…k9zA
                 token_id: 2b3c4d5e-6f70-4a81-92b3-c4d5e6f70a81
-                dev_id: prod-app-x81LmQ
+                token_hint: terra_dt_…k9zA
+                dev_id: staging-app-b52TnP
                 scopes:
                   - auth:write
                 name: sdk-auth-only
+                created_via: admin_api
+                revealable: true
                 created_at: '2026-07-03T09:15:00Z'
                 expires_at: null
                 last_used_at: '2026-07-15T08:00:00Z'
@@ -9360,10 +9372,15 @@ components:
       additionalProperties: true
     DataToken:
       type: object
-      description: A data token together with its bearer, which is shown once at mint and afterwards only through the keys:read secret endpoint.
+      description: A data token together with its bearer, which is shown at mint and afterwards only through the keys:read secret endpoint, and only while the token is revealable.
       properties:
         token_id:
           type: string
+        token_hint:
+          type:
+            - string
+            - 'null'
+          description: The bearer's kind prefix and last 4 characters (terra_dt_…x7Kq), or …a1b2 for a backfilled legacy API key. null when the secret is under 32 characters or the token predates hints.
         dev_id:
           type: string
         scopes:
@@ -9372,6 +9389,12 @@ components:
             type: string
         name:
           type: string
+        created_via:
+          type: string
+          description: 'How the token was made: `admin_api` when minted here, `backfill` for a legacy API key carried over as a token.'
+        revealable:
+          type: boolean
+          description: Whether the secret endpoint can show the bearer again; false for a token with no stored bearer.
         created_at:
           type: string
           format: date-time
@@ -9392,8 +9415,10 @@ components:
             - 'null'
           format: date-time
         token:
-          type: string
-          description: The bearer (terra_dt_*). Shown once at mint.
+          type:
+            - string
+            - 'null'
+          description: The bearer (terra_dt_*). Shown once at mint; null in an Idempotency-Key replay.
       required:
         - token_id
         - dev_id
@@ -9407,6 +9432,11 @@ components:
       properties:
         token_id:
           type: string
+        token_hint:
+          type:
+            - string
+            - 'null'
+          description: The bearer's kind prefix and last 4 characters (terra_dt_…x7Kq), or …a1b2 for a backfilled legacy API key. null when the secret is under 32 characters or the token predates hints.
         dev_id:
           type: string
         scopes:
@@ -9415,6 +9445,12 @@ components:
             type: string
         name:
           type: string
+        created_via:
+          type: string
+          description: 'How the token was made: `admin_api` when minted here, `backfill` for a legacy API key carried over as a token.'
+        revealable:
+          type: boolean
+          description: Whether the secret endpoint can show the bearer again; false for a token with no stored bearer.
         created_at:
           type: string
           format: date-time
@@ -9448,6 +9484,7 @@ components:
           columns:
             - token_id
             - name
+            - token_hint
             - scopes
             - expires_at
             - last_used_at
@@ -12890,6 +12927,11 @@ components:
           description: Durable OAuth client label, independent of the editable token name.
         token_id:
           type: string
+        token_hint:
+          type:
+            - string
+            - 'null'
+          description: The bearer's kind prefix and last 4 characters (terra_at_…x7Kq, or …a1b2 for a legacy API key). null when the secret is under 32 characters or the token predates hints.
         kind:
           type: string
           enum:
@@ -12941,6 +12983,7 @@ components:
             - token_id
             - name
             - kind
+            - token_hint
             - scopes
             - expires_at
             - last_used_at
