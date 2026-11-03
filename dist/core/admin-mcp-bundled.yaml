@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.03
+  version: 2026.11.03.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -9857,7 +9857,7 @@ components:
             team:write: Invite, change or remove team members. This can take away someone's access.
           x-scope-planes:
             account:read: admin
-            keys:read: both
+            keys:read: admin
             keys:write: admin
             providers:read: both
             providers:write: both
@@ -12008,13 +12008,12 @@ components:
         scopes:
           type: array
           description: Data-plane scopes only (e.g. ["auth:write"] for an SDK-authentication-only token)
-            — the names the adminToken scope registry marks `data` or `both` in x-scope-planes, except
-            keys:read, which reveals the environment's non-expiring API key and signing secret. Admin-plane
-            names and keys:read are rejected with 400 validation_failed.
+            — the names the adminToken scope registry marks `data` or `both` in x-scope-planes. Admin-plane
+            names are rejected with 400 validation_failed.
           items:
             type: string
           x-terra-help: Data-plane scopes to grant; repeat for each scope. At least one is required; admin-only
-            scopes and keys:read are rejected.
+            scopes are rejected.
           x-scope-plane: data
         expires_in_days:
           type: integer
