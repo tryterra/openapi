@@ -1075,6 +1075,17 @@
     ],
     "sensitive": false
   },
+  "rotateDestinationSigningSecret": {
+    "confirmation_reason": "Deliveries are signed with the new secret straight away, so a receiver still checking the old one rejects them.",
+    "dangerous": true,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "destinations:write",
+      "keys:write"
+    ],
+    "sensitive": false
+  },
   "rotateEnvironmentApiKey": {
     "confirmation_reason": "Your current API key stops working straight away, so anything still using it will break.",
     "dangerous": true,

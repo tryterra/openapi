@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.03.4
+  version: 2026.11.03.5
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -1668,8 +1668,9 @@ paths:
       description: Discloses the environment's API key and its webhook signing secret in plaintext, which
         is why it sits behind keys:read rather than account:read and is audited. Everywhere else in this
         API masks them. An environment whose key was revoked has none, a 404 api_key_not_found; rotating
-        mints a new one. For new work prefer per-environment data tokens, which can be minted and revoked
-        independently instead of being shared.
+        mints a new one. signing_secret is deprecated for unified-api webhooks, which are getting their
+        own; read the one a webhook signs with from its destination's secrets. For new work prefer per-environment
+        data tokens, which can be minted and revoked independently instead of being shared.
       security:
       - adminToken:
         - keys:read
@@ -3011,9 +3012,9 @@ paths:
         the fields GET unified-api/destination-types lists for the type. An active destination must be
         complete, and each missing field is a 400 naming it; `active: false` saves a draft to finish with
         a PATCH. For a webhook, the 201 body is the only place its signing_secret appears, so store it
-        now, or pass `signing_secret_source: environment` to sign with the environment''s secret instead.
-        Secrets in the response are masked. `url` and `metadata` are the deprecated stored form and cannot
-        be combined with `config`.'
+        now, or pass `signing_secret_source: environment` (deprecated and soon rejected) to sign with
+        the environment''s secret instead. Secrets in the response are masked. `url` and `metadata` are
+        the deprecated stored form and cannot be combined with `config`.'
       security:
       - adminToken:
         - destinations:write
@@ -3377,10 +3378,10 @@ paths:
       - destinations
       summary: Reveal a destination's credentials
       description: 'Returns the secret configuration fields that retrieving a destination masks: a database
-        password, an access key secret, a key file, an API key, a SAS token, or a webhook''s own signing
-        secret. Gated by keys:read (sensitive plaintext disclosure, same class as GET /api-key) and audited.
-        A destination outside this environment returns 404; one whose stored configuration is unreadable
-        returns 409.'
+        password, an access key secret, a key file, an API key, a SAS token, or the secret a webhook''s
+        deliveries are signed with: its own, else the environment''s. Gated by keys:read (sensitive plaintext
+        disclosure, same class as GET /api-key) and audited. A destination outside this environment returns
+        404; one whose stored configuration is unreadable returns 409.'
       security:
       - adminToken:
         - keys:read
@@ -3405,6 +3406,64 @@ paths:
                 type: sql
                 secrets:
                   password: correct-horse-battery-staple
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /environments/{dev_id}/unified-api/destinations/{destination_id}/signing-secret/rotate:
+    post:
+      operationId: rotateDestinationSigningSecret
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-confirmation-reason: Deliveries are signed with the new secret straight away, so a receiver
+        still checking the old one rejects them.
+      x-terra-help: Give a webhook destination a new signing secret and return it once. Use dry_run to
+        preview.
+      tags:
+      - destinations
+      summary: Rotate a webhook's signing secret
+      description: Generates a new signing secret for one webhook destination, replacing its own or the
+        environment's it was signed with, and returns it once. It needs keys:write as well as destinations:write,
+        like every other credential rotation. Every delivery after the call is signed with it, so update
+        the receiver straight away. Other destinations keep theirs. A destination that is not a webhook
+        is a 400; one whose stored configuration is unreadable is a 409. Pass ?dry_run=true for a preview
+        that generates and writes nothing.
+      security:
+      - adminToken:
+        - destinations:write
+        - keys:write
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      - name: destination_id
+        x-terra-help: Destination ID returned by creation.
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The webhook destination to act on, by the id its creation returned.
+      - $ref: '#/components/parameters/DryRun'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Rotated (or DryRunResult when ?dry_run=true; the new secret is never previewed).
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                - $ref: '#/components/schemas/RotatedSigningSecret'
+                - $ref: '#/components/schemas/DryRunResult'
+              example:
+                id: '1937255512398764032'
+                signing_secret: a4f8…shown-once…c917
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -10423,7 +10482,8 @@ components:
           - destination
           - environment
           description: Webhooks only. destination (the default) generates a secret for this destination
-            and returns it once; environment signs with the environment's signing secret instead.
+            and returns it once; environment signs with the environment's signing secret instead, and
+            is deprecated and soon rejected.
           default: destination
           x-terra-help: 'Webhook signing secret: destination (default, returned once) or environment.'
     BatchDisableSourcesRequest:
@@ -10526,7 +10586,8 @@ components:
           - destination
           - environment
           description: Webhooks only. destination (the default) generates a secret for this destination
-            and returns it once; environment signs with the environment's signing secret instead.
+            and returns it once; environment signs with the environment's signing secret instead, and
+            is deprecated and soon rejected.
           default: destination
           x-terra-help: 'Webhook signing secret: destination (default, returned once) or environment.'
         url:
@@ -10830,6 +10891,9 @@ components:
       - method_name: delete
         operation: delete
         path: /environments/{dev_id}/unified-api/destinations/{destination_id}
+      - method_name: rotate-signing-secret
+        operation: post
+        path: /environments/{dev_id}/unified-api/destinations/{destination_id}/signing-secret/rotate
       x-terra-summary: Manage data destinations
       x-terra-resource: unified-api.destinations
     Destination:
@@ -10919,6 +10983,23 @@ components:
       - id
       - type
       - secrets
+    RotatedSigningSecret:
+      type: object
+      description: A webhook destination's new signing secret.
+      properties:
+        id:
+          type: string
+          description: string-encoded 64-bit id
+        signing_secret:
+          type:
+          - string
+          - 'null'
+          description: The new secret. Deliveries are signed with it from now on. Null on an Idempotency-Key
+            replay; retrieving the destination's secrets returns it again.
+          x-terra-secret: true
+      required:
+      - id
+      - signing_secret
     DevDetail:
       type: object
       properties:
@@ -10942,6 +11023,8 @@ components:
           type: string
         signing_secret_masked:
           type: string
+          description: 'Deprecated: a unified-api webhook signs with its own secret, or this one until
+            it has one.'
         user_limit:
           type: integer
           format: int64
@@ -10979,8 +11062,9 @@ components:
           x-terra-secret: true
         signing_secret:
           type: string
-          description: The secret destinations sign their webhook payloads with. Returned once, keys:read
-            only.
+          description: 'The environment''s signing secret: Vantage webhooks, and unified-api webhooks
+            without their own, sign with it. Deprecated for unified-api webhooks: read a webhook''s from
+            its destination''s secrets. keys:read only.'
           x-terra-secret: true
     DevSummary:
       type: object
@@ -17077,8 +17161,7 @@ components:
           type:
           - string
           - 'null'
-          description: The destination's own webhook signing secret. Null when it signs with the environment's
-            signing secret.
+          description: 'The secret this webhook''s deliveries are signed with: its own, else the environment''s.'
           x-terra-secret: true
     VantageRichTextText:
       type: object
