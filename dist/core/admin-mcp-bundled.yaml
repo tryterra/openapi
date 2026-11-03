@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.03.2
+  version: 2026.11.03.3
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -1665,10 +1665,11 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Full credential material (audited)
-      description: Discloses the environment's client_secret and its webhook signing secret in plaintext,
-        which is why it sits behind keys:read rather than account:read and is audited. Everywhere else
-        in this API masks them. For new work prefer per-environment data tokens, which can be minted and
-        revoked independently instead of being shared.
+      description: Discloses the environment's API key and its webhook signing secret in plaintext, which
+        is why it sits behind keys:read rather than account:read and is audited. Everywhere else in this
+        API masks them. An environment whose key was revoked has none, a 404 api_key_not_found; rotating
+        mints a new one. For new work prefer per-environment data tokens, which can be minted and revoked
+        independently instead of being shared.
       security:
       - adminToken:
         - keys:read
@@ -9761,11 +9762,11 @@ paths:
       - $ref: '#/components/parameters/DevId'
       - $ref: '#/components/parameters/DryRun'
       - $ref: '#/components/parameters/IdempotencyKey'
-      description: Mints a new client_secret for this environment and returns it. Requires keys:write,
-        the dangerous scope reserved for legacy-key mutation, which a default token does not hold; keys:read
-        alone reveals but never rotates. Prefer coexisting data tokens — mint new, revoke old — which
-        need no atomic swap; this exists for the dashboard settings page's legacy key. The rotated-away
-        secret stops working immediately.
+      description: Mints a new API key for this environment and returns it. Requires keys:write, the dangerous
+        scope reserved for legacy-key mutation, which a default token does not hold; keys:read alone reveals
+        but never rotates. Prefer coexisting data tokens — mint new, revoke old — which need no atomic
+        swap; this exists for the dashboard settings page's legacy key. The rotated-away secret stops
+        working immediately.
 components:
   securitySchemes:
     adminToken:
@@ -12394,6 +12395,7 @@ components:
           type: string
           enum:
           - access_denied
+          - api_key_not_found
           - audience_restricted
           - authorization_pending
           - authorization_unavailable
