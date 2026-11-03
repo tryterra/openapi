@@ -14,6 +14,9 @@ properties:
   message:
     type: string
     description: Confirmation message
+  reason:
+    type: string
+    description: "Why the user was deauthenticated, when Terra knows more than that it was requested. `last_device_disconnected`: the last device linked to the user through the mobile SDK disconnected. Absent for a deauthentication you requested."
 required:
   - type
   - user

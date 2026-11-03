@@ -5,7 +5,7 @@ info:
 
     **Lab reports versioning.** The report endpoints (`/reports`, and the deprecated `/lab-reports`) are versioned by date. Send `X-Terra-Version: <date>` to choose the version a request is served in: the newest version on or before that date. Without the header a request gets the environment's pinned version. An environment without a pin is pinned to the latest version on its first request; change the pin through the admin API (`PUT /api/v3/admin/environments/{dev_id}/lab-reports/api-version`). Every authenticated response carries `X-Terra-Version` stating the version it was served in, and every `lab_report` webhook delivery carries the environment's version. A malformed or future date returns 400 with code `invalid_api_version`. Versions are `2026-10-21` (latest: the report list is paginated) and `2026-03-24` (the list returns up to 500 reports in `sessions`). This document describes the latest version.
   title: TerraAPI
-  version: 2026.10.27
+  version: 2026.11.03
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -11493,6 +11493,9 @@ components:
         message:
           type: string
           description: Confirmation message
+        reason:
+          type: string
+          description: 'Why the user was deauthenticated, when Terra knows more than that it was requested. `last_device_disconnected`: the last device linked to the user through the mobile SDK disconnected. Absent for a deauthentication you requested.'
       required:
         - type
         - user
