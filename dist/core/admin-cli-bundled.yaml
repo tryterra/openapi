@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.04.1
+  version: 2026.11.04.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -2975,7 +2975,7 @@ paths:
       tags:
         - destinations
       summary: Reveal a destination's credentials
-      description: 'Returns the secret configuration fields that retrieving a destination masks: a database password, an access key secret, a key file, an API key, a SAS token, or the secret a webhook''s deliveries are signed with: its own, else the environment''s. Gated by keys:read (sensitive plaintext disclosure, same class as GET /api-key) and audited. A destination outside this environment returns 404; one whose stored configuration is unreadable returns 409.'
+      description: 'Returns the secret configuration fields that retrieving a destination masks: a database password, an access key secret, a key file, an API key, a SAS token, or the secret a webhook''s deliveries are signed with. Gated by keys:read (sensitive plaintext disclosure, same class as GET /api-key) and audited. A destination outside this environment returns 404; one whose stored configuration is unreadable returns 409.'
       security:
         - adminToken:
             - keys:read
@@ -5934,7 +5934,7 @@ paths:
       tags:
         - vantage
       summary: Reveal the Vantage webhook's secrets
-      description: 'Returns the secret the environment''s Vantage webhook deliveries are signed with: the webhook''s own, else the environment''s. Gated by keys:read (sensitive plaintext disclosure, same class as GET /api-key) and audited. signing_secret is null while no URL is set, as nothing is delivered then.'
+      description: Returns the secret the environment's Vantage webhook deliveries are signed with. Gated by keys:read (sensitive plaintext disclosure, same class as GET /api-key) and audited. signing_secret is null while no URL is set, as nothing is delivered then.
       security:
         - adminToken:
             - keys:read
@@ -13607,7 +13607,7 @@ components:
           type:
             - string
             - 'null'
-          description: 'The secret deliveries are signed with: the webhook''s own, else the environment''s. null while no URL is set, as nothing is delivered.'
+          description: The secret deliveries are signed with. null while no URL is set, as nothing is delivered.
       required:
         - signing_secret
     SetVantageWebhookRequest:
@@ -14359,7 +14359,7 @@ components:
             - null
           description: |-
             Why last_status_code is null. At most one of the two is non-null; both are null before the first attempt, while status is pending.
-            Never sent, because current access suppressed the delivery (status canceled): no_destination (no webhook URL or signing secret is set for the environment), no_access (the environment does not hold Vantage, or is not served by this deployment), catalogue_restricted (the order item's product is disabled in your catalogue), order_missing (the order no longer exists), environment_missing (the environment no longer exists), source_mismatch (the event's ids do not match the order), owner_changed (the environment or customer that owns the work changed), recipient_changed (an event queued before account snapshots whose original URL or signing secret is no longer current).
+            Never sent, because current access suppressed the delivery (status canceled): no_destination (no webhook URL is set for the environment), no_access (the environment does not hold Vantage, or is not served by this deployment), catalogue_restricted (the order item's product is disabled in your catalogue), order_missing (the order no longer exists), environment_missing (the environment no longer exists), source_mismatch (the event's ids do not match the order), owner_changed (the environment or customer that owns the work changed), recipient_changed (an event queued before account snapshots whose original URL or signing secret is no longer current).
             No response to the latest attempt: invalid_url (the URL can never be delivered to: it does not parse, has no host, or is not http or https; status is failed and it is not retried), host_not_found (the attempt found no DNS record for the URL's host), connection_failed (the attempt got no HTTP response, for example a refused connection, TLS failure or timeout).
             not_recorded: no attempt result is known, either because the event was recorded before the reason was stored or because it failed without one.
         attempt_count:
@@ -14549,7 +14549,7 @@ components:
             - null
           description: |-
             Why last_status_code is null. At most one of the two is non-null; both are null before the first attempt, while status is pending.
-            Never sent, because current access suppressed the delivery (status canceled): no_destination (no webhook URL or signing secret is set for the environment), no_access (the environment does not hold Vantage, or is not served by this deployment), catalogue_restricted (the order item's product is disabled in your catalogue), order_missing (the order no longer exists), environment_missing (the environment no longer exists), source_mismatch (the event's ids do not match the order), owner_changed (the environment or customer that owns the work changed), recipient_changed (an event queued before account snapshots whose original URL or signing secret is no longer current).
+            Never sent, because current access suppressed the delivery (status canceled): no_destination (no webhook URL is set for the environment), no_access (the environment does not hold Vantage, or is not served by this deployment), catalogue_restricted (the order item's product is disabled in your catalogue), order_missing (the order no longer exists), environment_missing (the environment no longer exists), source_mismatch (the event's ids do not match the order), owner_changed (the environment or customer that owns the work changed), recipient_changed (an event queued before account snapshots whose original URL or signing secret is no longer current).
             No response to the latest attempt: invalid_url (the URL can never be delivered to: it does not parse, has no host, or is not http or https; status is failed and it is not retried), host_not_found (the attempt found no DNS record for the URL's host), connection_failed (the attempt got no HTTP response, for example a refused connection, TLS failure or timeout).
             not_recorded: no attempt result is known, either because the event was recorded before the reason was stored or because it failed without one.
         attempt_count:
@@ -16424,7 +16424,6 @@ components:
           type:
             - string
             - 'null'
-          description: 'The secret this webhook''s deliveries are signed with: its own, else the environment''s.'
     VantageRichTextText:
       type: object
       description: A run of characters sharing one set of styles.
