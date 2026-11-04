@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.04.2
+  version: 2026.11.04.3
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -4528,6 +4528,64 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/synthetic-users/samples:
+    post:
+      operationId: ensureSampleUsers
+      tags:
+        - syntheticusers
+      summary: Ensure sample users
+      description: Creates the environment's five fixed sample users if they do not exist yet and fills any missing days of their history, up to now. The history is generated in the request and stored before the response, so Health Context and model runs can read it immediately. Every environment's sample users share the same history, seeded by date, so the same day is the same data everywhere. Repeat calls create nothing and write only days that are missing. Sample users cannot be started, stopped or uploaded to.
+      security:
+        - adminToken:
+            - testdata:write
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - $ref: '#/components/parameters/DryRun'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnsureSampleUsersRequest'
+      responses:
+        '200':
+          description: The environment's sample users with their history window; or DryRunResult when ?dry_run=true, whose preview lists the personas that would be ensured and the days of history.
+          content:
+            application/json:
+              schema:
+                type: object
+                anyOf:
+                  - type: object
+                    properties:
+                      users:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SampleUser'
+                    required:
+                      - users
+                  - $ref: '#/components/schemas/DryRunResult'
+              example:
+                users:
+                  - user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                    reference_id: terra-sample-runner
+                    name: Marathon runner
+                    description: Runs most days with a low resting heart rate and strong recovery.
+                    days_written: 45
+                    history_from: '2026-09-12T00:00:00Z'
+                    history_to: '2026-10-27T00:00:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/RateLimited'
         '503':
@@ -13356,6 +13414,9 @@ components:
           enum:
             - generating
             - stopped
+        sample:
+          type: boolean
+          description: 'True for one of the environment''s sample users: fixed personas with shared history that cannot be started or uploaded to.'
         created_at:
           type: string
           format: date-time
@@ -13371,6 +13432,7 @@ components:
         - persona
         - provider
         - status
+        - sample
         - created_at
         - latest_run
     SyntheticUserRun:
@@ -13428,6 +13490,52 @@ components:
         - expires_at
         - next_run_at
         - last_run_at
+    SampleUser:
+      type: object
+      description: One of the environment's sample users, with the shared history window it can be read over.
+      properties:
+        user_id:
+          type: string
+          description: The synthetic user's id in this environment, usable wherever a user id is accepted.
+        reference_id:
+          type: string
+          description: Fixed reference id, the same in every environment (terra-sample-runner, terra-sample-short-sleeper, ...).
+        name:
+          type: string
+          description: Short human name for the persona.
+        description:
+          type: string
+          description: One line on what the persona's data looks like.
+        days_written:
+          type: integer
+          description: How many days of history this call generated; zero when the history was already there.
+          minimum: -2147483648
+          maximum: 2147483647
+        history_from:
+          type: string
+          format: date-time
+          description: Start of the covered history window (UTC midnight).
+        history_to:
+          type: string
+          format: date-time
+          description: Most recent moment the history reaches.
+      required:
+        - user_id
+        - reference_id
+        - name
+        - description
+        - days_written
+        - history_from
+        - history_to
+    EnsureSampleUsersRequest:
+      type: object
+      properties:
+        days:
+          type: integer
+          description: How many days of history, ending now, every sample user must have. Days already present are not rewritten.
+          minimum: 1
+          maximum: 60
+          default: 45
     schemas-Problem:
       type: object
       description: |

@@ -207,6 +207,16 @@
     ],
     "sensitive": false
   },
+  "ensureSampleUsers": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": true,
+    "method": "post",
+    "scopes": [
+      "testdata:write"
+    ],
+    "sensitive": false
+  },
   "generateVantageEvent": {
     "confirmation_reason": null,
     "dangerous": false,
