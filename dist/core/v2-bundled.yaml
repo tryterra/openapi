@@ -5,7 +5,7 @@ info:
 
     **Lab reports versioning.** The report endpoints (`/reports`, and the deprecated `/lab-reports`) are versioned by date. Send `X-Terra-Version: <date>` to choose the version a request is served in: the newest version on or before that date. Without the header a request gets the environment's pinned version. An environment without a pin is pinned to the latest version on its first request; change the pin through the admin API (`PUT /api/v3/admin/environments/{dev_id}/lab-reports/api-version`). Every authenticated response carries `X-Terra-Version` stating the version it was served in, and every `lab_report` webhook delivery carries the environment's version. A malformed or future date returns 400 with code `invalid_api_version`. Versions are `2026-10-21` (latest: the report list is paginated) and `2026-03-24` (the list returns up to 500 reports in `sessions`). This document describes the latest version.
   title: TerraAPI
-  version: 2026.11.03
+  version: 2026.11.04
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -61,7 +61,7 @@ paths:
                   enum:
                     - avengers
                     - grip
-                  description: Which Terra reference app an SDK authentication link hands the end user to. For APPLE_HEALTH, omit to use Terra Avengers. For HEALTH_CONNECT and SAMSUNG, "grip" is required; any other value or omitting it is rejected with a 400. The link carries a resource query parameter (APPLE, HEALTH_CONNECT or SAMSUNG) naming the connection the app opens. Sending this for any other resource has no effect.
+                  description: Which Terra reference app an SDK authentication link hands the end user to. For APPLE_HEALTH, "avengers" or "grip" is required; omitting it is rejected with a 400 unless the legacy use_terra_avengers_app is true, which selects Terra Avengers. For HEALTH_CONNECT and SAMSUNG, "grip" is required; any other value or omitting it is rejected with a 400. The link carries a resource query parameter (APPLE, HEALTH_CONNECT or SAMSUNG) naming the connection the app opens. Sending this for any other resource has no effect.
         required: false
       responses:
         '200':
@@ -3192,7 +3192,7 @@ components:
           example: https://myapp.com/failure
         use_terra_avengers_app:
           type: boolean
-          description: Allow Apple Health connections through the Terra mobile app
+          description: Complete Apple Health connections in the Terra Avengers app instead of your own app. On the widget session endpoint, sdk_app takes precedence where both apply.
           example: false
         connected_uids:
           type: array
