@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.03.5
+  version: 2026.11.04
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -1489,7 +1489,7 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Full credential material (audited)
-      description: Discloses the environment's API key and its webhook signing secret in plaintext, which is why it sits behind keys:read rather than account:read and is audited. Everywhere else in this API masks them. An environment whose key was revoked has none, a 404 api_key_not_found; rotating mints a new one. signing_secret is deprecated for unified-api webhooks, which are getting their own; read the one a webhook signs with from its destination's secrets. For new work prefer per-environment data tokens, which can be minted and revoked independently instead of being shared.
+      description: Discloses the environment's API key and its webhook signing secret in plaintext, which is why it sits behind keys:read rather than account:read and is audited. Everywhere else in this API masks them. An environment whose key was revoked has none, a 404 api_key_not_found; rotating mints a new one. signing_secret is deprecated, as webhooks are getting their own. Read the one a unified-api webhook signs with from its destination's secrets, and the Vantage webhook's from GET /environments/{dev_id}/vantage/webhook/secrets. For new work prefer per-environment data tokens, which can be minted and revoked independently instead of being shared.
       security:
         - adminToken:
             - keys:read
@@ -5854,11 +5854,11 @@ paths:
   /environments/{dev_id}/vantage/webhook:
     get:
       operationId: getVantageWebhook
-      x-terra-help: View the URL Vantage webhook events are delivered to (destinations:read). Deliveries are signed with the environment's signing secret.
+      x-terra-help: View the URL Vantage webhook events are delivered to (destinations:read).
       tags:
         - vantage
       summary: Fetch the Vantage webhook
-      description: The HTTPS URL the environment's Vantage webhook events are delivered to, from the deployment its production setting selects; url is null when none is set, and then events are not delivered. Vantage keeps one webhook URL per environment, apart from unified-api destinations. Every delivery is signed with the environment's shared signing secret, the one GET /environments/{dev_id}/api-key reveals under keys:read, as a destination created with signing_secret_source environment is; Vantage webhooks have no secret of their own.
+      description: The HTTPS URL the environment's Vantage webhook events are delivered to, from the deployment its production setting selects; url is null when none is set, and then events are not delivered. Vantage keeps one webhook URL per environment, apart from unified-api destinations. The secret deliveries are signed with is never returned here; GET /environments/{dev_id}/vantage/webhook/secrets reveals it under keys:read.
       security:
         - adminToken:
             - destinations:read
@@ -5890,7 +5890,7 @@ paths:
       tags:
         - vantage
       summary: Replace the Vantage webhook
-      description: Replaces the HTTPS URL the environment's Vantage webhook events are delivered to, production included; null stops delivery, and events raised while no URL is set are recorded as canceled with no_status_reason no_destination. The next event is sent to the new URL, and a resend goes to it too. A URL that is not HTTPS, or carries credentials, is a 400. Deliveries are signed with the environment's shared signing secret, the one GET /environments/{dev_id}/api-key reveals under keys:read; setting the URL does not change it. Setting the URL it already has is a noop and writes nothing. Pass ?dry_run=true for a preview that validates the URL and writes nothing.
+      description: Replaces the HTTPS URL the environment's Vantage webhook events are delivered to, production included; null stops delivery, and events raised while no URL is set are recorded as canceled with no_status_reason no_destination. The next event is sent to the new URL, and a resend goes to it too. A URL that is not HTTPS, or carries credentials, is a 400. Setting the URL does not change the secret deliveries are signed with, the one GET /environments/{dev_id}/vantage/webhook/secrets reveals under keys:read. Setting the URL it already has is a noop and writes nothing. Pass ?dry_run=true for a preview that validates the URL and writes nothing.
       security:
         - adminToken:
             - destinations:write
@@ -5928,6 +5928,40 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/vantage/webhook/secrets:
+    get:
+      operationId: revealVantageWebhookSecrets
+      x-terra-help: Reveal the secret Vantage webhook deliveries are signed with, in plaintext (keys:read, audited).
+      tags:
+        - vantage
+      summary: Reveal the Vantage webhook's secrets
+      description: 'Returns the secret the environment''s Vantage webhook deliveries are signed with: the webhook''s own, else the environment''s. Gated by keys:read (sensitive plaintext disclosure, same class as GET /api-key) and audited. signing_secret is null while no URL is set, as nothing is delivered then.'
+      security:
+        - adminToken:
+            - keys:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+      responses:
+        '200':
+          description: The Vantage webhook's secrets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VantageWebhookSecrets'
+              example:
+                signing_secret: correct-horse-battery-staple
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /environments/{dev_id}/vantage/catalogue:
@@ -9865,7 +9899,7 @@ components:
           description: full client_secret — returned once, keys:read only
         signing_secret:
           type: string
-          description: 'The environment''s signing secret: Vantage webhooks, and unified-api webhooks without their own, sign with it. Deprecated for unified-api webhooks: read a webhook''s from its destination''s secrets. keys:read only.'
+          description: 'The environment''s signing secret: webhooks without their own sign with it. Deprecated: read a unified-api webhook''s from its destination''s secrets, and the Vantage webhook''s from GET /environments/{dev_id}/vantage/webhook/secrets. keys:read only.'
     DevSummary:
       type: object
       properties:
@@ -13538,7 +13572,7 @@ components:
       additionalProperties: false
     VantageWebhook:
       type: object
-      description: Where the environment's Vantage webhook events are delivered. Vantage keeps one webhook URL per environment; deliveries are signed with the environment's signing secret, the one GET /environments/{dev_id}/api-key reveals.
+      description: Where the environment's Vantage webhook events are delivered. Vantage keeps one webhook URL per environment; retrieving its secrets reveals the secret deliveries are signed with.
       properties:
         url:
           type:
@@ -13556,6 +13590,14 @@ components:
               args:
                 - '--env'
                 - <dev-id>
+        - method_name: retrieve-secrets
+          operation: get
+          path: /environments/{dev_id}/vantage/webhook/secrets
+          examples:
+            - summary: Reveal the secret Vantage webhooks are signed with
+              args:
+                - '--env'
+                - <dev-id>
         - method_name: update
           operation: put
           path: /environments/{dev_id}/vantage/webhook
@@ -13568,6 +13610,17 @@ components:
                 - https://api.acme.com/terra/vantage
       x-terra-summary: View and change where Vantage webhook events are delivered
       x-terra-resource: vantage.webhook
+    VantageWebhookSecrets:
+      type: object
+      description: The Vantage webhook's secrets in plaintext.
+      properties:
+        signing_secret:
+          type:
+            - string
+            - 'null'
+          description: 'The secret deliveries are signed with: the webhook''s own, else the environment''s. null while no URL is set, as nothing is delivered.'
+      required:
+        - signing_secret
     SetVantageWebhookRequest:
       type: object
       properties:

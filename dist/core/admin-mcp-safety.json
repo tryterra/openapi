@@ -1045,6 +1045,16 @@
     ],
     "sensitive": true
   },
+  "revealVantageWebhookSecrets": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "keys:read"
+    ],
+    "sensitive": true
+  },
   "revokeDataToken": {
     "confirmation_reason": "This token stops working straight away, so anything still using it loses access to your data.",
     "dangerous": true,
