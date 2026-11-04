@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.04
+  version: 2026.11.04.1
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -1349,7 +1349,6 @@ paths:
                   widget_name: null
                   app_logo: null
                 api_key_masked: '****k2Qw'
-                signing_secret_masked: '****9xLm'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1466,7 +1465,7 @@ paths:
   /environments/{dev_id}/api-key:
     get:
       operationId: getEnvironmentApiKey
-      x-terra-help: Reveal the environment API key and webhook signing secret in plaintext. Requires keys:read and is audited.
+      x-terra-help: Reveal the environment API key in plaintext. Requires keys:read and is audited.
       tags:
         - environments
       responses:
@@ -1479,7 +1478,6 @@ paths:
               example:
                 dev_id: prod-app-x81LmQ
                 api_key: 6f8c…full-secret…2a1b
-                signing_secret: e3d9…full-secret…77c4
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1489,7 +1487,7 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Full credential material (audited)
-      description: Discloses the environment's API key and its webhook signing secret in plaintext, which is why it sits behind keys:read rather than account:read and is audited. Everywhere else in this API masks them. An environment whose key was revoked has none, a 404 api_key_not_found; rotating mints a new one. signing_secret is deprecated, as webhooks are getting their own. Read the one a unified-api webhook signs with from its destination's secrets, and the Vantage webhook's from GET /environments/{dev_id}/vantage/webhook/secrets. For new work prefer per-environment data tokens, which can be minted and revoked independently instead of being shared.
+      description: Discloses the environment's API key in plaintext, which is why it sits behind keys:read rather than account:read and is audited. Everywhere else in this API masks it. An environment whose key was revoked has none, a 404 api_key_not_found; rotating mints a new one. Webhook signing secrets are per webhook; read a unified-api webhook's from its destination's secrets, and the Vantage webhook's from GET /environments/{dev_id}/vantage/webhook/secrets. For new work prefer per-environment data tokens, which can be minted and revoked independently instead of being shared.
       security:
         - adminToken:
             - keys:read
@@ -2650,7 +2648,7 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Create a destination
-      description: 'The server translates `config` into what delivery reads, so the caller needs only the fields GET unified-api/destination-types lists for the type. An active destination must be complete, and each missing field is a 400 naming it; `active: false` saves a draft to finish with a PATCH. For a webhook, the 201 body is the only place its signing_secret appears, so store it now, or pass `signing_secret_source: environment` (deprecated and soon rejected) to sign with the environment''s secret instead. Secrets in the response are masked. `url` and `metadata` are the deprecated stored form and cannot be combined with `config`.'
+      description: 'The server translates `config` into what delivery reads, so the caller needs only the fields GET unified-api/destination-types lists for the type. An active destination must be complete, and each missing field is a 400 naming it; `active: false` saves a draft to finish with a PATCH. For a webhook, the 201 body is the only place its signing_secret appears, so store it now. Secrets in the response are masked. `url` and `metadata` are the deprecated stored form and cannot be combined with `config`.'
       security:
         - adminToken:
             - destinations:write
@@ -2666,13 +2664,12 @@ paths:
               $ref: '#/components/schemas/CreateDestinationRequest'
             examples:
               webhook:
-                summary: A webhook signed with the environment's secret
+                summary: A webhook
                 value:
                   type: webhook
                   event_types:
                     - activity
                     - sleep
-                  signing_secret_source: environment
                   config:
                     url: https://api.acme.com/terra/webhook
               sql:
@@ -2766,7 +2763,7 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
       summary: Create several destinations
-      description: 'Creates up to 100 destinations in one transaction, so either every destination is created or none is. Each item takes the same fields as a single create and is validated the same way, before anything is written; every invalid item is reported in one 400 whose errors are prefixed with its position, e.g. items[2].config.url. The deprecated url and metadata fields are not accepted. The response lists the destinations in request order, and for a webhook its item is the only place its signing_secret appears, so store it now, or pass signing_secret_source: environment on that item. Through the MCP, a batch whose result would not fit in one tool result is a 400 asking for smaller batches, so no signing secret is ever lost to a truncated result.'
+      description: Creates up to 100 destinations in one transaction, so either every destination is created or none is. Each item takes the same fields as a single create and is validated the same way, before anything is written; every invalid item is reported in one 400 whose errors are prefixed with its position, e.g. items[2].config.url. The deprecated url and metadata fields are not accepted. The response lists the destinations in request order, and for a webhook its item is the only place its signing_secret appears, so store it now. Through the MCP, a batch whose result would not fit in one tool result is a 400 asking for smaller batches, so no signing secret is ever lost to a truncated result.
       security:
         - adminToken:
             - destinations:write
@@ -6808,7 +6805,7 @@ paths:
       tags:
         - vantage
       summary: Resend a Vantage webhook event
-      description: 'Asynchronous: a 202 with dispatched true means the event was queued, not that it arrived, so re-read the event to see the outcome, where the resend replaces its earlier one. The event goes to the environment''s current webhook URL, signed with its current signing secret and rendered in its pinned API version. Its body is rebuilt from the stored event, so it carries the status the event originally announced, not the order''s current one, and keeps its event_id: an endpoint that dedupes on event_id treats it as the event it already processed. An event can be resent for 30 days; an older one and an unknown one are 404s, and one still being sent is a 409 not_ready until its delivery has an outcome. Without a webhook URL it is a 422. Pass ?dry_run=true to check the event can be resent without sending it.'
+      description: 'Asynchronous: a 202 with dispatched true means the event was queued, not that it arrived, so re-read the event to see the outcome, where the resend replaces its earlier one. The event goes to the environment''s current webhook URL, signed with the webhook''s signing secret and rendered in its pinned API version. Its body is rebuilt from the stored event, so it carries the status the event originally announced, not the order''s current one, and keeps its event_id: an endpoint that dedupes on event_id treats it as the event it already processed. An event can be resent for 30 days; an older one and an unknown one are 404s, and one still being sent is a 409 not_ready until its delivery has an outcome. Without a webhook URL it is a 422. Pass ?dry_run=true to check the event can be resent without sending it.'
       security:
         - adminToken:
             - events:write
@@ -6871,7 +6868,7 @@ paths:
       tags:
         - vantage
       summary: Send a test Vantage webhook event
-      description: 'Sends a generated event of one webhook type to the environment''s current webhook URL, through the same delivery as real events: signed with the environment''s signing secret, rendered in its pinned API version and retried the same way, and listed among its events. A generated event carries test true and describes no real order: every order, order item, variant and test-taker id in it is "0". It changes no order or result. It is delivered only while the environment has a current Vantage grant. Without a webhook URL it is a 422. The response carries the payload in the latest API version. Pass ?dry_run=true to get the payload without sending it.'
+      description: 'Sends a generated event of one webhook type to the environment''s current webhook URL, through the same delivery as real events: signed with the webhook''s signing secret, rendered in its pinned API version and retried the same way, and listed among its events. A generated event carries test true and describes no real order: every order, order item, variant and test-taker id in it is "0". It changes no order or result. It is delivered only while the environment has a current Vantage grant. Without a webhook URL it is a 422. The response carries the payload in the latest API version. Pass ?dry_run=true to get the payload without sending it.'
       security:
         - adminToken:
             - testdata:write
@@ -9273,10 +9270,9 @@ components:
           type: string
           enum:
             - destination
-            - environment
-          description: Webhooks only. destination (the default) generates a secret for this destination and returns it once; environment signs with the environment's signing secret instead, and is deprecated and soon rejected.
+          description: 'Deprecated: every webhook signs with its own secret, generated here and returned once. Webhooks only; environment is rejected.'
           default: destination
-          x-terra-help: 'Webhook signing secret: destination (default, returned once) or environment.'
+          x-terra-help: 'Deprecated: every webhook gets its own signing secret, returned once.'
     BatchDisableSourcesRequest:
       type: object
       properties:
@@ -9362,10 +9358,9 @@ components:
           type: string
           enum:
             - destination
-            - environment
-          description: Webhooks only. destination (the default) generates a secret for this destination and returns it once; environment signs with the environment's signing secret instead, and is deprecated and soon rejected.
+          description: 'Deprecated: every webhook signs with its own secret, generated here and returned once. Webhooks only; environment is rejected.'
           default: destination
-          x-terra-help: 'Webhook signing secret: destination (default, returned once) or environment.'
+          x-terra-help: 'Deprecated: every webhook gets its own signing secret, returned once.'
         url:
           type: string
           description: 'Deprecated: send config instead. The delivery location in the stored form; cannot be combined with config.'
@@ -9403,7 +9398,7 @@ components:
       additionalProperties: false
     CreatedDestination:
       type: object
-      description: A newly created destination, plus its own webhook signing secret when it has one. A webhook destination signs with its own secret or with the environment's shared signing secret, as signing_secret_source chose.
+      description: A newly created destination, plus its own webhook signing secret when it is a webhook.
       properties:
         id:
           type: string
@@ -9437,7 +9432,7 @@ components:
           type:
             - string
             - 'null'
-          description: The secret this destination signs its webhook payloads with. Set for webhook destinations created with signing_secret_source destination; null otherwise and on an Idempotency-Key replay. Retrieving the destination's secrets returns it again.
+          description: The secret this destination signs its webhook payloads with. Set for webhook destinations; null otherwise and on an Idempotency-Key replay. Retrieving the destination's secrets returns it again.
       required:
         - id
         - type
@@ -9842,9 +9837,6 @@ components:
           $ref: '#/components/schemas/EnvironmentProfile'
         api_key_masked:
           type: string
-        signing_secret_masked:
-          type: string
-          description: 'Deprecated: a unified-api webhook signs with its own secret, or this one until it has one.'
         user_limit:
           type: integer
           format: int64
@@ -9897,9 +9889,6 @@ components:
         api_key:
           type: string
           description: full client_secret — returned once, keys:read only
-        signing_secret:
-          type: string
-          description: 'The environment''s signing secret: webhooks without their own sign with it. Deprecated: read a unified-api webhook''s from its destination''s secrets, and the Vantage webhook''s from GET /environments/{dev_id}/vantage/webhook/secrets. keys:read only.'
     DevSummary:
       type: object
       properties:
