@@ -49,6 +49,39 @@ properties:
       - $ref: "#/$defs/RecordFloat"
       - type: "null"
     description: Map of contributing factor name to its weighted contribution to the TRIMP score.
+  vo2max:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 48.2
+    description: Estimated VO2max for the workout, in ml/kg/min. Absent when the workout gave too little reliable data.
+  vo2max_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: "The heart-rate anchors behind the VO2max estimate, in bpm: hr_max and hr_rest."
+  vo2max_traffic_light:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - GREEN
+    description: "Confidence in the VO2max estimate: GREEN (reliable) or AMBER (treat as an estimate)."
+  vo2max_method:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - RUN
+    description: "How the VO2max was estimated: RUN (pace and gradient) or RIDE (power-meter power and body weight)."
+  vo2max_reasons:
+    anyOf:
+      - type: array
+        items:
+          type: string
+      - type: "null"
+    description: "Why the VO2max confidence is not GREEN, or which input was a stand-in: HR_MAX_ESTIMATED, NO_NEAR_MAX_EFFORT, LIMITED_SAMPLES, RESTING_HR_NOT_MEASURED."
 $defs:
   RecordFloat:
     type: object

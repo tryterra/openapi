@@ -80,6 +80,39 @@ properties:
       - $ref: "#/$defs/RecordFloat"
       - type: "null"
     description: Map of contributing factor name to its weighted contribution to the v2 total stress score.
+  vo2max:
+    anyOf:
+      - type: number
+      - type: "null"
+    examples:
+      - 46.5
+    description: Resting VO2max estimate for the day, in ml/kg/min, from the ratio of max to measured resting heart rate. Absent without a measured resting heart rate in the last 30 days.
+  vo2max_contributors:
+    anyOf:
+      - $ref: "#/$defs/RecordFloat"
+      - type: "null"
+    description: "The heart-rate anchors behind the VO2max estimate, in bpm: hr_max and hr_rest."
+  vo2max_traffic_light:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - AMBER
+    description: "Confidence in the VO2max estimate. A resting estimate is always AMBER: no workout near max heart rate backs it."
+  vo2max_method:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - REST
+    description: "How the VO2max was estimated: REST (resting and max heart rate)."
+  vo2max_reasons:
+    anyOf:
+      - type: array
+        items:
+          type: string
+      - type: "null"
+    description: "Why the VO2max confidence is not GREEN: RESTING_ESTIMATE, and HR_MAX_ESTIMATED when max heart rate came from age."
 $defs:
   RecordFloat:
     type: object
