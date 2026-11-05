@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.04.3
+  version: 2026.11.05
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -9415,7 +9415,8 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Update a team member
       description: 404 not_found when user_id does not exist or belongs to a different company — identical
-        either way (no existence oracle).
+        either way (no existence oracle). 409 conflict when the change would leave the company with no
+        admin; make another member an admin first.
       security:
       - adminToken:
         - team:write
@@ -9467,6 +9468,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -9475,7 +9478,8 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
       summary: Remove a team member from the company
       description: 'Detaches the user from the company (nulls company_id); never touches a row in another
-        company. Idempotent: removing a user who is already not a member is not an error.'
+        company. Idempotent: removing a user who is already not a member is not an error. 409 conflict
+        when the user is the company''s last admin; make another member an admin first.'
       security:
       - adminToken:
         - team:write
