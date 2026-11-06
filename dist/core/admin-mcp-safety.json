@@ -615,6 +615,16 @@
     ],
     "sensitive": false
   },
+  "listEventTypes": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "events:read"
+    ],
+    "sensitive": false
+  },
   "listInvoicePreviews": {
     "confirmation_reason": null,
     "dangerous": false,

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.05
+  version: 2026.11.06
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -4381,18 +4381,19 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-  /environments/{dev_id}/webhook-events:
+  /environments/{dev_id}/events:
     get:
       operationId: listWebhookEvents
       x-terra-mcp-annotations:
         openWorldHint: false
-      x-terra-help: List delivery metadata in the selected environment (events:read). Defaults to the
-        last 7 days, or 14 with event_id. Payloads are separate.
+      x-terra-help: List webhook events in the selected environment, newest first, with where delivery
+        stands across their destinations (events:read). Defaults to the last 7 days, or 14 with event_id.
+        Payloads are separate.
       tags:
       - webhookevents
       responses:
         '200':
-          description: A page of delivery events (keyset cursor).
+          description: A page of webhook events (keyset cursor).
           content:
             application/json:
               schema:
@@ -4401,7 +4402,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/EventRecord'
+                      $ref: '#/components/schemas/Event'
                   has_more:
                     type: boolean
                   next_cursor:
@@ -4415,16 +4416,17 @@ paths:
               example:
                 data:
                 - event_id: c9d0e1f2-3a4b-4c5d-8e9f-a0b1c2d3e4f5
-                  sent_at: '2026-07-02T18:04:11.532Z'
-                  data_type: activity
+                  type: unified_api.activity.updated
+                  payload_type: activity
                   provider: garmin
-                  destination_type: webhook
-                  destination_id: '1937255512398764032'
-                  destination_url: https://api.acme.com/terra/webhook
-                  http_status: 200
-                  response_time_ms: 184
-                  bytes: 15872
                   connection_id: '1937251889234671616'
+                  user_id: 3f8e2b1c-4d5a-4e6f-9a0b-1c2d3e4f5a6b
+                  reference_id: user-42
+                  status: pending
+                  destination_count: 2
+                  attempt_count: 3
+                  created_at: '2026-07-02T18:04:11Z'
+                  completed_at: null
                 has_more: true
                 next_cursor: eyJzZW50X2F0IjoiMjAyNi0wNy0wMlQxODowNDoxMS41MzJaIiwiZXZlbnRfaWQiOiJjOWQwIn0
         '400':
@@ -4439,15 +4441,17 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-      summary: Delivery-history debug surface
-      description: 'Delivery metadata, not payloads: each row is one dispatch with its HTTP status, latency
-        and size, while the body that was sent is a separate payloads:read-gated sub-resource. Keyset
-        cursor pagination over a bounded window, newest first unless order_by and order say otherwise:
-        the default is the trailing 7 days, since and until move it, and nothing older than the 14 days
-        a payload is retained for is worth querying. Filter by outcome (delivered or failed), provider,
-        data_type, destination_type, destination, destination_url, summary_id, user_id, reference_id,
-        or event_id for one exact event. An event_id widens the default window to 14 days. No matching
-        deliveries returns an empty page; an unknown user_id or reference_id returns 404.'
+      summary: List webhook events
+      description: 'One row per event, with where its delivery stands across every destination it was
+        sent to. Each destination''s delivery and its attempts are on GET /environments/{dev_id}/events/{event_id},
+        and the body that was sent is a separate payloads:read-gated sub-resource. Keyset cursor pagination
+        over a bounded window of created_at, newest first unless order_by and order say otherwise: the
+        default is the trailing 7 days, since and until move it, and events are kept for 30 days. Filter
+        by status, provider, type, destination_type, destination, destination_url, summary_id, user_id,
+        reference_id, or event_id for one exact event. A destination or destination_url filter selects
+        the events sent to it; each event''s status and counts still cover every destination. An event_id
+        widens the default window to 14 days. No matching events returns an empty page; an unknown user_id
+        or reference_id returns 404.'
       security:
       - adminToken:
         - events:read
@@ -4455,19 +4459,18 @@ paths:
       - $ref: '#/components/parameters/DevId'
       - name: destination
         in: query
-        x-terra-help: Exact destination ID recorded at delivery time. Older rows without IDs do not match;
-          use destination_url for those.
+        x-terra-help: Exact destination ID. Lists events sent to it; status still covers every destination.
         description: String-encoded destination ID, matched exactly against the delivery-time record.
-          Rows that predate destination ID recording do not match. Use destination_url to include older
-          rows.
+          Lists the events sent to that destination; each event's status and counts still cover every
+          destination. A value that is not an id is a 400.
         schema:
           type: string
         example: '1937255512398764032'
       - name: destination_url
         in: query
-        x-terra-help: Exact recorded destination URL, including older deliveries. Combines with destination.
+        x-terra-help: Exact recorded destination URL. Combines with destination.
         description: Exact, case-sensitive destination URL recorded at delivery time. Combines with destination
-          when both are supplied. Also matches older rows without a recorded destination ID.
+          when both are supplied.
         schema:
           type: string
         example: https://api.acme.com/terra/webhook
@@ -4491,30 +4494,32 @@ paths:
         description: The previous page's next_cursor. It carries the window the first page resolved, so
           since and until are ignored while it is set, but supplied values must still be valid RFC3339.
       - name: since
-        x-terra-help: 'Inclusive oldest sent_at (RFC3339). Default: 7 days before until, or 14 with event_id.'
+        x-terra-help: 'Inclusive oldest created_at (RFC3339). Default: 7 days before until, or 14 with
+          event_id.'
         in: query
         schema:
           type: string
           format: date-time
-        description: Oldest sent_at to return, inclusive, as RFC3339. Defaults to 7 days before until,
+        description: Oldest created_at to return, inclusive, as RFC3339. Defaults to 7 days before until,
           or 14 days before it when event_id is given.
       - name: until
-        x-terra-help: 'Inclusive newest sent_at (RFC3339). Default: now.'
+        x-terra-help: 'Inclusive newest created_at (RFC3339). Default: now.'
         in: query
         schema:
           type: string
           format: date-time
-        description: Newest sent_at to return, inclusive, as RFC3339. Defaults to now.
-      - name: outcome
-        x-terra-help: 'HTTP outcome: delivered is status <=299; failed is status >299.'
+        description: Newest created_at to return, inclusive, as RFC3339. Defaults to now.
+      - name: status
+        x-terra-help: 'Event status: pending, delivered, failed or canceled.'
         in: query
         schema:
           type: string
           enum:
+          - pending
           - delivered
           - failed
-        description: 'Delivery outcome, from the HTTP status the destination returned: delivered is 299
-          or below, failed is above it.'
+          - canceled
+        description: Only events with this status. The removed outcome parameter is a 400.
       - name: provider
         x-terra-help: Case-insensitive provider slugs (e.g. garmin). Repeat to match any provider.
         in: query
@@ -4526,9 +4531,9 @@ paths:
         explode: false
         description: Provider slugs, matched case-insensitively, e.g. garmin. Repeat the parameter to
           widen the filter; an event matching any of them is returned.
-      - name: data_type
-        x-terra-help: Case-insensitive payload types (e.g. activity, sleep, body). Repeat to match any
-          type.
+      - name: type
+        x-terra-help: Event types (e.g. unified_api.sleep.updated) or segment wildcards (e.g. unified_api.auth.*).
+          Repeat to match any.
         in: query
         schema:
           type: array
@@ -4536,8 +4541,10 @@ paths:
             type: string
         style: form
         explode: false
-        description: Payload types, matched case-insensitively, e.g. activity, sleep or body. Repeat the
-          parameter to widen the filter; an event matching any of them is returned.
+        description: Event types, e.g. unified_api.sleep.updated, or a prefix of whole segments ending
+          in .*, e.g. unified_api.* or unified_api.auth.*. Repeat the parameter to widen the filter; an
+          event matching any of them is returned. A type that matches no event type listed here is a 400,
+          as is the removed data_type parameter.
       - name: destination_type
         x-terra-help: Case-insensitive destination kinds (e.g. webhook, s3, kafka). Repeat to match any
           kind.
@@ -4552,14 +4559,14 @@ paths:
           webhook, s3 or kafka. Repeat the parameter to widen the filter; an event matching any of them
           is returned.
       - name: summary_id
-        x-terra-help: Exact summary ID in any delivered record. Older payloads without recorded IDs never
-          match.
+        x-terra-help: Exact summary ID carried by the event's payload, whether or not a request was sent
+          yet.
         in: query
         schema:
           type: string
-        description: A summary id carried by the payload, matched exactly. An event is returned when any
-          of the records it delivered carries it. Payloads written before summary ids were recorded carry
-          none and never match.
+        description: A summary id carried by the event's payload, matched exactly. An event is returned
+          when any of its records carries it, including an event no request has been sent for yet. An
+          event canceled before its payload was read never matches.
       - name: user_id
         x-terra-help: Terra user UUID; unknown users return 404. Intersects with reference_id.
         in: query
@@ -4580,45 +4587,94 @@ paths:
           is not under the reference matches no events.
       - name: event_id
         x-terra-help: Exact event ID; default window widens to 14 days. Override with since/until; no
-          matching delivery returns an empty page.
+          matching event returns an empty page.
         in: query
         schema:
           type: string
         description: Exact event id. An id is identity-keyed rather than time-keyed, so it widens the
           default window from 7 days to the 14 days a payload is retained for.
       - name: order_by
-        x-terra-help: 'Sort field: sent_at (default), http_status, provider, data_type, destination_type
-          or response_time_ms. Ties fall back to sent_at.'
+        x-terra-help: 'Sort field: created_at. Ties fall back to event_id.'
         in: query
         schema:
           type: string
           enum:
-          - sent_at
-          - http_status
-          - provider
-          - data_type
-          - destination_type
-          - response_time_ms
-          default: sent_at
-        description: Field to sort by. Rows that tie fall back to sent_at, then event_id, in the same
-          direction, so every page is a stable slice. response_time_ms sorts on the whole milliseconds
-          the response carries; a delivery with no recorded response time sorts as -1. A cursor keeps
-          the order its first page was read in, so order_by is ignored while cursor is set, though it
-          must still be valid.
+          - created_at
+          default: created_at
+        description: Field to sort by. Events that tie fall back to event_id in the same direction, so
+          every page is a stable slice. A cursor keeps the order its first page was read in, so order_by
+          is ignored while cursor is set, though it must still be valid.
       - $ref: '#/components/parameters/Order'
-  /environments/{dev_id}/webhook-events/resend:
+  /environments/{dev_id}/event-types:
+    get:
+      operationId: listEventTypes
+      x-terra-mcp-annotations:
+        openWorldHint: false
+      x-terra-help: List the event types /events records, with the product each belongs to and when it
+        occurs. The catalogue is the same for every environment.
+      tags:
+      - events
+      summary: List event types
+      description: Every event type the events list records, as <product>.<resource>.<action>, with the
+        product it belongs to, when it occurs and the type its webhook payload carries today. These are
+        the values the events list's type filter takes. Identical for every environment.
+      security:
+      - adminToken:
+        - events:read
+      parameters:
+      - $ref: '#/components/parameters/DevId'
+      responses:
+        '200':
+          description: The event types.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventType'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                    - string
+                    - 'null'
+                required:
+                - data
+                - has_more
+                - next_cursor
+              example:
+                data:
+                - type: unified_api.sleep.updated
+                  product: unified_api
+                  description: Sleep data was received or revised.
+                  payload_types:
+                  - sleep
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /environments/{dev_id}/events/resend:
     post:
       operationId: resendWebhookEvent
       x-terra-mcp-annotations:
         destructiveHint: false
-      x-terra-help: Re-send a stored payload in the selected environment (events:write). Acceptance is
-        asynchronous; the destination may receive the event twice.
+      x-terra-help: Resend a stored event to one destination in the selected environment (events:write).
+        Acceptance is asynchronous; the destination may receive the event twice.
       tags:
       - webhookevents
       responses:
         '200':
-          description: DryRunResult when ?dry_run=true. Every lookup and the routing decision have run,
-            so destination_count is how many destinations a live resend would reach; nothing is queued.
+          description: DryRunResult when ?dry_run=true. The payload, destination and user lookups have
+            run and nothing is queued; a live resend mints its own resend_id.
           content:
             application/json:
               schema:
@@ -4628,9 +4684,10 @@ paths:
                 would: resend
                 preview:
                   event_id: 7d2f1c3a-9b4e-4f60-8a1d-2c3b4e5f6a7b
-                  event_type: activity
+                  type: unified_api.activity.updated
+                  payload_type: activity
                   user_id: 3f8e2b1c-4d5a-4e6f-9a0b-1c2d3e4f5a6b
-                  destination_count: 2
+                  destination_id: '1937255512398764032'
                   dispatched: false
         '202':
           description: Queued for redelivery. Dispatch is asynchronous, so a 202 means the event was accepted
@@ -4641,7 +4698,10 @@ paths:
                 $ref: '#/components/schemas/ResendResult'
               example:
                 event_id: c9d0e1f2-3a4b-4c5d-8e9f-a0b1c2d3e4f5
-                event_type: activity
+                type: unified_api.activity.updated
+                payload_type: activity
+                destination_id: '1937255512398764032'
+                resend_id: rs_0b8f4f6e-2c1d-4a3b-9e8f-7a6b5c4d3e2f
                 dispatched: true
         '400':
           $ref: '#/components/responses/ValidationError'
@@ -4651,15 +4711,19 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         '429':
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-      summary: Re-dispatch a stored event
+      summary: Resend an event to one destination
       description: 'Asynchronous: a 202 with dispatched: true means the event was accepted for redelivery,
         not that it arrived, so re-read the event to see the outcome. The destination receives the stored
-        payload again, so a receiver that is not idempotent sees the same event twice. All three of user_id,
-        event_id and event_type are required, which means fetching the row from the list endpoint first.'
+        payload again under the same event_id, so a receiver that is not idempotent sees the same event
+        twice. A resend is allowed while the delivery is still pending: it runs alongside the automatic
+        retries, which carry on. An unknown destination is a 404; an inactive one, or one that does not
+        accept the event''s type, is a 422.'
       security:
       - adminToken:
         - events:write
@@ -4673,7 +4737,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ResendEventRequest'
-  /environments/{dev_id}/webhook-events/generate:
+  /environments/{dev_id}/events/generate:
     post:
       operationId: generateWebhookEvent
       x-terra-mcp-annotations:
@@ -4701,7 +4765,8 @@ paths:
                 would: dispatch
                 preview:
                   event_id: 7d2f1c3a-9b4e-4f60-8a1d-2c3b4e5f6a7b
-                  type: sleep
+                  type: unified_api.sleep.updated
+                  payload_type: sleep
                   provider: null
                   destination_id: null
                   dispatched: false
@@ -4719,7 +4784,8 @@ paths:
                 event_id: 7d2f1c3a-9b4e-4f60-8a1d-2c3b4e5f6a7b
                 user_id: 3f8e2b1c-4d5a-4e6f-9a0b-1c2d3e4f5a6b
                 reference_id: qa-runner-17
-                type: daily
+                type: unified_api.daily.updated
+                payload_type: daily
                 provider: garmin
                 destination_id: null
                 dispatched: true
@@ -5626,7 +5692,7 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-  /environments/{dev_id}/webhook-events/stats:
+  /environments/{dev_id}/events/stats:
     get:
       operationId: getEventStats
       x-terra-mcp-annotations:
@@ -5775,8 +5841,9 @@ paths:
                       retry_attempts: 0
                       success_rate: 1
                     breakdowns:
-                      data_type:
-                      - data_type: daily
+                      type:
+                      - type: unified_api.daily.updated
+                        payload_type: daily
                         bytes: 512
                         delivery_attempts: 1
                         successful_attempts: 1
@@ -5870,48 +5937,83 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-  /environments/{dev_id}/webhook-events/{event_id}:
+  /environments/{dev_id}/events/{event_id}:
     get:
       operationId: getWebhookEvent
       x-terra-mcp-annotations:
         openWorldHint: false
-      x-terra-help: Read delivery metadata by ID within 14 days in the selected environment (events:read).
-        Not found returns 404; payloads are separate.
+      x-terra-help: Read a webhook event with each destination's delivery and attempts, within 30 days,
+        in the selected environment (events:read). Not found returns 404; payloads are separate.
       tags:
       - webhookevents
-      summary: Fetch a single delivery event
-      description: One delivery event's metadata by id, bounded to the 14-day actionable window.
+      summary: Retrieve a webhook event
+      description: One webhook event by id, with one delivery per destination it was sent to and each
+        request sent to that destination, newest first. Events are kept for 30 days.
       security:
       - adminToken:
         - events:read
       parameters:
       - $ref: '#/components/parameters/DevId'
       - name: event_id
-        x-terra-help: Delivery event ID from events list; no matching event in the last 14 days returns
-          404.
+        x-terra-help: Event ID from the events list; no matching event in the last 30 days returns 404.
         in: path
         required: true
         schema:
           type: string
-        description: The delivery event to read, by the id events list returns. Bounded to the 14 days
-          a payload is retained for.
+        description: The event to read, by the id the events list returns.
       responses:
         '200':
-          description: The delivery event.
+          description: The event with its deliveries.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventRecord'
+                $ref: '#/components/schemas/EventDetail'
               example:
                 event_id: c9d0e1f2-3a4b-4c5d-8e9f-a0b1c2d3e4f5
-                sent_at: '2026-07-02T18:04:11.532Z'
-                data_type: activity
+                type: unified_api.activity.updated
+                payload_type: activity
                 provider: garmin
-                destination_type: webhook
-                http_status: 500
-                response_time_ms: 3011
-                bytes: 15872
                 connection_id: '1937251889234671616'
+                user_id: 3f8e2b1c-4d5a-4e6f-9a0b-1c2d3e4f5a6b
+                reference_id: user-42
+                status: pending
+                destination_count: 2
+                attempt_count: 3
+                created_at: '2026-07-02T18:04:11Z'
+                completed_at: null
+                deliveries:
+                - destination_id: '1937255512398764032'
+                  destination_type: webhook
+                  destination_url: https://api.acme.com/terra/webhook
+                  status: pending
+                  last_status_code: 500
+                  no_status_reason: null
+                  attempt_count: 2
+                  next_attempt_at: '2026-07-02T18:05:42Z'
+                  completed_at: null
+                  attempts:
+                  - attempted_at: '2026-07-02T18:04:42Z'
+                    url: https://api.acme.com/terra/webhook
+                    status_code: 500
+                    duration_ms: 3011
+                  - attempted_at: '2026-07-02T18:04:12Z'
+                    url: https://api.acme.com/terra/webhook
+                    status_code: 500
+                    duration_ms: 2987
+                - destination_id: '1937255512398764033'
+                  destination_type: s3
+                  destination_url: null
+                  status: delivered
+                  last_status_code: 200
+                  no_status_reason: null
+                  attempt_count: 1
+                  next_attempt_at: null
+                  completed_at: '2026-07-02T18:04:12Z'
+                  attempts:
+                  - attempted_at: '2026-07-02T18:04:12Z'
+                    url: null
+                    status_code: 200
+                    duration_ms: null
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':
@@ -5924,7 +6026,7 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-  /environments/{dev_id}/webhook-events/{event_id}/payload:
+  /environments/{dev_id}/events/{event_id}/payload:
     get:
       operationId: getWebhookEventPayload
       x-terra-mcp-annotations:
@@ -11484,7 +11586,10 @@ components:
           type: string
         type:
           type: string
-          description: The generated data type, e.g. daily.
+          description: The generated event's type, e.g. unified_api.daily.updated.
+        payload_type:
+          type: string
+          description: The type the generated payload carries, e.g. daily.
         provider:
           type:
           - string
@@ -11544,13 +11649,17 @@ components:
       - retry_attempts
       - bytes
       - success_rate
-    EventStatsDataType:
+    EventStatsEventType:
       type: object
-      description: Delivery attempt counts grouped by the recorded event data type.
+      description: Delivery attempt counts grouped by event type and the payload type delivered.
       properties:
-        data_type:
+        type:
           type: string
-          description: Event data type recorded on these delivery attempts.
+          description: The event type, e.g. unified_api.sleep.updated. A payload type with no registered
+            event type reads unknown.<payload_type>.
+        payload_type:
+          type: string
+          description: The type the delivered payloads carried, e.g. sleep.
         delivery_attempts:
           type: integer
           description: Recorded outbound delivery attempts, including initial and retry attempts.
@@ -11574,7 +11683,8 @@ components:
           description: successful_attempts / delivery_attempts, from 0 to 1. Null when delivery_attempts
             is zero.
       required:
-      - data_type
+      - type
+      - payload_type
       - delivery_attempts
       - successful_attempts
       - failed_attempts
@@ -11697,11 +11807,11 @@ components:
       description: Whole-window breakdowns. Arrays are sorted by their dimension and empty without delivery
         attempts.
       properties:
-        data_type:
+        type:
           type: array
-          description: Delivery attempt counts per event data type, sorted lexicographically by data_type.
+          description: Delivery attempt counts per event type and payload type, sorted by type, then payload_type.
           items:
-            $ref: '#/components/schemas/EventStatsDataType'
+            $ref: '#/components/schemas/EventStatsEventType'
         provider:
           type: array
           description: Delivery attempt counts per recorded provider, sorted lexicographically by provider.
@@ -11718,7 +11828,7 @@ components:
           items:
             $ref: '#/components/schemas/EventStatsHTTPStatus'
       required:
-      - data_type
+      - type
       - provider
       - destination_type
       - http_status
@@ -11915,79 +12025,411 @@ components:
       - p50_response_time_ms
       - p95_response_time_ms
       - p99_response_time_ms
-    EventRecord:
+    EventType:
+      type: object
+      properties:
+        type:
+          type: string
+          description: The event type, as <product>.<resource>.<action>, e.g. unified_api.sleep.updated.
+            The events list's type filter takes it.
+        product:
+          type: string
+          description: The product the event belongs to, e.g. unified_api or lab_reports.
+        description:
+          type: string
+          description: When the event occurs.
+        payload_types:
+          type: array
+          description: The type values the event's webhook payload carries today, e.g. sleep.
+          items:
+            type: string
+      required:
+      - type
+      - product
+      - description
+      - payload_types
+      x-terra-operations:
+      - method_name: list
+        operation: get
+        path: /environments/{dev_id}/event-types
+        columns:
+        - type
+        - product
+        - description
+      x-terra-summary: Event types, the product each belongs to and when it occurs
+      x-terra-resource: event-types
+    Event:
       type: object
       properties:
         event_id:
           type: string
-        sent_at:
+          description: The event's id, as its webhook's terra-reference header and payload carry it. Every
+            delivery and resend of the event shares it.
+        type:
+          type: string
+          description: What happened, as <product>.<resource>.<action>, e.g. unified_api.sleep.updated
+            or unified_api.auth.succeeded. A payload type with no registered event type reads unknown.<payload_type>.
+        payload_type:
+          type: string
+          description: The type the delivered payload carried, e.g. sleep or auth_success.
+        provider:
+          type:
+          - string
+          - 'null'
+          description: The provider slug the event came from, e.g. garmin. null for an event no provider
+            produced.
+        connection_id:
+          type:
+          - string
+          - 'null'
+          description: String-encoded 64-bit id of the connection the event is about. null for an event
+            with no connection.
+        user_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: The Terra user the event is about, as a UUID. null when the event has no user,
+            or its connection has since been deleted.
+        reference_id:
+          type:
+          - string
+          - 'null'
+          description: Your own id for that user, as set on the connection. null when none is set, or
+            the connection has since been deleted.
+        status:
+          type: string
+          enum:
+          - pending
+          - delivered
+          - failed
+          - canceled
+          description: 'Where delivery stands across the event''s destinations.
+
+            pending: at least one destination has not been delivered to yet and Terra will try it again.
+
+            failed: no destination is pending, and Terra stopped trying at least one of them.
+
+            canceled: no destination was sent the event, because each stopped accepting it.
+
+            delivered: every other case: each destination was delivered to, or canceled after another
+            was delivered to.'
+        destination_count:
+          type: integer
+          description: How many destinations the event was sent to, or was due to be.
+          minimum: -2147483648
+          maximum: 2147483647
+        attempt_count:
+          type: integer
+          description: How many requests were sent across every destination, resends included. A try the
+            safety valve held back sent nothing and is not counted.
+          minimum: -2147483648
+          maximum: 2147483647
+        created_at:
           type: string
           format: date-time
-        data_type:
-          type: string
-        provider:
-          type: string
-        destination_type:
-          type: string
-        destination_id:
-          type: string
-          description: String-encoded destination ID recorded at delivery time. Absent on older rows that
-            did not record an ID.
-        destination_url:
-          type: string
-          description: Destination URL recorded at delivery time, including for destinations since edited
-            or deleted. Empty for destinations without a URL.
-        http_status:
-          type: integer
-        response_time_ms:
-          type: integer
-          format: int64
-        bytes:
-          type: integer
-          format: int64
-        connection_id:
-          type: string
-          description: string-encoded 64-bit id
-        user_id:
-          type: string
-          format: uuid
-          description: The Terra user the delivery belongs to, as a UUID. Pass it to resend with the row's
-            event_id and data_type. Absent on a row whose connection has since been deleted.
-        reference_id:
-          type: string
-          description: Your own id for that user, as it was set on the connection. Absent where none is
-            set, or where the connection has since been deleted.
+          description: When the event was created. since and until filter on this.
+        completed_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the last destination reached its status. null while status is pending, or
+            when a delivery failed by an overdue retry.
+      required:
+      - event_id
+      - type
+      - payload_type
+      - provider
+      - connection_id
+      - user_id
+      - reference_id
+      - status
+      - destination_count
+      - attempt_count
+      - created_at
+      - completed_at
       x-terra-operations:
       - method_name: stats
         operation: get
-        path: /environments/{dev_id}/webhook-events/stats
+        path: /environments/{dev_id}/events/stats
       - method_name: list
         operation: get
-        path: /environments/{dev_id}/webhook-events
+        path: /environments/{dev_id}/events
         columns:
         - event_id
-        - data_type
+        - type
         - provider
-        - destination_type
-        - destination_id
-        - destination_url
-        - http_status
-        - sent_at
+        - status
+        - destination_count
+        - attempt_count
+        - created_at
       - method_name: retrieve
         operation: get
-        path: /environments/{dev_id}/webhook-events/{event_id}
+        path: /environments/{dev_id}/events/{event_id}
       - method_name: resend
         operation: post
-        path: /environments/{dev_id}/webhook-events/resend
+        path: /environments/{dev_id}/events/resend
       - method_name: retrieve-payload
         operation: get
-        path: /environments/{dev_id}/webhook-events/{event_id}/payload
+        path: /environments/{dev_id}/events/{event_id}/payload
       - method_name: generate
         operation: post
-        path: /environments/{dev_id}/webhook-events/generate
+        path: /environments/{dev_id}/events/generate
         slow: true
       x-terra-summary: Inspect, summarize, resend, and generate webhook events
       x-terra-resource: events
+    EventDetail:
+      type: object
+      description: A webhook event with each destination's delivery and its attempts.
+      properties:
+        event_id:
+          type: string
+          description: The event's id, as its webhook's terra-reference header and payload carry it. Every
+            delivery and resend of the event shares it.
+        type:
+          type: string
+          description: What happened, as <product>.<resource>.<action>, e.g. unified_api.sleep.updated
+            or unified_api.auth.succeeded. A payload type with no registered event type reads unknown.<payload_type>.
+        payload_type:
+          type: string
+          description: The type the delivered payload carried, e.g. sleep or auth_success.
+        provider:
+          type:
+          - string
+          - 'null'
+          description: The provider slug the event came from, e.g. garmin. null for an event no provider
+            produced.
+        connection_id:
+          type:
+          - string
+          - 'null'
+          description: String-encoded 64-bit id of the connection the event is about. null for an event
+            with no connection.
+        user_id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: The Terra user the event is about, as a UUID. null when the event has no user,
+            or its connection has since been deleted.
+        reference_id:
+          type:
+          - string
+          - 'null'
+          description: Your own id for that user, as set on the connection. null when none is set, or
+            the connection has since been deleted.
+        status:
+          type: string
+          enum:
+          - pending
+          - delivered
+          - failed
+          - canceled
+          description: 'Where delivery stands across the event''s destinations.
+
+            pending: at least one destination has not been delivered to yet and Terra will try it again.
+
+            failed: no destination is pending, and Terra stopped trying at least one of them.
+
+            canceled: no destination was sent the event, because each stopped accepting it.
+
+            delivered: every other case: each destination was delivered to, or canceled after another
+            was delivered to.'
+        destination_count:
+          type: integer
+          description: How many destinations the event was sent to, or was due to be.
+          minimum: -2147483648
+          maximum: 2147483647
+        attempt_count:
+          type: integer
+          description: How many requests were sent across every destination, resends included. A try the
+            safety valve held back sent nothing and is not counted.
+          minimum: -2147483648
+          maximum: 2147483647
+        created_at:
+          type: string
+          format: date-time
+          description: When the event was created. since and until filter on this.
+        completed_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the last destination reached its status. null while status is pending, or
+            when a delivery failed by an overdue retry.
+        deliveries:
+          type: array
+          description: One delivery per destination the event was sent to.
+          items:
+            $ref: '#/components/schemas/EventDelivery'
+      required:
+      - event_id
+      - type
+      - payload_type
+      - provider
+      - connection_id
+      - user_id
+      - reference_id
+      - status
+      - destination_count
+      - attempt_count
+      - created_at
+      - completed_at
+      - deliveries
+    EventDelivery:
+      type: object
+      description: The delivery of one event to one destination.
+      properties:
+        destination_id:
+          type:
+          - string
+          - 'null'
+          description: String-encoded id of the destination, as recorded at delivery time. null when the
+            destination had no id.
+        destination_type:
+          type: string
+          description: The destination kind, e.g. webhook, s3 or kafka.
+        destination_url:
+          type:
+          - string
+          - 'null'
+          description: The destination URL recorded at delivery time, including for a destination since
+            edited or deleted. null for a destination without one.
+        status:
+          type: string
+          enum:
+          - pending
+          - delivered
+          - failed
+          - canceled
+          description: 'Where this delivery stands. A resend runs alongside any automatic retries; a delivery
+            that reached delivered stays delivered until a later resend ends otherwise.
+
+            pending: not delivered yet; Terra tries again at next_attempt_at.
+
+            delivered: the destination accepted the event.
+
+            failed: Terra stopped trying after the last retry, or a scheduled retry is more than six hours
+            overdue with no recorded result.
+
+            canceled: Terra stopped because the destination was removed or disabled, stopped accepting
+            the event, cannot take it, or the environment lost access to it.'
+        last_status_code:
+          type:
+          - integer
+          - 'null'
+          description: The HTTP status the destination returned to the latest attempt, including a non-2xx
+            one. A destination that is not HTTP, such as s3, kafka or a database, records 200 when the
+            write succeeded and 500 when it failed. null when no_status_reason is set.
+          minimum: -2147483648
+          maximum: 2147483647
+        no_status_reason:
+          type:
+          - string
+          - 'null'
+          enum:
+          - timed_out
+          - connection_failed
+          - destination_paused
+          - destination_unavailable
+          - access_withdrawn
+          - payload_unavailable
+          - unsupported_event
+          - null
+          description: 'Why last_status_code is null.
+
+            timed_out: the destination did not answer in time, so Terra has no status for a request it
+            sent.
+
+            connection_failed: no HTTP response, for example a refused connection or TLS failure.
+
+            destination_paused: Terra held the try back while the destination was failing, without sending
+            it.
+
+            destination_unavailable: the destination was removed, disabled or stopped accepting the event
+            (status canceled).
+
+            access_withdrawn: the environment no longer has access to the event''s product (status canceled).
+
+            payload_unavailable: Terra could not load the stored payload or build the request from it,
+            so nothing was sent; it retries, and fails once the payload is gone or the retries run out.
+
+            unsupported_event: the destination''s type cannot take this event, for example a database
+            destination given data it cannot store, so nothing was sent (status canceled).'
+        attempt_count:
+          type: integer
+          description: How many requests were sent to this destination, resends included.
+          minimum: -2147483648
+          maximum: 2147483647
+        next_attempt_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When Terra next tries this destination. Set only while status is pending.
+        completed_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the delivery reached its status. null while status is pending, and for a delivery
+            failed by an overdue retry.
+        attempts:
+          type: array
+          description: The newest 1,000 requests sent to the destination, newest first; attempt_count
+            is the total. A try held back by the safety valve sent nothing and is not listed.
+          items:
+            $ref: '#/components/schemas/EventAttempt'
+      required:
+      - destination_id
+      - destination_type
+      - destination_url
+      - status
+      - last_status_code
+      - no_status_reason
+      - attempt_count
+      - next_attempt_at
+      - completed_at
+      - attempts
+    EventAttempt:
+      type: object
+      description: One request sent to a destination.
+      properties:
+        attempted_at:
+          type: string
+          format: date-time
+          description: When the request was sent.
+        url:
+          type:
+          - string
+          - 'null'
+          description: The URL the request was sent to. null for a destination without one.
+        status_code:
+          type: integer
+          description: The HTTP status recorded for the request. A timeout records 504 and a connection
+            failure 503. A destination that is not HTTP records 200 for a successful write and 500 for
+            a failed one.
+          minimum: -2147483648
+          maximum: 2147483647
+        duration_ms:
+          type:
+          - integer
+          - 'null'
+          format: int64
+          description: How long the request took, in milliseconds. null when it was not measured.
+        resend_id:
+          type:
+          - string
+          - 'null'
+          description: The resend this request belongs to, as the resend returned it. null for the event's
+            own delivery and its automatic retries.
+      required:
+      - attempted_at
+      - url
+      - status_code
+      - duration_ms
+      - resend_id
     InvoiceSummary:
       type: object
       properties:
@@ -12576,6 +13018,7 @@ components:
           - dependency_failed
           - dev_id_not_found
           - device_code_expired
+          - endpoint_moved
           - entitlement_required
           - environment_disabled
           - idempotency_key_reuse
@@ -13081,36 +13524,47 @@ components:
     ResendEventRequest:
       type: object
       properties:
-        user_id:
-          type: string
-          format: uuid
-          description: The Terra user the event belongs to, as a UUID. Required. Taken from the row's
-            user_id. A deauthenticated user still resolves, so a historical event can be replayed.
-          x-terra-help: Terra user UUID from the event row's user_id. Deauthenticated users still resolve
-            for replay.
         event_id:
           type: string
-          description: The event to re-dispatch. Required. Taken from the row's event_id; an id whose
-            stored payload is gone is a 404.
-          x-terra-help: Stored event ID from the row's event_id. A missing or expired payload returns
-            404.
-        event_type:
+          description: The event to resend. Required. Its stored payload is sent again, so an event whose
+            payload has expired is a 404.
+          x-terra-help: Event ID to resend. A missing or expired payload returns 404.
+        destination_id:
           type: string
-          description: The event's type, e.g. activity or sleep. Required. Taken from the row's data_type.
-          x-terra-help: Value from the event row's data_type (e.g. activity or sleep).
+          description: The destination to resend to, by the id its delivery reports. Required. An unknown
+            id is a 404; an inactive destination, or one that does not accept the event's type, is a 422.
+          x-terra-help: Destination ID to resend to, from the event's deliveries. Must be active and accept
+            the event's type.
       required:
-      - user_id
       - event_id
-      - event_type
+      - destination_id
     ResendResult:
       type: object
       properties:
         event_id:
           type: string
-        event_type:
+        type:
           type: string
+          description: The event's type, e.g. unified_api.sleep.updated.
+        payload_type:
+          type: string
+          description: The type the resent payload carries, e.g. sleep.
+        destination_id:
+          type: string
+          description: The destination the event was resent to.
+        resend_id:
+          type: string
+          description: Identifies this resend. Its attempts are recorded apart from the event's automatic
+            retries, which carry on.
         dispatched:
           type: boolean
+      required:
+      - event_id
+      - type
+      - payload_type
+      - destination_id
+      - resend_id
+      - dispatched
     RotatedApiKey:
       type: object
       properties:
