@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.09.1
+  version: 2026.11.09.2
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
 servers:
   - url: /api/v3/admin
@@ -30,6 +30,8 @@ tags:
     description: The catalog of generally-available models, and the per-environment history of model runs.
   - name: webhookevents
     description: Inspect, resend and generate webhook events
+  - name: doctor
+    description: Check an environment for problems that stop data reaching you
   - name: connections
     description: Inspect end-user connections
   - name: syntheticusers
@@ -2498,6 +2500,8 @@ paths:
                     type: webhook
                     url: https://api.acme.com/terra/webhook
                     active: true
+                    disabled_reason: null
+                    disabled_at: null
                     event_types:
                       - activity
                       - sleep
@@ -2556,6 +2560,8 @@ paths:
                 type: webhook
                 url: https://api.acme.com/terra/webhook
                 active: true
+                disabled_reason: null
+                disabled_at: null
                 event_types:
                   - activity
                   - sleep
@@ -2616,6 +2622,104 @@ paths:
                 value:
                   type: s3
                   active: false
+  /environments/{dev_id}/unified-api/destinations/health:
+    get:
+      operationId: getDestinationsHealth
+      tags:
+        - destinations
+      summary: Get destination health
+      description: 'Works out each destination''s health when asked, from the outcomes of its last 24 hours of deliveries, judged on the last hour. A delivery is one event sent to one destination and is counted once however many attempts it took, so these are the deliveries listWebhookEvents shows for the destination. A destination is failing when every delivery that finished in the last hour failed, when deliveries have waited on automatic retries for an hour with none delivered, or when its retries ran out and none has been delivered since, with info.failing_since set to when that began. A resend counts whatever its event''s age; it keeps its event''s creation time, so how long it has been retrying is unknown, and a resend still failing makes the destination degraded. A delivery Terra could not send because it could not load the payload does not count against the destination. A disabled destination''s error carries its disabled_reason, so one Terra turned off after failing reads auto_disabled_failed_delivery. When delivery state cannot be read, every destination is unknown with error check_unavailable: health is never assumed.'
+      security:
+        - adminToken:
+            - destinations:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: destination_id
+          in: query
+          required: false
+          description: Only these destinations, as string-encoded ids. Comma-separate them or repeat the parameter. Omit for every destination in the environment.
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DestinationHealth'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type:
+                      - string
+                      - 'null'
+                required:
+                  - data
+                  - has_more
+                  - next_cursor
+              example:
+                data:
+                  - destination_id: '1937255512398764032'
+                    status: failing
+                    info:
+                      failing_since: '2026-11-04T09:40:12Z'
+                      last_delivered_at: '2026-11-04T09:31:05Z'
+                      last_failure_at: '2026-11-04T10:14:52Z'
+                      last_failure_status_code: 401
+                      pending: 48
+                      oldest_pending_at: '2026-11-04T09:32:40Z'
+                      counts:
+                        last_hour:
+                          delivered: 0
+                          failed: 21
+                          retried: 0
+                        last_24h:
+                          delivered: 28911
+                          failed: 21
+                          retried: 140
+                    error:
+                      code: unauthorized
+                      message: The endpoint answered 401 Unauthorized.
+                  - destination_id: '1937255512398764033'
+                    status: disabled
+                    info:
+                      failing_since: null
+                      last_delivered_at: null
+                      last_failure_at: '2026-11-03T09:40:00Z'
+                      last_failure_status_code: null
+                      pending: 0
+                      oldest_pending_at: null
+                      counts:
+                        last_hour:
+                          delivered: 0
+                          failed: 0
+                          retried: 0
+                        last_24h:
+                          delivered: 0
+                          failed: 4
+                          retried: 0
+                    error:
+                      code: auto_disabled_failed_delivery
+                      message: Terra turned this destination off after deliveries to it failed for 24 hours. Fix the destination, then turn it back on.
+                has_more: false
+                next_cursor: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /environments/{dev_id}/unified-api/destinations/batch-create:
     post:
       operationId: batchCreateDestinations
@@ -2655,6 +2759,8 @@ paths:
                     type: webhook
                     url: https://api.acme.com/terra/webhook
                     active: true
+                    disabled_reason: null
+                    disabled_at: null
                     event_types: []
                     configured: true
                     missing: []
@@ -2666,6 +2772,8 @@ paths:
                     type: s3
                     url: ''
                     active: false
+                    disabled_reason: owner
+                    disabled_at: '2026-11-04T10:15:00Z'
                     event_types: []
                     configured: false
                     missing:
@@ -2730,6 +2838,8 @@ paths:
                 type: s3
                 url: acme-terra
                 active: false
+                disabled_reason: owner
+                disabled_at: '2026-11-03T16:02:11Z'
                 event_types: []
                 configured: false
                 missing:
@@ -2781,6 +2891,8 @@ paths:
                 type: sql
                 url: db2.acme.com
                 active: true
+                disabled_reason: null
+                disabled_at: null
                 event_types:
                   - activity
                 configured: true
@@ -3744,6 +3856,113 @@ paths:
           $ref: '#/components/responses/RateLimited'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
+  /environments/{dev_id}/doctor:
+    get:
+      operationId: getDoctor
+      tags:
+        - doctor
+      summary: Check the environment
+      description: 'Runs the checks when asked and answers one lint per problem, in the shape of an advisor lint: its check name, a title, a level (error, warn or info), facing, its category (security, performance or health), what the check looks for and what it found, how to fix it with the operationId to call, what it concerns, a cache_key that stays the same for the same problem across runs, and when it was observed. Errors come first. There is no overall status: decide which levels fail you. Each area''s checks run only when the token holds the scope that area''s own reads need (tokens:read, tokens:admin, billing:read, team:read, providers:read, connections:read, events:read, dataconfig:read, vantage:read, vantageconfig:read, lab_reports:read, models:read, workouts:read, account:read), and product checks only when the environment has the product; checks for a product it does not have are skipped. Checks that cannot run, for want of a scope or a readable dependency, come back as one check_unavailable lint per cause listing them in metadata.checks, never as a pass. remediation.docs_url links to the check in the environment doctor docs. name and category each take several values, any of which matches, and combine with each other to choose which lints come back.'
+      security:
+        - adminToken:
+            - destinations:read
+      parameters:
+        - $ref: '#/components/parameters/DevId'
+        - name: name
+          in: query
+          required: false
+          description: Run only these checks, by lint name. Comma-separate them or repeat the parameter; a check matching any of them runs. An unknown name is a 400.
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: category
+          in: query
+          required: false
+          description: Run only the checks in these categories. Comma-separate them or repeat the parameter.
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - security
+                - performance
+                - health
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoctorReport'
+              example:
+                lints:
+                  - name: billing_unlinked
+                    title: Billing is not set up
+                    level: error
+                    facing: external
+                    categories:
+                      - health
+                    description: Terra does not deliver data for a billable environment whose account has no billing set up.
+                    detail: The account has no billing set up, so Terra holds every delivery for this billable environment.
+                    remediation:
+                      text: Subscribe to a plan to set up billing.
+                      action: subscribe
+                      docs_url: https://docs.tryterra.co/reference/admin-api/environment-doctor#billing_unlinked
+                    metadata:
+                      type: environment
+                      id: null
+                      name: null
+                      reason: null
+                      scope: null
+                      since: null
+                      observed: {}
+                      checks: null
+                    cache_key: billing_unlinked
+                    observed_at: '2026-11-05T12:00:00Z'
+                  - name: check_unavailable
+                    title: Check could not run
+                    level: info
+                    facing: external
+                    categories:
+                      - health
+                      - security
+                    description: A check that cannot run is reported here instead of passing.
+                    detail: 'These checks could not run because the token lacks the tokens:admin scope: token_cap_near, token_leaked, token_never_expires, token_overbroad, token_unused.'
+                    remediation:
+                      text: Use a token that holds tokens:admin.
+                      action: null
+                      docs_url: https://docs.tryterra.co/reference/admin-api/environment-doctor#check_unavailable
+                    metadata:
+                      type: check
+                      id: null
+                      name: null
+                      reason: missing_scope
+                      scope: tokens:admin
+                      since: null
+                      observed: {}
+                      checks:
+                        - token_cap_near
+                        - token_leaked
+                        - token_never_expires
+                        - token_overbroad
+                        - token_unused
+                    cache_key: check_unavailable:missing_scope:tokens:admin
+                    observed_at: '2026-11-05T12:00:00Z'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /environments/{dev_id}/events:
     get:
       operationId: listWebhookEvents
@@ -7392,6 +7611,8 @@ paths:
                       delayed_orders: 1
                       payment_failed_orders_last_7d: 1
                       failed_webhooks_last_24h: 3
+                      failed_results: 1
+                      kits_awaiting_sample_14d: 2
                 full:
                   summary: Daily statistics compared with the previous period
                   value:
@@ -7414,6 +7635,8 @@ paths:
                       delayed_orders: 1
                       payment_failed_orders_last_7d: 1
                       failed_webhooks_last_24h: 3
+                      failed_results: 1
+                      kits_awaiting_sample_14d: 2
                     granularity: day
                     series:
                       - bucket_start: '2026-10-28T00:00:00Z'
@@ -9204,6 +9427,22 @@ components:
           description: The event types delivered here. An empty list delivers every event type.
           items:
             type: string
+        disabled_reason:
+          type:
+            - string
+            - 'null'
+          enum:
+            - owner
+            - auto_disabled_failed_delivery
+            - unrecorded
+            - null
+          description: 'Why the destination is off: owner (turned off through the API or dashboard), auto_disabled_failed_delivery (Terra turned it off after deliveries failed for 24 hours), or unrecorded (turned off before Terra recorded why). Null while active.'
+        disabled_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: When the destination was turned off. Null while active, and when it was turned off before Terra recorded when (disabled_reason unrecorded).
         configured:
           type: boolean
           description: Whether the configuration has every field the type needs to deliver. A draft saved inactive reads false until it is completed.
@@ -9227,6 +9466,8 @@ components:
         - type
         - url
         - active
+        - disabled_reason
+        - disabled_at
         - configured
         - missing
         - config
@@ -9364,11 +9605,29 @@ components:
           description: The event types delivered here. An empty list delivers every event type.
           items:
             type: string
+        disabled_reason:
+          type:
+            - string
+            - 'null'
+          enum:
+            - owner
+            - auto_disabled_failed_delivery
+            - unrecorded
+            - null
+          description: 'Why the destination is off: owner (turned off through the API or dashboard), auto_disabled_failed_delivery (Terra turned it off after deliveries failed for 24 hours), or unrecorded (turned off before Terra recorded why). Null while active.'
+        disabled_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: When the destination was turned off. Null while active, and when it was turned off before Terra recorded when (disabled_reason unrecorded).
       required:
         - id
         - type
         - url
         - active
+        - disabled_reason
+        - disabled_at
     Destination:
       type: object
       description: 'A destination with its configuration. Secrets are never returned: each is replaced by a masked form ending in its last four characters, or null when unset.'
@@ -9388,6 +9647,22 @@ components:
           description: The event types delivered here. An empty list delivers every event type.
           items:
             type: string
+        disabled_reason:
+          type:
+            - string
+            - 'null'
+          enum:
+            - owner
+            - auto_disabled_failed_delivery
+            - unrecorded
+            - null
+          description: 'Why the destination is off: owner (turned off through the API or dashboard), auto_disabled_failed_delivery (Terra turned it off after deliveries failed for 24 hours), or unrecorded (turned off before Terra recorded why). Null while active.'
+        disabled_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: When the destination was turned off. Null while active, and when it was turned off before Terra recorded when (disabled_reason unrecorded).
         configured:
           type: boolean
           description: Whether the configuration has every field the type needs to deliver. A draft saved inactive reads false until it is completed.
@@ -9406,9 +9681,279 @@ components:
         - type
         - url
         - active
+        - disabled_reason
+        - disabled_at
         - configured
         - missing
         - config
+    DestinationHealth:
+      type: object
+      description: A destination's delivery health, worked out from the outcomes of the last 24 hours of deliveries and judged on the last hour.
+      properties:
+        destination_id:
+          type: string
+          description: string-encoded 64-bit id
+        status:
+          type: string
+          enum:
+            - healthy
+            - degraded
+            - failing
+            - idle
+            - disabled
+            - unknown
+          description: 'healthy: delivering. degraded: some deliveries in the last hour failed, a delivery has waited on automatic retries for 15 minutes, a resend failed in the last hour and is still retrying, or most deliveries in the last hour needed a retry. failing: every delivery that finished in the last hour failed, deliveries have waited on automatic retries for an hour with none delivered, every delivery that finished in 24 hours failed, or retries ran out and none has been delivered since. idle: no deliveries in 24 hours. disabled: the destination is off. unknown: delivery state could not be read; this is never reported as healthy.'
+        info:
+          description: The deliveries behind the status. Null when unknown.
+          anyOf:
+            - $ref: '#/components/schemas/DestinationHealthInfo'
+            - type: 'null'
+        error:
+          description: Why the destination is not healthy. Null when healthy or idle, and for degraded or failing when the failure left no detail.
+          anyOf:
+            - $ref: '#/components/schemas/DestinationHealthError'
+            - type: 'null'
+      required:
+        - destination_id
+        - status
+        - info
+        - error
+    DestinationHealthInfo:
+      type: object
+      description: The deliveries behind a destination's status. These are the deliveries listWebhookEvents shows for the destination.
+      properties:
+        failing_since:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: 'When the current failure began: the first delivery whose retries ran out with no success since. Null when not failing, or failing for less than one full retry chain.'
+        last_delivered_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: The last delivery that arrived in the last 24 hours, or null.
+        last_failure_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: The last failed or retrying delivery's latest attempt, or null.
+        last_failure_status_code:
+          type:
+            - integer
+            - 'null'
+          description: 'The HTTP status a webhook answered on its last failure. Null for other destination types, and when there was no answer: a timeout or a connection failure.'
+        pending:
+          type: integer
+          description: Deliveries still waiting on a retry, including a resend still retrying after its event was delivered. listWebhookEvents shows such a delivery as delivered until the resend ends; health counts it here because it is how the destination is answering now.
+        oldest_pending_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: When the oldest delivery still waiting on an automatic retry was created, or null. A resend keeps its event's creation time, so its age is unknown and it is not counted here.
+        counts:
+          $ref: '#/components/schemas/DestinationHealthCounts'
+      required:
+        - failing_since
+        - last_delivered_at
+        - last_failure_at
+        - last_failure_status_code
+        - pending
+        - oldest_pending_at
+        - counts
+    DestinationHealthError:
+      type: object
+      description: Why a destination is not healthy.
+      properties:
+        code:
+          type: string
+          description: 'A stable code. For degraded or failing: unauthorized, forbidden, not_found, gone, payload_too_large, rate_limited, timeout (no answer in time, or a 408 or 504), unreachable (could not connect), paused (Terra is holding deliveries back after repeated failures), server_error, rejected, unexpected_status, no_response, retrying (deliveries arrive but most needed a retry), or delivery_error for non-webhook destinations. For disabled: the disabled_reason. For unknown: check_unavailable.'
+        message:
+          type: string
+          description: The code in a sentence.
+      required:
+        - code
+        - message
+    DestinationHealthCounts:
+      type: object
+      description: Delivery counts over the last hour and the last 24 hours, by when each delivery reached its outcome.
+      properties:
+        last_hour:
+          $ref: '#/components/schemas/DestinationDeliveryCounts'
+        last_24h:
+          $ref: '#/components/schemas/DestinationDeliveryCounts'
+      required:
+        - last_hour
+        - last_24h
+    DestinationDeliveryCounts:
+      type: object
+      description: 'Deliveries that reached an outcome in a window, counted once per event and destination however many attempts they took. A delivery Terra could not send because it could not load the payload is not counted: that failure is Terra''s, not the destination''s.'
+      properties:
+        delivered:
+          type: integer
+          description: Deliveries that arrived.
+        failed:
+          type: integer
+          description: Deliveries whose retries ran out, or whose retry is more than six hours overdue.
+        retried:
+          type: integer
+          description: Delivered deliveries that took more than one attempt.
+      required:
+        - delivered
+        - failed
+        - retried
+    DoctorReport:
+      type: object
+      description: The environment's lints, worked out when asked.
+      properties:
+        lints:
+          type: array
+          description: Problems found, errors first. Checks that could not run are check_unavailable lints, one per cause, never a pass. Empty when there are none.
+          items:
+            $ref: '#/components/schemas/DoctorLint'
+      required:
+        - lints
+    DoctorLint:
+      type: object
+      description: One problem with the environment, or a check that could not run.
+      properties:
+        name:
+          type: string
+          description: The check that found it, or check_unavailable.
+        title:
+          type: string
+        level:
+          type: string
+          enum:
+            - error
+            - warn
+            - info
+          description: error stops data reaching you or breaks your integration; warn needs attention; info is worth knowing.
+        facing:
+          type: string
+          enum:
+            - external
+          description: 'Always external: every lint concerns your use of Terra.'
+        categories:
+          type: array
+          description: security, performance or health.
+          items:
+            type: string
+            enum:
+              - security
+              - performance
+              - health
+        description:
+          type: string
+          description: What the check looks for, the same for every lint it makes.
+        detail:
+          type: string
+          description: This lint in particular.
+        remediation:
+          $ref: '#/components/schemas/DoctorRemediation'
+        metadata:
+          $ref: '#/components/schemas/DoctorLintMetadata'
+        cache_key:
+          type: string
+          description: 'Stable for the same problem across runs: the check, plus the id of what it concerns when there is one.'
+        observed_at:
+          type: string
+          format: date-time
+          description: When the check ran.
+      required:
+        - name
+        - title
+        - level
+        - facing
+        - categories
+        - description
+        - detail
+        - remediation
+        - metadata
+        - cache_key
+        - observed_at
+    DoctorLintMetadata:
+      type: object
+      description: What a lint concerns, and the facts behind it.
+      properties:
+        type:
+          type: string
+          description: destination, source, token, subscription, meter, invitation, data_type, api_version, model, route, environment, account (the problem is account-wide and shows in every environment), or check for a check_unavailable lint.
+        id:
+          type:
+            - string
+            - 'null'
+          description: The id of what the lint concerns, string-encoded. Null for the environment as a whole, and for a check_unavailable lint.
+        name:
+          type:
+            - string
+            - 'null'
+          description: A display name for it, or null.
+        reason:
+          type:
+            - string
+            - 'null'
+          description: 'A stable reason code: a delivery error code, a disabled reason, a subscription or certificate state, or why checks could not run (missing_scope, dependency_unavailable). Null when there is none.'
+        scope:
+          type:
+            - string
+            - 'null'
+          description: The admin scope the token needs, when a check could not run for want of it.
+          x-scope-plane: admin
+        since:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: When the problem began or comes due, when Terra knows.
+        observed:
+          description: The counts behind the lint, keyed by name. omitted, on the last lint a check returns, counts the lints left out once a check reaches 25.
+          $ref: '#/components/schemas/RecordInteger'
+        checks:
+          type:
+            - array
+            - 'null'
+          description: The checks a check_unavailable lint covers. Null for every other lint.
+          items:
+            type: string
+      required:
+        - type
+        - id
+        - name
+        - reason
+        - scope
+        - since
+        - observed
+        - checks
+      $defs:
+        RecordInteger:
+          type: object
+          unevaluatedProperties:
+            type: integer
+    DoctorRemediation:
+      type: object
+      description: How to act on a lint.
+      properties:
+        text:
+          type: string
+          description: What to do, in a sentence.
+        action:
+          type:
+            - string
+            - 'null'
+          description: The operationId of the admin call that inspects or fixes the problem, or null.
+        docs_url:
+          type:
+            - string
+            - 'null'
+          description: The check's section in the environment doctor docs.
+      required:
+        - text
+        - action
+        - docs_url
     DestinationType:
       type: object
       properties:
@@ -12972,12 +13517,20 @@ components:
         failed_webhooks_last_24h:
           type: integer
           description: Webhook deliveries that failed in the last 24 hours.
+        failed_results:
+          type: integer
+          description: Order items whose current results status became results.sample_rejected, results.lab_processing_error or results.escalation_raised in the last 30 days.
+        kits_awaiting_sample_14d:
+          type: integer
+          description: Order items whose current results status has been results.awaiting_sample for more than 14 days.
       required:
         - observed_at
         - unacknowledged_results
         - delayed_orders
         - payment_failed_orders_last_7d
         - failed_webhooks_last_24h
+        - failed_results
+        - kits_awaiting_sample_14d
     VantageStatsOrders:
       type: object
       description: Orders placed in the window, by their current status.
@@ -14875,6 +15428,10 @@ components:
           type:
             - string
             - 'null'
+    RecordInteger:
+      type: object
+      unevaluatedProperties:
+        type: integer
     VantageRichTextText:
       type: object
       description: A run of characters sharing one set of styles.
@@ -15521,10 +16078,6 @@ components:
         type: array
         items:
           type: string
-    RecordInteger:
-      type: object
-      unevaluatedProperties:
-        type: integer
     VantageResultStatusChange:
       type: object
       properties:

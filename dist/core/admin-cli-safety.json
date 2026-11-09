@@ -247,6 +247,26 @@
     ],
     "sensitive": false
   },
+  "getDestinationsHealth": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "destinations:read"
+    ],
+    "sensitive": false
+  },
+  "getDoctor": {
+    "confirmation_reason": null,
+    "dangerous": false,
+    "dry_run": false,
+    "method": "get",
+    "scopes": [
+      "destinations:read"
+    ],
+    "sensitive": false
+  },
   "getEnvironment": {
     "confirmation_reason": null,
     "dangerous": false,
