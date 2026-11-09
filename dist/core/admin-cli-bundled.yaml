@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.09.2
+  version: 2026.11.09.3
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -11411,7 +11411,7 @@ components:
             Where delivery stands across the event's destinations.
             pending: at least one destination has not been delivered to yet and Terra will try it again.
             failed: no destination is pending, and Terra stopped trying at least one of them.
-            canceled: no destination was sent the event, because each stopped accepting it.
+            canceled: no destination was sent the event, because Terra refused every delivery before sending it.
             delivered: every other case: each destination was delivered to, or canceled after another was delivered to.
         destination_count:
           type: integer
@@ -11648,7 +11648,7 @@ components:
             Where delivery stands across the event's destinations.
             pending: at least one destination has not been delivered to yet and Terra will try it again.
             failed: no destination is pending, and Terra stopped trying at least one of them.
-            canceled: no destination was sent the event, because each stopped accepting it.
+            canceled: no destination was sent the event, because Terra refused every delivery before sending it.
             delivered: every other case: each destination was delivered to, or canceled after another was delivered to.
         destination_count:
           type: integer
@@ -11717,8 +11717,8 @@ components:
             Where this delivery stands. A resend runs alongside any automatic retries; a delivery that reached delivered stays delivered until a later resend ends otherwise.
             pending: not delivered yet; Terra tries again at next_attempt_at.
             delivered: the destination accepted the event.
-            failed: Terra stopped trying after the last retry, or a scheduled retry is more than six hours overdue with no recorded result.
-            canceled: Terra stopped because the destination was removed or disabled, stopped accepting the event, cannot take it, or the environment lost access to it.
+            failed: Terra stopped trying after the last retry, a scheduled retry is more than six hours overdue with no recorded result, or Terra refused a retry after requests had been sent (no_status_reason says why).
+            canceled: Terra refused the delivery before sending any request; no_status_reason says why.
         last_status_code:
           type:
             - integer
@@ -11734,6 +11734,11 @@ components:
             - timed_out
             - connection_failed
             - destination_paused
+            - destination_disabled
+            - destination_deleted
+            - destination_changed
+            - environment_disabled
+            - connection_withdrawn
             - destination_unavailable
             - access_withdrawn
             - payload_unavailable
@@ -11744,8 +11749,13 @@ components:
             timed_out: the destination did not answer in time, so Terra has no status for a request it sent.
             connection_failed: no HTTP response, for example a refused connection or TLS failure.
             destination_paused: Terra held the try back while the destination was failing, without sending it.
-            destination_unavailable: the destination was removed, disabled or stopped accepting the event (status canceled).
-            access_withdrawn: the environment no longer has access to the event's product (status canceled).
+            destination_disabled: the destination was turned off, by its owner or by Terra after sustained failures, so Terra refused the try.
+            destination_deleted: the destination was deleted, so Terra refused the try.
+            destination_changed: the destination's event types or format changed and no longer take this event, so Terra refused the try.
+            environment_disabled: the environment was disabled, so Terra refused the try.
+            connection_withdrawn: the user's connection was removed, became inactive, or lost the scope or consent this data needs, so Terra refused the try.
+            destination_unavailable: Terra refused the try because the destination or source changed in a way it does not classify.
+            access_withdrawn: the environment no longer has access to the event's product, so Terra refused the try.
             payload_unavailable: Terra could not load the stored payload or build the request from it, so nothing was sent; it retries, and fails once the payload is gone or the retries run out.
             unsupported_event: the destination's type cannot take this event, for example a database destination given data it cannot store, so nothing was sent (status canceled).
         attempt_count:
