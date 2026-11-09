@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.06
+  version: 2026.11.09
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -16489,11 +16489,11 @@ components:
           x-terra-help: Provider whose data shape to simulate, e.g. GARMIN.
         backfill_days:
           type: integer
-          description: Days of past data to add when the user is created, up to 30.
+          description: Days of past data to add when the user is created, up to 90.
           minimum: 0
-          maximum: 30
+          maximum: 90
           default: 0
-          x-terra-help: 'Days of past data to add (0-30; default: 0).'
+          x-terra-help: 'Days of past data to add (0-90; default: 0).'
       required:
       - duration_hours
       anyOf:
@@ -16785,9 +16785,9 @@ components:
           description: How many days of history, ending now, every sample user must have. Days already
             present are not rewritten.
           minimum: 1
-          maximum: 60
-          default: 45
-          x-terra-help: 'Days of history to make sure exist, 1 to 60 (default: 45).'
+          maximum: 90
+          default: 90
+          x-terra-help: 'Days of history to make sure exist, 1 to 90 (default: 90).'
     schemas-Problem:
       type: object
       description: 'An error response, following RFC 9457 (Problem Details for HTTP APIs, which obsoletes
