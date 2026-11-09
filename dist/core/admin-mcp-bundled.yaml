@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.09.3
+  version: 2026.11.09.4
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved
     on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json
     with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product
@@ -13034,8 +13034,10 @@ components:
             failed by an overdue retry.
         attempts:
           type: array
-          description: The newest 1,000 requests sent to the destination, newest first; attempt_count
-            is the total. A try held back by the safety valve sent nothing and is not listed.
+          description: The newest 1,000 requests sent to the destination, plus each try Terra refused
+            to send (not_sent_reason set), newest first. attempt_count counts only the requests sent,
+            so a refused try is listed but not counted. A try held back by the safety valve sent nothing
+            and is not listed.
           items:
             $ref: '#/components/schemas/EventAttempt'
       required:
@@ -13051,22 +13053,24 @@ components:
       - attempts
     EventAttempt:
       type: object
-      description: One request sent to a destination.
+      description: 'One try at a destination: a request sent, or a try Terra refused to send.'
       properties:
         attempted_at:
           type: string
           format: date-time
-          description: When the request was sent.
+          description: When the request was sent, or when Terra refused the try.
         url:
           type:
           - string
           - 'null'
           description: The URL the request was sent to. null for a destination without one.
         status_code:
-          type: integer
+          type:
+          - integer
+          - 'null'
           description: The HTTP status recorded for the request. A timeout records 504 and a connection
             failure 503. A destination that is not HTTP records 200 for a successful write and 500 for
-            a failed one.
+            a failed one. null when Terra refused the try, so no request was sent.
           minimum: -2147483648
           maximum: 2147483647
         duration_ms:
@@ -13081,12 +13085,29 @@ components:
           - 'null'
           description: The resend this request belongs to, as the resend returned it. null for the event's
             own delivery and its automatic retries.
+        not_sent_reason:
+          type:
+          - string
+          - 'null'
+          enum:
+          - destination_disabled
+          - destination_deleted
+          - destination_changed
+          - environment_disabled
+          - connection_withdrawn
+          - destination_unavailable
+          - access_withdrawn
+          - unsupported_event
+          - null
+          description: Why Terra refused this try and sent nothing; null for a request that was sent.
+            Each reason has the meaning it has on the delivery's no_status_reason.
       required:
       - attempted_at
       - url
       - status_code
       - duration_ms
       - resend_id
+      - not_sent_reason
     InvoiceSummary:
       type: object
       properties:
