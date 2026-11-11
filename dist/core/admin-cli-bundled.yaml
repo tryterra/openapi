@@ -1,7 +1,10 @@
 openapi: 3.2.0
 info:
   title: Terra Admin API
-  version: 2026.11.11.1
+  version: 2026.11.11.2
+  license:
+    name: Apache-2.0
+    url: https://github.com/tryterra/openapi/blob/master/LICENSE
   description: |-
     Configure and inspect your Terra account, for people and agents, with an admin token minted through an RFC 8628 device flow approved on the dashboard.
 
@@ -317,6 +320,8 @@ paths:
                     summary: Auditing, onboarding a teammate, or a demo.
                     scopes:
                       - account:read
+        '429':
+          $ref: '#/components/responses/RateLimited'
   /docs/ask:
     post:
       operationId: askDocs
@@ -1095,6 +1100,20 @@ paths:
                     status: active
                     cancel_at_period_end: false
                     collection_method: charge_automatically
+                    cancel_at: null
+                    pause_collection: null
+                    items:
+                      - name: Growth
+                        currency: usd
+                        billing_scheme: per_unit
+                        unit_amount: 49900
+                        quantity: 1
+                        recurring:
+                          interval: month
+                          interval_count: 1
+                          usage_type: licensed
+                        current_period_start: '2026-11-01T00:00:00Z'
+                        current_period_end: '2026-12-01T00:00:00Z'
                     scopes:
                       - api
                       - growth
@@ -3083,6 +3102,7 @@ paths:
                     config:
                       bucket: null
                       region: null
+                      role_arn: null
                       access_key_id: null
                       secret_access_key_masked: null
                     signing_secret: null
@@ -3152,6 +3172,7 @@ paths:
                 config:
                   bucket: acme-terra
                   region: eu-west-1
+                  role_arn: null
                   access_key_id: AKIAIOSFODNN7EXAMPLE
                   secret_access_key_masked: null
         '400':
@@ -3978,12 +3999,8 @@ paths:
                   - next_cursor
               example:
                 data:
-                  - score: sleep
+                  - type: sleep
                     active: true
-                    weights:
-                      duration: 40
-                      efficiency: 30
-                      timing: 30
                 has_more: false
                 next_cursor: null
         '401':
@@ -5203,6 +5220,7 @@ paths:
               example:
                 data:
                   - user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                    reference_id: null
                     description: a poor sleeper with high stress
                     persona:
                       data_types:
@@ -5214,6 +5232,7 @@ paths:
                         stress: high
                     provider: null
                     status: generating
+                    sample: false
                     created_at: '2026-07-02T09:00:00Z'
                     latest_run:
                       run_id: 3c9e1f2a-7b4d-4e8f-a1c2-5d6e7f8a9b0c
@@ -5288,6 +5307,7 @@ paths:
                 $ref: '#/components/schemas/SyntheticUser'
               example:
                 user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                reference_id: null
                 description: a poor sleeper with high stress
                 persona:
                   data_types:
@@ -5299,6 +5319,7 @@ paths:
                     stress: high
                 provider: null
                 status: generating
+                sample: false
                 created_at: '2026-07-02T09:00:00Z'
                 latest_run:
                   run_id: 3c9e1f2a-7b4d-4e8f-a1c2-5d6e7f8a9b0c
@@ -5412,6 +5433,7 @@ paths:
                 $ref: '#/components/schemas/SyntheticUser'
               example:
                 user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                reference_id: null
                 description: a poor sleeper with high stress
                 persona:
                   data_types:
@@ -5423,6 +5445,7 @@ paths:
                     stress: high
                 provider: null
                 status: generating
+                sample: false
                 created_at: '2026-07-02T09:00:00Z'
                 latest_run:
                   run_id: 3c9e1f2a-7b4d-4e8f-a1c2-5d6e7f8a9b0c
@@ -5483,6 +5506,7 @@ paths:
                   - $ref: '#/components/schemas/DryRunResult'
               example:
                 user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                reference_id: null
                 description: a poor sleeper with high stress
                 persona:
                   data_types:
@@ -5494,6 +5518,7 @@ paths:
                     stress: high
                 provider: null
                 status: generating
+                sample: false
                 created_at: '2026-07-02T09:00:00Z'
                 latest_run:
                   run_id: 3c9e1f2a-7b4d-4e8f-a1c2-5d6e7f8a9b0c
@@ -5551,6 +5576,7 @@ paths:
                   - $ref: '#/components/schemas/DryRunResult'
               example:
                 user_id: 8b7f2c1e-4a5d-4f6e-9c3b-2d1a0e9f8b7a
+                reference_id: null
                 description: a poor sleeper with high stress
                 persona:
                   data_types:
@@ -5562,6 +5588,7 @@ paths:
                     stress: high
                 provider: null
                 status: stopped
+                sample: false
                 created_at: '2026-07-02T09:00:00Z'
                 latest_run:
                   run_id: 3c9e1f2a-7b4d-4e8f-a1c2-5d6e7f8a9b0c
@@ -5868,10 +5895,14 @@ paths:
                         url: https://api.acme.com/terra/webhook
                         status_code: 500
                         duration_ms: 3011
+                        resend_id: null
+                        not_sent_reason: null
                       - attempted_at: '2026-07-02T18:04:12Z'
                         url: https://api.acme.com/terra/webhook
                         status_code: 500
                         duration_ms: 2987
+                        resend_id: null
+                        not_sent_reason: null
                   - destination_id: '1937255512398764033'
                     destination_type: s3
                     destination_url: null
@@ -5886,6 +5917,8 @@ paths:
                         url: null
                         status_code: 200
                         duration_ms: null
+                        resend_id: null
+                        not_sent_reason: null
         '400':
           $ref: '#/components/responses/ValidationError'
         '401':

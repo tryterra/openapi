@@ -5,7 +5,7 @@ info:
 
     **Lab reports versioning.** The report endpoints (`/reports`, and the deprecated `/lab-reports`) are versioned by date. Send `X-Terra-Version: <date>` to choose the version a request is served in: the newest version on or before that date. Without the header a request gets the environment's pinned version. An environment without a pin is pinned to the latest version on its first request; change the pin through the admin API (`PUT /api/v3/admin/environments/{dev_id}/lab-reports/api-version`). Every authenticated response carries `X-Terra-Version` stating the version it was served in, and every `lab_report` webhook delivery carries the environment's version. A malformed or future date returns 400 with code `invalid_api_version`. Versions are `2026-10-21` (latest: the report list is paginated) and `2026-03-24` (the list returns up to 500 reports in `sessions`). This document describes the latest version.
   title: Terra API
-  version: 2026.11.11.1
+  version: 2026.11.11.2
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -23,42 +23,35 @@ tags:
   - name: Authentication
     summary: Authentication
     description: Connect a user's wearable or app through a link or the Terra Widget, issue mobile SDK tokens, and disconnect a user.
+    x-displayName: Authentication
   - name: User
     summary: User
     description: Look up connected users by user ID or your own reference ID.
+    x-displayName: User
   - name: Integrations
     summary: Integrations
     description: The wearables and apps you can connect, and what each one supports.
-  - name: Activity
-    summary: Activity
-    description: A user's activity data.
-  - name: Athlete
-    summary: Athlete
-    description: A user's athlete profile.
-  - name: Body
-    summary: Body
-    description: A user's body data.
-  - name: Daily
-    summary: Daily
-    description: A user's daily summaries.
-  - name: Menstruation
-    summary: Menstruation
-    description: A user's menstruation data.
-  - name: Nutrition
-    summary: Nutrition
-    description: A user's nutrition data.
-  - name: Sleep
-    summary: Sleep
-    description: A user's sleep data.
-  - name: Workouts
+    x-displayName: Integrations
+  - name: HealthData
+    summary: Health data
+    description: Read a user's activity, athlete profile, body, daily, menstruation, nutrition and sleep data over a date range.
+    x-displayName: Health data
+  - name: PlannedWorkouts
     summary: Planned Workouts
     description: Workout templates, and the planned workouts that put them on a user's calendar.
+    x-displayName: Planned Workouts
+  - name: Routes
+    summary: Routes
+    description: GPS routes, and pushing them to users' devices for on-device navigation.
+    x-displayName: Routes
   - name: LabReports
     summary: Lab Reports
     description: Upload lab reports and read back their standardized results.
+    x-displayName: Lab Reports
   - name: Webhooks
     summary: Webhooks
     description: The events Terra sends to your destinations.
+    x-displayName: Webhooks
 paths:
   /auth/authenticateUser:
     post:
@@ -347,7 +340,7 @@ paths:
         - A range longer than one month is delivered in chunks, announced by `large_request_processing` and `large_request_sending` events.
         - Returns `404` if the user's provider does not offer this data type, and `400` if your environment does not collect it.
       tags:
-        - Activity
+        - HealthData
       operationId: Activity_Get
       parameters:
         - name: user_id
@@ -405,6 +398,8 @@ paths:
                         type:
                           - string
                           - 'null'
+                    required:
+                      - data
                   - $ref: '#/components/schemas/DataSentToWebhook'
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -424,7 +419,7 @@ paths:
 
         - Returns `404` if the user's provider does not offer a profile.
       tags:
-        - Athlete
+        - HealthData
       operationId: Athlete_Get
       parameters:
         - name: user_id
@@ -467,7 +462,7 @@ paths:
         - A range longer than one month is delivered in chunks, announced by `large_request_processing` and `large_request_sending` events.
         - Returns `404` if the user's provider does not offer this data type, and `400` if your environment does not collect it.
       tags:
-        - Body
+        - HealthData
       operationId: Body_Get
       parameters:
         - name: user_id
@@ -525,6 +520,8 @@ paths:
                         type:
                           - string
                           - 'null'
+                    required:
+                      - data
                   - $ref: '#/components/schemas/DataSentToWebhook'
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -545,7 +542,7 @@ paths:
         - A range longer than one month is delivered in chunks, announced by `large_request_processing` and `large_request_sending` events.
         - Returns `404` if the user's provider does not offer this data type, and `400` if your environment does not collect it.
       tags:
-        - Daily
+        - HealthData
       operationId: Daily_Get
       parameters:
         - name: user_id
@@ -603,6 +600,8 @@ paths:
                         type:
                           - string
                           - 'null'
+                    required:
+                      - data
                   - $ref: '#/components/schemas/DataSentToWebhook'
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -623,7 +622,7 @@ paths:
         - A range longer than one month is delivered in chunks, announced by `large_request_processing` and `large_request_sending` events.
         - Returns `404` if the user's provider does not offer this data type, and `400` if your environment does not collect it.
       tags:
-        - Menstruation
+        - HealthData
       operationId: Menstruation_Get
       parameters:
         - name: user_id
@@ -681,6 +680,8 @@ paths:
                         type:
                           - string
                           - 'null'
+                    required:
+                      - data
                   - $ref: '#/components/schemas/DataSentToWebhook'
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -701,7 +702,7 @@ paths:
         - A range longer than one month is delivered in chunks, announced by `large_request_processing` and `large_request_sending` events.
         - Returns `404` if the user's provider does not offer this data type, and `400` if your environment does not collect it.
       tags:
-        - Nutrition
+        - HealthData
       operationId: Nutrition_Get
       parameters:
         - name: user_id
@@ -759,6 +760,8 @@ paths:
                         type:
                           - string
                           - 'null'
+                    required:
+                      - data
                   - $ref: '#/components/schemas/DataSentToWebhook'
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -779,7 +782,7 @@ paths:
         - A range longer than one month is delivered in chunks, announced by `large_request_processing` and `large_request_sending` events.
         - Returns `404` if the user's provider does not offer this data type, and `400` if your environment does not collect it.
       tags:
-        - Sleep
+        - HealthData
       operationId: Sleep_Get
       parameters:
         - name: user_id
@@ -837,6 +840,8 @@ paths:
                         type:
                           - string
                           - 'null'
+                    required:
+                      - data
                   - $ref: '#/components/schemas/DataSentToWebhook'
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -851,7 +856,7 @@ paths:
   /workouts:
     post:
       tags:
-        - Workouts
+        - PlannedWorkouts
       summary: Create a workout template
       description: |-
         Stores a reusable workout template and returns its `workout_id`.
@@ -889,7 +894,7 @@ paths:
           $ref: '#/components/responses/AuthorizationUnavailable'
     get:
       tags:
-        - Workouts
+        - PlannedWorkouts
       summary: List workout templates
       description: Returns every workout template stored for your developer account.
       operationId: Workouts_ListWorkouts
@@ -911,7 +916,7 @@ paths:
   /workouts/{workout_id}:
     get:
       tags:
-        - Workouts
+        - PlannedWorkouts
       summary: Get a workout template
       description: Returns one stored workout template.
       operationId: Workouts_GetWorkout
@@ -940,7 +945,7 @@ paths:
           $ref: '#/components/responses/AuthorizationUnavailable'
     put:
       tags:
-        - Workouts
+        - PlannedWorkouts
       summary: Update a workout template
       description: |-
         Replaces the template and re-sends it to every upcoming planned workout made from it, each under its existing provider ID.
@@ -996,7 +1001,7 @@ paths:
           $ref: '#/components/responses/AuthorizationUnavailable'
     delete:
       tags:
-        - Workouts
+        - PlannedWorkouts
       summary: Delete a workout template
       description: Deletes the template and every planned workout created from it, removing each from its connected provider.
       operationId: Workouts_DeleteWorkout
@@ -1036,7 +1041,7 @@ paths:
   /workouts/{workout_id}/plan:
     post:
       tags:
-        - Workouts
+        - PlannedWorkouts
       summary: Plan a workout onto a user's calendar
       description: |-
         Schedules the template for a user on `planned_date` and pushes it to the user's connected provider, or queues it for delivery through the SDK.
@@ -1135,7 +1140,7 @@ paths:
   /plannedWorkouts:
     get:
       tags:
-        - Workouts
+        - PlannedWorkouts
       summary: List planned workouts
       description: |-
         Returns the user's planned workouts, including those created on the provider side (`is_external` true) where the provider exposes them.
@@ -1207,7 +1212,7 @@ paths:
   /plannedWorkouts/{planned_workout_id}:
     get:
       tags:
-        - Workouts
+        - PlannedWorkouts
       summary: Get a planned workout
       description: |-
         Returns a planned workout created through Terra.
@@ -1245,7 +1250,7 @@ paths:
           $ref: '#/components/responses/AuthorizationUnavailable'
     patch:
       tags:
-        - Workouts
+        - PlannedWorkouts
       summary: Reschedule a planned workout
       description: |-
         Moves a planned workout to a new `planned_date` and returns it.
@@ -1303,7 +1308,7 @@ paths:
           $ref: '#/components/responses/AuthorizationUnavailable'
     delete:
       tags:
-        - Workouts
+        - PlannedWorkouts
       summary: Delete a planned workout
       description: Deletes a planned workout from the user's calendar and removes it from the connected provider.
       operationId: Workouts_DeletePlannedWorkout
@@ -1328,6 +1333,295 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+  /routes:
+    post:
+      tags:
+        - Routes
+      summary: Create a route
+      description: |-
+        Stores a reusable GPS route and returns its `route_id`.
+
+        - The route is not sent to any device until you push it to a user with `POST /routes/{route_id}/push`.
+        - When every waypoint has `elevation_meters`, elevation gain and loss are computed from them unless you set them.
+      operationId: Routes_CreateRoute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteCreateRequest'
+            example:
+              name: Morning Run Loop
+              sport: running
+              waypoints:
+                - latitude: 51.5074
+                  longitude: -0.1278
+                  elevation_meters: 11
+                - latitude: 51.515
+                  longitude: -0.12
+                  elevation_meters: 24
+                  course_point:
+                    type: summit
+                    name: Hill top
+      responses:
+        '200':
+          description: Route created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - route_id
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                  route_id:
+                    type: string
+                    example: '295581149349019648'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+    get:
+      tags:
+        - Routes
+      summary: List routes
+      description: |-
+        Returns every route created with your credentials, as a JSON array.
+
+        - Apart from waypoint coordinates, fields whose value is zero or empty are left out of each route.
+      operationId: Routes_ListRoutes
+      responses:
+        '200':
+          description: Your routes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Route'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+  /routes/{route_id}:
+    put:
+      tags:
+        - Routes
+      summary: Update a route
+      description: |-
+        Changes the fields you send, keeps the rest, and re-sends the route to every user it was pushed to, each under its existing provider ID.
+
+        - Sending `waypoints` replaces them all, and recomputes elevation gain and loss when every new waypoint has `elevation_meters`.
+        - An empty `description` clears it.
+        - Each re-send to a device is billed like a push.
+        - The response lists each pushed copy's outcome: `skipped` ones cannot be re-sent (for example, the user disconnected); repeat the request to re-send `failed` ones.
+      operationId: Routes_UpdateRoute
+      parameters:
+        - $ref: '#/components/parameters/RouteId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteUpdateRequest'
+            example:
+              name: Morning Run Loop (extended)
+      responses:
+        '200':
+          description: Route saved and re-sent to every pushed copy that could be reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteCopiesResponse'
+        '207':
+          description: Route saved, but some re-sends failed. Repeat the request to re-send them.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteCopiesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/RouteBusy'
+        '422':
+          description: The route has been pushed to more users than one update can re-send to (50).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+    delete:
+      tags:
+        - Routes
+      summary: Delete a route
+      description: |-
+        Removes every pushed copy of the route from users' devices, then deletes the route.
+
+        - If any copy could not be removed, the route is kept and the response lists each copy's outcome; repeat the request to finish deleting it.
+      operationId: Routes_DeleteRoute
+      parameters:
+        - $ref: '#/components/parameters/RouteId'
+      responses:
+        '204':
+          description: Route and every pushed copy deleted
+        '207':
+          description: Some pushed copies could not be removed, so the route was kept. Repeat the request to finish deleting it.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RouteCopiesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/RouteBusy'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+  /routes/{route_id}/push:
+    post:
+      tags:
+        - Routes
+      summary: Push a route to a user's device
+      description: |-
+        Sends the route to the user's connected provider, where it appears on their device after its next sync.
+
+        - Pushing a route the user already has re-sends that copy and returns `200`; a first push creates a pushed route and returns `201`.
+        - Each push is billed like pushing a planned workout.
+        - Returns `404` when the user's provider does not support routes.
+      operationId: Routes_PushRoute
+      parameters:
+        - $ref: '#/components/parameters/RouteId'
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: The Terra user ID of the connection to push the route to.
+      responses:
+        '200':
+          description: The user's existing copy was re-sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutePushResponse'
+        '201':
+          description: The route was pushed to the user for the first time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoutePushResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/RouteBusy'
+        '424':
+          description: The provider rejected the route; retry later.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+  /pushedRoutes:
+    get:
+      tags:
+        - Routes
+      summary: List a user's pushed routes
+      description: Returns every route pushed to the user, as a JSON array.
+      operationId: Routes_ListPushedRoutes
+      parameters:
+        - $ref: '#/components/parameters/PushedRouteUserId'
+      responses:
+        '200':
+          description: The user's pushed routes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PushedRoute'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+  /pushedRoutes/{pushed_route_id}:
+    get:
+      tags:
+        - Routes
+      summary: Get a pushed route
+      operationId: Routes_GetPushedRoute
+      description: Returns one route pushed to the user.
+      parameters:
+        - $ref: '#/components/parameters/PushedRouteId'
+        - $ref: '#/components/parameters/PushedRouteUserId'
+      responses:
+        '200':
+          description: The pushed route
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PushedRoute'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+    delete:
+      tags:
+        - Routes
+      summary: Delete a pushed route
+      operationId: Routes_DeletePushedRoute
+      description: |-
+        Removes the route from the user's device, then deletes the pushed route.
+
+        - The pushed route is deleted even if the provider could not remove it from the device; the route itself is kept.
+      parameters:
+        - $ref: '#/components/parameters/PushedRouteId'
+        - $ref: '#/components/parameters/PushedRouteUserId'
+      responses:
+        '204':
+          description: Pushed route deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/RouteBusy'
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
   /userInfo:
@@ -1966,357 +2260,6 @@ paths:
           $ref: '#/components/responses/ReportNotReprocessable'
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
-  /lab-reports:
-    post:
-      deprecated: true
-      summary: Upload a report
-      description: |-
-        Uploads one report for processing and returns its `upload_id`.
-
-        - Deprecated: use `POST /reports` instead.
-        - Send one `file` part, or one per page in page order; all of an upload's files are read as one report and produce one session, so upload separate reports separately.
-        - A file's type is read from its contents, not its name or declared type.
-        - Lab reports and DXA body-composition or bone-density scans both go here; Terra detects which, and the session and webhook carry it as `report_type`.
-        - Find the `session_id` in the webhook events or with `GET /lab-reports?upload_id=...`.
-      tags:
-        - LabReports
-      operationId: LabReports_Upload
-      parameters:
-        - $ref: '#/components/parameters/LabReportsApiVersion'
-        - name: reference_id
-          in: query
-          required: false
-          description: Your external identifier for this report or patient.
-          schema:
-            type: string
-          example: patient_456
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required:
-                - file
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: 'A file of the report: a PDF or a PNG, JPEG, GIF, WebP or HEIC/HEIF image. Repeat the `file` part, up to 20 times, to send a report''s pages as separate files, in the order of the pages. At most 20 MB per file and 50 MB per upload, of which at most 22.5 MB PDF. Files are stored as uploaded, so a HEIC photo keeps its EXIF metadata, location included; strip it before uploading if that matters.'
-      responses:
-        '202':
-          description: Upload accepted for processing.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LabReportUploadResponse'
-        '400':
-          $ref: '#/components/responses/UploadInvalid'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '413':
-          $ref: '#/components/responses/PayloadTooLarge'
-        '503':
-          $ref: '#/components/responses/AuthorizationUnavailable'
-    get:
-      deprecated: true
-      summary: List report sessions
-      description: |-
-        Lists your account's report sessions, lab reports and scans alike, filtered by reference, upload, report type or date.
-
-        - Deprecated: use `GET /reports` instead.
-        - Each session's `report_type` tells a lab report from a scan.
-      tags:
-        - LabReports
-      operationId: LabReports_List
-      parameters:
-        - $ref: '#/components/parameters/LabReportsApiVersion'
-        - name: limit
-          in: query
-          required: false
-          description: Sessions per page. Defaults to 50; a larger value than 200 is served as 200. From API version 2026-10-21.
-          schema:
-            type: integer
-            minimum: 1
-            default: 50
-        - name: cursor
-          in: query
-          required: false
-          description: The previous page's `next_cursor`. Send it with the same filters it was issued for; with different filters it is a 400 with code `validation_failed`. From API version 2026-10-21.
-          schema:
-            type: string
-        - name: reference_id
-          in: query
-          required: false
-          description: Your external reference ID, as sent on upload; returns only sessions uploaded with it.
-          schema:
-            type: string
-        - name: report_type
-          in: query
-          required: false
-          description: 'The kind of session to return: `lab` or `dexa`. Omit for both.'
-          schema:
-            type: string
-            enum:
-              - lab
-              - dexa
-          example: dexa
-        - name: upload_id
-          in: query
-          required: false
-          description: An `upload_id` from `POST /lab-reports`; returns every session from that upload.
-          schema:
-            type: string
-        - name: report_date_from
-          in: query
-          required: false
-          description: Earliest report date to include, inclusive (`YYYY-MM-DD`).
-          schema:
-            type: string
-            format: date
-        - name: report_date_to
-          in: query
-          required: false
-          description: Latest report date to include, inclusive (`YYYY-MM-DD`).
-          schema:
-            type: string
-            format: date
-        - name: uploaded_at_from
-          in: query
-          required: false
-          description: Earliest upload date to include, inclusive (`YYYY-MM-DD`).
-          schema:
-            type: string
-            format: date
-        - name: uploaded_at_to
-          in: query
-          required: false
-          description: Latest upload date to include, inclusive (`YYYY-MM-DD`).
-          schema:
-            type: string
-            format: date
-      responses:
-        '200':
-          description: 'One page of sessions, newest first (`LabReportListPage`). An environment served API version 2026-03-24 gets `LabReportListResponse` instead: up to 500 sessions in `sessions`, with `limit` and `cursor` ignored.'
-          headers:
-            X-Terra-Version:
-              $ref: '#/components/headers/LabReportsApiVersion'
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/LabReportListPage'
-                  - $ref: '#/components/schemas/LabReportListResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '503':
-          description: Current product authorization or the environment's API version pin is unavailable (code `authorization_unavailable`), or paging is briefly unavailable while a deploy rolls out (code `service_unavailable`). Retry.
-          content:
-            application/problem+json:
-              schema:
-                $ref: '#/components/schemas/Problem'
-  /lab-reports/{session_id}:
-    get:
-      deprecated: true
-      summary: Retrieve a lab report session
-      description: |-
-        Returns a report session with its metadata, results, reference ranges and status history.
-
-        - Deprecated: use `GET /reports/{session_id}` instead.
-        - Presigned file URLs and per-destination delivery state are not included: read them with `GET /lab-reports/{session_id}/files` and `GET /lab-reports/{session_id}/deliveries`.
-      tags:
-        - LabReports
-      operationId: LabReports_Get
-      parameters:
-        - $ref: '#/components/parameters/LabReportsApiVersion'
-        - name: session_id
-          in: path
-          required: true
-          description: The session's snowflake ID.
-          schema:
-            type: string
-          example: '297405620317847552'
-      responses:
-        '200':
-          description: The lab report session.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LabReportSession'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '503':
-          $ref: '#/components/responses/AuthorizationUnavailable'
-    delete:
-      deprecated: true
-      summary: Delete a lab report session
-      description: |-
-        Deletes a report session.
-
-        - Deprecated: use `DELETE /reports/{session_id}` instead.
-        - It is removed from the API immediately: every later read of it returns 404.
-        - Its files, results and Terra's copies of them are erased from active systems within 30 days (target 24 hours), and backups expire within 10 days.
-        - Works without Lab Reports access.
-      tags:
-        - LabReports
-      operationId: LabReports_Delete
-      parameters:
-        - $ref: '#/components/parameters/LabReportsApiVersion'
-        - name: session_id
-          in: path
-          required: true
-          description: The session's snowflake ID.
-          schema:
-            type: string
-          example: '297405620317847552'
-      responses:
-        '204':
-          description: The session was deleted.
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '503':
-          $ref: '#/components/responses/AuthorizationUnavailable'
-  /lab-reports/{session_id}/deliveries:
-    get:
-      deprecated: true
-      summary: List delivery outcomes
-      description: |-
-        Returns a report's delivery state for each opted-in destination.
-
-        - Deprecated: use `GET /reports/{session_id}/deliveries` instead.
-        - Each destination is tracked independently, so one failure never hides delivery to the others; that is why a session can be `partially_sent`.
-      tags:
-        - LabReports
-      operationId: LabReports_ListDeliveries
-      parameters:
-        - $ref: '#/components/parameters/LabReportsApiVersion'
-        - name: session_id
-          in: path
-          required: true
-          description: The session's snowflake ID.
-          schema:
-            type: string
-          example: '297405620317847552'
-      responses:
-        '200':
-          description: Per-destination delivery outcomes.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LabReportDeliveriesResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '503':
-          $ref: '#/components/responses/AuthorizationUnavailable'
-  /lab-reports/{session_id}/files:
-    get:
-      deprecated: true
-      summary: List input files
-      description: |-
-        Returns a report's uploaded input files and thumbnail, each with a freshly minted presigned download URL.
-
-        - Deprecated: use `GET /reports/{session_id}/files` instead.
-        - The URLs expire; call again to mint new ones.
-      tags:
-        - LabReports
-      operationId: LabReports_ListFiles
-      parameters:
-        - $ref: '#/components/parameters/LabReportsApiVersion'
-        - name: session_id
-          in: path
-          required: true
-          description: The session's snowflake ID.
-          schema:
-            type: string
-          example: '297405620317847552'
-      responses:
-        '200':
-          description: Input files and thumbnail with presigned URLs.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LabReportFilesResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '503':
-          $ref: '#/components/responses/AuthorizationUnavailable'
-  /lab-reports/{session_id}/reprocess:
-    post:
-      deprecated: true
-      summary: Reprocess a session
-      description: |-
-        Re-runs extraction and standardisation on a session from its stored input files, replacing its results and delivering it again to the environment's current destinations on completion.
-
-        - Deprecated: use `POST /reports/{session_id}/reprocess` instead.
-        - Only a delivered (`sent`, `partially_sent`, `delivery_failed`) or failed session can be reprocessed.
-        - Re-running a failed report helps only when its `error.retriable` is true; otherwise change the input first.
-        - A report is metered once; reprocessing an already metered session does not meter it again.
-        - A session can be reprocessed at most 3 times.
-      tags:
-        - LabReports
-      operationId: LabReports_Reprocess
-      parameters:
-        - $ref: '#/components/parameters/LabReportsApiVersion'
-        - name: session_id
-          in: path
-          required: true
-          description: The session's snowflake ID.
-          schema:
-            type: string
-          example: '297405620317847552'
-        - name: legacy_format
-          in: query
-          required: false
-          description: Whether to deliver the re-run in the legacy Lab Reports webhook shape. Only needed for a session uploaded through the legacy Lab Reports API before Terra recorded each upload's shape with its session; otherwise the recorded shape is used.
-          schema:
-            type: boolean
-      responses:
-        '202':
-          description: Reprocessing accepted.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LabReportReprocessResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/ReportNotReprocessable'
-        '503':
-          $ref: '#/components/responses/AuthorizationUnavailable'
 webhooks:
   auth:
     post:
@@ -2615,7 +2558,7 @@ webhooks:
           $ref: '#/components/responses/Forbidden'
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
-  s3_upload:
+  s3_payload:
     post:
       description: |-
         Fires in place of a data event's body when delivery is set to ping, with a pre-signed `url` to the data instead of the data itself.
@@ -2623,8 +2566,8 @@ webhooks:
         - On a webhook destination whose `delivery` is `ping`, every data event arrives this way; user lifecycle events, `connection_error` and the large-request events still arrive in full.
         - SQS and Kafka destinations always receive this shape.
         - Download the JSON from `url` within `expires_in` seconds and process it exactly as the equivalent data event.
-      summary: S3 upload event
-      operationId: Webhooks_S3Upload
+      summary: S3 payload event
+      operationId: Webhooks_S3Payload
       tags:
         - Webhooks
       requestBody:
@@ -2639,7 +2582,7 @@ webhooks:
               expires_in: 300
       responses:
         '200':
-          description: Successful S3 upload response
+          description: Successful S3 payload response
         '403':
           $ref: '#/components/responses/Forbidden'
         '503':
@@ -2962,6 +2905,48 @@ webhooks:
           $ref: '#/components/responses/Forbidden'
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
+  hormone:
+    post:
+      description: |-
+        Fires when new hormone test results are available for a user, such as LH, E3G, PdG, hCG and FSH readings.
+
+        - Each entry is one test event: the readings taken at its `timestamp`, with `null` for any hormone not measured. Unlike other data events, entries have no `metadata` block.
+        - Deliveries are at least once: overwrite the entry keyed on `timestamp`.
+        - Hormone is not in an environment's data types by default; add it to receive this event.
+        - Webhook, Kafka and SQS destinations receive it; other destination types do not yet.
+      summary: Hormone event
+      operationId: Webhooks_HormoneData
+      tags:
+        - Webhooks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HormoneEvent'
+            example:
+              type: hormone
+              version: '2022-03-16'
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: MIRA
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: null
+                reference_id: your-user-123
+                active: true
+              data:
+                - timestamp: '2026-07-01T08:00:00.000000+01:00'
+                  lh_mIU_per_ml: 5.2
+                  e3g_ng_per_ml: 108.5
+                  pdg_ug_per_ml: 2.4
+                  hcg_mIU_per_ml: null
+                  fsh_mIU_per_ml: 4.8
+      responses:
+        '200':
+          description: Successful hormone response
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   lab_report:
     post:
       description: |-
@@ -3044,6 +3029,9 @@ webhooks:
                           numeric: 1.024
                           units: g/cm2
                           ucum_code: g/cm2
+                        interpretation:
+                          flag: null
+                          source: none
                       - source:
                           name: T-score
                           region_name: L1-L4
@@ -3075,6 +3063,9 @@ webhooks:
                           numeric: 2431
                           units: g
                           ucum_code: g
+                        interpretation:
+                          flag: null
+                          source: none
                       - source:
                           name: Weight
                           value: '78.4'
@@ -3087,6 +3078,9 @@ webhooks:
                           numeric: 78.4
                           units: kg
                           ucum_code: kg
+                        interpretation:
+                          flag: null
+                          source: none
                     panels: []
               failed:
                 summary: Report terminally failed
@@ -3132,6 +3126,29 @@ components:
       schema:
         type: string
         format: date
+    RouteId:
+      name: route_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: The route's ID, as returned by `POST /routes`.
+    PushedRouteId:
+      name: pushed_route_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+      description: The pushed route's ID, as returned by `POST /routes/{route_id}/push`.
+    PushedRouteUserId:
+      name: user_id
+      in: query
+      required: true
+      schema:
+        type: string
+      description: The Terra user ID of the connection the route was pushed to.
   headers:
     LabReportsApiVersion:
       description: The lab-reports API version this response was served in.
@@ -3163,6 +3180,12 @@ components:
             title: bad request
             instance: /activity
             detail: invalid start_date
+    RouteBusy:
+      description: Another request is changing this route; retry shortly.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
     Unauthorized:
       description: The credential is missing, invalid, expired or revoked (code `unauthorized`).
       content:
@@ -3391,6 +3414,230 @@ components:
           description: What the provider could not take from the new template, as when planning.
           items:
             $ref: '#/components/schemas/CoercionWarning'
+    RouteSport:
+      type: string
+      enum:
+        - running
+        - trail_running
+        - hiking
+        - cycling
+        - road_biking
+        - mountain_biking
+        - gravel_cycling
+        - other
+    RouteCoursePoint:
+      type: object
+      description: A point of interest marked at a waypoint, shown on devices that support course points.
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - generic
+            - summit
+            - valley
+            - water
+            - food
+            - danger
+            - left
+            - right
+            - straight
+            - first_aid
+            - sprint
+            - segment_start
+            - segment_end
+            - left_fork
+            - right_fork
+        name:
+          type: string
+    RouteWaypoint:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+        elevation_meters:
+          type: number
+          minimum: -500
+          maximum: 9000
+        course_point:
+          $ref: '#/components/schemas/RouteCoursePoint'
+    RouteCreateRequest:
+      type: object
+      required:
+        - name
+        - sport
+        - waypoints
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: The name shown on the device.
+        description:
+          type: string
+          maxLength: 2000
+          description: Used only by providers that show a route description.
+        sport:
+          $ref: '#/components/schemas/RouteSport'
+        elevation_gain_meters:
+          type: number
+          minimum: 0
+        elevation_loss_meters:
+          type: number
+          minimum: 0
+        speed_meters_per_second:
+          type: number
+          exclusiveMinimum: 0
+          description: Target average speed, used only by providers that support one.
+        waypoints:
+          type: array
+          minItems: 2
+          maxItems: 10000
+          items:
+            $ref: '#/components/schemas/RouteWaypoint'
+    RouteUpdateRequest:
+      type: object
+      description: Every field is optional; fields you leave out keep their value.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+          description: An empty string clears the description.
+        sport:
+          $ref: '#/components/schemas/RouteSport'
+        elevation_gain_meters:
+          type: number
+          minimum: 0
+        elevation_loss_meters:
+          type: number
+          minimum: 0
+        speed_meters_per_second:
+          type: number
+          exclusiveMinimum: 0
+        waypoints:
+          type: array
+          minItems: 2
+          maxItems: 10000
+          items:
+            $ref: '#/components/schemas/RouteWaypoint'
+    Route:
+      type: object
+      description: A stored route. Apart from waypoint coordinates, fields whose value is zero or empty are left out.
+      properties:
+        route_id:
+          type: string
+          example: '295581149349019648'
+        name:
+          type: string
+        description:
+          type: string
+        sport:
+          $ref: '#/components/schemas/RouteSport'
+        elevation_gain_meters:
+          type: number
+        elevation_loss_meters:
+          type: number
+        speed_meters_per_second:
+          type: number
+        waypoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/RouteWaypoint'
+    RoutePushResponse:
+      type: object
+      required:
+        - status
+        - pushed_route_id
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+        pushed_route_id:
+          type: string
+          example: '295590123345661952'
+        provider_route_id:
+          type: string
+          description: The route's ID at the provider.
+    PushedRoute:
+      type: object
+      required:
+        - pushed_route_id
+        - is_external
+        - created_at
+        - last_updated_at
+      properties:
+        pushed_route_id:
+          type: string
+        route_id:
+          type: string
+          description: The route this copy was pushed from. Absent when the copy was not pushed through Terra.
+        provider_route_id:
+          type: string
+          description: The copy's ID at the provider.
+        is_external:
+          type: boolean
+          description: True when the copy was not pushed through Terra.
+        created_at:
+          type: string
+          format: date-time
+        last_updated_at:
+          type: string
+          format: date-time
+    RouteCopiesResponse:
+      type: object
+      required:
+        - route_id
+        - pushed_routes
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+          description: Present when every reachable copy succeeded (200).
+        message:
+          type: string
+          description: Present when some copies failed (207). Repeat the request to retry them.
+        route_id:
+          type: string
+        pushed_routes:
+          type: array
+          items:
+            $ref: '#/components/schemas/RouteCopyResult'
+    RouteCopyResult:
+      type: object
+      required:
+        - pushed_route_id
+        - status
+      properties:
+        pushed_route_id:
+          type: string
+        provider_route_id:
+          type: string
+          description: The copy's ID at the provider after the request.
+        status:
+          type: string
+          enum:
+            - updated
+            - deleted
+            - failed
+            - skipped
+        error:
+          type: string
+          description: Why the copy was not updated or removed.
     PlannedWorkoutBody:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -3565,6 +3812,12 @@ components:
               example: '2024-01-19T23:00:00Z'
     DataSentToWebhook:
       type: object
+      required:
+        - reference
+        - status
+        - trace_id
+        - type
+        - user
       description: |
         Acknowledgement returned when `to_webhook` is true (the default): the requested data is fetched asynchronously and delivered to your configured destination, and this body confirms the request was accepted.
       properties:
@@ -3824,6 +4077,8 @@ components:
           description: The user's unique identifier as assigned by the data provider.
     AthleteCollection:
       type: object
+      required:
+        - athlete
       properties:
         athlete:
           description: Object containing the user's information
@@ -4181,7 +4436,7 @@ components:
       $ref: '#/components/schemas/LargeRequestProcessingEvent'
     AuthenticationFailedWebhook:
       $ref: '#/components/schemas/AuthErrorEvent'
-    S3UploadWebhook:
+    S3PayloadWebhook:
       $ref: '#/components/schemas/S3PayloadEvent'
     ActivityWebhook:
       $ref: '#/components/schemas/ActivityEvent'
@@ -12294,6 +12549,32 @@ components:
       allOf:
         - $ref: '#/components/schemas/WebhookEvent'
       description: Body data event
+    HormoneEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        type:
+          type: string
+          const: hormone
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/HormoneSample'
+          description: Array of hormone samples
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being provided
+        version:
+          type: string
+          description: API version
+      required:
+        - type
+        - data
+        - user
+        - version
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: Hormone data event
     LabReportEventResultSource:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -12453,32 +12734,6 @@ components:
       allOf:
         - $ref: '#/components/schemas/WebhookEvent'
       description: Planned workout data event
-    HormoneEvent:
-      $schema: https://json-schema.org/draft/2020-12/schema
-      type: object
-      properties:
-        type:
-          type: string
-          const: hormone
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/HormoneSample'
-          description: Array of hormone samples
-        user:
-          $ref: '#/components/schemas/TerraUser'
-          description: User whose data is being provided
-        version:
-          type: string
-          description: API version
-      required:
-        - type
-        - data
-        - user
-        - version
-      allOf:
-        - $ref: '#/components/schemas/WebhookEvent'
-      description: Hormone data event
     HealthObservationMetadata:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object

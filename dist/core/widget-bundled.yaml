@@ -2,9 +2,10 @@ openapi: 3.2.0
 info:
   title: Terra Widget API
   description: Endpoint for generating an authentication-widget session, used to redirect an end user into the Terra Authentication Widget so they can connect a data provider.
-  version: 2026.11.11
+  version: 2026.11.11.1
   license:
-    name: Proprietary
+    name: Apache-2.0
+    url: https://github.com/tryterra/openapi/blob/master/LICENSE
 servers:
   - url: https://access.tryterra.co
     description: Main API base URL
@@ -15,6 +16,7 @@ tags:
   - name: Authentication
     summary: Authentication
     description: Create a Terra Widget session, where an end user picks a wearable or app and signs in to connect it.
+    x-displayName: Authentication
 paths:
   /widget/session:
     post:

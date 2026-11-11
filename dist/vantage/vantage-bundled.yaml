@@ -1,6 +1,9 @@
 openapi: 3.2.0
 info:
   contact: {}
+  license:
+    name: Apache-2.0
+    url: https://github.com/tryterra/openapi/blob/master/LICENSE
   description: |-
     Order at-home and go-to-lab diagnostic tests, and receive their results.
 
@@ -22,34 +25,42 @@ info:
     - Terra's edge refuses credentials in the platform Problem format (`application/problem+json`, schema `Refusal`), in every version: 401 with code `unauthorized`, 403 with `scope_missing` or `audience_restricted`, and 503 with `authorization_unavailable`. Branch on `code`.
     - Vantage itself still answers in `application/json` (schema `ProblemDetail`) while the edge cannot check credentials, when your account's pinned version cannot be read, and for a scope an operation needs beyond the one its HTTP method implies, so choose the schema by `Content-Type`.
   title: Terra Vantage API
-  version: 2026.11.11
+  version: 2026.11.11.1
 servers:
   - url: https://vantage.tryterra.co
 tags:
   - name: orders
     summary: Orders
     description: Place diagnostic test orders, read them back, and simulate their lifecycle in the sandbox.
+    x-displayName: Orders
   - name: results
     summary: Results
     description: List results, fetch a result file, and record each test taker's confirmation that they received their result.
+    x-displayName: Results
   - name: products
     summary: Products
     description: The test products and variants you can order, and the catalogue selection your environment offers.
+    x-displayName: Products
   - name: activation
     summary: Kit activation
     description: The page and call that activate an at-home test kit.
+    x-displayName: Kit activation
   - name: labs
     summary: Labs
     description: Find lab draw sites near a patient for go-to-lab tests.
+    x-displayName: Labs
   - name: clients
     summary: Webhook URL
     description: The URL Vantage delivers webhook events to.
+    x-displayName: Webhook URL
   - name: analytics
     summary: Analytics
     description: An overview of your Vantage activity, and the outcome of each webhook delivery.
+    x-displayName: Analytics
   - name: webhooks
     summary: Webhooks
     description: The webhook events Vantage sends, and the calls that resend an event or send a test one.
+    x-displayName: Webhooks
 paths:
   /api/v1/orders/activate:
     get:

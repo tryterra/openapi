@@ -1,7 +1,10 @@
 openapi: 3.2.0
 info:
   title: Real Time Streaming API
-  version: 2026.11.11
+  version: 2026.11.11.1
+  license:
+    name: Apache-2.0
+    url: https://github.com/tryterra/openapi/blob/master/LICENSE
   description: |-
     Mints the tokens that open the Terra real-time streaming WebSocket. Call an operation below with your developer credentials, then open the socket and present the token in the IDENTIFY frame.
 
@@ -20,6 +23,7 @@ tags:
   - name: Authentication
     summary: Authentication
     description: Mint the tokens that open the real-time streaming socket, as a producer for one user or as a consumer for all of them, and revoke reusable producer tokens.
+    x-displayName: Authentication
 paths:
   /auth/developer:
     post:
