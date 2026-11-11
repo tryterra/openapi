@@ -1,16 +1,55 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
   contact: {}
   description: |-
-    Authenticate with your Terra API credentials — HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password (the `dev-id` + `x-api-key` header pair is also accepted). Selected product enforcement requires a current Vantage grant for orders, results and lab work. Missing grants or disabled environments return 403 with code entitlement_required or environment_disabled; unavailable current authorization returns 503 with code authorization_unavailable. Configuration, catalogue and recovery remain authenticated. Each environment uses one Vantage deployment: production environments use production Vantage, and every other environment uses the Vantage sandbox. A request from an environment of the other deployment returns 403 with code environment_mode_mismatch, on every route including configuration.
+    Order at-home and go-to-lab diagnostic tests, and receive their results.
 
-    **Versioning.** The API is versioned by date. Send `X-Terra-Version: <date>` on a request to choose the version it is served in; without the header you get your account's pinned version. An account is pinned to the latest version on its first request, and you can change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`). Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in. A date between versions is served the version before it, and a date before the first version the oldest; a malformed or future date returns 400 with code `invalid_api_version`. Supported versions are `2026-10-29` (latest), `2026-10-15`, `2026-10-01` and `2026-09-27`; the [changelog](https://docs.tryterra.co/vantage-api/changelog) lists what each one changed. This document describes the latest version.
+    **Authentication.** Use HTTP Basic with your Terra **dev-id** as the username and your **API key** as the password; the `dev-id` + `x-api-key` header pair is also accepted.
 
-    **Refusals.** Terra's edge refuses credentials in the platform Problem format (`application/problem+json`, schema `Refusal`), in every version: 401 with code `unauthorized`, 403 with `scope_missing` or `audience_restricted`, and 503 with `authorization_unavailable`. Branch on `code`. Vantage itself still answers in `application/json` (schema `ProblemDetail`) while the edge cannot check credentials, when your account's pinned version cannot be read, and for a scope an operation needs beyond the one its HTTP method implies, so choose the schema by `Content-Type`.
+    - Selected product enforcement requires a current Vantage grant for orders, results and lab work. A missing grant or a disabled environment returns 403 with code `entitlement_required` or `environment_disabled`; 503 with code `authorization_unavailable` means current authorization could not be checked. Configuration, catalogue and recovery need only authentication.
+    - Each environment uses one Vantage deployment: production environments use production Vantage, and every other environment uses the Vantage sandbox. A request from an environment of the other deployment returns 403 with code `environment_mode_mismatch`, on every route including configuration.
+
+    **Versioning.** The API is versioned by date. This document describes the latest version.
+
+    - Send `X-Terra-Version: <date>` to choose the version a request is served in; without the header you get your account's pinned version.
+    - An account is pinned to the latest version on its first request. Change the pin to any supported version in the Terra dashboard or through the admin API (`PUT /api/v3/admin/environments/{dev_id}/vantage/api-version`).
+    - Every response, and every webhook delivery, carries `X-Terra-Version` stating the version it was rendered in.
+    - A date between versions is served the version before it, and a date before the first version the oldest; a malformed or future date returns 400 with code `invalid_api_version`.
+    - Supported versions are `2026-10-29` (latest), `2026-10-15`, `2026-10-01` and `2026-09-27`; the [changelog](https://docs.tryterra.co/vantage-api/changelog) lists what each one changed.
+
+    **Refusals.**
+
+    - Terra's edge refuses credentials in the platform Problem format (`application/problem+json`, schema `Refusal`), in every version: 401 with code `unauthorized`, 403 with `scope_missing` or `audience_restricted`, and 503 with `authorization_unavailable`. Branch on `code`.
+    - Vantage itself still answers in `application/json` (schema `ProblemDetail`) while the edge cannot check credentials, when your account's pinned version cannot be read, and for a scope an operation needs beyond the one its HTTP method implies, so choose the schema by `Content-Type`.
   title: Terra Vantage API
-  version: 2026.10.30
+  version: 2026.11.11
 servers:
   - url: https://vantage.tryterra.co
+tags:
+  - name: orders
+    summary: Orders
+    description: Place diagnostic test orders, read them back, and simulate their lifecycle in the sandbox.
+  - name: results
+    summary: Results
+    description: List results, fetch a result file, and record each test taker's confirmation that they received their result.
+  - name: products
+    summary: Products
+    description: The test products and variants you can order, and the catalogue selection your environment offers.
+  - name: activation
+    summary: Kit activation
+    description: The page and call that activate an at-home test kit.
+  - name: labs
+    summary: Labs
+    description: Find lab draw sites near a patient for go-to-lab tests.
+  - name: clients
+    summary: Webhook URL
+    description: The URL Vantage delivers webhook events to.
+  - name: analytics
+    summary: Analytics
+    description: An overview of your Vantage activity, and the outcome of each webhook delivery.
+  - name: webhooks
+    summary: Webhooks
+    description: The webhook events Vantage sends, and the calls that resend an event or send a test one.
 paths:
   /api/v1/orders/activate:
     get:
@@ -19,12 +58,15 @@ paths:
       tags:
         - activation
       security: []
-      description: Returns an HTML page for end users to activate their test kit and provide test-taker information
+      description: |-
+        Returns the HTML page on which a test taker activates their at-home test kit and enters their details.
+
+        - The page submits those details to `POST /api/v1/orders/activate`.
       parameters:
         - $ref: '#/components/parameters/ApiVersion'
         - name: kit_id
           in: query
-          description: Supplier Kit ID from test kit packaging
+          description: The supplier's kit ID, printed on the test kit packaging.
           required: true
           schema:
             type: string
@@ -46,9 +88,20 @@ paths:
               $ref: '#/components/headers/ApiVersion'
             X-Request-Id:
               $ref: '#/components/headers/RequestId'
-          description: Invalid kit ID. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
+          description: Missing `kit_id`. An unsupported `X-Terra-Version` also returns 400 with code `invalid_api_version`.
           content:
-            text/html:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          headers:
+            X-Terra-Version:
+              $ref: '#/components/headers/ApiVersion'
+            X-Request-Id:
+              $ref: '#/components/headers/RequestId'
+          description: No kit has this `kit_id`.
+          content:
+            application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
         '500':
@@ -59,7 +112,7 @@ paths:
               $ref: '#/components/headers/RequestId'
           description: Internal server error
           content:
-            text/html:
+            application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
     post:
@@ -68,7 +121,11 @@ paths:
       tags:
         - activation
       security: []
-      description: Registers test-taker details with the supplier and updates order item status. This endpoint is called after the test-taker receives their kit and provides their information.
+      description: |-
+        Activates an at-home test kit: sends the test taker's details to the kit's supplier and sets the order item's results status to `results.kit_activated`.
+
+        - Call it once the test taker has received the kit and given their details; the page from `GET /api/v1/orders/activate` calls it for them.
+        - The status change sends the `order_item.results_status_change` webhook.
       requestBody:
         content:
           application/json:
@@ -151,7 +208,7 @@ paths:
       summary: Get the registered webhook URL
       tags:
         - clients
-      description: The currently registered webhook destination for this environment ("" when none).
+      description: Returns the URL Vantage delivers this environment's webhook events to, or an empty string when none is set.
       x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
@@ -231,18 +288,12 @@ paths:
       summary: Update webhook URL
       tags:
         - clients
-      description: |
-        Update or clear the webhook URL for the authenticated client. The
-        webhook URL must use HTTPS and carry no credentials if provided, or
-        can be empty to clear it.
-        Note this means webhooks will no longer be sent to your previous
-        endpoint.
+      description: |-
+        Sets or clears the URL Vantage delivers this environment's webhook events to.
 
-        Deliveries to your endpoint carry an `X-Terra-Signature` header of the
-        form `t=<timestamp>,v1=<hex-hmac>` where `t` is the send time in Unix
-        seconds and `v1` is `HMAC-SHA256(secret, t + "." + payload)` — the
-        same scheme as all Terra webhooks. Verify by recomputing the HMAC
-        from the received `t` and the raw body.
+        - The URL must use HTTPS and carry no credentials; an empty string clears it.
+        - Events are no longer sent to the previous URL.
+        - Deliveries carry an `X-Terra-Signature` header, the same scheme as all Terra webhooks: `t=<timestamp>,v1=<hex-hmac>`, where `t` is the send time in Unix seconds and `v1` is `HMAC-SHA256(secret, t + "." + payload)`. Verify by recomputing the HMAC from the received `t` and the raw body.
       requestBody:
         content:
           application/json:
@@ -350,7 +401,10 @@ paths:
       summary: List orders
       tags:
         - orders
-      description: 'Keyset-paginated index of your orders, newest first unless order says otherwise. Pass the returned next_cursor, with the same order and filters, to fetch the following page; has_more is false and next_cursor null on the last page. Filters combine: an order must match every one given, and any of a list filter''s values.'
+      description: |-
+        Lists your orders, newest first, one page at a time.
+
+        - Filters combine: an order must match every filter given, and any one of a list filter's values.
       x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
@@ -361,7 +415,7 @@ paths:
         - name: limit
           in: query
           required: false
-          description: Page size. Values above 100 are treated as 100.
+          description: Orders per page. Defaults to 25; a value above 100 is treated as 100.
           schema:
             type: integer
             minimum: 1
@@ -369,42 +423,42 @@ paths:
         - name: cursor
           in: query
           required: false
-          description: order_id from the previous page's next_cursor
+          description: The `next_cursor` from the previous page, an `order_id`. Send it with the same `order` and filters as that page.
           schema:
             type: string
             example: '333410942627700736'
         - name: since
           in: query
           required: false
-          description: Only orders created at/after this RFC3339 timestamp.
+          description: Only orders created at or after this time (RFC 3339).
           schema:
             type: string
             format: date-time
         - name: until
           in: query
           required: false
-          description: Only orders created at/before this RFC3339 timestamp.
+          description: Only orders created at or before this time (RFC 3339).
           schema:
             type: string
             format: date-time
         - name: client_order_reference_id
           in: query
           required: false
-          description: Only orders with exactly this client_order_reference_id. Use it to find an order you created when you did not keep its order_id.
+          description: Only orders with exactly this `client_order_reference_id`. Use it to find an order you created when you did not keep its `order_id`.
           schema:
             type: string
             example: ORDER-2024-001
         - name: missing
           in: query
           required: false
-          description: true = only delivered/completed orders with at least one item whose results aren't in yet (the overview's "missing results" set).
+          description: 'When true, only delivered or completed orders with at least one item whose results are not in yet: the set `GET /api/v1/overview` counts as missing results. Defaults to false.'
           schema:
             type: boolean
             default: false
         - name: status
           in: query
           required: false
-          description: Only orders in these statuses (e.g. order.processing). Repeat the parameter or join the statuses with commas; an unknown status is a 400.
+          description: Only orders whose order status is one of these, such as `order.processing`. Repeat the parameter or join the statuses with commas; an unknown status returns 400.
           schema:
             type: array
             items:
@@ -417,6 +471,7 @@ paths:
             enum:
               - AT_HOME
               - GO_TO_LAB
+          description: Only orders with this collection type.
         - name: order_id
           in: query
           required: false
@@ -530,7 +585,13 @@ paths:
       summary: Create a new order
       tags:
         - orders
-      description: Create a new blood, DNA, or device test order. Products that are disabled in your catalog cannot be ordered and are rejected with 403. Products not sold in the environment's markets (the UK or the US; testing environments choose theirs in the dashboard, and Terra sets production's) are rejected with 403 too. So are products not offered in the environment you call, with code `product_unavailable`. Payment is authorized then captured as part of order creation; if authorization fails, nothing is created and a 402 is returned.
+      description: |-
+        Places a blood, DNA or device test order and takes payment for it.
+
+        - Payment is authorised, then captured, as part of creation. If authorisation fails, nothing is created and it returns 402.
+        - A product disabled in your catalogue selection (`PUT /api/v1/products/selection`) returns 403.
+        - A product not sold in the environment's markets returns 403. Markets are the UK or the US; testing environments choose theirs in the dashboard, and Terra sets production's.
+        - A product not offered in the environment you call returns 403 with code `product_unavailable`.
       x-required-token-scope: vantage:write
       security:
         - BasicAuth: []
@@ -679,12 +740,12 @@ paths:
       summary: Get order by order ID
       tags:
         - orders
-      description: Returns complete order details including items, recipient, and status
+      description: Returns one order with its items, recipient and order status.
       parameters:
         - $ref: '#/components/parameters/ApiVersion'
         - name: orderID
           in: path
-          description: Order ID
+          description: The order's `order_id`.
           required: true
           schema:
             type: integer
@@ -787,7 +848,12 @@ paths:
       summary: Simulate an order lifecycle event (Testing environment only)
       tags:
         - orders
-      description: Drives one lifecycle event on your order exactly as a supplier update would — status history is recorded and the corresponding signed webhook is delivered to your registered destination. Only valid forward transitions are accepted. results_ready also stores a sample result so the download and acknowledge flows work end to end. The production environment refuses with 403.
+      description: |-
+        Applies one lifecycle event to your order exactly as a supplier update would: the status history records it, and the matching signed webhook is delivered to your webhook URL.
+
+        - Only valid forward transitions are accepted.
+        - `results_ready` also stores a sample result, so the download and acknowledge flows work end to end.
+        - Production environments refuse it with 403.
       x-required-token-scope: vantage:write
       security:
         - BasicAuth: []
@@ -801,6 +867,7 @@ paths:
           schema:
             type: string
             example: '333410942627700736'
+          description: The order's `order_id`.
       requestBody:
         required: true
         content:
@@ -911,7 +978,7 @@ paths:
       summary: List all product types
       tags:
         - products
-      description: Returns all available diagnostic test categories (e.g., Blood Tests, DNA Tests)
+      description: Lists the diagnostic test categories, such as blood tests and DNA tests. Pass a type's `id` to `GET /api/v1/products/{id}` for its products.
       x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
@@ -994,7 +1061,13 @@ paths:
       summary: Set catalog selection
       tags:
         - products
-      description: 'Curate which products your own catalog reads return. Full-set write: listed products become enabled, every other product disabled. With no selection saved, everything is enabled; products added to the global catalog after your last save default to enabled until you save again. Disabled products are excluded from catalog reads and cannot be ordered (403).'
+      description: |-
+        Sets which products your catalogue reads return and which you can order, returning how many are enabled.
+
+        - It replaces the whole selection: listed products become enabled, and every other product disabled.
+        - With no selection saved, every product is enabled.
+        - Products added to the catalogue after your last save are enabled until you save again.
+        - Disabled products are left out of catalogue reads, and ordering one returns 403.
       x-required-token-scope: vantage:write
       security:
         - BasicAuth: []
@@ -1090,19 +1163,23 @@ paths:
       summary: Get products by type ID
       tags:
         - products
-      description: Returns all products within a specific product type category that are sold in the environment's markets. Vantage sells in the UK and the US, each with different products; an environment lists every market until its markets are set (testing environments choose theirs in the dashboard, and Terra sets production's).
+      description: |-
+        Lists the products of one product type that are sold in the environment's markets.
+
+        - Vantage sells in the UK and the US, with different products in each.
+        - An environment lists every market until its markets are set. Testing environments choose theirs in the dashboard, and Terra sets production's.
       parameters:
         - $ref: '#/components/parameters/ApiVersion'
         - name: show_all
           in: query
           required: false
-          description: Return the full catalog with per-product enabled flags (curation view). Products outside the environment's markets are still left out.
+          description: When true, returns the full catalogue with each product's `enabled` flag, for curating your selection. Products outside the environment's markets are still left out. Defaults to false.
           schema:
             type: boolean
             default: false
         - name: id
           in: path
-          description: Product Type ID
+          description: The product type's `id`, from `GET /api/v1/products`.
           required: true
           schema:
             type: integer
@@ -1229,19 +1306,19 @@ paths:
       summary: Get product variants by product ID
       tags:
         - products
-      description: Returns all available variants/options for a specific diagnostic test product (e.g., different panel sizes, customizations)
+      description: Lists the variants of one product, the ways it can be ordered, such as different panel sizes or customisations.
       parameters:
         - $ref: '#/components/parameters/ApiVersion'
         - name: show_all
           in: query
           required: false
-          description: Include variants of catalog-disabled products (curation view). Disabled products remain non-orderable regardless. A product outside the environment's markets is still a 404.
+          description: When true, also returns variants of products disabled in your catalogue selection, for curation; those products still cannot be ordered. A product outside the environment's markets still returns 404. Defaults to false.
           schema:
             type: boolean
             default: false
         - name: id
           in: path
-          description: Product ID
+          description: The product's `id`, from `GET /api/v1/products/{id}`.
           required: true
           schema:
             type: integer
@@ -1368,7 +1445,10 @@ paths:
       summary: List results
       tags:
         - results
-      description: 'Keyset-paginated index of order items with result activity, newest first unless order says otherwise. Pass the returned next_cursor, with the same order and filters, to fetch the following page. Filters combine: a result must match every one given, and any of a list filter''s values.'
+      description: |-
+        Lists order items with result activity, newest first, one page at a time.
+
+        - Filters combine: a result must match every filter given, and any one of a list filter's values.
       x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
@@ -1379,7 +1459,7 @@ paths:
         - name: limit
           in: query
           required: false
-          description: Page size. Values above 100 are treated as 100.
+          description: Results per page. Defaults to 25; a value above 100 is treated as 100.
           schema:
             type: integer
             minimum: 1
@@ -1387,14 +1467,14 @@ paths:
         - name: cursor
           in: query
           required: false
-          description: order_item_id from the previous page's next_cursor
+          description: The `next_cursor` from the previous page, an `order_item_id`. Send it with the same `order` and filters as that page.
           schema:
             type: string
             example: '333410942627700737'
         - name: status
           in: query
           required: false
-          description: Only results in these results statuses (e.g. results.results_ready). Repeat the parameter or join the statuses with commas; an unknown status is a 400. Acknowledgement is is_acknowledged, not a status.
+          description: 'Only results whose results status is one of these, such as `results.results_ready`. Repeat the parameter or join the statuses with commas; an unknown status returns 400. Acknowledgement is not a status: filter on it with `is_acknowledged`.'
           schema:
             type: array
             items:
@@ -1411,7 +1491,7 @@ paths:
         - name: client_order_reference_id
           in: query
           required: false
-          description: Only results of the order with exactly this client_order_reference_id.
+          description: Only results of the order with exactly this `client_order_reference_id`.
           schema:
             type: string
             example: ORDER-2024-001
@@ -1435,14 +1515,14 @@ paths:
         - name: since
           in: query
           required: false
-          description: Only items whose updated_at is at/after this RFC3339 timestamp.
+          description: Only items whose `updated_at` is at or after this time (RFC 3339).
           schema:
             type: string
             format: date-time
         - name: until
           in: query
           required: false
-          description: Only items whose updated_at is at/before this RFC3339 timestamp.
+          description: Only items whose `updated_at` is at or before this time (RFC 3339).
           schema:
             type: string
             format: date-time
@@ -1528,19 +1608,23 @@ paths:
       summary: Get presigned URL for test results
       tags:
         - results
-      description: 'Returns a time-limited presigned URL to download normalized test results (JSON): a FHIR R4 bundle for blood tests, a Terra DNA result for DNA tests. `result_type` says which, and `result_version` which version of the result the URL serves. The URL is valid for 15 minutes before credential validation is configured. Validated requests receive a URL bounded by token expiry and the original authorization deadline (at most 45 seconds), even when product policy is off; request a fresh URL when starting each download. Note: Every orderItemID can only be associated with maximum 1 panel, hence results can be uniquely identified by orderItemID.'
+      description: |-
+        Returns a short-lived URL to download an order item's normalised result as JSON: a FHIR R4 bundle for a blood test, a Terra DNA result for a DNA test.
+
+        - The URL expires at `expires_at`, at most 45 seconds after the request was authorised and sooner if your token expires first. Request a fresh URL each time you start a download.
+        - An order item has at most one panel, so its id identifies the result.
       parameters:
         - $ref: '#/components/parameters/ApiVersion'
         - name: orderItemID
           in: path
-          description: Order Item ID
+          description: The order item's `order_item_id`.
           required: true
           schema:
             type: integer
             minimum: 1
         - name: test_taker_id
           in: query
-          description: Test Taker ID
+          description: The order item's `test_taker_id`. Another test taker's id returns 400.
           required: true
           schema:
             type: integer
@@ -1643,19 +1727,24 @@ paths:
       summary: Acknowledge results receipt
       tags:
         - results
-      description: Records the end user's affirmative confirmation that they have received and viewed their results (Schedule C §C6A). Must be triggered by an explicit end-user action (e.g. a checkbox or button in the client's UI) — never automatically by the backend on retrieval or delivery. Required for compliance and audit trails.
+      description: |-
+        Records that the test taker confirmed, in your app, that they received their result.
+
+        - Every result needs it, and it is never automatic: call it only from the test taker's own action, such as a button or checkbox after your app shows the result.
+        - It is a legal requirement. Results left unacknowledged can get your Vantage access suspended, enforced within 1 to 5 business days.
+        - An escalated result carries an `acknowledgment_due_by` deadline; if it is missed, the lab may contact the patient.
       parameters:
         - $ref: '#/components/parameters/ApiVersion'
         - name: orderItemID
           in: path
-          description: Order Item ID
+          description: The order item's `order_item_id`.
           required: true
           schema:
             type: integer
             minimum: 1
         - name: test_taker_id
           in: query
-          description: Test Taker ID
+          description: The order item's `test_taker_id`. Another test taker's id returns 400.
           required: true
           schema:
             type: integer
@@ -1758,7 +1847,7 @@ paths:
       summary: List nearby lab draw sites
       tags:
         - labs
-      description: Returns nearby Patient Service Centers (lab draw sites) for a US zip code, used when placing a GO_TO_LAB order.
+      description: Lists Patient Service Centers (lab draw sites) near a US zip code, to choose from when placing a `GO_TO_LAB` order.
       x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
@@ -1769,7 +1858,7 @@ paths:
         - name: zip_code
           in: query
           required: true
-          description: 5-digit US zip (optionally with 4-digit suffix)
+          description: A 5-digit US zip code, optionally with its 4-digit suffix.
           schema:
             type: string
             example: '10001'
@@ -1855,7 +1944,10 @@ paths:
       summary: Analytics overview
       tags:
         - analytics
-      description: 'Client-scoped analytics summary for a time window: order totals with a by-status breakdown, results in vs. still missing, and webhook failures with a daily series. Like the orders and results lists, every count covers the environment''s current Vantage access or, without it, only its verified purchases.'
+      description: |-
+        Summarises your Vantage activity over a time window: order totals by fulfilment status, results in and still missing, and failed webhook deliveries with a daily series.
+
+        - Like `GET /api/v1/orders` and `GET /api/v1/results`, every count covers the environment's current Vantage access or, without it, only its verified purchases.
       x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
@@ -1866,14 +1958,14 @@ paths:
         - name: since
           in: query
           required: false
-          description: Start of the window (RFC3339). Defaults to until minus 7 days.
+          description: Start of the window (RFC 3339). Defaults to 7 days before `until`.
           schema:
             type: string
             format: date-time
         - name: until
           in: query
           required: false
-          description: End of the window (RFC3339). Defaults to now.
+          description: End of the window (RFC 3339). Defaults to now.
           schema:
             type: string
             format: date-time
@@ -1959,7 +2051,10 @@ paths:
       summary: List webhook delivery outcomes
       tags:
         - analytics
-      description: Client-scoped keyset list of terminal webhook delivery outcomes, newest first. Use outcome=failed to see only permanently-failed deliveries.
+      description: |-
+        Lists the final outcome of each webhook delivery, newest first, one page at a time.
+
+        - A resend from `POST /api/v1/webhook-events/resend` replaces the event's earlier outcome.
       x-required-token-scope: vantage:read
       security:
         - BasicAuth: []
@@ -1970,7 +2065,7 @@ paths:
         - name: outcome
           in: query
           required: false
-          description: One delivery outcome, or "failed" (rejected|invalid|dead_lettered).
+          description: 'Only deliveries with this outcome. `failed` matches every permanently failed delivery: `rejected`, `invalid` and `dead_lettered`.'
           schema:
             type: string
             enum:
@@ -1983,7 +2078,7 @@ paths:
         - name: limit
           in: query
           required: false
-          description: Page size. Values above 100 are treated as 100.
+          description: Deliveries per page. Defaults to 25; a value above 100 is treated as 100.
           schema:
             type: integer
             minimum: 1
@@ -1991,7 +2086,7 @@ paths:
         - name: cursor
           in: query
           required: false
-          description: event_id from the previous page's next_cursor
+          description: The `next_cursor` from the previous page, an `event_id`.
           schema:
             type: string
             example: '333410942627700737'
@@ -2077,7 +2172,13 @@ paths:
       summary: Resend a webhook event
       tags:
         - webhooks
-      description: 'Sends a previously delivered event again, to your current webhook URL, signed with your current signing secret and rendered in your pinned version. The payload is rebuilt from the stored event, so it carries the status the event originally announced, not the order''s current status, and a fresh `timestamp`. The event keeps its `event_id`: an endpoint that dedupes on it treats the resend as the event it already processed. Delivery is asynchronous, so 202 means the event was queued, not that it arrived; find the outcome with `GET /api/v1/webhook-deliveries`, where the resend replaces the event''s earlier outcome. A delivered event can be resent for 30 days; an older one, or one delivered before Vantage began keeping delivered events, returns 404 with code `event_not_resendable`. Pass `dry_run=true` to check that an event can be resent without sending it.'
+      description: |-
+        Sends a delivered webhook event again to your current webhook URL, signed with your current signing secret and rendered in your pinned version.
+
+        - The payload is rebuilt from the stored event: it carries the status the event originally announced, not the order's current status, and a fresh `timestamp`.
+        - The event keeps its `event_id`, so an endpoint that dedupes on it treats the resend as the event it already processed.
+        - Delivery is asynchronous: 202 means queued, not arrived. Find the outcome with `GET /api/v1/webhook-deliveries`, where the resend replaces the event's earlier outcome.
+        - An event can be resent for 30 days after delivery. An older one, or one delivered before Vantage began keeping delivered events, returns 404 with code `event_not_resendable`.
       x-required-token-scope: vantage:write
       security:
         - BasicAuth: []
@@ -2207,7 +2308,13 @@ paths:
       summary: Send a test webhook event
       tags:
         - webhooks
-      description: 'Sends a generated event of one webhook type to your current webhook URL, through the same delivery as real events: signed with `X-Terra-Signature`, rendered in your pinned version, and retried the same way. A generated event carries `"test": true` and describes no real order: every order, order item, variant and test-taker id in it is `"0"`, and the test taker is a placeholder. It changes no order or result. Selected product enforcement delivers it only while the environment has a current Vantage grant. The response carries the latest-shape payload; the delivery is stamped with its own `timestamp` when sent. Pass `dry_run=true` to get the payload without sending it.'
+      description: |-
+        Sends a generated event of one webhook type to your current webhook URL, through the same delivery as real events: signed with `X-Terra-Signature`, rendered in your pinned version and retried the same way.
+
+        - It carries `"test": true` and describes no real order: every order, order item, variant and test-taker id in it is `"0"`, and the test taker is a placeholder.
+        - It changes no order or result.
+        - Under selected product enforcement, it is delivered only while the environment has a current Vantage grant.
+        - The response carries the payload in the latest version's shape; the delivery is stamped with its own `timestamp` when sent.
       x-required-token-scope: vantage:write
       security:
         - BasicAuth: []
@@ -2324,12 +2431,25 @@ webhooks:
   order.status_changed:
     post:
       operationId: webhookOrderStatusChanged
+      tags:
+        - webhooks
       security: []
       summary: Order fulfilment status changed
       description: |-
-        Sent when an order's fulfilment status changes, including `order.payment_processing` and `order.payment_complete` when the order is created. `data.status` uses the same `order.*` vocabulary as REST reads of the order.
+        Sent when an order's fulfilment status changes, including `order.payment_processing` and `order.payment_complete` when the order is created. `data.status` uses the same `order.*` statuses as REST reads of the order.
 
-        Deliveries carry `X-Terra-Signature: t=<unix_seconds>,v1=<hex>` where `v1 = HMAC-SHA256(signing_secret, "<t>.<raw_body>")` — verify against the raw body before trusting the payload — plus `X-Terra-Trace-Id` (the event_id), `X-Terra-Version` (the API version the payload is rendered in: your account's pinned version, or the latest) and `X-Terra-Ordering-Timestamp` (Unix milliseconds when Terra emitted the event, identical on every retry of it; omitted when unknown). Retries can reorder deliveries, so when two events for the same order arrive out of order, the higher `X-Terra-Ordering-Timestamp` is the newer one. The body `timestamp` is when the delivery was built and can differ between retries. Delivery is at-least-once: dedupe on `event_id`. On network errors/408/429/5xx an event gets up to 5 HTTP attempts with exponential backoff (~1s, 2s, 4s, 8s) on first delivery, then single re-attempts with growing delays (5s doubling, capped at 10 minutes) for up to 10 deliveries in total — at most ~14 calls spread over ~30 minutes — before dead-lettering. Other 4xx responses are recorded as rejected and not retried at all.
+        Every delivery carries these headers:
+
+        - `X-Terra-Signature: t=<unix_seconds>,v1=<hex>`, where `v1 = HMAC-SHA256(signing_secret, "<t>.<raw_body>")`. Verify it against the raw body before trusting the payload.
+        - `X-Terra-Trace-Id`: the `event_id`.
+        - `X-Terra-Version`: the API version the payload is rendered in, your account's pinned version or the latest.
+        - `X-Terra-Ordering-Timestamp`: Unix milliseconds when Terra emitted the event, identical on every retry of it, and omitted when unknown. Retries can reorder deliveries, so of two events for the same order, the one with the higher value is newer.
+
+        Delivery is at least once, so dedupe on `event_id`. The body `timestamp` is when the delivery was built and can differ between retries.
+
+        - On a network error, 408, 429 or 5xx, the first delivery makes up to 5 HTTP attempts with exponential backoff (about 1s, 2s, 4s, 8s).
+        - Single re-attempts then follow with growing delays (5s, doubling, capped at 10 minutes), up to 10 deliveries in total: at most about 14 calls over about 30 minutes before the event is dead-lettered.
+        - Any other 4xx is recorded as rejected and not retried.
 
         `POST /api/v1/webhook-events/resend` sends a delivered event again with the same `event_id`, and `POST /api/v1/webhook-events/generate` sends a test event marked `"test": true`; both are delivered as described here.
       requestBody:
@@ -2344,12 +2464,14 @@ webhooks:
   order_item.results_status_change:
     post:
       operationId: webhookOrderItemResultsStatusChange
+      tags:
+        - webhooks
       security: []
       summary: Order item results status changed
       description: |-
-        Sent when an order item's results status changes. `data.results_status` uses the `results.*` vocabulary shared with REST reads.
+        Sent when an order item's results status changes. `data.results_status` uses the same `results.*` statuses as REST reads.
 
-        Signing, `X-Terra-Trace-Id`, `X-Terra-Version`, `X-Terra-Ordering-Timestamp`, at-least-once delivery, and retry semantics are identical to `order.status_changed` — see its description.
+        Signing, `X-Terra-Trace-Id`, `X-Terra-Version`, `X-Terra-Ordering-Timestamp`, at-least-once delivery and retries are the same as for `order.status_changed`; see its description.
       requestBody:
         required: true
         content:
@@ -2365,7 +2487,7 @@ components:
       name: order
       in: query
       required: false
-      description: desc for newest first, asc for oldest first. Send the same order with every page's cursor.
+      description: 'Sort direction: `desc` for newest first, `asc` for oldest first. Defaults to `desc`; send the same value with every page''s cursor.'
       schema:
         type: string
         enum:
@@ -2388,7 +2510,7 @@ components:
       name: dry_run
       in: query
       required: false
-      description: When true, run every check and return what the operation would do, with 200, without doing it.
+      description: When true, runs every check and returns what the operation would do, with 200, without doing it. Defaults to false.
       schema:
         type: boolean
         default: false

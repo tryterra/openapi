@@ -1,11 +1,11 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
   description: |
     The Terra API (v2 surface, served at access.tryterra.co/api/v2). Protected product operations require a current product entitlement in addition to valid credentials and token scopes. Missing access returns HTTP 403 with code entitlement_required; disabled environments return environment_disabled. Unavailable current authorization returns HTTP 503 with code authorization_unavailable. Billing, configuration and recovery remain available under their existing permissions. Completed Health Scores stay with the caller's own authorized data. Pass recipients require their own Health Scores entitlement; otherwise enrichment fields retain null values. New score computation requires Health Scores access. Retained lab reports remain readable through the report endpoints with valid credentials and ownership, without a current Lab Reports entitlement. New uploads and reprocessing require it.
 
     **Lab reports versioning.** The report endpoints (`/reports`, and the deprecated `/lab-reports`) are versioned by date. Send `X-Terra-Version: <date>` to choose the version a request is served in: the newest version on or before that date. Without the header a request gets the environment's pinned version. An environment without a pin is pinned to the latest version on its first request; change the pin through the admin API (`PUT /api/v3/admin/environments/{dev_id}/lab-reports/api-version`). Every authenticated response carries `X-Terra-Version` stating the version it was served in, and every `lab_report` webhook delivery carries the environment's version. A malformed or future date returns 400 with code `invalid_api_version`. Versions are `2026-10-21` (latest: the report list is paginated) and `2026-03-24` (the list returns up to 500 reports in `sessions`). This document describes the latest version.
-  title: TerraAPI
-  version: 2026.11.11
+  title: Terra API
+  version: 2026.11.11.1
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -19,18 +19,62 @@ servers:
 security:
   - ApiKeyAuth: []
     DevID: []
+tags:
+  - name: Authentication
+    summary: Authentication
+    description: Connect a user's wearable or app through a link or the Terra Widget, issue mobile SDK tokens, and disconnect a user.
+  - name: User
+    summary: User
+    description: Look up connected users by user ID or your own reference ID.
+  - name: Integrations
+    summary: Integrations
+    description: The wearables and apps you can connect, and what each one supports.
+  - name: Activity
+    summary: Activity
+    description: A user's activity data.
+  - name: Athlete
+    summary: Athlete
+    description: A user's athlete profile.
+  - name: Body
+    summary: Body
+    description: A user's body data.
+  - name: Daily
+    summary: Daily
+    description: A user's daily summaries.
+  - name: Menstruation
+    summary: Menstruation
+    description: A user's menstruation data.
+  - name: Nutrition
+    summary: Nutrition
+    description: A user's nutrition data.
+  - name: Sleep
+    summary: Sleep
+    description: A user's sleep data.
+  - name: Workouts
+    summary: Planned Workouts
+    description: Workout templates, and the planned workouts that put them on a user's calendar.
+  - name: LabReports
+    summary: Lab Reports
+    description: Upload lab reports and read back their standardized results.
+  - name: Webhooks
+    summary: Webhooks
+    description: The events Terra sends to your destinations.
 paths:
   /auth/authenticateUser:
     post:
       summary: Generate an authentication link
-      description: Creates a login link that allows end users to connect their fitness tracking account
+      description: |-
+        Returns a login URL for one provider; redirect the end user to it to connect their account.
+
+        - The outcome arrives as an `auth` event: type `auth` on success, `auth_cancelled` if the login fails or is abandoned.
+        - Refused with `402` once your environment is past its user limit.
       tags:
         - Authentication
       operationId: Authentication_AuthenticateUser
       parameters:
         - name: resource
           in: query
-          description: Provider resource identifier (e.g., 'FITBIT', 'GARMIN', 'OURA'). See "Get detailed list of integrations" for available providers
+          description: Provider to connect, such as `FITBIT`, `GARMIN` or `OURA`; `GET /integrations/detailed` lists them. An unknown provider, or one not enabled in your environment, is refused with `400`.
           schema:
             type: string
           example: FITBIT
@@ -99,7 +143,10 @@ paths:
   /auth/generateWidgetSession:
     post:
       summary: Generate a Terra Widget session link
-      description: Returns a Terra Widget session with a hosted URL where the end user selects a provider and logs in.
+      description: |-
+        Returns a Terra Widget session with a hosted URL where the end user selects a provider and logs in.
+
+        - Accounts created after 3 September 2026 get `410 Gone`; create widget sessions with `POST https://access.tryterra.co/api/widget/session` instead.
       tags:
         - Authentication
       operationId: Authentication_GenerateWidgetSession
@@ -158,14 +205,18 @@ paths:
   /auth/deauthenticateUser:
     delete:
       summary: Deauthenticate a user
-      description: Deletes every record Terra holds for the user, including any cached data, and revokes Terra's access to their provider data.
+      description: |-
+        Deletes every record Terra holds for the user, including any cached data, and revokes Terra's access to their provider data.
+
+        - Cannot be undone: the end user has to connect again for data to resume.
+        - Sends a `deauth` event for the user.
       tags:
         - Authentication
       operationId: Authentication_DeauthenticateUser
       parameters:
         - name: user_id
           in: query
-          description: Terra user ID (UUID format) to deauthenticate and remove from Terra system
+          description: Terra user ID (a UUID) of the user to deauthenticate.
           schema:
             type: string
           required: true
@@ -194,7 +245,7 @@ paths:
       tags:
         - Authentication
       summary: Generate a mobile SDK auth token
-      description: Creates a token to be used with initConnection() functions in the Terra mobile SDKs in order to create a user record for Apple Health or Samsung Health (or equivalent)
+      description: Creates a token that a Terra mobile SDK passes to `initConnection()` to create a user for Apple Health, Samsung Health or a similar on-device provider.
       operationId: Authentication_CreateAuthToken
       parameters:
         - name: reference_id
@@ -241,7 +292,10 @@ paths:
       tags:
         - Authentication
       summary: Generate a mobile SDK auth token (deprecated)
-      description: Deprecated spelling of POST /auth/tokens, which it is identical to. Kept indefinitely because shipped mobile SDK versions call this path; new integrations should use POST /auth/tokens.
+      description: |-
+        Same as `POST /auth/tokens`, under the older path that shipped mobile SDK versions call.
+
+        - Stays available indefinitely; new integrations should use `POST /auth/tokens`.
       operationId: Authentication_GenerateAuthToken
       parameters:
         - name: reference_id
@@ -287,20 +341,24 @@ paths:
   /activity:
     get:
       summary: Retrieve activity data
-      description: Returns completed workout sessions, each with a defined start and end time and an activity type such as running or cycling.
+      description: |-
+        Returns a user's completed workout sessions in a date range, each with a start and end time and an activity type such as running or cycling.
+
+        - A range longer than one month is delivered in chunks, announced by `large_request_processing` and `large_request_sending` events.
+        - Returns `404` if the user's provider does not offer this data type, and `400` if your environment does not collect it.
       tags:
         - Activity
       operationId: Activity_Get
       parameters:
         - name: user_id
           in: query
-          description: Terra user ID (UUID format) to retrieve data for
+          description: Terra user ID (a UUID) of the user to retrieve data for.
           schema:
             type: string
           required: true
         - name: start_date
           in: query
-          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          description: Start of the period to retrieve, as an ISO 8601 date (YYYY-MM-DD) or a 10-digit unix timestamp in seconds. A date in the future is refused with `400`.
           schema:
             oneOf:
               - type: integer
@@ -309,7 +367,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          description: End of the period to retrieve, as an ISO 8601 date (YYYY-MM-DD) or a 10-digit unix timestamp in seconds. Defaults to one day after `start_date`; a future value is clamped to the current time, and a value before `start_date` is refused with `400`.
           schema:
             oneOf:
               - type: integer
@@ -318,15 +376,13 @@ paths:
           required: false
         - name: to_webhook
           in: query
-          description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
+          description: Whether to deliver the data to your destinations as data events instead of in the response. Defaults to `true`. `false` with a range longer than one month is refused with `400`, as is `true` when your environment has no destination.
           schema:
             type: boolean
           required: false
         - name: with_samples
           in: query
-          description: |
-            Boolean flag specifying whether to include detailed samples in the returned payload (default: false)
+          description: Whether to include detailed samples in the returned data. Omit it to follow your environment's samples setting for this data type.
           schema:
             type: boolean
           required: false
@@ -363,21 +419,23 @@ paths:
   /athlete:
     get:
       summary: Retrieve athlete profile
-      description: Returns the user profile, such as first and last name, birth date and gender.
+      description: |-
+        Returns a user's profile from their provider, such as first and last name, birth date and gender.
+
+        - Returns `404` if the user's provider does not offer a profile.
       tags:
         - Athlete
       operationId: Athlete_Get
       parameters:
         - name: user_id
           in: query
-          description: Terra user ID (UUID format) to retrieve data for
+          description: Terra user ID (a UUID) of the user to retrieve data for.
           schema:
             type: string
           required: true
         - name: to_webhook
           in: query
-          description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
+          description: Whether to deliver the profile to your destinations as an `athlete` event instead of in the response. Defaults to `true`; `true` when your environment has no destination is refused with `400`.
           schema:
             type: boolean
           required: false
@@ -403,20 +461,24 @@ paths:
   /body:
     get:
       summary: Retrieve body metrics
-      description: Returns body metrics such as weight, height and body-fat percentage.
+      description: |-
+        Returns a user's body metrics in a date range, such as weight, height and body-fat percentage.
+
+        - A range longer than one month is delivered in chunks, announced by `large_request_processing` and `large_request_sending` events.
+        - Returns `404` if the user's provider does not offer this data type, and `400` if your environment does not collect it.
       tags:
         - Body
       operationId: Body_Get
       parameters:
         - name: user_id
           in: query
-          description: Terra user ID (UUID format) to retrieve data for
+          description: Terra user ID (a UUID) of the user to retrieve data for.
           schema:
             type: string
           required: true
         - name: start_date
           in: query
-          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          description: Start of the period to retrieve, as an ISO 8601 date (YYYY-MM-DD) or a 10-digit unix timestamp in seconds. A date in the future is refused with `400`.
           schema:
             oneOf:
               - type: integer
@@ -425,7 +487,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          description: End of the period to retrieve, as an ISO 8601 date (YYYY-MM-DD) or a 10-digit unix timestamp in seconds. Defaults to one day after `start_date`; a future value is clamped to the current time, and a value before `start_date` is refused with `400`.
           schema:
             oneOf:
               - type: integer
@@ -434,15 +496,13 @@ paths:
           required: false
         - name: to_webhook
           in: query
-          description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
+          description: Whether to deliver the data to your destinations as data events instead of in the response. Defaults to `true`. `false` with a range longer than one month is refused with `400`, as is `true` when your environment has no destination.
           schema:
             type: boolean
           required: false
         - name: with_samples
           in: query
-          description: |
-            Boolean flag specifying whether to include detailed samples in the returned payload (default: false)
+          description: Whether to include detailed samples in the returned data. Omit it to follow your environment's samples setting for this data type.
           schema:
             type: boolean
           required: false
@@ -479,20 +539,24 @@ paths:
   /daily:
     get:
       summary: Retrieve daily summaries
-      description: Returns daily summaries of activity metrics such as steps, distance and calories burned.
+      description: |-
+        Returns a user's daily activity summaries in a date range, such as steps, distance and calories burned.
+
+        - A range longer than one month is delivered in chunks, announced by `large_request_processing` and `large_request_sending` events.
+        - Returns `404` if the user's provider does not offer this data type, and `400` if your environment does not collect it.
       tags:
         - Daily
       operationId: Daily_Get
       parameters:
         - name: user_id
           in: query
-          description: Terra user ID (UUID format) to retrieve data for
+          description: Terra user ID (a UUID) of the user to retrieve data for.
           schema:
             type: string
           required: true
         - name: start_date
           in: query
-          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          description: Start of the period to retrieve, as an ISO 8601 date (YYYY-MM-DD) or a 10-digit unix timestamp in seconds. A date in the future is refused with `400`.
           schema:
             oneOf:
               - type: integer
@@ -501,7 +565,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          description: End of the period to retrieve, as an ISO 8601 date (YYYY-MM-DD) or a 10-digit unix timestamp in seconds. Defaults to one day after `start_date`; a future value is clamped to the current time, and a value before `start_date` is refused with `400`.
           schema:
             oneOf:
               - type: integer
@@ -510,15 +574,13 @@ paths:
           required: false
         - name: to_webhook
           in: query
-          description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
+          description: Whether to deliver the data to your destinations as data events instead of in the response. Defaults to `true`. `false` with a range longer than one month is refused with `400`, as is `true` when your environment has no destination.
           schema:
             type: boolean
           required: false
         - name: with_samples
           in: query
-          description: |
-            Boolean flag specifying whether to include detailed samples in the returned payload (default: false)
+          description: Whether to include detailed samples in the returned data. Omit it to follow your environment's samples setting for this data type.
           schema:
             type: boolean
           required: false
@@ -555,20 +617,24 @@ paths:
   /menstruation:
     get:
       summary: Retrieve menstruation data
-      description: Returns menstruation data such as cycle length, period length and ovulation date.
+      description: |-
+        Returns a user's menstruation data in a date range, such as cycle length, period length and ovulation date.
+
+        - A range longer than one month is delivered in chunks, announced by `large_request_processing` and `large_request_sending` events.
+        - Returns `404` if the user's provider does not offer this data type, and `400` if your environment does not collect it.
       tags:
         - Menstruation
       operationId: Menstruation_Get
       parameters:
         - name: user_id
           in: query
-          description: Terra user ID (UUID format) to retrieve data for
+          description: Terra user ID (a UUID) of the user to retrieve data for.
           schema:
             type: string
           required: true
         - name: start_date
           in: query
-          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          description: Start of the period to retrieve, as an ISO 8601 date (YYYY-MM-DD) or a 10-digit unix timestamp in seconds. A date in the future is refused with `400`.
           schema:
             oneOf:
               - type: integer
@@ -577,7 +643,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          description: End of the period to retrieve, as an ISO 8601 date (YYYY-MM-DD) or a 10-digit unix timestamp in seconds. Defaults to one day after `start_date`; a future value is clamped to the current time, and a value before `start_date` is refused with `400`.
           schema:
             oneOf:
               - type: integer
@@ -586,15 +652,13 @@ paths:
           required: false
         - name: to_webhook
           in: query
-          description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
+          description: Whether to deliver the data to your destinations as data events instead of in the response. Defaults to `true`. `false` with a range longer than one month is refused with `400`, as is `true` when your environment has no destination.
           schema:
             type: boolean
           required: false
         - name: with_samples
           in: query
-          description: |
-            Boolean flag specifying whether to include detailed samples in the returned payload (default: false)
+          description: Whether to include detailed samples in the returned data. Omit it to follow your environment's samples setting for this data type.
           schema:
             type: boolean
           required: false
@@ -631,20 +695,24 @@ paths:
   /nutrition:
     get:
       summary: Retrieve nutrition data
-      description: Returns nutrition data such as meal type, calories and macronutrients.
+      description: |-
+        Returns a user's nutrition logs in a date range, such as meal type, calories and macronutrients.
+
+        - A range longer than one month is delivered in chunks, announced by `large_request_processing` and `large_request_sending` events.
+        - Returns `404` if the user's provider does not offer this data type, and `400` if your environment does not collect it.
       tags:
         - Nutrition
       operationId: Nutrition_Get
       parameters:
         - name: user_id
           in: query
-          description: Terra user ID (UUID format) to retrieve data for
+          description: Terra user ID (a UUID) of the user to retrieve data for.
           schema:
             type: string
           required: true
         - name: start_date
           in: query
-          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          description: Start of the period to retrieve, as an ISO 8601 date (YYYY-MM-DD) or a 10-digit unix timestamp in seconds. A date in the future is refused with `400`.
           schema:
             oneOf:
               - type: integer
@@ -653,7 +721,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          description: End of the period to retrieve, as an ISO 8601 date (YYYY-MM-DD) or a 10-digit unix timestamp in seconds. Defaults to one day after `start_date`; a future value is clamped to the current time, and a value before `start_date` is refused with `400`.
           schema:
             oneOf:
               - type: integer
@@ -662,15 +730,13 @@ paths:
           required: false
         - name: to_webhook
           in: query
-          description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
+          description: Whether to deliver the data to your destinations as data events instead of in the response. Defaults to `true`. `false` with a range longer than one month is refused with `400`, as is `true` when your environment has no destination.
           schema:
             type: boolean
           required: false
         - name: with_samples
           in: query
-          description: |
-            Boolean flag specifying whether to include detailed samples in the returned payload (default: false)
+          description: Whether to include detailed samples in the returned data. Omit it to follow your environment's samples setting for this data type.
           schema:
             type: boolean
           required: false
@@ -707,20 +773,24 @@ paths:
   /sleep:
     get:
       summary: Retrieve sleep sessions
-      description: Returns sleep sessions, each with a defined start and end time, such as sleep duration, stages and quality.
+      description: |-
+        Returns a user's sleep sessions in a date range, each with a start and end time, covering duration, stages and quality.
+
+        - A range longer than one month is delivered in chunks, announced by `large_request_processing` and `large_request_sending` events.
+        - Returns `404` if the user's provider does not offer this data type, and `400` if your environment does not collect it.
       tags:
         - Sleep
       operationId: Sleep_Get
       parameters:
         - name: user_id
           in: query
-          description: Terra user ID (UUID format) to retrieve data for
+          description: Terra user ID (a UUID) of the user to retrieve data for.
           schema:
             type: string
           required: true
         - name: start_date
           in: query
-          description: Start date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          description: Start of the period to retrieve, as an ISO 8601 date (YYYY-MM-DD) or a 10-digit unix timestamp in seconds. A date in the future is refused with `400`.
           schema:
             oneOf:
               - type: integer
@@ -729,7 +799,7 @@ paths:
           required: true
         - name: end_date
           in: query
-          description: End date for data query - either ISO8601 date (YYYY-MM-DD) or unix timestamp in seconds (10-digit)
+          description: End of the period to retrieve, as an ISO 8601 date (YYYY-MM-DD) or a 10-digit unix timestamp in seconds. Defaults to one day after `start_date`; a future value is clamped to the current time, and a value before `start_date` is refused with `400`.
           schema:
             oneOf:
               - type: integer
@@ -738,15 +808,13 @@ paths:
           required: false
         - name: to_webhook
           in: query
-          description: |
-            Boolean flag specifying whether to send the data retrieved to the webhook instead of in the response (default: true if not provided)
+          description: Whether to deliver the data to your destinations as data events instead of in the response. Defaults to `true`. `false` with a range longer than one month is refused with `400`, as is `true` when your environment has no destination.
           schema:
             type: boolean
           required: false
         - name: with_samples
           in: query
-          description: |
-            Boolean flag specifying whether to include detailed samples in the returned payload (default: false)
+          description: Whether to include detailed samples in the returned data. Omit it to follow your environment's samples setting for this data type.
           schema:
             type: boolean
           required: false
@@ -785,8 +853,10 @@ paths:
       tags:
         - Workouts
       summary: Create a workout template
-      description: |
-        Stores a reusable workout template. Plan it onto a user's calendar with `POST /workouts/{workout_id}/plan`; the template itself carries no date and is not pushed to any provider until planned.
+      description: |-
+        Stores a reusable workout template and returns its `workout_id`.
+
+        - The template carries no date and is not pushed to any provider until you plan it onto a user's calendar with `POST /workouts/{workout_id}/plan`.
       operationId: Workouts_CreateWorkout
       requestBody:
         required: true
@@ -843,6 +913,7 @@ paths:
       tags:
         - Workouts
       summary: Get a workout template
+      description: Returns one stored workout template.
       operationId: Workouts_GetWorkout
       parameters:
         - name: workout_id
@@ -851,6 +922,7 @@ paths:
           schema:
             type: integer
             format: int64
+          description: The workout template's ID, as returned by `POST /workouts`.
       responses:
         '200':
           description: The stored template
@@ -870,8 +942,13 @@ paths:
       tags:
         - Workouts
       summary: Update a workout template
-      description: |
-        Replaces the template and re-sends it to every upcoming planned workout made from it, each under its existing provider id. Completed and past planned workouts keep the version they were sent. An Apple Health planned workout already on the device is queued to fetch the new version, as a reschedule is. Each re-send to a provider is billed like a reschedule. The response lists every planned workout's outcome; `skipped` ones cannot be re-sent (for example, the user has disconnected), and a `failed` one is re-sent by repeating the request.
+      description: |-
+        Replaces the template and re-sends it to every upcoming planned workout made from it, each under its existing provider ID.
+
+        - Completed and past planned workouts keep the version they were sent.
+        - An Apple Health planned workout already on the device is queued to fetch the new version, as on a reschedule.
+        - Each re-send to a provider is billed like a reschedule.
+        - The response lists each planned workout's outcome: `skipped` ones cannot be re-sent (for example, the user disconnected); repeat the request to re-send `failed` ones.
       operationId: Workouts_UpdateWorkout
       parameters:
         - name: workout_id
@@ -880,6 +957,7 @@ paths:
           schema:
             type: integer
             format: int64
+          description: The workout template's ID, as returned by `POST /workouts`.
       requestBody:
         required: true
         content:
@@ -920,8 +998,7 @@ paths:
       tags:
         - Workouts
       summary: Delete a workout template
-      description: |
-        Deletes the template and cascades deletion of every planned workout created from it, including removal from connected providers.
+      description: Deletes the template and every planned workout created from it, removing each from its connected provider.
       operationId: Workouts_DeleteWorkout
       parameters:
         - name: workout_id
@@ -930,6 +1007,7 @@ paths:
           schema:
             type: integer
             format: int64
+          description: The workout template's ID, as returned by `POST /workouts`.
       responses:
         '204':
           description: Template and all planned instances deleted
@@ -960,8 +1038,10 @@ paths:
       tags:
         - Workouts
       summary: Plan a workout onto a user's calendar
-      description: |
-        Schedules the workout template for a user on a given date and pushes it to the user's connected provider (or queues it for SDK delivery). Athlete metrics personalise zone-based targets for this plan only.
+      description: |-
+        Schedules the template for a user on `planned_date` and pushes it to the user's connected provider, or queues it for delivery through the SDK.
+
+        - Athlete metrics in the body personalise zone-based targets for this planned workout only.
       operationId: Workouts_PlanWorkout
       parameters:
         - name: workout_id
@@ -970,10 +1050,11 @@ paths:
           schema:
             type: integer
             format: int64
+          description: The ID of the workout template to plan, as returned by `POST /workouts`.
         - name: user_id
           in: query
           required: true
-          description: Terra user ID of the connection to plan the workout for
+          description: The Terra user ID of the connection to plan the workout for.
           schema:
             type: string
       requestBody:
@@ -1056,8 +1137,13 @@ paths:
       tags:
         - Workouts
       summary: List planned workouts
-      description: |
-        Returns the user's planned workouts, including workouts created on the provider side (is_external true) where the provider exposes them. Every item carries its workout body under `template`, in the same shape for Terra-created and external workouts. External workouts are fetched live from the provider and are not stored by Terra; a workout pushed through Terra that the provider echoes back is listed once, as the Terra row. When the provider could not be read, or a template could not be loaded, the response is still 200 with the rows Terra has and carries the `X-Terra-Provider-Data-Truncated: true` header. Note that providers may limit how far ahead planned workouts are visible.
+      description: |-
+        Returns the user's planned workouts, including those created on the provider side (`is_external` true) where the provider exposes them.
+
+        - Provider-side workouts are read live from the provider, not stored by Terra.
+        - A workout pushed through Terra and echoed back by the provider is listed once, as the Terra-created one.
+        - If the provider cannot be read, the response is still 200, with Terra's workouts and `X-Terra-Provider-Data-Truncated: true`.
+        - Providers may limit how far ahead planned workouts are visible.
       operationId: Workouts_ListPlannedWorkouts
       parameters:
         - name: user_id
@@ -1065,21 +1151,21 @@ paths:
           required: true
           schema:
             type: string
+          description: The Terra user ID of the connection whose planned workouts to list.
         - name: start_date
           in: query
           required: false
           schema:
             type: string
             format: date
-          description: |
-            Start of the planned-date window (YYYY-MM-DD). When start_date and end_date are omitted, provider-side workouts default to the trailing 30 days; pass an explicit window to list upcoming workouts.
+          description: First planned date to include (`YYYY-MM-DD`), inclusive; applies only together with `end_date`. Without both, Terra-created workouts are listed for every date and provider-side workouts for the trailing 30 days, so pass a window to list upcoming workouts.
         - name: end_date
           in: query
           required: false
           schema:
             type: string
             format: date
-          description: End of the planned-date window (YYYY-MM-DD), inclusive.
+          description: Last planned date to include (`YYYY-MM-DD`), inclusive; applies only together with `start_date`.
       responses:
         '200':
           description: Planned workouts for the connection
@@ -1123,8 +1209,10 @@ paths:
       tags:
         - Workouts
       summary: Get a planned workout
-      description: |
-        Returns a planned workout created through Terra. Provider-created (external) workouts are not addressable by id — they are returned by the list endpoint with their full body under `details`.
+      description: |-
+        Returns a planned workout created through Terra.
+
+        - Provider-created (external) workouts are not addressable by ID and return 404 here; `GET /plannedWorkouts` lists them with their body under `workout`.
       operationId: Workouts_GetPlannedWorkout
       parameters:
         - name: planned_workout_id
@@ -1133,11 +1221,13 @@ paths:
           schema:
             type: integer
             format: int64
+          description: The planned workout's ID, as returned by `POST /workouts/{workout_id}/plan`.
         - name: user_id
           in: query
           required: true
           schema:
             type: string
+          description: The Terra user ID of the connection the planned workout belongs to.
       responses:
         '200':
           description: The planned workout
@@ -1157,6 +1247,11 @@ paths:
       tags:
         - Workouts
       summary: Reschedule a planned workout
+      description: |-
+        Moves a planned workout to a new `planned_date` and returns it.
+
+        - A workout already pushed to a provider is re-sent there under its existing provider ID, and the re-send is billed.
+        - An Apple Health planned workout is queued for the device to fetch the new date.
       operationId: Workouts_UpdatePlannedWorkout
       parameters:
         - name: planned_workout_id
@@ -1165,11 +1260,13 @@ paths:
           schema:
             type: integer
             format: int64
+          description: The planned workout's ID, as returned by `POST /workouts/{workout_id}/plan`.
         - name: user_id
           in: query
           required: true
           schema:
             type: string
+          description: The Terra user ID of the connection the planned workout belongs to.
       requestBody:
         required: true
         content:
@@ -1208,7 +1305,7 @@ paths:
       tags:
         - Workouts
       summary: Delete a planned workout
-      description: Removes the planned workout from the user's calendar and from the connected provider.
+      description: Deletes a planned workout from the user's calendar and removes it from the connected provider.
       operationId: Workouts_DeletePlannedWorkout
       parameters:
         - name: planned_workout_id
@@ -1217,11 +1314,13 @@ paths:
           schema:
             type: integer
             format: int64
+          description: The planned workout's ID, as returned by `POST /workouts/{workout_id}/plan`.
         - name: user_id
           in: query
           required: true
           schema:
             type: string
+          description: The Terra user ID of the connection the planned workout belongs to.
       responses:
         '204':
           description: Planned workout deleted
@@ -1236,18 +1335,23 @@ paths:
       tags:
         - User
       operationId: User_Get
-      description: Returns the Terra user for a given user ID, or every user registered under a given reference ID.
+      description: |-
+        Returns one user by `user_id`, or every user registered under a `reference_id`.
+
+        - A `user_id` request returns the user under `user`; a `reference_id` request returns a `users` list.
+        - Sending neither parameter returns `404`.
+        - A `reference_id` that matches no user returns an empty `users` list, not `404`.
       summary: Get user info by user ID or reference ID
       parameters:
         - name: user_id
           in: query
-          description: user ID to query for
+          description: Terra user ID of the user to return. Takes precedence over `reference_id` when both are sent.
           schema:
             type: string
           required: false
         - name: reference_id
           in: query
-          description: reference ID to query for
+          description: Your identifier for the end user; every user registered under it is returned.
           schema:
             type: string
           required: false
@@ -1258,42 +1362,71 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - description: User information for one connection (single User object)
+                  - title: By user ID
+                    description: Returned for a `user_id` request.
                     type: object
+                    required:
+                      - status
+                      - is_authenticated
+                      - user
                     properties:
-                      user:
-                        description: |
-                          The connection. In addition to the base User fields, this endpoint also returns polling metadata.
-                        allOf:
-                          - $ref: '#/components/schemas/TerraUser'
-                          - type: object
-                            properties:
-                              last_polled_at:
-                                type:
-                                  - string
-                                  - 'null'
-                                format: date-time
-                                description: Last time Terra polled the provider for this connection.
-                                example: '2024-01-20T11:00:00Z'
-                              most_recent_data_at:
-                                type:
-                                  - string
-                                  - 'null'
-                                format: date-time
-                                description: Timestamp of the most recent data point Terra holds for this connection.
-                                example: '2024-01-19T23:00:00Z'
                       status:
                         type: string
                         enum:
                           - success
-                          - error
                         default: success
                       is_authenticated:
                         type: boolean
-                  - description: List of multiple User objects the reference_id is associated to
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/TerraUser'
+                        description: Always `true`.
+                      user:
+                        $ref: '#/components/schemas/UserWithPolling'
+                  - title: By reference ID
+                    description: Returned for a `reference_id` request without `user_id`.
+                    type: object
+                    required:
+                      - status
+                      - users
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                          - success
+                        default: success
+                      users:
+                        type: array
+                        description: Every user registered under the reference ID; empty when none matches.
+                        items:
+                          $ref: '#/components/schemas/UserWithPolling'
+              examples:
+                by_user_id:
+                  summary: By user ID
+                  value:
+                    status: success
+                    is_authenticated: true
+                    user:
+                      user_id: 123e4567-e89b-12d3-a456-426614174000
+                      provider: FITBIT
+                      reference_id: user123@email.com
+                      created_at: '2024-01-10T09:30:00Z'
+                      last_webhook_update: '2024-01-20T11:05:00Z'
+                      scopes: activity,sleep
+                      active: true
+                      last_polled_at: '2024-01-20T11:00:00Z'
+                      most_recent_data_at: '2024-01-19T23:00:00Z'
+                by_reference_id:
+                  summary: By reference ID
+                  value:
+                    status: success
+                    users:
+                      - user_id: 123e4567-e89b-12d3-a456-426614174000
+                        provider: FITBIT
+                        reference_id: user123@email.com
+                        created_at: '2024-01-10T09:30:00Z'
+                        last_webhook_update: '2024-01-20T11:05:00Z'
+                        scopes: activity,sleep
+                        active: true
+                        last_polled_at: '2024-01-20T11:00:00Z'
+                        most_recent_data_at: '2024-01-19T23:00:00Z'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1307,7 +1440,7 @@ paths:
       tags:
         - User
       operationId: User_List
-      description: Returns all Terra users. Supports optional pagination via `page` and `per_page`; if `page` is omitted, every user is returned in one response for backwards compatibility.
+      description: Lists every user in your environment, either in one response or a page at a time.
       summary: List all user IDs
       parameters:
         - name: page
@@ -1315,14 +1448,14 @@ paths:
           required: false
           schema:
             type: integer
-          description: Zero-based page number. If omitted, results are not paginated.
+          description: Zero-based page number. Omit it to get every user in one unpaginated response; an invalid or negative value is treated as `0`.
           example: 0
         - name: per_page
           in: query
           required: false
           schema:
             type: integer
-          description: Number of results per page (default is 500).
+          description: Users per page when `page` is sent. Defaults to 500, which is also used for an invalid or non-positive value.
           example: 500
       responses:
         '200':
@@ -1365,7 +1498,7 @@ paths:
       tags:
         - User
       operationId: User_BatchGet
-      description: Returns the Terra users for a batch of user IDs.
+      description: Returns the users for a list of user IDs, sent as a JSON array in the body.
       summary: Get info for multiple users
       requestBody:
         content:
@@ -1382,10 +1515,50 @@ paths:
           content:
             application/json:
               schema:
-                description: List of User objects
-                type: array
-                items:
-                  $ref: '#/components/schemas/TerraUser'
+                type: object
+                required:
+                  - status
+                  - users
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - success
+                    default: success
+                  users:
+                    type: array
+                    description: One entry per user ID that matches a user in your environment; IDs that match none are left out rather than refused.
+                    items:
+                      type: object
+                      required:
+                        - user
+                        - is_authenticated
+                      properties:
+                        user:
+                          allOf:
+                            - $ref: '#/components/schemas/TerraUser'
+                            - type: object
+                              properties:
+                                provider_user_id:
+                                  type: string
+                                  description: The user's ID at the provider; empty when Terra does not hold one.
+                                  example: 4T8VXQ
+                        is_authenticated:
+                          type: boolean
+                          description: Always `true`.
+              example:
+                status: success
+                users:
+                  - user:
+                      user_id: 123e4567-e89b-12d3-a456-426614174000
+                      provider: FITBIT
+                      reference_id: user123@email.com
+                      created_at: '2024-01-10T09:30:00Z'
+                      last_webhook_update: '2024-01-20T11:05:00Z'
+                      provider_user_id: 4T8VXQ
+                      scopes: activity,sleep
+                      active: true
+                    is_authenticated: true
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1400,7 +1573,7 @@ paths:
       tags:
         - Integrations
       operationId: Integrations_List
-      description: Returns all provider integrations available on the API.
+      description: Lists every provider Terra supports, with those available only through the mobile SDKs listed separately.
       security: []
       responses:
         '200':
@@ -1433,14 +1606,21 @@ paths:
         - Integrations
       operationId: Integrations_ListDetailed
       summary: List integrations with details
-      description: Returns supported integrations with details, optionally filtered to your enabled integrations and to those that require the SDK.
+      description: Lists supported providers with the details needed to present them, such as display name, icon and the data types each offers.
       parameters:
+        - name: dev-id
+          in: header
+          required: false
+          description: Your developer ID. When sent, the list is your environment's providers, with `enabled` saying whether each is turned on; without it, every supported provider is listed with `enabled` true.
+          schema:
+            type: string
+          example: testingTerra
         - in: query
           name: sdk
           required: false
           schema:
             type: boolean
-          description: If `true`, allows SDK integrations to be included in the response.
+          description: Whether to include providers that connect through the mobile SDKs, such as Apple Health. Defaults to `false`.
       responses:
         '200':
           description: Successful response containing a list of integrations.
@@ -1452,7 +1632,13 @@ paths:
   /reports:
     post:
       summary: Upload a report
-      description: 'Upload one report as multipart form data: one `file` part, or one per page for a report photographed page by page, sent in page order. Each file may be a PDF or a PNG, JPEG, GIF, WebP or HEIC/HEIF image, and is identified by its contents rather than its name or declared type. All the files of an upload are read as one report and produce one session, so upload separate reports separately. Both clinical lab reports and DXA body-composition/bone-density scans go to this endpoint — Terra identifies which it is from the file, so there is no parameter to declare the type; read `report_type` off the session or the webhook. Returns an `upload_id`; learn the `session_id` from the webhook events or from `GET /reports?upload_id=...`.'
+      description: |-
+        Uploads one report for processing and returns its `upload_id`.
+
+        - Send one `file` part, or one per page in page order; all of an upload's files are read as one report and produce one session, so upload separate reports separately.
+        - A file's type is read from its contents, not its name or declared type.
+        - Lab reports and DXA body-composition or bone-density scans both go here; Terra detects which, and the session and webhook carry it as `report_type`.
+        - Find the `session_id` in the webhook events or with `GET /reports?upload_id=...`.
       tags:
         - LabReports
       operationId: Reports_Upload
@@ -1497,7 +1683,10 @@ paths:
           $ref: '#/components/responses/AuthorizationUnavailable'
     get:
       summary: List report sessions
-      description: List report sessions for your account — both lab reports and scans — with optional reference, upload, and inclusive date-range filters. Use the date filters to narrow large result sets, and read `report_type` on each session to tell a lab panel from a scan.
+      description: |-
+        Lists your account's report sessions, lab reports and scans alike, filtered by reference, upload, report type or date.
+
+        - Each session's `report_type` tells a lab report from a scan.
       tags:
         - LabReports
       operationId: Reports_List
@@ -1506,7 +1695,7 @@ paths:
         - name: limit
           in: query
           required: false
-          description: Page size; defaults to 50, and a larger value than 200 is served as 200. From API version 2026-10-21.
+          description: Sessions per page. Defaults to 50; a larger value than 200 is served as 200. From API version 2026-10-21.
           schema:
             type: integer
             minimum: 1
@@ -1514,19 +1703,19 @@ paths:
         - name: cursor
           in: query
           required: false
-          description: The previous page's `next_cursor`, sent with the same filters it was issued for; with different filters it is a 400 with code `validation_failed`. From API version 2026-10-21.
+          description: The previous page's `next_cursor`. Send it with the same filters it was issued for; with different filters it is a 400 with code `validation_failed`. From API version 2026-10-21.
           schema:
             type: string
         - name: reference_id
           in: query
           required: false
-          description: Filter by your external reference ID.
+          description: Your external reference ID, as sent on upload; returns only sessions uploaded with it.
           schema:
             type: string
         - name: report_type
           in: query
           required: false
-          description: Return only sessions of this kind. Omit for both.
+          description: 'The kind of session to return: `lab` or `dexa`. Omit for both.'
           schema:
             type: string
             enum:
@@ -1536,34 +1725,34 @@ paths:
         - name: upload_id
           in: query
           required: false
-          description: Filter by upload handle — returns every report from that upload.
+          description: An `upload_id` from `POST /reports`; returns every session from that upload.
           schema:
             type: string
         - name: report_date_from
           in: query
           required: false
-          description: Lab report date lower bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          description: Earliest report date to include, inclusive (`YYYY-MM-DD`).
           schema:
             type: string
             format: date
         - name: report_date_to
           in: query
           required: false
-          description: Lab report date upper bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          description: Latest report date to include, inclusive (`YYYY-MM-DD`).
           schema:
             type: string
             format: date
         - name: uploaded_at_from
           in: query
           required: false
-          description: Upload date lower bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          description: Earliest upload date to include, inclusive (`YYYY-MM-DD`).
           schema:
             type: string
             format: date
         - name: uploaded_at_to
           in: query
           required: false
-          description: Upload date upper bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          description: Latest upload date to include, inclusive (`YYYY-MM-DD`).
           schema:
             type: string
             format: date
@@ -1594,7 +1783,10 @@ paths:
   /reports/{session_id}:
     get:
       summary: Retrieve a lab report session
-      description: Retrieve a report's metadata, results, reference ranges, and status history. Immutable and cacheable — presigned file URLs and mutable per-destination delivery state live on the `/files` and `/deliveries` sub-resources.
+      description: |-
+        Returns a report session with its metadata, results, reference ranges and status history.
+
+        - Presigned file URLs and per-destination delivery state are not included: read them with `GET /reports/{session_id}/files` and `GET /reports/{session_id}/deliveries`.
       tags:
         - LabReports
       operationId: Reports_Get
@@ -1626,7 +1818,12 @@ paths:
           $ref: '#/components/responses/AuthorizationUnavailable'
     delete:
       summary: Delete a lab report session
-      description: 'Delete a session. It is removed from the API immediately: every read of it returns 404. Its files, results and Terra''s copies of them are erased from active systems within 30 days (target 24 hours), and backups expire within 10 days. Works without Lab Reports access.'
+      description: |-
+        Deletes a report session.
+
+        - It is removed from the API immediately: every later read of it returns 404.
+        - Its files, results and Terra's copies of them are erased from active systems within 30 days (target 24 hours), and backups expire within 10 days.
+        - Works without Lab Reports access.
       tags:
         - LabReports
       operationId: Reports_Delete
@@ -1653,7 +1850,10 @@ paths:
   /reports/{session_id}/deliveries:
     get:
       summary: List delivery outcomes
-      description: The per-destination delivery state for a report. Each opted-in destination is tracked independently, so one failure never hides delivery to the others (and is why a session can be `partially_sent`).
+      description: |-
+        Returns a report's delivery state for each opted-in destination.
+
+        - Each destination is tracked independently, so one failure never hides delivery to the others; that is why a session can be `partially_sent`.
       tags:
         - LabReports
       operationId: Reports_ListDeliveries
@@ -1686,7 +1886,10 @@ paths:
   /reports/{session_id}/files:
     get:
       summary: List input files
-      description: The uploaded input files and report thumbnail, with freshly minted presigned download URLs. URLs expire; fetch again to mint new ones.
+      description: |-
+        Returns a report's uploaded input files and thumbnail, each with a freshly minted presigned download URL.
+
+        - The URLs expire; call again to mint new ones.
       tags:
         - LabReports
       operationId: Reports_ListFiles
@@ -1719,7 +1922,13 @@ paths:
   /reports/{session_id}/reprocess:
     post:
       summary: Reprocess a session
-      description: 'Re-run extraction and standardization on an existing session from its stored input files. The session re-enters the processing flow, its stored results are replaced, and a new delivery to the environment''s current destinations occurs on completion. Only a session that was delivered (`sent`, `partially_sent`, `delivery_failed`) or has failed can be reprocessed. Re-running a failed report helps when its `error.retriable` is true; otherwise the input must change first. A report is metered once: reprocessing a session that was already metered does not meter it again. Each session can be reprocessed at most 3 times; a further request is refused with 409 and problem code `reprocess_limit_reached`.'
+      description: |-
+        Re-runs extraction and standardisation on a session from its stored input files, replacing its results and delivering it again to the environment's current destinations on completion.
+
+        - Only a delivered (`sent`, `partially_sent`, `delivery_failed`) or failed session can be reprocessed.
+        - Re-running a failed report helps only when its `error.retriable` is true; otherwise change the input first.
+        - A report is metered once; reprocessing an already metered session does not meter it again.
+        - A session can be reprocessed at most 3 times.
       tags:
         - LabReports
       operationId: Reports_Reprocess
@@ -1735,7 +1944,7 @@ paths:
         - name: legacy_format
           in: query
           required: false
-          description: Deliver the re-run in the pre-v6 webhook shape. Only needed for a session uploaded on the pre-v6 surface before the upload's shape was recorded with the session; otherwise the recorded shape is used.
+          description: Whether to deliver the re-run in the legacy Lab Reports webhook shape. Only needed for a session uploaded through the legacy Lab Reports API before Terra recorded each upload's shape with its session; otherwise the recorded shape is used.
           schema:
             type: boolean
       responses:
@@ -1761,7 +1970,14 @@ paths:
     post:
       deprecated: true
       summary: Upload a report
-      description: 'Upload one report as multipart form data: one `file` part, or one per page for a report photographed page by page, sent in page order. Each file may be a PDF or a PNG, JPEG, GIF, WebP or HEIC/HEIF image, and is identified by its contents rather than its name or declared type. All the files of an upload are read as one report and produce one session, so upload separate reports separately. Both clinical lab reports and DXA body-composition/bone-density scans go to this endpoint — Terra identifies which it is from the file, so there is no parameter to declare the type; read `report_type` off the session or the webhook. Returns an `upload_id`; learn the `session_id` from the webhook events or from `GET /lab-reports?upload_id=...`.'
+      description: |-
+        Uploads one report for processing and returns its `upload_id`.
+
+        - Deprecated: use `POST /reports` instead.
+        - Send one `file` part, or one per page in page order; all of an upload's files are read as one report and produce one session, so upload separate reports separately.
+        - A file's type is read from its contents, not its name or declared type.
+        - Lab reports and DXA body-composition or bone-density scans both go here; Terra detects which, and the session and webhook carry it as `report_type`.
+        - Find the `session_id` in the webhook events or with `GET /lab-reports?upload_id=...`.
       tags:
         - LabReports
       operationId: LabReports_Upload
@@ -1807,7 +2023,11 @@ paths:
     get:
       deprecated: true
       summary: List report sessions
-      description: List report sessions for your account — both lab reports and scans — with optional reference, upload, and inclusive date-range filters. Use the date filters to narrow large result sets, and read `report_type` on each session to tell a lab panel from a scan.
+      description: |-
+        Lists your account's report sessions, lab reports and scans alike, filtered by reference, upload, report type or date.
+
+        - Deprecated: use `GET /reports` instead.
+        - Each session's `report_type` tells a lab report from a scan.
       tags:
         - LabReports
       operationId: LabReports_List
@@ -1816,7 +2036,7 @@ paths:
         - name: limit
           in: query
           required: false
-          description: Page size; defaults to 50, and a larger value than 200 is served as 200. From API version 2026-10-21.
+          description: Sessions per page. Defaults to 50; a larger value than 200 is served as 200. From API version 2026-10-21.
           schema:
             type: integer
             minimum: 1
@@ -1824,19 +2044,19 @@ paths:
         - name: cursor
           in: query
           required: false
-          description: The previous page's `next_cursor`, sent with the same filters it was issued for; with different filters it is a 400 with code `validation_failed`. From API version 2026-10-21.
+          description: The previous page's `next_cursor`. Send it with the same filters it was issued for; with different filters it is a 400 with code `validation_failed`. From API version 2026-10-21.
           schema:
             type: string
         - name: reference_id
           in: query
           required: false
-          description: Filter by your external reference ID.
+          description: Your external reference ID, as sent on upload; returns only sessions uploaded with it.
           schema:
             type: string
         - name: report_type
           in: query
           required: false
-          description: Return only sessions of this kind. Omit for both.
+          description: 'The kind of session to return: `lab` or `dexa`. Omit for both.'
           schema:
             type: string
             enum:
@@ -1846,34 +2066,34 @@ paths:
         - name: upload_id
           in: query
           required: false
-          description: Filter by upload handle — returns every report from that upload.
+          description: An `upload_id` from `POST /lab-reports`; returns every session from that upload.
           schema:
             type: string
         - name: report_date_from
           in: query
           required: false
-          description: Lab report date lower bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          description: Earliest report date to include, inclusive (`YYYY-MM-DD`).
           schema:
             type: string
             format: date
         - name: report_date_to
           in: query
           required: false
-          description: Lab report date upper bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          description: Latest report date to include, inclusive (`YYYY-MM-DD`).
           schema:
             type: string
             format: date
         - name: uploaded_at_from
           in: query
           required: false
-          description: Upload date lower bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          description: Earliest upload date to include, inclusive (`YYYY-MM-DD`).
           schema:
             type: string
             format: date
         - name: uploaded_at_to
           in: query
           required: false
-          description: Upload date upper bound (inclusive, ISO-8601 `YYYY-MM-DD`).
+          description: Latest upload date to include, inclusive (`YYYY-MM-DD`).
           schema:
             type: string
             format: date
@@ -1905,7 +2125,11 @@ paths:
     get:
       deprecated: true
       summary: Retrieve a lab report session
-      description: Retrieve a report's metadata, results, reference ranges, and status history. Immutable and cacheable — presigned file URLs and mutable per-destination delivery state live on the `/files` and `/deliveries` sub-resources.
+      description: |-
+        Returns a report session with its metadata, results, reference ranges and status history.
+
+        - Deprecated: use `GET /reports/{session_id}` instead.
+        - Presigned file URLs and per-destination delivery state are not included: read them with `GET /lab-reports/{session_id}/files` and `GET /lab-reports/{session_id}/deliveries`.
       tags:
         - LabReports
       operationId: LabReports_Get
@@ -1938,7 +2162,13 @@ paths:
     delete:
       deprecated: true
       summary: Delete a lab report session
-      description: 'Delete a session. It is removed from the API immediately: every read of it returns 404. Its files, results and Terra''s copies of them are erased from active systems within 30 days (target 24 hours), and backups expire within 10 days. Works without Lab Reports access.'
+      description: |-
+        Deletes a report session.
+
+        - Deprecated: use `DELETE /reports/{session_id}` instead.
+        - It is removed from the API immediately: every later read of it returns 404.
+        - Its files, results and Terra's copies of them are erased from active systems within 30 days (target 24 hours), and backups expire within 10 days.
+        - Works without Lab Reports access.
       tags:
         - LabReports
       operationId: LabReports_Delete
@@ -1966,7 +2196,11 @@ paths:
     get:
       deprecated: true
       summary: List delivery outcomes
-      description: The per-destination delivery state for a report. Each opted-in destination is tracked independently, so one failure never hides delivery to the others (and is why a session can be `partially_sent`).
+      description: |-
+        Returns a report's delivery state for each opted-in destination.
+
+        - Deprecated: use `GET /reports/{session_id}/deliveries` instead.
+        - Each destination is tracked independently, so one failure never hides delivery to the others; that is why a session can be `partially_sent`.
       tags:
         - LabReports
       operationId: LabReports_ListDeliveries
@@ -2000,7 +2234,11 @@ paths:
     get:
       deprecated: true
       summary: List input files
-      description: The uploaded input files and report thumbnail, with freshly minted presigned download URLs. URLs expire; fetch again to mint new ones.
+      description: |-
+        Returns a report's uploaded input files and thumbnail, each with a freshly minted presigned download URL.
+
+        - Deprecated: use `GET /reports/{session_id}/files` instead.
+        - The URLs expire; call again to mint new ones.
       tags:
         - LabReports
       operationId: LabReports_ListFiles
@@ -2034,7 +2272,14 @@ paths:
     post:
       deprecated: true
       summary: Reprocess a session
-      description: 'Re-run extraction and standardization on an existing session from its stored input files. The session re-enters the processing flow, its stored results are replaced, and a new delivery to the environment''s current destinations occurs on completion. Only a session that was delivered (`sent`, `partially_sent`, `delivery_failed`) or has failed can be reprocessed. Re-running a failed report helps when its `error.retriable` is true; otherwise the input must change first. A report is metered once: reprocessing a session that was already metered does not meter it again. Each session can be reprocessed at most 3 times; a further request is refused with 409 and problem code `reprocess_limit_reached`.'
+      description: |-
+        Re-runs extraction and standardisation on a session from its stored input files, replacing its results and delivering it again to the environment's current destinations on completion.
+
+        - Deprecated: use `POST /reports/{session_id}/reprocess` instead.
+        - Only a delivered (`sent`, `partially_sent`, `delivery_failed`) or failed session can be reprocessed.
+        - Re-running a failed report helps only when its `error.retriable` is true; otherwise change the input first.
+        - A report is metered once; reprocessing an already metered session does not meter it again.
+        - A session can be reprocessed at most 3 times.
       tags:
         - LabReports
       operationId: LabReports_Reprocess
@@ -2050,7 +2295,7 @@ paths:
         - name: legacy_format
           in: query
           required: false
-          description: Deliver the re-run in the pre-v6 webhook shape. Only needed for a session uploaded on the pre-v6 surface before the upload's shape was recorded with the session; otherwise the recorded shape is used.
+          description: Whether to deliver the re-run in the legacy Lab Reports webhook shape. Only needed for a session uploaded through the legacy Lab Reports API before Terra recorded each upload's shape with its session; otherwise the recorded shape is used.
           schema:
             type: boolean
       responses:
@@ -2075,7 +2320,11 @@ paths:
 webhooks:
   auth:
     post:
-      description: Fires when a user completes or abandons connecting a provider account through Terra. The success arm (type `auth`) carries the new `user` object and your `reference_id`; the failure or cancellation arm (type `auth_cancelled`) carries no user, only a `reason` and the `reference_id`. On success, persist the user and link it to your end user through `reference_id`; on cancellation, treat it as a failed attempt with nothing to store.
+      description: |-
+        Fires when an end user finishes connecting a provider, or the attempt fails or is abandoned.
+
+        - Branch on `type`: `auth` carries the new `user` and your `reference_id`; `auth_cancelled` carries no user, only a `reason` and the `reference_id`.
+        - On `auth`, store the user and link it to your end user through `reference_id`; on `auth_cancelled` there is nothing to store.
       summary: User authentication event
       operationId: Webhooks_UserAuth
       tags:
@@ -2119,7 +2368,11 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   deauth:
     post:
-      description: Fires when a user disconnects a previously connected provider account. Carries the affected `user`, identified by `user_id`. Remove that user and their stored data from your system according to your data-retention policy.
+      description: |-
+        Fires when a user's connection ends and Terra deletes it.
+
+        - Sent when the user disconnects, when you call `DELETE /auth/deauthenticateUser`, and alongside `access_revoked` when the user revokes access at the provider.
+        - Remove the user and their stored data according to your data-retention policy.
       summary: User deauthentication event
       operationId: Webhooks_UserDeauth
       tags:
@@ -2149,7 +2402,11 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   user_reauth:
     post:
-      description: Fires when a user re-authenticates a provider already connected under the same `reference_id`, which replaces the old connection with a new `user_id`. The payload carries both `old_user`, the record being deleted, and `new_user`, the replacement. Re-key your storage from `old_user.user_id` to `new_user.user_id` and drop the old record; a normal `auth` event is delivered for the same reconnection.
+      description: |-
+        Fires when a user connects a provider again under the same `reference_id`, which replaces the old connection with a new `user_id`.
+
+        - `old_user` is the record being deleted and `new_user` its replacement: re-key your storage from `old_user.user_id` to `new_user.user_id` and drop the old record.
+        - An `auth` event is also sent for the same reconnection.
       summary: User reauthentication event
       operationId: Webhooks_UserReauth
       tags:
@@ -2187,7 +2444,11 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   access_revoked:
     post:
-      description: Fires when a user revokes Terra's access from the provider's side, for example in their wearable app's settings. Carries the affected `user`. Remove the user and their stored data according to your data-retention policy.
+      description: |-
+        Fires when a user revokes Terra's access from the provider's side, for example in their wearable app's settings.
+
+        - A `deauth` event is also sent for the same user.
+        - Remove the user and their stored data according to your data-retention policy.
       summary: Access revoked event
       operationId: Webhooks_AccessRevoked
       tags:
@@ -2217,7 +2478,11 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   permission_change:
     post:
-      description: 'Fires when the set of scopes a user has granted changes on the provider side. Carries the `user` with its current `scopes`, along with `scopes_added` and `scopes_removed`. Treat it as informational: it explains why some data types may later start or stop being delivered.'
+      description: |-
+        Fires when the set of scopes a user has granted changes at the provider.
+
+        - `user.scopes` holds the current set; `scopes_added` and `scopes_removed` hold the difference.
+        - Informational: it explains why some data types may later start or stop arriving.
       summary: Permission change event
       operationId: Webhooks_PermissionChange
       tags:
@@ -2250,7 +2515,10 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   connection_error:
     post:
-      description: Fires when a request to a provider returns HTTP 401, 403 or 412, meaning the stored credentials are no longer valid. Carries the affected `user`. Unlike `access_revoked`, Terra cannot tell whether the user deliberately revoked access or the failure is transient, so prompt the user to reconnect before removing their data.
+      description: |-
+        Fires when a provider answers Terra with HTTP 401, 403 or 412, meaning the stored credentials are no longer valid.
+
+        - Unlike `access_revoked`, Terra cannot tell whether the user revoked access deliberately or the failure is transient, so prompt the user to reconnect before removing their data.
       summary: Connection error event
       operationId: Webhooks_ConnectionError
       tags:
@@ -2280,7 +2548,10 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   large_request_sending:
     post:
-      description: Fires just before Terra begins delivering the data for a large historical request of more than one month. Carries `expected_payloads`, the number of chunked data events that will follow, all sharing one `terra_reference`. Use it to track sync progress and to know when every chunk has arrived.
+      description: |-
+        Fires just before Terra starts delivering the data for a request covering more than one month.
+
+        - `expected_payloads` is the number of chunked data events that follow, all sharing one `terra-reference` header: use it to track progress and to know when every chunk has arrived.
       summary: Large request sending event
       operationId: Webhooks_LargeRequestSending
       tags:
@@ -2311,7 +2582,11 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   large_request_processing:
     post:
-      description: Fires when you request more than one month of a user's data, acknowledging that Terra has begun assembling it. The data follows as a series of data events that share one `terra_reference`, each capped at 10 MB. Correlate the chunks back to the original request through `terra_reference`; a `large_request_sending` event announces how many will arrive.
+      description: |-
+        Fires when the data for a request covering more than one month is ready to deliver in chunks, just before `large_request_sending`.
+
+        - The data follows as data events of at most 10 MB each, all sharing one `terra-reference` header.
+        - Correlate the chunks with the original request through that reference; `large_request_sending` says how many will arrive.
       summary: Large request processing event
       operationId: Webhooks_LargeRequestProcessing
       tags:
@@ -2342,7 +2617,12 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   s3_upload:
     post:
-      description: Fires in place of a normal data event when a payload is too large to deliver inline, for destinations configured in ping mode. Carries a `type` of `s3_payload` and a pre-signed, time-limited `url` (valid for `expires_in` seconds) instead of the data itself. Download the JSON from `url` before it expires and process it exactly as the equivalent inline data event.
+      description: |-
+        Fires in place of a data event's body when delivery is set to ping, with a pre-signed `url` to the data instead of the data itself.
+
+        - On a webhook destination whose `delivery` is `ping`, every data event arrives this way; user lifecycle events, `connection_error` and the large-request events still arrive in full.
+        - SQS and Kafka destinations always receive this shape.
+        - Download the JSON from `url` within `expires_in` seconds and process it exactly as the equivalent data event.
       summary: S3 upload event
       operationId: Webhooks_S3Upload
       tags:
@@ -2366,7 +2646,11 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   activity:
     post:
-      description: Fires when a new completed activity is available, such as a tracked run or ride with a defined start and end. Carries a `data` array of activity sessions for the `user`. Deliveries are at-least-once, so deduplicate on `metadata.summary_id` and overwrite rather than append; on webhook destinations the newer copy carries a higher `x-terra-ordering-timestamp` header.
+      description: |-
+        Fires when a new completed activity is available, such as a run or ride with a start and end time.
+
+        - Deliveries are at least once: deduplicate on `metadata.summary_id` and overwrite rather than append.
+        - On webhook destinations the newer copy carries a higher `x-terra-ordering-timestamp` header.
       summary: Activity event
       operationId: Webhooks_ActivityData
       tags:
@@ -2414,7 +2698,10 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   athlete:
     post:
-      description: Fires when a user's athlete profile becomes available or changes, such as name, birth date or gender. Carries the `user` and their profile `data`. Store it against the user; unlike the time-series events there is no per-record deduplication key.
+      description: |-
+        Fires when a user's profile, such as name, birth date or gender, becomes available or changes.
+
+        - Store it against the user; unlike the time-series events there is no per-record deduplication key.
       summary: Athlete event
       operationId: Webhooks_AthleteData
       tags:
@@ -2451,7 +2738,11 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   nutrition:
     post:
-      description: Fires when new nutrition data is available, such as logged meals, calories and macronutrients. Carries a `data` array for the `user`. Deliveries are at-least-once, so overwrite keyed on `metadata.start_time`; on webhook destinations the newer copy carries a higher `x-terra-ordering-timestamp` header.
+      description: |-
+        Fires when new nutrition data is available, such as logged meals, calories and macronutrients.
+
+        - Deliveries are at least once: overwrite the record keyed on `metadata.start_time`.
+        - On webhook destinations the newer copy carries a higher `x-terra-ordering-timestamp` header.
       summary: Nutrition event
       operationId: Webhooks_NutritionData
       tags:
@@ -2491,7 +2782,11 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   daily:
     post:
-      description: Fires as a user's daily totals accrue, carrying the running summary up to the moment of the event, such as steps, calories and distance. Each payload is a cumulative superset for the 24-hour window identified by `metadata.start_time`, so overwrite the stored record for that date rather than appending. Deliveries are at-least-once; on webhook destinations the newer copy carries a higher `x-terra-ordering-timestamp` header.
+      description: |-
+        Fires as a user's daily totals accrue, such as steps, calories and distance, each time with the running summary up to that moment.
+
+        - Each payload is a cumulative superset for the 24-hour window starting at `metadata.start_time`: overwrite the record for that date rather than appending.
+        - Deliveries are at least once; on webhook destinations the newer copy carries a higher `x-terra-ordering-timestamp` header.
       summary: Daily event
       operationId: Webhooks_DailyData
       tags:
@@ -2532,7 +2827,11 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   sleep:
     post:
-      description: Fires when a new sleep session is available, with a defined start and end. Carries a `data` array of sleep sessions for the `user`. Deliveries are at-least-once, so overwrite keyed on `metadata.summary_id`; on webhook destinations the newer copy carries a higher `x-terra-ordering-timestamp` header.
+      description: |-
+        Fires when a new sleep session with a start and end time is available.
+
+        - Deliveries are at least once: overwrite the record keyed on `metadata.summary_id`.
+        - On webhook destinations the newer copy carries a higher `x-terra-ordering-timestamp` header.
       summary: Sleep event
       operationId: Webhooks_SleepData
       tags:
@@ -2575,7 +2874,11 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   menstruation:
     post:
-      description: Fires when new menstruation data is available for a day, such as cycle phase and flow. Each payload is relevant to the 24-hour window identified by `metadata.start_time`, so overwrite the record for that date rather than appending. Deliveries are at-least-once; on webhook destinations the newer copy carries a higher `x-terra-ordering-timestamp` header.
+      description: |-
+        Fires when new menstruation data is available for a day, such as cycle phase and flow.
+
+        - Each payload covers the 24-hour window starting at `metadata.start_time`: overwrite the record for that date rather than appending.
+        - Deliveries are at least once; on webhook destinations the newer copy carries a higher `x-terra-ordering-timestamp` header.
       summary: Menstruation event
       operationId: Webhooks_MenstruationData
       tags:
@@ -2614,7 +2917,11 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   body:
     post:
-      description: Fires when new body-metric data is available for a day, such as weight, heart rate or blood-oxygen samples. Each payload is a cumulative superset for the 24-hour window identified by `metadata.start_time`, so overwrite the stored record for that date rather than appending. Deliveries are at-least-once; on webhook destinations the newer copy carries a higher `x-terra-ordering-timestamp` header.
+      description: |-
+        Fires when new body-metric data is available for a day, such as weight, heart rate or blood-oxygen samples.
+
+        - Each payload is a cumulative superset for the 24-hour window starting at `metadata.start_time`: overwrite the record for that date rather than appending.
+        - Deliveries are at least once; on webhook destinations the newer copy carries a higher `x-terra-ordering-timestamp` header.
       summary: Body event
       operationId: Webhooks_BodyData
       tags:
@@ -2657,7 +2964,13 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
   lab_report:
     post:
-      description: 'lab_report data event: sent when a report finishes processing. The same event carries both clinical lab reports and DXA body-composition/bone-density scans - branch on data.report_type, which is always present. The envelope type is lab_report.completed (normalised results delivered under data) or lab_report.failed (a terminal failure, with a structured reason). Both share the lab_report destination event type; branch on the envelope type. Unlike wearable events these are report-scoped, so they carry no user or version.'
+      description: |-
+        Fires when a report uploaded to Lab Reports finishes processing or fails for good.
+
+        - Branch on `type`: `lab_report.completed` delivers the normalised results under `data`; `lab_report.failed` carries a structured reason.
+        - Both arrive under the `lab_report` destination event type.
+        - On `lab_report.completed`, `data.report_type` tells a clinical lab report from a DXA body-composition or bone-density scan.
+        - They are report-scoped, so unlike provider data events they carry no `user` or `version`.
       summary: Lab report event
       operationId: Webhooks_LabReport
       tags:
@@ -3192,8 +3505,15 @@ components:
           example: https://myapp.com/failure
         use_terra_avengers_app:
           type: boolean
-          description: Complete Apple Health connections in the Terra Avengers app instead of your own app. On the widget session endpoint, sdk_app takes precedence where both apply.
+          description: Complete Apple Health connections in the Terra Avengers app instead of your own app. sdk_app takes precedence where both apply.
           example: false
+        sdk_app:
+          type: string
+          enum:
+            - avengers
+            - grip
+          description: Terra mobile app that completes connections to providers with no web login, instead of your own app. grip (Terra Grip) covers APPLE, HEALTH_CONNECT and SAMSUNG; avengers (Terra Avengers) covers APPLE. Other on-device providers keep the default redirect to auth_success_redirect_url with resource and user_id=null. Takes precedence over use_terra_avengers_app where both apply; apple_app_url and samsung_app_url take precedence over both. Any other value is rejected with a 400.
+          example: grip
         connected_uids:
           type: array
           description: Terra user IDs already connected for this end user; their providers show as connected with a disconnect option
@@ -3223,6 +3543,26 @@ components:
           example: en
     User:
       $ref: '#/components/schemas/TerraUser'
+    UserWithPolling:
+      description: A user with the times Terra last polled their provider and last received data for them. Each is null when Terra has no such time, and both are left out for a user that is not a provider connection.
+      allOf:
+        - $ref: '#/components/schemas/TerraUser'
+        - type: object
+          properties:
+            last_polled_at:
+              type:
+                - string
+                - 'null'
+              format: date-time
+              description: Last time Terra polled the provider for this connection.
+              example: '2024-01-20T11:00:00Z'
+            most_recent_data_at:
+              type:
+                - string
+                - 'null'
+              format: date-time
+              description: Timestamp of the most recent data point Terra holds for this connection.
+              example: '2024-01-19T23:00:00Z'
     DataSentToWebhook:
       type: object
       description: |

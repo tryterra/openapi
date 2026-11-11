@@ -1,8 +1,8 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
   title: Terra Widget API
   description: Endpoint for generating an authentication-widget session, used to redirect an end user into the Terra Authentication Widget so they can connect a data provider.
-  version: 2026.11.04
+  version: 2026.11.11
   license:
     name: Proprietary
 servers:
@@ -11,11 +11,15 @@ servers:
 security:
   - ApiKeyAuth: []
     DevID: []
+tags:
+  - name: Authentication
+    summary: Authentication
+    description: Create a Terra Widget session, where an end user picks a wearable or app and signs in to connect it.
 paths:
   /widget/session:
     post:
       summary: Generate an authentication link, using the Terra Authentication Widget
-      description: Generates a link to redirect an end user to for them to select an integration and log in with their fitness data provider
+      description: Returns a Terra Widget session with a hosted URL where the end user selects a provider and logs in.
       tags:
         - Authentication
       operationId: GenerateWidgetSession
@@ -123,18 +127,6 @@ components:
       description: Your developer ID for authentication and tracking
   schemas:
     WidgetSessionParams:
-      allOf:
-        - $ref: '#/components/schemas/schemas-WidgetSessionParams'
-        - type: object
-          properties:
-            sdk_app:
-              type: string
-              enum:
-                - avengers
-                - grip
-              description: Terra mobile app that completes connections to providers with no web login, instead of your own app. grip (Terra Grip) covers APPLE, HEALTH_CONNECT and SAMSUNG; avengers (Terra Avengers) covers APPLE. Other on-device providers keep the default redirect to auth_success_redirect_url with resource and user_id=null. Takes precedence over use_terra_avengers_app where both apply; apple_app_url and samsung_app_url take precedence over both. Any other value is rejected with a 400.
-              example: grip
-    schemas-WidgetSessionParams:
       type: object
       properties:
         providers:
@@ -155,8 +147,15 @@ components:
           example: https://myapp.com/failure
         use_terra_avengers_app:
           type: boolean
-          description: Complete Apple Health connections in the Terra Avengers app instead of your own app. On the widget session endpoint, sdk_app takes precedence where both apply.
+          description: Complete Apple Health connections in the Terra Avengers app instead of your own app. sdk_app takes precedence where both apply.
           example: false
+        sdk_app:
+          type: string
+          enum:
+            - avengers
+            - grip
+          description: Terra mobile app that completes connections to providers with no web login, instead of your own app. grip (Terra Grip) covers APPLE, HEALTH_CONNECT and SAMSUNG; avengers (Terra Avengers) covers APPLE. Other on-device providers keep the default redirect to auth_success_redirect_url with resource and user_id=null. Takes precedence over use_terra_avengers_app where both apply; apple_app_url and samsung_app_url take precedence over both. Any other value is rejected with a 400.
+          example: grip
         connected_uids:
           type: array
           description: Terra user IDs already connected for this end user; their providers show as connected with a disconnect option

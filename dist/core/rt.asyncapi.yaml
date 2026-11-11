@@ -10,7 +10,7 @@ asyncapi: 3.0.0
 # test (services/streaming/internal/spec_drift_test.go).
 info:
   title: Terra Real-Time Streaming API (WebSocket)
-  version: 2026.10.23
+  version: 2026.11.11
   description: |
     Bidirectional WebSocket protocol for streaming health and fitness data in
     real time. Two roles share one protocol over a single `/connect` socket:
@@ -20,7 +20,7 @@ info:
     - **Consumer** (`developer` session) — receives the live dispatch stream
       for all of a developer's users, and can replay recent history.
 
-    A connection is authenticated with a single-use token obtained from the
+    A connection is authenticated with a token obtained from the
     REST token endpoints (see the companion OpenAPI document `rt.yaml`:
     `POST /auth/user` for producers, `POST /auth/developer` for consumers).
 
@@ -114,7 +114,7 @@ operations:
       $ref: '#/channels/connect'
     title: Authenticate the session
     summary: |
-      Client authenticates with a single-use token. The token type selects the
+      Client authenticates with a token. The token type selects the
       session role (producer vs consumer). Must arrive before the identify
       timeout or the connection is closed with 4000.
     messages:
@@ -307,7 +307,10 @@ components:
               enum: [0, 1]
             token:
               type: string
-              description: Single-use token from the REST token endpoint.
+              description: >-
+                Token from the REST token endpoint. Single-use, except a reusable
+                producer token (prefix `rt.`), which is presented again on every
+                reconnect until it expires or is revoked.
 
     ReadyFrame:
       type: object

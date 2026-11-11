@@ -1,21 +1,40 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
   title: Terra API Team-Based API
   description: API to manage and retrieve data from team-based fitness tracking devices used in sports training and monitoring.
-  version: 2026.10.23
+  version: 2026.11.11
 servers:
   - url: https://api.tryterra.co/v2/teams
     description: Main teams API base URL
 security:
   - ApiKeyAuth: []
     DevID: []
+tags:
+  - name: Authentication
+    summary: Authentication
+    description: Create a Terra Widget session, where an athlete picks a wearable or app and signs in to connect it.
+  - name: Integrations
+    summary: Integrations
+    description: List the wearables and apps athletes can connect, with the login fields and logo for each.
+  - name: Coaches
+    summary: Coaches
+    description: Create and delete coaches, and read the athletes, activities and tests under each coach.
+  - name: Athletes
+    summary: Athletes
+    description: List, read and update athletes.
+  - name: Webhooks
+    summary: Webhooks
+    description: Events Terra sends to your webhook URL when a coach or athletes register.
 paths:
   /auth/generateWidgetSession:
     servers:
       - url: https://access.tryterra.co/api/v2
     post:
       summary: Generate an authentication link, using the Terra Authentication Widget
-      description: Generates a link to redirect an end user to for them to select an integration and log in with their fitness data provider
+      description: |-
+        Returns a Terra Widget session with a hosted URL where the athlete selects a provider and logs in.
+
+        - Accounts created after 3 September 2026 get `410 Gone`; create widget sessions with `POST https://access.tryterra.co/api/widget/session` instead.
       tags:
         - Authentication
       operationId: GenerateWidgetSession
@@ -101,13 +120,19 @@ paths:
                       - success
                       - error
                     description: indicates that an error happened (value is error)
+        '410':
+          description: Returned for Terra accounts created after the widget relaunch (2026-09-03) — this endpoint is deprecated for them. Create widget sessions with POST https://access.tryterra.co/api/widget/session instead. The response carries Deprecation and Link (rel="deprecation") headers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
   /integrations/detailed:
     get:
       operationId: getDetailedIntegrations
       summary: Get detailed information about available integrations
-      description: Returns detailed information about available providers, including required login fields and logos.
+      description: Lists the providers you can connect, with each one's login fields, logo and whether it supplies tests, activities or both.
       security: []
       responses:
         '200':
@@ -121,6 +146,7 @@ paths:
   /coaches:
     get:
       operationId: listCoaches
+      description: Lists every coach registered under your developer ID.
       summary: List all coaches
       responses:
         '200':
@@ -138,7 +164,12 @@ paths:
     post:
       operationId: createCoach
       summary: Create a new coach
-      description: Registers a new coach with credentials and integration specifics.
+      description: |-
+        Registers a coach from their provider, region and provider credentials, and returns the new coach.
+
+        - Terra also imports the coach's athletes from the provider, so they appear in `GET /coaches/{coachId}/athletes` and `GET /athletes`.
+        - Only VALD coaches can be created today; any other `provider` returns `404`.
+        - Creating the same VALD coach again makes a second coach, with its own copy of the athletes, rather than returning `409`.
       requestBody:
         required: true
         content:
@@ -156,24 +187,71 @@ paths:
           description: Invalid input, object invalid
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: The provider cannot be onboarded yet. The `error` is `Provider not available on version 2022-03-16`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Provider not available on version 2022-03-16
         '409':
-          description: The coach already exists for your dev-id
+          description: You already registered a coach with the same credentials and `token`. The body is that coach. A body without `token` never conflicts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Coach'
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Coaches
   /coaches/{coachId}:
-    delete:
-      summary: Delete a coach
-      operationId: deleteCoach
-      description: Deletes a coach and all associated athletes, activities, and tests.
+    get:
+      operationId: getCoach
+      summary: Retrieve a coach
+      description: Returns one of your coaches.
       parameters:
         - name: coachId
           in: path
           required: true
           schema:
             type: string
-          description: Unique identifier of the coach to be deleted.
+          description: The coach's `coach_id`.
+      responses:
+        '200':
+          description: The coach.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Coach'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Coach not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Coach not found
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+      tags:
+        - Coaches
+    delete:
+      summary: Delete a coach
+      operationId: deleteCoach
+      description: |-
+        Deletes a coach, the provider token Terra holds for them, and their athletes.
+
+        - Terra reads activities and tests from the provider rather than storing them, so they can no longer be fetched through Terra.
+      parameters:
+        - name: coachId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The `coach_id` of the coach to delete.
       responses:
         '204':
           description: Coach deleted successfully.
@@ -184,7 +262,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Coach not found
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
@@ -192,6 +272,12 @@ paths:
   /coaches/{coachId}/athletes:
     get:
       operationId: getAthletesForCoach
+      description: |-
+        Returns the athletes registered under a coach.
+
+        - A coach with no athletes returns one athlete whose fields are all `null` except `coach_id`, with `active` set to `false`.
+        - `gender` is always `null` here; read it with `GET /athletes/{athleteId}`.
+        - A `coach_id` you do not have returns `500`, not `404`.
       summary: Retrieve all athletes under a specific coach
       parameters:
         - name: coachId
@@ -199,22 +285,24 @@ paths:
           required: true
           schema:
             type: string
+          description: The coach's `coach_id`.
       responses:
         '200':
           description: An array of athletes coached by the specified coach
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/CoachDataReturned'
-                  - type: object
-                    properties:
-                      data:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Athlete'
+                $ref: '#/components/schemas/AthletesReturned'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          description: Returned when the coach does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
@@ -222,6 +310,10 @@ paths:
   /coaches/{coachId}/activities:
     get:
       operationId: getActivitiesForCoach
+      description: |-
+        Returns a coach and the activities their athletes recorded between `start_date` and `end_date`.
+
+        - Not available yet: a valid request currently returns `500`.
       summary: Retrieve all activities recorded by athletes under a specific coach
       parameters:
         - name: coachId
@@ -229,10 +321,11 @@ paths:
           required: true
           schema:
             type: string
+          description: The coach's `coach_id`.
         - name: start_date
           in: query
           required: true
-          description: Start date for the query range (YYYY-MM-DD).
+          description: Start date for the query range (YYYY-MM-DD). Leaving it out returns `500`, not `400`.
           schema:
             type: string
             format: date
@@ -240,7 +333,7 @@ paths:
         - name: end_date
           in: query
           required: false
-          description: End date for the query range (YYYY-MM-DD). Defaults to start_date + 1 day if omitted.
+          description: End of the date range, as YYYY-MM-DD. Defaults to one day after `start_date`.
           schema:
             type: string
             format: date
@@ -248,7 +341,7 @@ paths:
         - name: to_destination
           in: query
           required: false
-          description: When `true`, data is sent asynchronously to your configured webhook and the endpoint returns HTTP 202 with a reference ID. When `false` (default), data is returned inline in the response body.
+          description: Not implemented yet. Whether to send the data to your webhook instead of returning it. When `true`, the response is `202` with a `reference` ID that identifies the later webhook delivery. Defaults to `false`, which returns the data in the response body.
           schema:
             type: string
             enum:
@@ -277,6 +370,22 @@ paths:
                 $ref: '#/components/schemas/DataSentToDestination'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Coach not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Coach not found
+        '500':
+          description: Returned for every request that passes validation, because provider data is not available yet.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
@@ -285,18 +394,21 @@ paths:
     get:
       operationId: getActivityMetricsSchemaForCoach
       summary: Retrieve activity metrics schema for a coach
-      description: Returns the schema of activity metrics available for the specified coach.
+      description: |-
+        Lists the metrics a coach's activities can carry, with the key, display name and unit of each.
+
+        - Not available yet: a valid request currently returns `500`.
       parameters:
         - name: coachId
           in: path
           required: true
           schema:
             type: string
-          description: Unique identifier of the coach.
+          description: The coach's `coach_id`.
         - name: to_destination
           in: query
           required: false
-          description: When `true`, data is sent asynchronously to your configured webhook and the endpoint returns HTTP 202 with a reference ID. When `false` (default), data is returned inline in the response body.
+          description: Not implemented yet. Whether to send the data to your webhook instead of returning it. When `true`, the response is `202` with a `reference` ID that identifies the later webhook delivery. Defaults to `false`, which returns the data in the response body.
           schema:
             type: string
             enum:
@@ -330,7 +442,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Coach not found
+        '500':
+          description: Returned for every request that passes validation, because provider data is not available yet.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
@@ -338,6 +460,10 @@ paths:
   /coaches/{coachId}/tests:
     get:
       operationId: getTestsForCoach
+      description: |-
+        Returns a coach and the tests their athletes completed between `start_date` and `end_date`.
+
+        - Not available yet: a valid request currently returns `500`.
       summary: Retrieve all tests conducted by athletes under a specific coach
       parameters:
         - name: coachId
@@ -345,6 +471,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The coach's `coach_id`.
         - name: start_date
           in: query
           required: true
@@ -356,7 +483,7 @@ paths:
         - name: end_date
           in: query
           required: false
-          description: End date for the query range (YYYY-MM-DD). Defaults to start_date + 1 day if omitted.
+          description: End of the date range, as YYYY-MM-DD. Defaults to one day after `start_date`.
           schema:
             type: string
             format: date
@@ -364,7 +491,7 @@ paths:
         - name: to_destination
           in: query
           required: false
-          description: When `true`, data is sent asynchronously to your configured webhook and the endpoint returns HTTP 202 with a reference ID. When `false` (default), data is returned inline in the response body.
+          description: Not implemented yet. Whether to send the data to your webhook instead of returning it. When `true`, the response is `202` with a `reference` ID that identifies the later webhook delivery. Defaults to `false`, which returns the data in the response body.
           schema:
             type: string
             enum:
@@ -391,8 +518,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DataSentToDestination'
+        '400':
+          description: Returned when `start_date` is missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: 'Missing required query parameter: start_date'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Coach not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Coach not found
+        '500':
+          description: Returned for every request that passes validation, because provider data is not available yet.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
@@ -401,17 +552,21 @@ paths:
     post:
       operationId: searchTestsForCoach
       summary: Search and filter tests for a specific coach
-      description: Returns tests matching the specified filters. Allows filtering by time range and athlete IDs.
+      description: |-
+        Returns a coach and their athletes' tests between `start_time` and `end_time`, optionally only for the athletes listed in `athlete_ids`.
+
+        - Not available yet: a valid request currently returns `500`.
       parameters:
         - name: coachId
           in: path
           required: true
           schema:
             type: string
+          description: The coach's `coach_id`.
         - name: to_destination
           in: query
           required: false
-          description: When `true`, data is sent asynchronously to your configured webhook and the endpoint returns HTTP 202 with a reference ID. When `false` (default), data is returned inline in the response body.
+          description: Not implemented yet. Whether to send the data to your webhook instead of returning it. When `true`, the response is `202` with a `reference` ID that identifies the later webhook delivery. Defaults to `false`, which returns the data in the response body.
           schema:
             type: string
             enum:
@@ -446,6 +601,22 @@ paths:
                 $ref: '#/components/schemas/DataSentToDestination'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Coach not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Coach not found
+        '500':
+          description: Returned for every request that passes validation, because provider data is not available yet.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
@@ -453,6 +624,7 @@ paths:
   /athletes:
     get:
       operationId: getAthletes
+      description: Lists the athletes under all of your coaches.
       summary: List all athletes
       responses:
         '200':
@@ -469,7 +641,11 @@ paths:
         - Athletes
     patch:
       summary: Bulk update multiple athletes
-      description: Allows a developer to partially update multiple athlete records in a single request.
+      description: |-
+        Updates several athletes in one request, and returns the athletes it updated with an error for each update that failed.
+
+        - Only `reference_id` and `active` can change here; use `PATCH /athletes/{athleteId}` for the other fields.
+        - A field sent as `null` or left out is unchanged; an update cannot clear a field.
       tags:
         - Athletes
       operationId: bulkPatchAthletes
@@ -521,7 +697,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/BulkPatchResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -535,6 +711,7 @@ paths:
   /athletes/{athleteId}:
     get:
       operationId: getAthlete
+      description: Returns one of your athletes.
       summary: Retrieve a specific athlete by their ID
       parameters:
         - name: athleteId
@@ -542,6 +719,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The athlete's `athlete_id`.
       responses:
         '200':
           description: Detailed information about the athlete
@@ -551,12 +729,24 @@ paths:
                 $ref: '#/components/schemas/Athlete'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No athlete with this `athlete_id` is registered under your coaches. The `error` says `Coach not found`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Coach not found
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
         - Athletes
     patch:
       operationId: updateAthlete
+      description: |-
+        Changes the fields you send on an athlete.
+
+        - A field sent as `null` or left out is unchanged; an update cannot clear a field.
       summary: Update an athlete's information
       parameters:
         - name: athleteId
@@ -564,6 +754,7 @@ paths:
           required: true
           schema:
             type: string
+          description: The `athlete_id` of the athlete to update.
       requestBody:
         required: true
         content:
@@ -573,8 +764,20 @@ paths:
       responses:
         '200':
           description: Athlete updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Athlete'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No athlete with this `athlete_id` is registered under your coaches. The `error` says `Coach not found`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Coach not found
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
       tags:
@@ -583,6 +786,10 @@ webhooks:
   coachRegistered:
     post:
       operationId: coachRegisteredWebhook
+      description: |-
+        Sent to your webhook URL when a coach is registered, with the coach in `data`.
+
+        - Not sent yet.
       tags:
         - Webhooks
       summary: Webhook to notify about a coach registration
@@ -608,6 +815,10 @@ webhooks:
   athleteRegistered:
     post:
       operationId: athleteRegisteredWebhook
+      description: |-
+        Sent to your webhook URL when athletes are registered under a coach, with every new athlete in `data`.
+
+        - Not sent yet.
       tags:
         - Webhooks
       summary: Webhook to notify about one or more athlete registrations
@@ -625,7 +836,6 @@ webhooks:
                   coach_id: 7f2d9a4e-1c3b-4f6a-9d8e-2b5c7a1f4e90
                   external_athlete_id: vald-athlete-118
                   reference_id: team-42-athlete-118
-                  provider: VALD
                   first_name: Jane
                   last_name: Doe
                   email: jane.doe@example.com
@@ -671,6 +881,47 @@ components:
             detail: Authorization is temporarily unavailable.
             code: authorization_unavailable
   schemas:
+    Problem:
+      type: object
+      description: |
+        An error response, following RFC 9457 (Problem Details for HTTP APIs, which obsoletes RFC 7807). Returned with `Content-Type: application/problem+json` on every 4xx/5xx response. The HTTP status line carries the status code; it is intentionally not repeated in the body. `type`, `title` and `instance` are always present; `detail` is included when a specific explanation is available.
+      properties:
+        type:
+          type: string
+          description: A URI reference identifying the problem type. Defaults to `about:blank`.
+          example: about:blank
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type (the lowercased HTTP status text).
+          example: unauthorized
+        instance:
+          type: string
+          description: The request path, including any query string, that produced this problem.
+          example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
+        code:
+          type: string
+          description: 'Stable error classification: branch on this, not on `detail`. A refused credential returns unauthorized (401: missing, invalid, expired or revoked), scope_missing (403: the credential lacks the scope the operation requires) or audience_restricted (403: the credential is not granted for this dev-id). authorization_unavailable (503) means the credential or the product access could not be checked; retry later. Product gates return entitlement_required (403) or environment_disabled (403). service_unavailable (503) means the request never reached the service; dependency_failed (502 or 504) means the service did not complete it, though it may already have acted on it. Report uploads return validation_failed, unsupported_file_type or too_many_files (400), and payload_too_large (413).'
+        product:
+          type: string
+          description: The product checked by the authorization gate, when classified.
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
+          example: dev-id or x-api-key headers are missing
+      required:
+        - type
+        - title
+        - instance
+    ErrorMessage:
+      type: object
+      description: The error body teams operations return.
+      properties:
+        error:
+          type: string
+          description: What went wrong.
+          example: Coach not found
+      required:
+        - error
     DataSentToDestination:
       type: object
       description: Returned when `to_destination=true`. Confirms that data retrieval has been queued and will be delivered to your webhook.
@@ -713,7 +964,7 @@ components:
           example: '2025-01-07'
         athlete_ids:
           type: array
-          description: Optional list of athlete IDs to filter results. If omitted, returns tests for all athletes.
+          description: Optional list of athlete IDs to filter results. If omitted, returns tests for all athletes. Not applied yet, so every athlete's tests are returned.
           items:
             type: string
           example:
@@ -796,10 +1047,11 @@ components:
         reference_id:
           type: string
           description: A string to reference the Athlete. This can be a UUID, email, or other, and can be used to reconcile the Athlete with your internal systems.
-        provider:
-          type: string
-          description: Integration provider associated with the Athlete (e.g., VALD, Catapult).
-          readOnly: true
+        gender:
+          type:
+            - integer
+            - 'null'
+          description: The athlete's gender, as an integer code. Always `null` in `GET /coaches/{coachId}/athletes`.
         first_name:
           type: string
           description: Athlete's first name.
@@ -2833,37 +3085,6 @@ components:
         - title
         - instance
         - code
-    Problem:
-      type: object
-      description: |
-        An error response, following RFC 9457 (Problem Details for HTTP APIs, which obsoletes RFC 7807). Returned with `Content-Type: application/problem+json` on every 4xx/5xx response. The HTTP status line carries the status code; it is intentionally not repeated in the body. `type`, `title` and `instance` are always present; `detail` is included when a specific explanation is available.
-      properties:
-        type:
-          type: string
-          description: A URI reference identifying the problem type. Defaults to `about:blank`.
-          example: about:blank
-        title:
-          type: string
-          description: A short, human-readable summary of the problem type (the lowercased HTTP status text).
-          example: unauthorized
-        instance:
-          type: string
-          description: The request path, including any query string, that produced this problem.
-          example: /api/v2/activity?user_id=d4aba475-f714-4663-88fe-28f18b8599b0&to_webhook=false
-        code:
-          type: string
-          description: 'Stable error classification: branch on this, not on `detail`. A refused credential returns unauthorized (401: missing, invalid, expired or revoked), scope_missing (403: the credential lacks the scope the operation requires) or audience_restricted (403: the credential is not granted for this dev-id). authorization_unavailable (503) means the credential or the product access could not be checked; retry later. Product gates return entitlement_required (403) or environment_disabled (403). service_unavailable (503) means the request never reached the service; dependency_failed (502 or 504) means the service did not complete it, though it may already have acted on it. Report uploads return validation_failed, unsupported_file_type or too_many_files (400), and payload_too_large (413).'
-        product:
-          type: string
-          description: The product checked by the authorization gate, when classified.
-        detail:
-          type: string
-          description: A human-readable explanation specific to this occurrence of the problem.
-          example: dev-id or x-api-key headers are missing
-      required:
-        - type
-        - title
-        - instance
   examples:
     ErrorCoachNotFound:
       summary: Resource Not Found
