@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Terra Admin API
-  version: 2026.11.09.4
+  version: 2026.11.11
   description: Customer-scoped admin/agent API. Tokens are minted via an RFC 8628 device flow approved on the dashboard. Tenant targeting is the {dev_id} path segment only. Errors are RFC 7807 problem+json with a stable `code`. Mutations accept an Idempotency-Key header and emit X-RateLimit-* headers. Product reads and replay actions additionally require current entitlements (403 entitlement_required). Disabled environments return 403 environment_disabled; unavailable current authorization returns 503 authorization_unavailable. Billing, configuration and recovery retain their existing permissions.
   x-terra-audience: cli
 servers:
@@ -10505,6 +10505,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DestinationConfigField'
+        aws_role_setup:
+          description: 'On s3 and sqs, when Terra can assume a role in your AWS account instead of using an access key: what you need to create that role. Absent on the public catalogue.'
+          $ref: '#/components/schemas/AwsRoleSetup'
       required:
         - type
         - display_name
@@ -17018,6 +17021,27 @@ components:
         - required
         - secret
         - enum
+    AwsRoleSetup:
+      type: object
+      description: What you need to create the role Terra assumes to deliver to your S3 bucket or SQS queue. The role can only write to the bucket and queue you name.
+      properties:
+        external_id:
+          type: string
+          description: The External ID the role's trust policy must require. It is derived from your account and is the same for every environment.
+        terra_principal_arn:
+          type: string
+          description: The Terra principal the role must trust.
+        template_url:
+          type: string
+          description: The CloudFormation template that creates the role.
+        quick_create_url:
+          type: string
+          description: A CloudFormation console link that creates the stack with these values filled in. Add param_BucketName and param_QueueArn to fill in the bucket and queue too.
+      required:
+        - external_id
+        - terra_principal_arn
+        - template_url
+        - quick_create_url
     AwsSecretRefConfigView:
       type: object
       properties:
@@ -17102,6 +17126,11 @@ components:
           type:
             - string
             - 'null'
+        role_arn:
+          type:
+            - string
+            - 'null'
+          description: A role in your AWS account that Terra assumes instead of using an access key, created by the template in the destination type's aws_role_setup. Set it or access_key_id and secret_access_key, not both; send the other pair as null to switch.
         access_key_id:
           type:
             - string
@@ -17125,6 +17154,11 @@ components:
             - string
             - 'null'
           description: Optional when the queue URL or ARN names it; a region that disagrees with the queue's is a 400.
+        role_arn:
+          type:
+            - string
+            - 'null'
+          description: A role in your AWS account that Terra assumes instead of using an access key, created by the template in the destination type's aws_role_setup. Set it or access_key_id and secret_access_key, not both; send the other pair as null to switch.
         access_key_id:
           type:
             - string
@@ -17324,6 +17358,10 @@ components:
           type:
             - string
             - 'null'
+        role_arn:
+          type:
+            - string
+            - 'null'
         access_key_id:
           type:
             - string
@@ -17335,6 +17373,7 @@ components:
       required:
         - bucket
         - region
+        - role_arn
         - access_key_id
         - secret_access_key_masked
     SqsDestinationConfigView:
@@ -17346,6 +17385,10 @@ components:
             - 'null'
           description: The queue's AWS URL.
         region:
+          type:
+            - string
+            - 'null'
+        role_arn:
           type:
             - string
             - 'null'
@@ -17364,6 +17407,7 @@ components:
       required:
         - queue
         - region
+        - role_arn
         - access_key_id
         - secret_access_key_masked
         - s3_bucket
