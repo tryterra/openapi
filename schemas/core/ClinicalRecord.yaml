@@ -1,0 +1,62 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  record_id:
+    type: string
+    description: "Stable identifier of this record for this user, derived from its source and FHIR resource type and identifier. Re-uploads and revisions of the same resource keep it: treat it as the upsert key."
+  clinical_type:
+    $ref: ClinicalRecordType.yaml
+    description: The kind of clinical record.
+  display_name:
+    type: string
+    examples:
+      - Hemoglobin A1c
+    description: The record's display name as the phone's health store shows it.
+  source_name:
+    type: string
+    examples:
+      - Cedars-Sinai
+    description: Name of the health system the record came from.
+  source_bundle_id:
+    type: string
+    description: Bundle identifier of the health system's source in the phone's health store.
+  downloaded_at:
+    type: string
+    examples:
+      - 2025-08-19T14:26:40.000000+01:00
+    description: "When the phone's health store downloaded the resource, in ISO8601 format with microsecond precision. Not a clinical date: those are inside fhir_resource. A device time later than when Terra received the upload is replaced by the receive time."
+  received_at:
+    type: string
+    examples:
+      - 2025-08-19T13:26:45.000000+00:00
+    description: When Terra stored this content of the record, in ISO8601 format with microsecond precision. Moves only when the content changes.
+  fhir:
+    $ref: ClinicalRecordFhir.yaml
+    description: Metadata about the FHIR resource.
+  fhir_resource:
+    anyOf:
+      - $ref: "#/$defs/RecordUnknown"
+      - type: "null"
+    description: "The FHIR resource as served by the health system, as a JSON object: the downloaded bytes with insignificant whitespace removed and nothing else changed (strings, markup and decimal precision are as served). Clinical notes can embed large attachments. Null only when fhir_resource_error is set."
+  fhir_resource_error:
+    anyOf:
+      - type: string
+        const: fhir_resource_unavailable
+      - type: "null"
+    description: "Why fhir_resource is null: `fhir_resource_unavailable` when Terra could not read the stored resource. The record's metadata is still served so the rest of the page, and paging past it, are unaffected. Null when fhir_resource is present."
+required:
+  - record_id
+  - clinical_type
+  - display_name
+  - source_name
+  - source_bundle_id
+  - downloaded_at
+  - received_at
+  - fhir
+  - fhir_resource
+  - fhir_resource_error
+$defs:
+  RecordUnknown:
+    type: object
+    properties: {}
+    unevaluatedProperties: {}

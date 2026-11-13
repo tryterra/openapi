@@ -1,7 +1,7 @@
 openapi: 3.2.0
 info:
   title: Terra Admin API
-  version: 2026.11.11.2
+  version: 2026.11.13
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -4414,7 +4414,7 @@ paths:
       x-terra-mcp-annotations:
         openWorldHint: false
       x-terra-help: Replace selected data types; omitted types are deselected. ATHLETE stays selected;
-        HEALTH_OBSERVATION needs its entitlement. SAMPLES controls sample flags.
+        HEALTH_OBSERVATION and CLINICAL_RECORD need their entitlements. SAMPLES controls sample flags.
       tags:
       - unified-api
       responses:
@@ -4466,6 +4466,8 @@ paths:
 
         - `HEALTH_OBSERVATION` is 403 `access_denied` unless the account holds the `health_observation`
         entitlement.
+
+        - `CLINICAL_RECORD` is 403 `access_denied` unless the account holds the `clinical_record` entitlement.
 
         - Needs `dataconfig:write`, not `account:write`, so every role that configures data can edit them.'
       requestBody:

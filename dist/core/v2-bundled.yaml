@@ -5,7 +5,7 @@ info:
 
     **Lab reports versioning.** The report endpoints (`/reports`, and the deprecated `/lab-reports`) are versioned by date. Send `X-Terra-Version: <date>` to choose the version a request is served in: the newest version on or before that date. Without the header a request gets the environment's pinned version. An environment without a pin is pinned to the latest version on its first request; change the pin through the admin API (`PUT /api/v3/admin/environments/{dev_id}/lab-reports/api-version`). Every authenticated response carries `X-Terra-Version` stating the version it was served in, and every `lab_report` webhook delivery carries the environment's version. A malformed or future date returns 400 with code `invalid_api_version`. Versions are `2026-10-21` (latest: the report list is paginated) and `2026-03-24` (the list returns up to 500 reports in `sessions`). This document describes the latest version.
   title: Terra API
-  version: 2026.11.11.2
+  version: 2026.11.13
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -843,6 +843,105 @@ paths:
                     required:
                       - data
                   - $ref: '#/components/schemas/DataSentToWebhook'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+  /clinicalRecord:
+    get:
+      summary: List clinical records
+      description: |-
+        Returns a user's clinical records (Apple Health Records) as the raw FHIR resources their health systems served, oldest received first.
+
+        - Records arrive only by SDK upload, so this reads what Terra has received: there is no date range and nothing is fetched from the device.
+        - Page with `next_cursor`, and read `has_more` to know whether more records are available now. A page can hold fewer than `limit` records and still have more, because pages are also bounded by the size of the resources they carry.
+        - `next_cursor` is always returned, including on the last page and on an empty one, so it doubles as a polling position: store it and send it on the next poll to receive only what arrived since. An empty page returns the position you asked from (your `cursor`, or the `received_since` boundary).
+        - A record whose content changes moves to the end of the order with a new `received_at`, so a consumer following `next_cursor` sees the record again, at its latest content, after each change. Revisions made between two polls collapse into the latest one. An unchanged re-upload does not move it, and neither does an upload of an older version than the one stored.
+        - Records received in the last 60 seconds are not returned yet. Holding them back means a record still becoming visible cannot land behind a `next_cursor` already issued, so a consumer following the cursor never misses one; a record uploaded now appears in this list about a minute later. The webhook is not delayed.
+        - A record whose stored resource Terra cannot read is still returned, with `fhir_resource` null and `fhir_resource_error` set, so the rest of the page and paging past it are unaffected.
+        - Upsert on `record_id`. Records are never deleted.
+        - Returns `400` if your environment does not collect clinical records.
+      tags:
+        - HealthData
+      operationId: ClinicalRecord_List
+      parameters:
+        - name: user_id
+          in: query
+          description: Terra user ID (a UUID) of the user to retrieve clinical records for.
+          schema:
+            type: string
+          required: true
+        - name: resource_type
+          in: query
+          description: Only records of this FHIR resource type, such as `Observation` or `AllergyIntolerance`.
+          schema:
+            type: string
+          required: false
+        - name: clinical_type
+          in: query
+          description: Only records of this clinical type. Any snake_case value is accepted, including one not yet listed in the enum, because a type Apple adds is stored under its snake_case spelling before Terra lists it; the match is exact.
+          schema:
+            $ref: '#/components/schemas/ClinicalRecordType'
+          required: false
+        - name: received_since
+          in: query
+          description: Only records Terra received at or after this time, as an ISO 8601 timestamp or date, or a unix timestamp in seconds. A number of more than 10 digits (a timestamp in milliseconds), or a time before 1970, is a `400`. Ignored when `cursor` is sent.
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+                format: date-time
+          required: false
+        - name: cursor
+          in: query
+          description: The previous page's `next_cursor`. Send it with the same `user_id`, `resource_type` and `clinical_type` it was issued for; with different ones it is a `400`.
+          schema:
+            type: string
+          required: false
+        - name: limit
+          in: query
+          description: Records per page. Defaults to 50; a larger value than 100 is served as 100.
+          schema:
+            type: integer
+            minimum: 1
+            default: 50
+          required: false
+      responses:
+        '200':
+          description: One page of clinical records.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    const: clinical_record
+                  user_id:
+                    type: string
+                    description: The Terra user ID the records belong to.
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ClinicalRecord'
+                  next_cursor:
+                    type: string
+                    description: Pass as `cursor` for the next page or the next poll. Always present; on an empty page it is the position the request asked from.
+                  has_more:
+                    type: boolean
+                    description: More records are available now. False on the last page; poll again later with `next_cursor` for records received since.
+                required:
+                  - type
+                  - user_id
+                  - data
+                  - next_cursor
+                  - has_more
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2815,6 +2914,66 @@ webhooks:
           $ref: '#/components/responses/Forbidden'
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
+  clinical_record:
+    post:
+      description: |-
+        Fires when clinical records (Apple Health Records) are new or their content changed, carrying each FHIR resource as the health system served it.
+
+        - Upsert on `record_id`. A re-upload of unchanged content does not fire this event; changed content does, with a new `fhir.content_sha256` and `received_at`.
+        - Webhook order is not authoritative: when two uploads of a record race, the event for the older content can arrive after the newer one. Upsert by the greater `downloaded_at`, then `received_at`, or refetch from `GET /v2/clinicalRecord`, which always serves the latest content.
+        - Records are never deleted, so there is no deletion event.
+        - Deliveries are at least once.
+      summary: Clinical record event
+      operationId: Webhooks_ClinicalRecordData
+      tags:
+        - Webhooks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClinicalRecordEvent'
+            example:
+              type: clinical_record
+              version: '2022-03-16'
+              user:
+                user_id: 40f7b0e1-89e2-43ac-a5b8-1e29c8d47cad
+                provider: APPLE
+                last_webhook_update: '2026-07-01T09:12:33.891000+00:00'
+                scopes: ''
+                reference_id: your-user-123
+                active: true
+              data:
+                - record_id: 0b5e1c9d7f3a4e2b8c6d0a1f9e7b5c3d2a4f6e8b0c1d3e5f7a9b2c4d6e8f0a1b
+                  clinical_type: lab_result
+                  display_name: Hemoglobin A1c
+                  source_name: Cedars-Sinai
+                  source_bundle_id: com.apple.health.5F2C1A
+                  downloaded_at: '2026-07-01T08:15:00.000000+01:00'
+                  received_at: '2026-07-01T07:15:04.120000+00:00'
+                  fhir:
+                    resource_type: Observation
+                    identifier: abc-123
+                    release: R4
+                    source_url: https://fhir.example.org/Observation/abc-123
+                    content_sha256: 9f2b6c1e4d8a7b3c5e0f1a2d4c6b8e0f1a3c5e7d9b0a2c4e6f8a1b3d5c7e9f0a
+                    byte_size: 412
+                  fhir_resource:
+                    resourceType: Observation
+                    id: abc-123
+                    status: final
+                    code:
+                      text: Hemoglobin A1c
+                    valueQuantity:
+                      value: 6.1
+                      unit: '%'
+                  fhir_resource_error: null
+      responses:
+        '200':
+          description: Successful clinical record response
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
   menstruation:
     post:
       description: |-
@@ -4458,6 +4617,71 @@ components:
       $ref: '#/components/schemas/HormoneEvent'
     HealthObservationWebhook:
       $ref: '#/components/schemas/HealthObservationEvent'
+    ClinicalRecord:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        record_id:
+          type: string
+          description: 'Stable identifier of this record for this user, derived from its source and FHIR resource type and identifier. Re-uploads and revisions of the same resource keep it: treat it as the upsert key.'
+        clinical_type:
+          $ref: '#/components/schemas/ClinicalRecordType'
+          description: The kind of clinical record.
+        display_name:
+          type: string
+          examples:
+            - Hemoglobin A1c
+          description: The record's display name as the phone's health store shows it.
+        source_name:
+          type: string
+          examples:
+            - Cedars-Sinai
+          description: Name of the health system the record came from.
+        source_bundle_id:
+          type: string
+          description: Bundle identifier of the health system's source in the phone's health store.
+        downloaded_at:
+          type: string
+          examples:
+            - '2025-08-19T14:26:40.000000+01:00'
+          description: 'When the phone''s health store downloaded the resource, in ISO8601 format with microsecond precision. Not a clinical date: those are inside fhir_resource. A device time later than when Terra received the upload is replaced by the receive time.'
+        received_at:
+          type: string
+          examples:
+            - '2025-08-19T13:26:45.000000+00:00'
+          description: When Terra stored this content of the record, in ISO8601 format with microsecond precision. Moves only when the content changes.
+        fhir:
+          $ref: '#/components/schemas/ClinicalRecordFhir'
+          description: Metadata about the FHIR resource.
+        fhir_resource:
+          anyOf:
+            - $ref: '#/components/schemas/RecordUnknown'
+            - type: 'null'
+          description: 'The FHIR resource as served by the health system, as a JSON object: the downloaded bytes with insignificant whitespace removed and nothing else changed (strings, markup and decimal precision are as served). Clinical notes can embed large attachments. Null only when fhir_resource_error is set.'
+        fhir_resource_error:
+          anyOf:
+            - type: string
+              const: fhir_resource_unavailable
+            - type: 'null'
+          description: 'Why fhir_resource is null: `fhir_resource_unavailable` when Terra could not read the stored resource. The record''s metadata is still served so the rest of the page, and paging past it, are unaffected. Null when fhir_resource is present.'
+      required:
+        - record_id
+        - clinical_type
+        - display_name
+        - source_name
+        - source_bundle_id
+        - downloaded_at
+        - received_at
+        - fhir
+        - fhir_resource
+        - fhir_resource_error
+      $defs:
+        RecordUnknown:
+          type: object
+          properties: {}
+          unevaluatedProperties: {}
+    ClinicalRecordWebhook:
+      $ref: '#/components/schemas/ClinicalRecordEvent'
     LabReportWebhook:
       oneOf:
         - $ref: '#/components/schemas/LabReportCompletedEvent'
@@ -11150,6 +11374,80 @@ components:
           examples:
             - 33.7
           description: Mean absolute skin temperature in degrees Celsius over the sleep window. Null for providers that only report a baseline deviation.
+    ClinicalRecordType:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      anyOf:
+        - type: string
+          const: allergy
+        - type: string
+          const: condition
+        - type: string
+          const: immunization
+        - type: string
+          const: lab_result
+        - type: string
+          const: medication
+        - type: string
+          const: procedure
+        - type: string
+          const: vital_sign
+        - type: string
+          const: coverage
+        - type: string
+          const: clinical_note
+        - type: string
+      description: 'The kind of clinical record, from HealthKit''s clinical type identifiers, in snake_case. The values may be extended: a type Apple adds is stored and served in the same snake_case spelling before it is listed here.'
+    ClinicalRecordFhir:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        resource_type:
+          type: string
+          examples:
+            - Observation
+          description: The FHIR resource type.
+        identifier:
+          type: string
+          examples:
+            - abc-123
+          description: 'The resource''s identifier at the health system. Unique only within one source: two health systems can reuse an identifier.'
+        release:
+          anyOf:
+            - type: string
+              const: R4
+            - type: string
+              const: DSTU2
+            - type: string
+            - type: 'null'
+          description: 'The FHIR release of the resource as the phone reported it, today R4 or DSTU2. The values may be extended: a release a newer iOS reports is stored as received. Null when the phone did not report one (iOS before 14).'
+        source_url:
+          anyOf:
+            - type: string
+            - type: 'null'
+          examples:
+            - https://fhir.example.org/Observation/abc-123
+          description: Where the health system served the resource from, when reported.
+        content_sha256:
+          type: string
+          description: Hex SHA-256 of the resource bytes exactly as the phone downloaded them, which fhir_resource carries with insignificant whitespace removed, so hashing fhir_resource does not reproduce it. Changes when, and only when, the downloaded resource changes.
+        byte_size:
+          type: integer
+          minimum: -2147483648
+          maximum: 2147483647
+          examples:
+            - 1532
+          description: Size of the resource bytes as downloaded, before whitespace is removed for fhir_resource.
+      required:
+        - resource_type
+        - identifier
+        - release
+        - source_url
+        - content_sha256
+        - byte_size
+    RecordUnknown:
+      type: object
+      properties: {}
+      unevaluatedProperties: {}
     EnvironmentType:
       $schema: https://json-schema.org/draft/2020-12/schema
       anyOf:
@@ -12497,6 +12795,32 @@ components:
       allOf:
         - $ref: '#/components/schemas/WebhookEvent'
       description: Sleep data event
+    ClinicalRecordEvent:
+      $schema: https://json-schema.org/draft/2020-12/schema
+      type: object
+      properties:
+        type:
+          type: string
+          const: clinical_record
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClinicalRecord'
+          description: Array of clinical records that are new or whose content changed
+        user:
+          $ref: '#/components/schemas/TerraUser'
+          description: User whose data is being provided
+        version:
+          type: string
+          description: API version
+      required:
+        - type
+        - data
+        - user
+        - version
+      allOf:
+        - $ref: '#/components/schemas/WebhookEvent'
+      description: 'Clinical record data event: Apple Health Records resources, as raw FHIR'
     MenstruationEvent:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
@@ -13060,6 +13384,7 @@ components:
         - $ref: '#/components/schemas/PlannedWorkoutEvent'
         - $ref: '#/components/schemas/HormoneEvent'
         - $ref: '#/components/schemas/HealthObservationEvent'
+        - $ref: '#/components/schemas/ClinicalRecordEvent'
         - $ref: '#/components/schemas/LabReportCompletedEvent'
         - $ref: '#/components/schemas/LabReportFailedEvent'
         - $ref: '#/components/schemas/S3PayloadEvent'

@@ -1,0 +1,46 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+type: object
+properties:
+  resource_type:
+    type: string
+    examples:
+      - Observation
+    description: The FHIR resource type.
+  identifier:
+    type: string
+    examples:
+      - abc-123
+    description: "The resource's identifier at the health system. Unique only within one source: two health systems can reuse an identifier."
+  release:
+    anyOf:
+      - type: string
+        const: R4
+      - type: string
+        const: DSTU2
+      - type: string
+      - type: "null"
+    description: "The FHIR release of the resource as the phone reported it, today R4 or DSTU2. The values may be extended: a release a newer iOS reports is stored as received. Null when the phone did not report one (iOS before 14)."
+  source_url:
+    anyOf:
+      - type: string
+      - type: "null"
+    examples:
+      - https://fhir.example.org/Observation/abc-123
+    description: Where the health system served the resource from, when reported.
+  content_sha256:
+    type: string
+    description: Hex SHA-256 of the resource bytes exactly as the phone downloaded them, which fhir_resource carries with insignificant whitespace removed, so hashing fhir_resource does not reproduce it. Changes when, and only when, the downloaded resource changes.
+  byte_size:
+    type: integer
+    minimum: -2147483648
+    maximum: 2147483647
+    examples:
+      - 1532
+    description: Size of the resource bytes as downloaded, before whitespace is removed for fhir_resource.
+required:
+  - resource_type
+  - identifier
+  - release
+  - source_url
+  - content_sha256
+  - byte_size

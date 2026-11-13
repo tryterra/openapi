@@ -1,0 +1,22 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+anyOf:
+  - type: string
+    const: allergy
+  - type: string
+    const: condition
+  - type: string
+    const: immunization
+  - type: string
+    const: lab_result
+  - type: string
+    const: medication
+  - type: string
+    const: procedure
+  - type: string
+    const: vital_sign
+  - type: string
+    const: coverage
+  - type: string
+    const: clinical_note
+  - type: string
+description: "The kind of clinical record, from HealthKit's clinical type identifiers, in snake_case. The values may be extended: a type Apple adds is stored and served in the same snake_case spelling before it is listed here."
