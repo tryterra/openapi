@@ -5,7 +5,7 @@ info:
 
     **Lab reports versioning.** The report endpoints (`/reports`, and the deprecated `/lab-reports`) are versioned by date. Send `X-Terra-Version: <date>` to choose the version a request is served in: the newest version on or before that date. Without the header a request gets the environment's pinned version. An environment without a pin is pinned to the latest version on its first request; change the pin through the admin API (`PUT /api/v3/admin/environments/{dev_id}/lab-reports/api-version`). Every authenticated response carries `X-Terra-Version` stating the version it was served in, and every `lab_report` webhook delivery carries the environment's version. A malformed or future date returns 400 with code `invalid_api_version`. Versions are `2026-10-21` (latest: the report list is paginated) and `2026-03-24` (the list returns up to 500 reports in `sessions`). This document describes the latest version.
   title: Terra API
-  version: 2026.11.13
+  version: 2026.11.13.1
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -3277,6 +3277,13 @@ webhooks:
           $ref: '#/components/responses/AuthorizationUnavailable'
 components:
   parameters:
+    TargetUserId:
+      name: target_user_id
+      in: query
+      required: false
+      description: 'Names one of the connections a shared device key is registered on, by the user_id its redemption returned (the compatibility uuid, or the connection id; either is accepted). A key registered on one connection never needs it. With a key shared by several customers'' connections (one install feeding several customers), signed uploads act on every connection unless this names one, and the routes whose effect belongs to one connection - backfill and planned-workout queues, diagnostics - answer 409 with the candidate `user_ids` until it does. Signed: when present, it is framed into the label slot of the signed message, joined by `@` (`resource` LF `label@target_user_id` LF `resource_user_id` LF `terra-timestamp` LF `body`), raw as the device holds it, so it can be neither stripped nor rewritten in transit and a targeted message never shares bytes with an untargeted one; an untargeted request signs exactly what it always did. A value with a line break is a 400; naming a connection the key is not registered on is a 403.'
+      schema:
+        type: string
     LabReportsApiVersion:
       name: X-Terra-Version
       in: header
