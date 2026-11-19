@@ -1,7 +1,7 @@
 openapi: 3.2.0
 info:
   title: Terra Admin API
-  version: 2026.11.13
+  version: 2026.11.19
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -14425,7 +14425,7 @@ components:
             (403) or environment_disabled (403). service_unavailable (503) means the request never reached
             the service; dependency_failed (502 or 504) means the service did not complete it, though
             it may already have acted on it. Report uploads return validation_failed, unsupported_file_type
-            or too_many_files (400), and payload_too_large (413).'
+            or too_many_files (400), payload_too_large (413) and rate_limited (429).'
         product:
           type: string
           description: The product checked by the authorization gate, when classified.
