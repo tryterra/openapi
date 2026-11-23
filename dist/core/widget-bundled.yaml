@@ -2,7 +2,7 @@ openapi: 3.2.0
 info:
   title: Terra Widget API
   description: Endpoint for generating an authentication-widget session, used to redirect an end user into the Terra Authentication Widget so they can connect a data provider.
-  version: 2026.11.11.1
+  version: 2026.11.23
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -147,6 +147,10 @@ components:
           type: string
           description: URL the user is redirected to upon unsuccessful authentication
           example: https://myapp.com/failure
+        auth_cancel_redirect_url:
+          type: string
+          description: URL the user is sent to if they close the widget without connecting a provider. When set, the widget shows a close button; when omitted, it does not. reference_id is appended as a query parameter. Must be an http, https or app URL.
+          example: https://myapp.com/onboarding/next
         use_terra_avengers_app:
           type: boolean
           description: Complete Apple Health connections in the Terra Avengers app instead of your own app. sdk_app takes precedence where both apply.
