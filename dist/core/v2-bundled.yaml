@@ -5,7 +5,7 @@ info:
 
     **Lab reports versioning.** The report endpoints (`/reports`, and the deprecated `/lab-reports`) are versioned by date. Send `X-Terra-Version: <date>` to choose the version a request is served in: the newest version on or before that date. Without the header a request gets the environment's pinned version. An environment without a pin is pinned to the latest version on its first request; change the pin through the admin API (`PUT /api/v3/admin/environments/{dev_id}/lab-reports/api-version`). Every authenticated response carries `X-Terra-Version` stating the version it was served in, and every `lab_report` webhook delivery carries the environment's version. A malformed or future date returns 400 with code `invalid_api_version`. Versions are `2026-10-21` (latest: the report list is paginated) and `2026-03-24` (the list returns up to 500 reports in `sessions`). This document describes the latest version.
   title: Terra API
-  version: 2026.11.23
+  version: 2026.11.26
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -135,11 +135,14 @@ paths:
           $ref: '#/components/responses/AuthorizationUnavailable'
   /auth/generateWidgetSession:
     post:
-      summary: Generate a Terra Widget session link
+      deprecated: true
+      summary: Generate a Terra Widget session link (deprecated)
       description: |-
         Returns a Terra Widget session with a hosted URL where the end user selects a provider and logs in.
 
-        - Accounts created after 3 September 2026 get `410 Gone`; create widget sessions with `POST https://access.tryterra.co/api/widget/session` instead.
+        - Deprecated: use `POST /widget/session` instead, which takes the same request body. This path keeps working for existing integrations, and its responses carry a `Deprecation: true` header.
+        - Providers are selected by the legacy widget's rules: an explicit `providers` list shows every requested provider in Terra's catalogue, enabled or not, and `ALL` shows the whole catalogue. Preview providers still need preview access.
+        - Accounts created after 3 September 2026 get `410 Gone`; create widget sessions with `POST /widget/session` instead.
       tags:
         - Authentication
       operationId: Authentication_GenerateWidgetSession
@@ -150,51 +153,65 @@ paths:
               $ref: '#/components/schemas/WidgetSessionParams'
         required: true
       responses:
-        '200':
-          description: Returned when authentication link could be successfully generated
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  session_id:
-                    description: Session ID for the widget authentication session
-                    type: string
-                    example: 23dc2540-7139-44c6-8158-f81196e2cf2e
-                  url:
-                    type: string
-                    description: the widget URL the user must be redirected to in order to link their account
-                    example: https://widget.tryterra.co/session/344d475f-296a-489a-a88c-54183671dafd
-                  status:
-                    type: string
-                    enum:
-                      - success
-                      - error
-                    description: indicates that the request was successful (value is success)
-                    example: success
-                  expires_in:
-                    type: number
-                    description: a number in seconds depicting how long the url is valid for
-                    example: 900
-                  warnings:
-                    type: array
-                    items:
-                      type: string
-                    description: present when part of the request could not be honoured, such as requested providers that are unknown or not enabled
+        '201':
+          $ref: '#/components/responses/WidgetSessionCreated'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          $ref: '#/components/responses/WidgetSessionBadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '410':
-          description: Returned for Terra accounts created after the widget relaunch (2026-09-03) — this endpoint is deprecated for them. Create widget sessions with POST https://access.tryterra.co/api/widget/session instead. The response carries Deprecation and Link (rel="deprecation") headers.
+          description: Returned for Terra accounts created after the widget relaunch (2026-09-03). Create widget sessions with POST https://access.tryterra.co/api/v2/widget/session instead. The response carries a Link (rel="deprecation") header to the widget documentation.
           content:
-            application/json:
+            application/problem+json:
               schema:
                 $ref: '#/components/schemas/Problem'
+        '413':
+          $ref: '#/components/responses/WidgetSessionTooLarge'
+        '500':
+          $ref: '#/components/responses/WidgetSessionFailed'
+        '502':
+          $ref: '#/components/responses/WidgetSessionLookupFailed'
         '503':
           $ref: '#/components/responses/AuthorizationUnavailable'
+        '504':
+          $ref: '#/components/responses/WidgetSessionTimeout'
+  /widget/session:
+    post:
+      summary: Generate a Terra Widget session link
+      description: |-
+        Returns a Terra Widget session with a hosted URL where the end user selects a provider and logs in.
+
+        - The widget shows the providers enabled on your environment, or the subset named in `providers`; requested providers that are unknown or not enabled are left out and reported in `warnings`.
+      tags:
+        - Authentication
+      operationId: Authentication_CreateWidgetSession
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WidgetSessionParams'
+        required: true
+      responses:
+        '201':
+          $ref: '#/components/responses/WidgetSessionCreated'
+        '400':
+          $ref: '#/components/responses/WidgetSessionBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/WidgetSessionTooLarge'
+        '500':
+          $ref: '#/components/responses/WidgetSessionFailed'
+        '502':
+          $ref: '#/components/responses/WidgetSessionLookupFailed'
+        '503':
+          $ref: '#/components/responses/AuthorizationUnavailable'
+        '504':
+          $ref: '#/components/responses/WidgetSessionTimeout'
   /auth/deauthenticateUser:
     delete:
       summary: Deauthenticate a user
@@ -3395,6 +3412,48 @@ components:
             instance: /activity
             detail: Authorization is temporarily unavailable.
             code: authorization_unavailable
+    WidgetSessionCreated:
+      description: The widget session was created.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WidgetSession'
+    WidgetSessionBadRequest:
+      description: The request body is malformed or fails validation, or `connected_uids` names users that do not exist (listed in `invalid_user_ids`). A body that cannot be read at all is answered as a Problem instead.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WidgetSessionError'
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    WidgetSessionTooLarge:
+      description: The request body is over 1 MiB.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    WidgetSessionFailed:
+      description: 'The session could not be created: the environment''s enabled providers could not be read, or an internal error occurred.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WidgetSessionError'
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    WidgetSessionLookupFailed:
+      description: The users named in `connected_uids` could not be looked up. Retry the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WidgetSessionError'
+    WidgetSessionTimeout:
+      description: The widget service did not respond in time. Retry the request.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
     ReportNotReprocessable:
       description: 'The session cannot be reprocessed: it is still being processed, was cancelled, or has used its 3 re-runs (problem code `reprocess_limit_reached`). A deleted session is 404.'
       content:
@@ -5280,6 +5339,54 @@ components:
         - title
         - instance
         - code
+    WidgetSession:
+      type: object
+      required:
+        - session_id
+        - url
+        - status
+        - expires_in
+      properties:
+        session_id:
+          description: Session ID for the widget authentication session
+          type: string
+          example: 23dc2540-7139-44c6-8158-f81196e2cf2e
+        url:
+          type: string
+          description: the widget URL the user must be redirected to in order to link their account
+          example: https://access.tryterra.co/widget/session/344d475f-296a-489a-a88c-54183671dafd
+        status:
+          type: string
+          enum:
+            - success
+          example: success
+        expires_in:
+          type: integer
+          description: how long the url is valid for, in seconds
+          example: 86400
+        warnings:
+          type: array
+          items:
+            type: string
+          description: present when part of the request could not be honoured, such as requested providers that are unknown or not enabled
+    WidgetSessionError:
+      type: object
+      required:
+        - message
+        - status
+      properties:
+        message:
+          description: a detailed message describing the error
+          type: string
+        status:
+          type: string
+          enum:
+            - error
+        invalid_user_ids:
+          type: array
+          description: present when one or more user IDs passed in connected_uids do not exist
+          items:
+            type: string
     TerraUser:
       $schema: https://json-schema.org/draft/2020-12/schema
       type: object
