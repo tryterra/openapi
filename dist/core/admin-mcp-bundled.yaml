@@ -1,7 +1,7 @@
 openapi: 3.2.0
 info:
   title: Terra Admin API
-  version: 2026.11.27
+  version: 2026.11.27.1
   license:
     name: Apache-2.0
     url: https://github.com/tryterra/openapi/blob/master/LICENSE
@@ -15518,6 +15518,18 @@ components:
           description: Resume only the original Idempotency-Key and purchase inputs. Never plans or creates
             a new purchase if its receipt is missing. Completion-only requests cannot preview a new purchase.
           x-terra-help: Resume the original operation only; never start a new purchase.
+        offer:
+          type: string
+          enum:
+          - second_month_free_2026
+          description: 'A time-limited offer the customer was shown. `second_month_free_2026` makes month
+            2 of a new monthly plan''s flat fee free when the subscription starts before the offer closes
+            after 4 Dec 2026 (UTC) on a monthly self-serve plan, with no promotion code, for a new customer:
+            one with no earlier subscription other than an abandoned checkout. Only the base plan fee
+            is free; add-ons and usage are billed at normal rates. A request that does not qualify subscribes
+            at the normal price; an unknown offer is rejected.'
+          x-terra-help: Offer the customer was shown, such as second_month_free_2026. If it does not apply,
+            the normal price is charged.
       required:
       - scope
     SubscriptionSummary:
